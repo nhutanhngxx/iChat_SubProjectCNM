@@ -1,12 +1,19 @@
 import React from "react";
-import { Text, View } from "react-native";
+import { Text, View, Button, SafeAreaView, StyleSheet } from "react-native";
 
 const ContactTab = () => {
   return (
-    <View>
+    <SafeAreaView style={styles.container}>
       <Text>Contact Screen</Text>
-    </View>
+    </SafeAreaView>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "white",
+  },
+});
 
 export default ContactTab;

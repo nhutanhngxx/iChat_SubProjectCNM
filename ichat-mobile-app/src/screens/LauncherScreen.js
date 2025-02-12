@@ -8,9 +8,14 @@ import {
   StatusBar,
   Image,
   TouchableOpacity,
+  Button,
 } from "react-native";
 
-const LauncherScreen = ({ navigation }) => {
+const LauncherScreen = ({ navigation, setUser }) => {
+  const handleLogin = () => {
+    navigation.navigate("Login");
+  }
+
   return (
     <View style={styles.container}>
       <ImageBackground
@@ -27,6 +32,7 @@ const LauncherScreen = ({ navigation }) => {
           </View>
           <View>
             <TouchableOpacity></TouchableOpacity>
+            <Button title="Login" onPress={() => handleLogin()}></Button>
           </View>
         </View>
       </ImageBackground>

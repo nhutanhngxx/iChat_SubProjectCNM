@@ -1,12 +1,19 @@
 import React from "react";
-import { Text, View } from "react-native";
+import { Text, View, Button, SafeAreaView, StyleSheet } from "react-native";
 
-const TimelineScreen = () => {
+const TimelineTab = () => {
   return (
-    <View>
+    <SafeAreaView style={styles.container}>
       <Text>Timeline Screen</Text>
-    </View>
+    </SafeAreaView>
   );
 };
 
-export default TimelineScreen;
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "white",
+  },
+});
+
+export default TimelineTab;

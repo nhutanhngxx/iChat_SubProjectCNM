@@ -1,12 +1,19 @@
 import React from "react";
-import { Text, View } from "react-native";
+import { Text, View, Button, SafeAreaView, StyleSheet } from "react-native";
 
-const MeScreen = () => {
+const MeTab = () => {
   return (
-    <View>
-      <Text>Me Screen</Text>
-    </View>
+    <SafeAreaView style={styles.container}>
+      <Text>Profile Screen</Text>
+    </SafeAreaView>
   );
 };
 
-export default MeScreen;
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "white",
+  },
+});
+
+export default MeTab;
