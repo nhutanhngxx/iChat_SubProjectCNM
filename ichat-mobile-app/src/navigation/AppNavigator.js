@@ -14,11 +14,11 @@ const AppNavigator = ({ setUser }) => {
     >
       <ButtomTab.Screen
         name="Home"
-        component={(props) => <HomeScreen {...props} setUser={setUser} />}
+        children={(props) => <HomeScreen {...props} setUser={setUser} />}
       />
       <ButtomTab.Screen
         name="Message"
-        component={(props) => <MessageScreen {...props} setUser={setUser} />}
+        children={(props) => <MessageScreen {...props} setUser={setUser} />}
       />
     </ButtomTab.Navigator>
   );

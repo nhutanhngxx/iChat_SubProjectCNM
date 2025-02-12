@@ -14,11 +14,11 @@ const AuthNavigator = ({ setUser }) => {
     >
       <Stack.Screen
         name="Launcher"
-        component={(props) => <LauncherScreen {...props} setUser={setUser} />}
+        children={(props) => <LauncherScreen {...props} setUser={setUser} />}
       />
       <Stack.Screen
         name="Login"
-        component={(props) => <LoginScreen {...props} setUser={setUser} />}
+        children={(props) => <LoginScreen {...props} setUser={setUser} />}
       />
     </Stack.Navigator>
   );
