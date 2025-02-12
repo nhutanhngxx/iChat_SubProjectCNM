@@ -1,12 +1,12 @@
 import React from "react";
 import { Text, View } from "react-native";
 
-const LoginScreen = () => {
+const MessagesTab = () => {
   return (
     <View>
-      <Text>LoginScreen</Text>
+      <Text>Messages Screen</Text>
     </View>
   );
 };
 
-export default LoginScreen;
+export default MessagesTab;
