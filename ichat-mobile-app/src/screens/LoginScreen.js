@@ -8,6 +8,7 @@ const LoginScreen = ({ navigation, setUser }) => {
   }
 
 
+
   return (
     <SafeAreaView style={styles.container}>
       <Text style={styles.title}>Login Screen</Text>

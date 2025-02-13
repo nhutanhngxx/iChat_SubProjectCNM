@@ -5,8 +5,20 @@ import MessageTab from "../screens/MessagesTab";
 import ContactTab from "../screens/ContactTab";
 import TimelineTab from "../screens/TimelineTab";
 import MeTab from "../screens/MeTab";
+import Chatting from "../components/messages/Chatting";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
 const BottomTab = createBottomTabNavigator();
+const Stack = createNativeStackNavigator();
+
+const ChatStack = () => {
+  return (
+    <Stack.Navigator screenOptions={{headerShown: false}}>
+      <Stack.Screen name="MessagesStack" component={MessageTab} />
+      <Stack.Screen name="Chatting" component={Chatting} />
+    </Stack.Navigator>
+  )
+}
 
 const AppNavigator = ({ setUser }) => {
   return (
@@ -56,10 +68,22 @@ const AppNavigator = ({ setUser }) => {
         },
       })}
     >
-      <BottomTab.Screen name="Messages" component={MessageTab} />
-      <BottomTab.Screen name="Contact" component={ContactTab} />
-      <BottomTab.Screen name="Timeline" component={TimelineTab} />
-      <BottomTab.Screen name="Me" component={MeTab} />
+      <BottomTab.Screen
+        name="Messages"
+        children={(props) => <ChatStack {...props} setUser={setUser} />}
+      />
+      <BottomTab.Screen
+        name="Contact"
+        children={(props) => <ContactTab {...props} setUser={setUser} />}
+      />
+      <BottomTab.Screen
+        name="Timeline"
+        children={(props) => <TimelineTab {...props} setUser={setUser} />}
+      />
+      <BottomTab.Screen
+        name="Me"
+        children={(props) => <MeTab {...props} setUser={setUser} />}
+      />
     </BottomTab.Navigator>
   );
 };
