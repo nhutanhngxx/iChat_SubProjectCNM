@@ -5,7 +5,7 @@ const LoginScreen = ({ navigation, setUser }) => {
   const handleLogin = () => {
     // Giả lập đăng nhập thành công
     setUser(true);
-    navigation.navigate("TabNavigator");
+    // navigation.navigate("TabNavigator");
   };
 
   return (
