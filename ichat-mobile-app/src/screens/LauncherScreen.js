@@ -17,7 +17,7 @@ const LauncherScreen = ({ navigation, setUser }) => {
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <ImageBackground
         source={require("../assets/images/background.png")}
         style={styles.background}
@@ -36,7 +36,7 @@ const LauncherScreen = ({ navigation, setUser }) => {
           </View>
         </View>
       </ImageBackground>
-    </View>
+    </SafeAreaView>
   );
 };
 

@@ -11,7 +11,7 @@ const HomeScreen = ({ navigation, setUser }) => {
 
   return (
     <View>
-      <Text>HomeScreen</Text>
+      <Text>Home Screen</Text>
       <Button title="Logout" onPress={() => handleLogout()}></Button>
     </View>
   );
