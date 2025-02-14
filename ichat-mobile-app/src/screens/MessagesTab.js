@@ -5,13 +5,13 @@ import {
   useWindowDimensions,
   ActivityIndicator,
 } from "react-native";
-import { TabView, TabBar, SceneMap } from "react-native-tab-view";
+import { TabView, SceneMap } from "react-native-tab-view";
 
 import HeaderMessages from "../components/tabs/HeaderMessagesTab";
 import UutienMessages from "../components/messages/UuTien";
 import KhacMessages from "../components/messages/Khac";
 
-const MessagesTab = ({setUser}) => {
+const MessagesTab = ({ setUser }) => {
   const layout = useWindowDimensions();
   const [index, setIndex] = useState(0);
 
@@ -20,22 +20,11 @@ const MessagesTab = ({setUser}) => {
     { key: "khac", title: "Khác" },
   ];
 
-  // const renderScene = ({ route }) => {
-  //   if (route.key === routes[index].key) {
-  //     return route.key === "uutien" ? <UutienMessages /> : <KhacMessages />;
-  //   }
-  //   return null; // Không render tab không được chọn
-  // };
-
   const renderScene = ({ route }) => {
     if (route.key === "uutien" && index === 0) {
-      console.log("uu tien: ", index);
-      console.log("key: ", route.key);
       return <UutienMessages />;
     }
     if (route.key === "khac" && index === 1) {
-      console.log("key: ", route.key);
-      console.log("khac: ", index);
       return <KhacMessages />;
     }
     return null;
@@ -53,13 +42,6 @@ const MessagesTab = ({setUser}) => {
         lazyPlaceholder={() => (
           <ActivityIndicator size="large" color="#2F80ED" />
         )}
-        // renderTabBar={(props) => (
-        //   <TabBar
-        //     {...props}
-        //     indicatorStyle={{ backgroundColor: "#2F80ED" }}
-        //     tabStyle={{ backgroundColor: "white" }}
-        //   />
-        // )}
       />
     </View>
   );

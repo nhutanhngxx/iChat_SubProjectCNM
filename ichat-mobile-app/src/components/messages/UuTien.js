@@ -13,21 +13,21 @@ const chatList = [
   {
     id: "1",
     name: "Nguyễn Nhựt Anh",
-    message: "[Hình ảnh]",
+    lastMessage: "[Hình ảnh]",
     time: "1 phút trước",
     avatar: require("../../assets/images/avatars/avatar1.png"),
   },
   {
     id: "2",
     name: "Trần Minh Quân",
-    message: "Xin chào!",
+    lastMessage: "Xin chào!",
     time: "5 phút trước",
     avatar: require("../../assets/images/avatars/avatar2.png"),
   },
   {
     id: "3",
     name: "Lê Phương Thảo",
-    message: "Bạn khỏe không?",
+    lastMessage: "Bạn khỏe không?",
     time: "10 phút trước",
     avatar: require("../../assets/images/avatars/avatar3.png"),
   },
@@ -49,7 +49,7 @@ const UuTien = () => {
         <Image source={item.avatar} style={styles.avatar} />
         <View>
           <Text style={styles.name}>{item.name}</Text>
-          <Text>{item.message}</Text>
+          <Text>{item.lastMessage}</Text>
         </View>
       </View>
       <View>

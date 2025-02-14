@@ -17,9 +17,10 @@ const HeaderMessages = () => {
           source={require("../../assets/icons/search.png")}
           style={{ width: 22, height: 22 }}
         />
-        <TextInput style={{ fontSize: 18, width: "100", color: "#2F80ED" }}>
-          Tìm kiếm
-        </TextInput>
+        <TextInput
+          style={{ fontSize: 18, width: "100", color: "#2F80ED" }}
+          placeholder="Tìm kiếm"
+        ></TextInput>
       </View>
 
       <View style={{ flexDirection: "row", gap: 10 }}>
