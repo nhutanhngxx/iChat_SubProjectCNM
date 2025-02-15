@@ -1,4 +1,6 @@
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+
 import React from "react";
 import { View, Image } from "react-native";
 import MessageTab from "../screens/MessagesTab";
@@ -6,7 +8,8 @@ import ContactTab from "../screens/ContactTab";
 import TimelineTab from "../screens/TimelineTab";
 import MeTab from "../screens/MeTab";
 import Chatting from "../components/messages/Chatting";
-import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import Option from "../components/messages/Options";
+import MediaStorage from "../components/messages/MediaStorage";
 
 const BottomTab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -16,6 +19,8 @@ const ChatStack = () => {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="MessagesStack" component={MessageTab} />
       <Stack.Screen name="Chatting" component={Chatting} />
+      <Stack.Screen name="Option" component={Option} />
+      <Stack.Screen name="MediaStorage" component={MediaStorage} />
     </Stack.Navigator>
   );
 };

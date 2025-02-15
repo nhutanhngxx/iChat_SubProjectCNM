@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Text, View, Image, TextInput } from "react-native";
 
@@ -20,7 +21,7 @@ const HeaderMessages = () => {
         <TextInput
           style={{ fontSize: 18, width: "100", color: "#2F80ED" }}
           placeholder="Tìm kiếm"
-        />
+        ></TextInput>
       </View>
 
       <View style={{ flexDirection: "row", gap: 10 }}>
