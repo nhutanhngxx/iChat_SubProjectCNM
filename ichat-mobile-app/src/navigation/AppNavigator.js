@@ -13,12 +13,12 @@ const Stack = createNativeStackNavigator();
 
 const ChatStack = () => {
   return (
-    <Stack.Navigator screenOptions={{headerShown: false}}>
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="MessagesStack" component={MessageTab} />
       <Stack.Screen name="Chatting" component={Chatting} />
     </Stack.Navigator>
-  )
-}
+  );
+};
 
 const AppNavigator = ({ setUser }) => {
   return (
