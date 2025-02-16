@@ -8,11 +8,11 @@ import {
 } from "@ant-design/icons";
 import Message from "./Message";
 import MessageInput from "./MessageInput";
-import "./ChatWindow.css";
+import "./MessageArea.css";
 
 const { Header, Content } = Layout;
 
-const ChatWindow = () => {
+const MessageArea = () => {
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState("");
 
@@ -93,4 +93,4 @@ const ChatWindow = () => {
   );
 };
 
-export default ChatWindow;
+export default MessageArea;

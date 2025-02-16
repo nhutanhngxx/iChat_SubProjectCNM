@@ -1,5 +1,6 @@
 import './App.css';
 import Login from './components/Login';
+import HomeWeb from './components/HomeWeb';
 import ChatRoom from './components/ChatRoom';
 import { BrowserRouter, Routes, Route } from 'react-router-dom'; // Import Routes thay cho Switch
 
@@ -9,7 +10,8 @@ function App() {
       <Routes>
         {/* Dùng element để render component */}
         <Route path="/login" element={<Login />} />
-        <Route path="/" element={<ChatRoom />} />
+        <Route path="/" element={<HomeWeb />} />
+        <Route path="/chatroom" element={<ChatRoom />} />
       </Routes>
     </BrowserRouter>
   );

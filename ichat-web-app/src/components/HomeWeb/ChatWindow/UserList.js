@@ -5,11 +5,11 @@ import {
   PhoneOutlined,
   NotificationOutlined,
 } from "@ant-design/icons";
-import "./Sidebar.css";
+import "./UserList.css";
 
 const { Header, Content } = Layout;
 
-const Sidebar = ({ chatList, onSelectChat }) => {
+const UserList = ({ chatList, onSelectChat }) => {
   const [searchText, setSearchText] = useState("");
 
   const filteredChatList = chatList.filter((chat) =>
@@ -17,7 +17,7 @@ const Sidebar = ({ chatList, onSelectChat }) => {
   );
 
   return (
-    <Layout.Sider width={400} className="chat-sidebar">
+    <Layout.Sider width={320} className="chat-sidebar">
       <Header className="sidebar-header">
         <h1>Chats</h1>
       </Header>
@@ -73,4 +73,4 @@ const Sidebar = ({ chatList, onSelectChat }) => {
   );
 };
 
-export default Sidebar;
+export default UserList;
