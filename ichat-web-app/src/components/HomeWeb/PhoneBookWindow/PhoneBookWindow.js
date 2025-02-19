@@ -1,7 +1,10 @@
 import React, { useState } from "react";
-import { FaUserFriends, FaUsers, FaUserPlus } from "react-icons/fa";
+import { FaUserFriends, FaUserPlus } from "react-icons/fa";
+import { FaUsers } from "react-icons/fa6";
 import { BsFillPersonLinesFill } from "react-icons/bs";
 import { BsPersonAdd } from "react-icons/bs";
+import { PiUsersThreeFill } from "react-icons/pi";
+
 import "./index.css"; // Import CSS
 import FriendList from "./FriendList";
 import GroupList from "./GroupList";
@@ -55,7 +58,7 @@ const PhoneBookWindow = () => {
             }`}
             onClick={() => setActiveTab("requestsgroups")}
           >
-            <FaUserPlus className="text-gray-600 mr-2 icons" />
+            <PiUsersThreeFill className="text-gray-600 mr-2 icons" />
             <span>Lời mời vào nhóm cộng đồng</span>
           </div>
         </div>
@@ -71,46 +74,5 @@ const PhoneBookWindow = () => {
     </div>
   );
 };
-
-// const FriendList = () => (
-//   <div className="body">
-//     {/* Content header  */}
-//     <div className="content-header">
-//       <BsFillPersonLinesFill className="text-gray-600 mr-2 icons" />
-//       <h2 className="text-lg font-bold mb-4">Danh sách bạn bè</h2>
-//     </div>
-//     <div className="content-body">
-//       <ul className="space-y-2">
-//         <li className="p-2 border-b">Anh Trai</li>
-//         <li className="p-2 border-b">Anh Hai</li>
-//         <li className="p-2 border-b">Ba</li>
-//         <li className="p-2 border-b">Em gái</li>
-//         <li className="p-2">Mẹ</li>
-//       </ul>
-//     </div>
-//   </div>
-// );
-
-// const GroupList = () => (
-//   <div>
-//     <h2 className="text-lg font-bold mb-4">Danh sách nhóm</h2>
-//     <ul className="space-y-2">
-//       <li className="p-2 border-b">Nhóm Gia Đình</li>
-//       <li className="p-2 border-b">Nhóm Bạn Cấp 3</li>
-//       <li className="p-2">Nhóm Công Ty</li>
-//     </ul>
-//   </div>
-// );
-
-// const RequestList = () => (
-//   <div>
-//     <h2 className="text-lg font-bold mb-4">Lời mời kết bạn</h2>
-//     <ul className="space-y-2">
-//       <li className="p-2 border-b">Nguyễn Văn A</li>
-//       <li className="p-2 border-b">Trần Thị B</li>
-//       <li className="p-2">Lê Văn C</li>
-//     </ul>
-//   </div>
-// );
 
 export default PhoneBookWindow;
