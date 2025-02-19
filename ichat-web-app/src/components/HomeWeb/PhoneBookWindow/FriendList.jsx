@@ -9,6 +9,9 @@ const friendsData = [
   { name: "Ba", color: "blue" },
   { name: "Em gái", color: "blue" },
   { name: "Mẹ", color: "blue" },
+  { name: "Thành Cương", color: "blue" },
+  { name: "Xuân Mai", color: "blue" },
+  { name: "Your Love", color: "blue" },
 ];
 
 const FriendList = () => {
@@ -44,6 +47,10 @@ const FriendList = () => {
 
       {/* Content */}
       <div className="content-body">
+        {/* Số lượng bạn bè */}
+        <div className="friend-count">
+          Bạn bè (<span className="count">{filteredFriends.length}</span>)
+        </div>
         <div className="friend-list">
           {/* Thanh tìm kiếm */}
           <div className="search-bar">
