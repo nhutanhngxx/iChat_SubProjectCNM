@@ -4,14 +4,46 @@ import { FaEllipsisV } from "react-icons/fa";
 import "./FriendList.css"; // Import file CSS
 
 const friendsData = [
-  { name: "Anh Trai", color: "red" },
-  { name: "Anh Hai", color: "blue" },
-  { name: "Ba", color: "blue" },
-  { name: "Em gái", color: "blue" },
-  { name: "Mẹ", color: "blue" },
-  { name: "Thành Cương", color: "blue" },
-  { name: "Xuân Mai", color: "blue" },
-  { name: "Your Love", color: "blue" },
+  {
+    name: "Anh Trai",
+    color: "red",
+    url: "https://i.ibb.co/4ngTYr7C/z5031681384600-ab5b44caa4076421b825ae215dd76958.jpg",
+  },
+  {
+    name: "Anh Hai",
+    color: "blue",
+    url: "https://i.ibb.co/wNmwL0bW/z5031681385418-29df7773d689107692c787f227cc84c4.jpg",
+  },
+  {
+    name: "Ba",
+    color: "blue",
+    url: "https://i.ibb.co/23n6GN8X/z5031681390608-cff50a647f157e4733d7f6463432e36d.jpg",
+  },
+  {
+    name: "Em gái",
+    color: "blue",
+    url: "https://i.ibb.co/4ngTYr7C/z5031681384600-ab5b44caa4076421b825ae215dd76958.jpg",
+  },
+  {
+    name: "Mẹ",
+    color: "blue",
+    url: "https://i.ibb.co/4ngTYr7C/z5031681384600-ab5b44caa4076421b825ae215dd76958.jpg",
+  },
+  {
+    name: "Thành Cương",
+    color: "blue",
+    url: "https://i.ibb.co/4ngTYr7C/z5031681384600-ab5b44caa4076421b825ae215dd76958.jpg",
+  },
+  {
+    name: "Xuân Mai",
+    color: "blue",
+    url: "https://i.ibb.co/4ngTYr7C/z5031681384600-ab5b44caa4076421b825ae215dd76958.jpg",
+  },
+  {
+    name: "Your Love",
+    color: "blue",
+    url: "https://i.ibb.co/4ngTYr7C/z5031681384600-ab5b44caa4076421b825ae215dd76958.jpg",
+  },
 ];
 
 const FriendList = () => {
@@ -84,7 +116,12 @@ const FriendList = () => {
                   <li className="group-header">{letter}</li>
                   {groupedFriends[letter].map((friend, index) => (
                     <li key={index} className="friend-item">
-                      <span className={`avatar ${friend.color}`}></span>
+                      {/* <span className={`avatar ${friend.color}`}></span> */}
+                      <img
+                        src={friend.url}
+                        alt={friend.name}
+                        className="avatar"
+                      />
                       <span className="friend-name">{friend.name}</span>
                       <FaEllipsisV className="menu-icon" />
                     </li>

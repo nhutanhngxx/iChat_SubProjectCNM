@@ -1,0 +1,24 @@
+.group-info {
+  display: flex;
+  /* justify-self: space-between; */
+  flex-direction: column;
+  flex: 1;
+}
+.group-item-content {
+  display: flex;
+  align-items: center;
+  transition: background 0.2s ease-in-out;
+  justify-content: space-between;
+}
+.group-item {
+  display: flex;
+  justify-content: space-between;
+}
+.group-name {
+  font-size: 18px;
+}
+.group-members {
+  font-size: 14px;
+  color: #666;
+  padding: 5px 0;
+}
