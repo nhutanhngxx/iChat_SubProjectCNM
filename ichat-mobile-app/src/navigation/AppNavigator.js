@@ -10,6 +10,7 @@ import MeTab from "../screens/MeTab";
 import Chatting from "../components/messages/Chatting";
 import Option from "../components/messages/Options";
 import MediaStorage from "../components/messages/MediaStorage";
+import ViewProfile from "../components/profile/ViewProfile";
 
 const BottomTab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -21,6 +22,7 @@ const ChatStack = () => {
       <Stack.Screen name="Chatting" component={Chatting} />
       <Stack.Screen name="Option" component={Option} />
       <Stack.Screen name="MediaStorage" component={MediaStorage} />
+      <Stack.Screen name="ViewProfile" component={ViewProfile} />
     </Stack.Navigator>
   );
 };

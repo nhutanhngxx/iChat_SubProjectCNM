@@ -9,7 +9,7 @@ import {
 
 import { TabView, TabBar } from "react-native-tab-view";
 
-import HeaderMediaStorage from "../tabs/HeaderMediaStorage";
+import HeaderMediaStorage from "../header/HeaderMediaStorage";
 import FilterButton from "../common/ButtonFilter";
 import ImageTab from "../messages/media/Image";
 import FileTab from "../messages/media/File";

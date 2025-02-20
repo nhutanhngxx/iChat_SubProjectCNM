@@ -7,7 +7,7 @@ import {
 } from "react-native";
 import { TabView, SceneMap } from "react-native-tab-view";
 
-import HeaderMessages from "../components/tabs/HeaderMessagesTab";
+import HeaderMessages from "../components/header/HeaderMessagesTab";
 import UutienMessages from "../components/messages/UuTien";
 import KhacMessages from "../components/messages/Khac";
 

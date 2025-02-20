@@ -14,7 +14,7 @@ import {
 
 import { useNavigation } from "@react-navigation/native";
 
-import HeaderOption from "../tabs/HeaderOption";
+import HeaderOption from "../header/HeaderOption";
 
 const Option = ({ route }) => {
   const navigation = useNavigation();
@@ -46,7 +46,14 @@ const Option = ({ route }) => {
           <Text style={{ textAlign: "center" }}>Tìm tin nhắn</Text>
         </View>
         <View style={{ width: 100, gap: 10, alignItems: "center" }}>
-          <TouchableOpacity>
+          <TouchableOpacity
+            onPress={() =>
+              navigation.navigate("ViewProfile", {
+                name: name,
+                avatar: avatar,
+              })
+            }
+          >
             <Image
               source={require("../../assets/icons/me.png")}
               style={styles.icon}
