@@ -1,4 +1,3 @@
-"
 # 📱💻 iChat - Ứng dụng Chat Đa Nền Tảng
 
 ## 📌 Giới thiệu
@@ -69,4 +68,3 @@ expo start
 
 ## 📜 Giấy phép
 Dự án này được phát triển cho mục đích học tập và nghiên cứu trong môn học Công nghệ mới trong phát triển ứng dụng CNTT.
-" 
