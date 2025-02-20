@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import CustomButton from "../components/common/CustomButton";
 
-const LauncherScreen = ({ navigation, setUser }) => {
+const LauncherScreen = ({ navigation }) => {
   const handleLogin = () => {
     navigation.navigate("Login");
   };

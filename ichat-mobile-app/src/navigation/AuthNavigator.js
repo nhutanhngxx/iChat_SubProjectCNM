@@ -16,7 +16,7 @@ const AuthNavigator = ({ setUser }) => {
     >
       <Stack.Screen
         name="Launcher"
-        children={(props) => <LauncherScreen {...props} setUser={setUser} />}
+        children={(props) => <LauncherScreen {...props} />}
       />
       <Stack.Screen
         name="Login"

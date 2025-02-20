@@ -14,7 +14,6 @@ import CustomButton from "../components/common/CustomButton";
 const LoginScreen = ({ navigation, setUser }) => {
   const handleLogin = () => {
     setUser(true);
-    // navigation.navigate("Login");
   };
 
   return (
