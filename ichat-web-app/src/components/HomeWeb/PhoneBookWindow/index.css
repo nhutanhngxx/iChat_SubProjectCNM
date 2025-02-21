@@ -18,7 +18,7 @@
 
 /* Sidebar */
 .sidebar {
-  flex: 3.5;
+  flex: 3;
   background-image: url("https://i.ibb.co/v471Jbbx/bgApp.png");
   background-size: cover; /* Để ảnh phủ toàn bộ background */
   background-position: center; /* Căn giữa ảnh */
@@ -91,7 +91,7 @@
 }
 /* Nội dung bên phải */
 .content {
-  flex: 6.5;
+  flex: 7;
   background: white;
   box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
 }
