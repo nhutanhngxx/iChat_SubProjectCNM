@@ -1,34 +1,111 @@
 import React from "react";
-import { Text, View, Button, SafeAreaView, StyleSheet } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ImageBackground,
+  SafeAreaView,
+  Image,
+  TextInput,
+  TouchableOpacity,
+} from "react-native";
+import CustomButton from "../components/common/CustomButton";
 
 const LoginScreen = ({ navigation, setUser }) => {
   const handleLogin = () => {
-    // Giả lập đăng nhập thành công
     setUser(true);
-  }
-
-
+  };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Login Screen</Text>
-      <Button title="Login" onPress={handleLogin} />
-      <Button title="Back" onPress={() => navigation.goBack()} />
+    <SafeAreaView style={{ flex: 1 }}>
+      <ImageBackground
+        source={require("../assets/images/background.png")}
+        style={styles.background}
+      >
+        <View style={styles.container}>
+          <View style={styles.logoContainer}>
+            <Text style={styles.title}>iChat</Text>
+            <View style={styles.content}>
+              <Text style={styles.label}>Đăng nhập</Text>
+              <TextInput style={styles.input} placeholder="Số điện thoại" />
+              <TextInput style={styles.input} placeholder="Mật khẩu" />
+              <Text
+                onPress={() => alert("Quên mật khẩu?")}
+                style={styles.forgotPassword}
+              >
+                Quên mật khẩu?
+              </Text>
+            </View>
+          </View>
+          <View style={{ gap: 20 }}>
+            <CustomButton
+              title="Đăng nhập"
+              onPress={() => handleLogin()}
+              backgroundColor={"#48A2FC"}
+            />
+          </View>
+        </View>
+        <View>
+          <Text
+            style={styles.question}
+            onPress={() => alert("Những câu hỏi thường gặp")}
+          >
+            Những câu hỏi thường gặp
+          </Text>
+        </View>
+      </ImageBackground>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#fff",
+    justifyContent: "center",
+  },
+  background: {
+    flex: 1,
+    resizeMode: "cover",
+    justifyContent: "center",
+  },
+  logoContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  content: {
+    alignItems: "center",
+    justifyContent: "center",
+    height: 350,
+  },
+  label: {
+    fontWeight: "bold",
+    fontSize: 30,
+    marginBottom: 40,
+  },
+  input: {
+    width: 300,
+    height: 50,
+    borderRadius: 10,
+    paddingHorizontal: 20,
+    marginBottom: 20,
+    backgroundColor: "#D9D9D9",
+  },
+  forgotPassword: {
+    fontWeight: "bold",
+    color: "#0C098C",
+    fontSize: 16,
+    alignSelf: "flex-start",
+    marginLeft: 20,
   },
   title: {
-    fontSize: 24,
+    fontSize: 70,
+    color: "#131058",
     fontWeight: "bold",
-    marginBottom: 20,
+  },
+  question: {
+    fontWeight: "400",
+    fontSize: 16,
+    textAlign: "center",
   },
 });
 
