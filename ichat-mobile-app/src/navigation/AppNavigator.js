@@ -12,6 +12,9 @@ import Option from "../components/messages/Options";
 import MediaStorage from "../components/messages/MediaStorage";
 import ViewProfile from "../components/profile/ViewProfile";
 
+import ProfileInformation from "../components/profile/ProfileInformation";
+import ChangeInformation from "../components/profile/ChangeInformation";
+
 const BottomTab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
@@ -19,13 +22,45 @@ const ChatStack = () => {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="MessagesStack" component={MessageTab} />
-      <Stack.Screen name="Chatting" component={Chatting} />
+      <Stack.Screen
+        name="Chatting"
+        component={Chatting}
+        options={{
+          animation: "none",
+        }}
+      />
       <Stack.Screen name="Option" component={Option} />
       <Stack.Screen name="MediaStorage" component={MediaStorage} />
-      <Stack.Screen name="ViewProfile" component={ViewProfile} />
+      <Stack.Screen
+        name="ViewProfile"
+        component={ViewProfile}
+        options={{
+          animation: "none",
+        }}
+      />
     </Stack.Navigator>
   );
 };
+
+const MeStack = () => (
+  <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Screen name="MeTab" component={MeTab} />
+    <Stack.Screen
+      name="ProfileInformation"
+      component={ProfileInformation}
+      options={{
+        animation: "none",
+      }}
+    />
+    <Stack.Screen
+      name="ChangeInformation"
+      component={ChangeInformation}
+      options={{
+        animation: "none",
+      }}
+    />
+  </Stack.Navigator>
+);
 
 const AppNavigator = ({ setUser }) => {
   return (
@@ -89,7 +124,7 @@ const AppNavigator = ({ setUser }) => {
       />
       <BottomTab.Screen
         name="Me"
-        children={(props) => <MeTab {...props} setUser={setUser} />}
+        children={(props) => <MeStack {...props} setUser={setUser} />}
       />
     </BottomTab.Navigator>
   );

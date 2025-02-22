@@ -45,7 +45,8 @@ const LoginScreen = ({ navigation, setUser }) => {
             />
           </View>
         </View>
-        <View>
+
+        <View style={{ position: "absolute", bottom: 20, alignSelf: "center" }}>
           <Text
             style={styles.question}
             onPress={() => alert("Những câu hỏi thường gặp")}

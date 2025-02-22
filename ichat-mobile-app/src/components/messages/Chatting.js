@@ -10,19 +10,21 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
+  Modal,
+  Keyboard,
 } from "react-native";
 
 import { useNavigation } from "@react-navigation/native";
 
 const Chatting = ({ route }) => {
   const navigation = useNavigation();
+  const [inputMessage, setInputMessage] = useState("");
   const { chat } = route.params || {};
   const [messages, setMessages] = useState([
     { id: "1", text: "Hello!", sender: "them" },
     { id: "2", text: "Hi, how are you?", sender: "me" },
     { id: "3", text: "I am good, thank you!", sender: "them" },
   ]);
-  const [inputMessage, setInputMessage] = useState("");
 
   useEffect(() => {
     navigation.getParent()?.setOptions({ tabBarStyle: { display: "none" } });
@@ -121,12 +123,10 @@ const Chatting = ({ route }) => {
               contentContainerStyle={styles.messagesContainer}
             />
             <View style={styles.inputContainer}>
-              <TouchableOpacity>
-                <Image
-                  source={require("../../assets/icons/emoji.png")}
-                  style={{ width: 30, height: 30 }}
-                />
-              </TouchableOpacity>
+              <Image
+                source={require("../../assets/icons/gif.png")}
+                style={{ width: 30, height: 30 }}
+              />
               <TextInput
                 style={styles.input}
                 value={inputMessage}

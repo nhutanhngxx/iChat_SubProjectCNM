@@ -16,15 +16,21 @@ const AuthNavigator = ({ setUser }) => {
     >
       <Stack.Screen
         name="Launcher"
-        children={(props) => <LauncherScreen {...props} />}
+        children={(props) => <LauncherScreen {...props} setUser={setUser} />}
       />
       <Stack.Screen
         name="Login"
         children={(props) => <LoginScreen {...props} setUser={setUser} />}
+        options={{
+          animation: "none",
+        }}
       />
       <Stack.Screen
         name="Register"
         children={(props) => <RegisterScreen {...props} setUser={setUser} />}
+        options={{
+          animation: "none",
+        }}
       />
       <Stack.Screen
         name="EnterOTP"
