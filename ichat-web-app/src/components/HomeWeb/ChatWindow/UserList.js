@@ -1,9 +1,13 @@
 import React, { useState } from "react";
-import { Layout, List, Avatar, Badge, Row, Col, Input } from "antd";
+import { Layout, List, Avatar, Badge, Row, Col, Input, Menu, Dropdown} from "antd";
 import {
   VideoCameraOutlined,
   PhoneOutlined,
   NotificationOutlined,
+  SearchOutlined,
+  UserOutlined,
+  UsergroupAddOutlined,
+  MoreOutlined,
 } from "@ant-design/icons";
 import "./UserList.css";
 
@@ -16,19 +20,40 @@ const UserList = ({ chatList, onSelectChat }) => {
     chat.name.toLowerCase().includes(searchText.toLowerCase())
   );
 
-  return (
-    <Layout.Sider width={320} className="chat-sidebar">
-      <Header className="sidebar-header">
-        <h1>Chats</h1>
-      </Header>
+  const menu = (
+    <Menu
+      items={[
+        { key: "1", label: "Xóa cuộc trò chuyện" },
+        { key: "2", label: "Đánh dấu là chưa đọc" },
+      ]}
+    />
+  );
 
+  return (
+    <Layout className="chat-sidebar">
       <Content className="chat-list">
-        <Input.Search
-          placeholder="Search messages"
-          className="search-bar"
-          value={searchText}
-          onChange={(e) => setSearchText(e.target.value)}
-        />
+        <div className="search-container">
+          <Input
+            prefix={<SearchOutlined className="search-icon" />}
+            placeholder="Tìm kiếm"
+            className="search-bar"
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+          />
+          <div className="icons">
+            <UserOutlined className="user-icon" />
+            <UsergroupAddOutlined className="group-icon" />
+          </div>
+        </div>
+        {/* Header Tabs */}
+        <div className="chat-header-user-list">
+          <span className="active">Tất cả</span>
+          <span>Chưa đọc</span>
+          <span>Phân loại ⌄</span>
+          <Dropdown overlay={menu} trigger={["click"]}>
+            <MoreOutlined className="more-icon" />
+          </Dropdown>
+        </div>
 
         <List
           itemLayout="horizontal"
@@ -37,10 +62,9 @@ const UserList = ({ chatList, onSelectChat }) => {
             <List.Item className="chat-item" onClick={() => onSelectChat(item)}>
               <div className="avatar-container">
                 <Avatar
-                  size={45}
+                  size={48}
                   src={`https://i.pravatar.cc/150?img=${item.id}`}
                 />
-                {item.online && <div className="online-status"></div>}
               </div>
               <div className="chat-info">
                 <Row justify="space-between">
@@ -51,25 +75,23 @@ const UserList = ({ chatList, onSelectChat }) => {
                     <span className="chat-time">{item.time}</span>
                   </Col>
                 </Row>
-                <Row>
-                  <Col span={24}>
+                <Row justify="space-between">
+                  <Col >
                     <span className={`last-message ${item.type}`}>
                       {item.type === "video" && <VideoCameraOutlined />}
                       {item.type === "audio" && <PhoneOutlined />}
-                      {item.type === "notification" && (
-                        <NotificationOutlined />
-                      )}
+                      {item.type === "notification" && <NotificationOutlined />}
                       {item.lastMessage}
-                      <Badge count={item.unread} offset={[0, 0]}></Badge>
                     </span>
                   </Col>
+                  <Col><Badge count={item.unread} offset={[0, 0]}></Badge></Col>
                 </Row>
               </div>
             </List.Item>
           )}
         />
       </Content>
-    </Layout.Sider>
+    </Layout>
   );
 };
 

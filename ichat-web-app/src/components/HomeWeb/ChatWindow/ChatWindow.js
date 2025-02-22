@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Layout, Input, Button } from "antd";
 import { SendOutlined } from "@ant-design/icons";
 import UserList from "./UserList";
+import HelloWindow from "./HelloWindow";
 import MessageArea from "./MessageArea";
 import MessageList from "./MessageList";
 import FileManager from "./FileManager";
@@ -99,10 +100,11 @@ const ChatWindow = () => {
   return (
     <Layout className="chat-window">
       <UserList chatList={chatList} onSelectChat={handleSelectChat} />
-      <MessageArea selectedChat = {selectedChat}/>
-      <Sider width={300} className="file-manager">
+      <HelloWindow />
+      {/* <MessageArea selectedChat = {selectedChat}/>
+      <Sider width={340} className="file-manager">
         <FileManager files={files} />
-      </Sider>
+      </Sider> */}
     </Layout>
   );
 };

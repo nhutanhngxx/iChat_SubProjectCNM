@@ -94,3 +94,6 @@ const MessageArea = () => {
 };
 
 export default MessageArea;
+
+
+// {item.online && <div className="online-status"></div>}
