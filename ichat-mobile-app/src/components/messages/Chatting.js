@@ -53,116 +53,111 @@ const Chatting = ({ route }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      {chat ? (
-        <>
-          <View style={styles.chatHeader}>
-            <View style={{ flexDirection: "row", alignItems: "center" }}>
-              <TouchableOpacity onPress={() => navigation.goBack()}>
-                <Image
-                  source={require("../../assets/icons/go-back.png")}
-                  style={{ width: 25, height: 25 }}
-                />
-              </TouchableOpacity>
-              <Text style={styles.name}>{chat.name}</Text>
-            </View>
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 15,
-                paddingRight: 10,
-              }}
-            >
-              <TouchableOpacity>
-                <Image
-                  source={require("../../assets/icons/phone-call.png")}
-                  style={styles.iconsInHeader}
-                />
-              </TouchableOpacity>
-              <TouchableOpacity>
-                <Image
-                  source={require("../../assets/icons/video.png")}
-                  style={{ width: 25, height: 25 }}
-                />
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() =>
-                  navigation.navigate("Option", {
-                    name: chat.name,
-                    avatar: chat.avatar,
-                  })
-                }
-              >
-                <Image
-                  source={require("../../assets/icons/option.png")}
-                  style={styles.iconsInHeader}
-                />
-              </TouchableOpacity>
-            </View>
-          </View>
-          <KeyboardAvoidingView
-            style={{ flex: 1 }}
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
-            keyboardVerticalOffset={Platform.OS === "ios" ? 50 : 0}
-          >
-            <FlatList
-              data={messages}
-              keyExtractor={(item) => item.id}
-              renderItem={({ item }) => (
-                <View
-                  style={[
-                    styles.message,
-                    item.sender === "me"
-                      ? styles.myMessage
-                      : styles.theirMessage,
-                  ]}
-                >
-                  <Text style={styles.messageText}>{item.text}</Text>
-                </View>
-              )}
-              contentContainerStyle={styles.messagesContainer}
+      {/* Header của Chatting */}
+      <View style={styles.chatHeader}>
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Image
+              source={require("../../assets/icons/go-back.png")}
+              style={{ width: 25, height: 25 }}
             />
-            <View style={styles.inputContainer}>
-              <Image
-                source={require("../../assets/icons/gif.png")}
-                style={{ width: 30, height: 30 }}
-              />
-              <TextInput
-                style={styles.input}
-                value={inputMessage}
-                onChangeText={setInputMessage}
-                placeholder="Tin nhắn"
-              />
-              {!inputMessage.trim() ? (
-                <TouchableOpacity>
-                  <Image
-                    source={require("../../assets/icons/microphone.png")}
-                    style={{ width: 25, height: 25 }}
-                  />
-                </TouchableOpacity>
-              ) : null}
-              {!inputMessage.trim() ? (
-                <TouchableOpacity>
-                  <Image
-                    source={require("../../assets/icons/image.png")}
-                    style={{ width: 25, height: 25 }}
-                  />
-                </TouchableOpacity>
-              ) : null}
-              {inputMessage.trim() ? (
-                <TouchableOpacity onPress={sendMessage}>
-                  <Image
-                    source={require("../../assets/icons/send.png")}
-                    style={{ width: 25, height: 25 }}
-                  />
-                </TouchableOpacity>
-              ) : null}
+          </TouchableOpacity>
+          <Text style={styles.name}>{chat.name}</Text>
+        </View>
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 15,
+            paddingRight: 10,
+          }}
+        >
+          <TouchableOpacity>
+            <Image
+              source={require("../../assets/icons/phone-call.png")}
+              style={styles.iconsInHeader}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity>
+            <Image
+              source={require("../../assets/icons/video.png")}
+              style={{ width: 25, height: 25 }}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() =>
+              navigation.navigate("Option", {
+                name: chat.name,
+                avatar: chat.avatar,
+              })
+            }
+          >
+            <Image
+              source={require("../../assets/icons/option.png")}
+              style={styles.iconsInHeader}
+            />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Load tin nhắn */}
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 50 : 0}
+      >
+        <FlatList
+          data={messages}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <View
+              style={[
+                styles.message,
+                item.sender === "me" ? styles.myMessage : styles.theirMessage,
+              ]}
+            >
+              <Text style={styles.messageText}>{item.text}</Text>
             </View>
-          </KeyboardAvoidingView>
-        </>
-      ) : (
-        <Text>Không có dữ liệu chat</Text>
-      )}
+          )}
+          contentContainerStyle={styles.messagesContainer}
+        />
+        <View style={styles.inputContainer}>
+          <Image
+            source={require("../../assets/icons/gif.png")}
+            style={{ width: 30, height: 30 }}
+          />
+          <TextInput
+            style={styles.input}
+            value={inputMessage}
+            onChangeText={setInputMessage}
+            placeholder="Tin nhắn"
+          />
+          {!inputMessage.trim() ? (
+            <TouchableOpacity>
+              <Image
+                source={require("../../assets/icons/microphone.png")}
+                style={{ width: 25, height: 25 }}
+              />
+            </TouchableOpacity>
+          ) : null}
+          {!inputMessage.trim() ? (
+            <TouchableOpacity>
+              <Image
+                source={require("../../assets/icons/image.png")}
+                style={{ width: 25, height: 25 }}
+              />
+            </TouchableOpacity>
+          ) : null}
+          {inputMessage.trim() ? (
+            <TouchableOpacity onPress={sendMessage}>
+              <Image
+                source={require("../../assets/icons/send.png")}
+                style={{ width: 25, height: 25 }}
+              />
+            </TouchableOpacity>
+          ) : null}
+        </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
@@ -171,7 +166,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "rgba(217, 217, 217, 0.5)",
-    padding: 20,
   },
   chatHeader: {
     flexDirection: "row",

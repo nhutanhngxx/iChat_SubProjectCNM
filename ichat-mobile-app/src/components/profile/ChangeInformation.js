@@ -6,10 +6,12 @@ import {
   Image,
   TouchableOpacity,
   StyleSheet,
+  Platform,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import RadioGroup from "react-native-radio-buttons-group";
 import DateTimePicker from "@react-native-community/datetimepicker";
+
 import { Modal } from "react-native";
 
 import avatar from "../../assets/images/avatars/avatar1.png";
@@ -114,14 +116,14 @@ const ChangeInformation = () => {
               )}
             </TouchableOpacity>
 
-            {showPicker && (
+            {/* {showPicker && (
               <Modal transparent={true} animationType="none">
                 <View style={styles.modalContainer}>
                   <View style={styles.pickerContainer}>
                     <DateTimePicker
                       value={dob}
                       mode="date"
-                      display="inline"
+                      display="default" // có thể sửa thành inline (chỉ IOS) để trông đẹp mắt hơn
                       onChange={(event, selectedDate) => {
                         if (selectedDate) {
                           setDob(selectedDate);
@@ -131,6 +133,36 @@ const ChangeInformation = () => {
                     <TouchableOpacity onPress={() => setShowPicker(false)}>
                       <Text style={styles.doneText}>Xong</Text>
                     </TouchableOpacity>
+                  </View>
+                </View>
+              </Modal>
+            )} */}
+            {showPicker && (
+              <Modal transparent={true} animationType="fade">
+                <View style={styles.modalContainer}>
+                  <View style={styles.pickerContainer}>
+                    <DateTimePicker
+                      value={dob}
+                      mode="date"
+                      display="spinner" // Hiển thị giao diện có nút OK trên iOS
+                      onChange={(event, selectedDate) => {
+                        if (Platform.OS === "android") {
+                          setShowPicker(false); // Android đóng ngay sau khi chọn
+                        }
+                        if (selectedDate) {
+                          setDob(selectedDate);
+                        }
+                      }}
+                    />
+                    {/* Chỉ hiển thị nút "OK" trên iOS */}
+                    {Platform.OS === "ios" && (
+                      <TouchableOpacity
+                        onPress={() => setShowPicker(false)}
+                        style={styles.okButton}
+                      >
+                        <Text style={styles.doneText}>OK</Text>
+                      </TouchableOpacity>
+                    )}
                   </View>
                 </View>
               </Modal>
@@ -213,6 +245,31 @@ const styles = StyleSheet.create({
     color: "#3083F9",
     fontSize: 18,
     marginVertical: 20,
+    fontWeight: "bold",
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.5)",
+  },
+  pickerContainer: {
+    backgroundColor: "#fff",
+    padding: 20,
+    borderRadius: 10,
+    width: "80%",
+    alignItems: "center",
+  },
+  okButton: {
+    marginTop: 10,
+    backgroundColor: "#3083F9",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+  },
+  doneText: {
+    color: "#fff",
+    fontSize: 18,
     fontWeight: "bold",
   },
 });

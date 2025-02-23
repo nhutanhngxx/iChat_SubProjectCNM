@@ -100,14 +100,18 @@ const MeTab = ({ navigation }) => {
           style={{
             flexDirection: "row",
             justifyContent: "space-between",
+            alignItems: "center",
             marginHorizontal: 30,
-            paddingHorizontal: 20,
-            paddingVertical: 10,
+            paddingHorizontal: 15,
+            paddingVertical: 5,
             borderRadius: 10,
             backgroundColor: "rgba(217, 217, 217, 0.5)",
           }}
         >
-          <TextInput placeholder="Suy nghĩ của bạn là gì?" />
+          <TextInput
+            style={{ fontSize: 16 }}
+            placeholder="Suy nghĩ của bạn là gì?"
+          />
           <TouchableOpacity>
             <Image
               source={require("../assets/icons/image.png")}

@@ -184,13 +184,13 @@ const TimelineTab = () => {
           />
           <Text>Album</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.postOption}>
+        {/* <TouchableOpacity style={styles.postOption}>
           <Image
             source={require("../assets/icons/memories.png")}
             style={styles.optionIcon}
           />
           <Text>Kỉ niệm</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
     </View>
   );
@@ -235,18 +235,18 @@ const styles = StyleSheet.create({
   },
   postOptions: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "space-around",
+    gap: 10,
     marginTop: 10,
   },
   postOption: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 5,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
     backgroundColor: "rgba(217, 217, 217, 0.5)",
     borderRadius: 10,
-    flex: 1,
     justifyContent: "center",
-    marginHorizontal: 5,
   },
   optionIcon: {
     width: 30,

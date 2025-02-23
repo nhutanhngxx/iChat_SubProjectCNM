@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
 } from "react-native";
 
 import { useNavigation } from "@react-navigation/native";
@@ -21,7 +22,7 @@ const Option = ({ route }) => {
   const { name, avatar } = route.params || {};
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <HeaderOption />
       <View style={styles.profileContainer}>
         <Image source={avatar} style={styles.avatar} />
@@ -63,11 +64,10 @@ const Option = ({ route }) => {
         </View>
       </View>
 
-      <View
-        style={{
-          paddingLeft: 20,
-          gap: 15,
-        }}
+      <ScrollView
+        style={{ flex: 1, paddingLeft: 20 }}
+        contentContainerStyle={{ gap: 15, paddingBottom: 20 }}
+        showsVerticalScrollIndicator={false} // Ẩn thanh cuộn
       >
         <View
           style={{
@@ -95,7 +95,6 @@ const Option = ({ route }) => {
             />
           </TouchableOpacity>
         </View>
-
         <View style={{ gap: 15 }}>
           <View
             style={{
@@ -129,7 +128,6 @@ const Option = ({ route }) => {
             <Text style={styles.title}>Xem các nhóm chung (5)</Text>
           </TouchableOpacity>
         </View>
-
         <View style={{ gap: 15 }}>
           <View
             style={{
@@ -163,8 +161,8 @@ const Option = ({ route }) => {
             <Text style={styles.title}>Xóa lịch sử trò chuyện</Text>
           </TouchableOpacity>
         </View>
-      </View>
-    </SafeAreaView>
+      </ScrollView>
+    </View>
   );
 };
 

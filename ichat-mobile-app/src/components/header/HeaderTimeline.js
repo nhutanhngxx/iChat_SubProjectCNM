@@ -5,20 +5,20 @@ const HeaderTimeline = () => {
   return (
     <View
       style={{
-        height: 40,
+        height: 50,
         justifyContent: "space-between",
         flexDirection: "row",
         alignItems: "center",
         paddingHorizontal: 10,
       }}
     >
-      <View style={{ flexDirection: "row", gap: 10 }}>
+      <View style={{ flexDirection: "row", gap: 10, alignItems: "center" }}>
         <Image
           source={require("../../assets/icons/search.png")}
-          style={{ width: 22, height: 22 }}
+          style={{ width: 20, height: 20 }}
         />
         <TextInput
-          style={{ fontSize: 18, width: "100", color: "#2F80ED" }}
+          style={{ fontSize: 16, width: "100", color: "#2F80ED" }}
           placeholder="Tìm kiếm"
         ></TextInput>
       </View>
