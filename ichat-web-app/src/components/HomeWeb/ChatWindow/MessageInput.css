@@ -1,25 +1,63 @@
-.message-input {
-    display: flex;
-    align-items: center;
-    padding: 10px;
-    background-color: #f5f5f5;
-    border-top: 1px solid #ddd;
-  }
-  
-  .message-input .ant-input {
-    flex: 1;
-    border-radius: 20px;
-    padding: 10px;
-    font-size: 16px;
-  }
-  
-  .message-input .ant-btn {
-    margin-left: 10px;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-  
+.message-input-container {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid #ddd;
+  padding: 8px 12px;
+  background-color: white;
+}
+
+/* Thanh công cụ trên */
+.message-toolbar {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 6px;
+  height: 40px;
+  margin-inline: 20px;
+}
+
+.toolbar-icon {
+  font-size: 20px;
+  color: #2d3e50; /* Màu tối hơn */
+  cursor: pointer;
+  transition: color 0.2s ease-in-out;
+}
+
+.toolbar-icon:hover {
+  color: #0078ff; /* Màu khi hover */
+}
+
+/* Hộp nhập tin nhắn */
+.message-input-box {
+  display: flex;
+  align-items: center;
+  flex-grow: 1;
+  background-color: #fff;
+}
+
+.message-input-box input {
+  flex-grow: 1;
+  border: none;
+
+  background: transparent;
+  font-size: 15px;
+  color: #2d3e50;
+  outline: none;
+}
+
+/* Nút emoji và like */
+.message-actions {
+  display: flex;
+  gap: 12px;
+  margin-left: auto;
+}
+
+.action-icon {
+  font-size: 20px;
+  color: #2d3e50;
+  cursor: pointer;
+  transition: transform 0.2s ease-in-out;
+}
+
+.action-icon:hover {
+  transform: scale(1.1);
+}

@@ -2,15 +2,16 @@ import React, { useState } from "react";
 import { Layout, Input, Button } from "antd";
 import { SendOutlined } from "@ant-design/icons";
 import UserList from "./UserList";
+import HelloWindow from "./HelloWindow";
 import MessageArea from "./MessageArea";
 import MessageList from "./MessageList";
-import FileManager from "./FileManager";
+import ConversationDetails from "./ConversationDetails";
 import "./ChatWindow.css";
 
 const { Sider, Content } = Layout;
 
 // Mock data
-const chatList = [
+const userList = [
   {
     id: 1,
     name: "George Alan",
@@ -58,19 +59,18 @@ const chatList = [
   },
 ];
 
-
-
 const ChatWindow = () => {
+  const [selectedUser, setSelectedUser] = useState(null);
+
+  
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState("");
   const [files, setFiles] = useState([]);
 
-  const [selectedChat, setSelectedChat] = useState(null);
-  
-    const handleSelectChat = (chat) => {
-      setSelectedChat(chat);
-    };
 
+  const handleSelectUser= (user) => {
+    setSelectedUser(user);
+  };
 
   const handleSendMessage = () => {
     if (inputMessage.trim()) {
@@ -98,11 +98,14 @@ const ChatWindow = () => {
 
   return (
     <Layout className="chat-window">
-      <UserList chatList={chatList} onSelectChat={handleSelectChat} />
-      <MessageArea selectedChat = {selectedChat}/>
-      <Sider width={300} className="file-manager">
-        <FileManager files={files} />
-      </Sider>
+      <UserList userList={userList} onSelectUser={handleSelectUser} />
+
+      {/* Phần điều kiện hiển thị */}
+      {selectedUser ? (
+        <MessageArea selectedChat={selectedUser} />
+      ) : (
+        <HelloWindow />
+      )}
     </Layout>
   );
 };
