@@ -8,6 +8,7 @@ import {
   StyleSheet,
 } from "react-native";
 import { Dimensions } from "react-native";
+import { useNavigation } from "@react-navigation/native";
 
 const friendList = [
   {
@@ -37,13 +38,21 @@ const addRequest = 20;
 
 const FriendTab = () => {
   const { width } = Dimensions.get("window");
+  const navigation = useNavigation();
+
+  //   const handleOpenChatting = (chat) => {
+  //     navigation.navigate("Contact", { chat });
+  //   };
 
   const renderItem = ({ item }) => (
     <View style={styles.itemContainer}>
-      <View style={styles.item_leftSide}>
+      <TouchableOpacity
+        style={styles.item_leftSide}
+        // onPress={() => handleOpenChatting(item)}
+      >
         <Image source={item.avatar} style={{ width: 50, height: 50 }} />
         <Text style={{ fontWeight: "500", fontSize: 16 }}>{item.name}</Text>
-      </View>
+      </TouchableOpacity>
       <View style={{ display: "flex", flexDirection: "row", gap: 20 }}>
         <Image
           source={require("../../assets/icons/phone-call.png")}
