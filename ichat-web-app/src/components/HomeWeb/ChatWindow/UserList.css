@@ -7,7 +7,6 @@
   background: url("https://i.ibb.co/v471Jbbx/bgApp.png") no-repeat center/cover;
   border-right: 1px solid #c6ddf5;
   height: 100vh;
-  width: 364px;
 }
 
 .search-container {
@@ -88,7 +87,6 @@
   display: flex;
   align-items: center;
   background-color: #fff;
-  max-width: 364px;
 }
 
 .chat-item:hover {

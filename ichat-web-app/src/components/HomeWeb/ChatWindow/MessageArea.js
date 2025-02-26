@@ -1,23 +1,23 @@
 import React, { useState, useEffect } from "react";
-import { Layout, Avatar, Input, Button } from "antd";
+import { Layout, Avatar, Input, Button, Badge } from "antd";
 import {
   VideoCameraOutlined,
-  PhoneOutlined,
-  NotificationOutlined,
-  SendOutlined,
+  UsergroupAddOutlined,
+  SearchOutlined,
+  ProfileOutlined,
+  InboxOutlined,
+  EditOutlined,
 } from "@ant-design/icons";
 import Message from "./Message";
 import MessageInput from "./MessageInput";
 import "./MessageArea.css";
+import ConversationDetails from "./ConversationDetails";
 
 const { Header, Content } = Layout;
 
-const MessageArea = () => {
-  const [messages, setMessages] = useState([]);
-  const [inputMessage, setInputMessage] = useState("");
-
-  // Mock data for messages
-  const mockMessages = [
+// Mock messages for different users
+const mockMessagesByUser = {
+  1: [
     {
       id: 1,
       text: "Hi, is the watch still up for sale?",
@@ -32,15 +32,34 @@ const MessageArea = () => {
       timestamp: "2:31 PM",
       type: "sent",
     },
-  ];
+  ],
+  2: [
+    {
+      id: 3,
+      text: "Your ride is arriving",
+      sender: "Uber Cars",
+      timestamp: "1:45 PM",
+      type: "received",
+    },
+  ],
+  // Add messages for other users...
+};
+
+const MessageArea = ({ selectedChat }) => {
+  const [messages, setMessages] = useState([]);
+  const [inputMessage, setInputMessage] = useState("");
+  const [showConversation, setShowConversation] = useState(false);
 
   useEffect(() => {
-    // Fetch messages from API or Socket.io
-    setMessages(mockMessages);
-  }, []);
+    if (selectedChat) {
+      // Fetch messages based on selected chat
+      const userMessages = mockMessagesByUser[selectedChat.id] || [];
+      setMessages(userMessages);
+    }
+  }, [selectedChat]);
 
   const handleSendMessage = () => {
-    if (inputMessage.trim()) {
+    if (inputMessage.trim() && selectedChat) {
       const newMessage = {
         id: messages.length + 1,
         text: inputMessage,
@@ -53,47 +72,58 @@ const MessageArea = () => {
     }
   };
 
-  return (
-    <Layout className="chat-window">
-      <Header className="chat-header">
-        <div className="user-profile">
-          <div className="avatar-container">
-            <Avatar
-              size={40}
-              src="https://i.pravatar.cc/300?img=5"
-              className="profile-avatar"
-            />
-            <div className="online-dot"></div>
-          </div>
-          <div className="user-info">
-            <h4 className="user-name">George Alan</h4>
-            <span className="online-status">Online</span>
-          </div>
-        </div>
-        <div className="action-icons">
-          <VideoCameraOutlined />
-          <PhoneOutlined />
-          <NotificationOutlined />
-        </div>
-      </Header>
+  if (!selectedChat) return null;
 
-      <Content className="message-area">
-        <div className="message-container">
-          {messages.map((message) => (
-            <Message key={message.id} message={message} />
-          ))}
-        </div>
+  return (
+    <div className="message-wrapper">
+      <Layout className="message-area-container">
+        <Header className="chat-header-message">
+          <div className="user-profile-message">
+            <div className="avatar-message">
+              <Avatar
+                size={48}
+                src={`https://i.pravatar.cc/300?img=${selectedChat.id}`}
+                className="profile-avatar-message"
+              />
+            </div>
+            <div className="user-info-message">
+              <h3 className="user-name-message">
+                {selectedChat.name} <EditOutlined />
+              </h3>
+              <InboxOutlined />
+            </div>
+          </div>
+          <div className="action-buttons-message-area">
+            <UsergroupAddOutlined className="header-icon-message-area" />
+            <VideoCameraOutlined className="header-icon-message" />
+            <SearchOutlined className="header-icon" />
+            <ProfileOutlined
+              className="header-icon"
+              onClick={() => setShowConversation(!showConversation)}
+            ></ProfileOutlined>
+          </div>
+        </Header>
+
+        <Content className="message-area-content">
+          <div className="message-container">
+            {messages.map((message) => (
+              <Message key={message.id} message={message} selectedChat={selectedChat} />
+            ))}
+          </div>
+        </Content>
         <MessageInput
           inputMessage={inputMessage}
           setInputMessage={setInputMessage}
           handleSendMessage={handleSendMessage}
         />
-      </Content>
-    </Layout>
+      </Layout>
+      {showConversation && (
+      <Layout className="conversation-details">
+        <ConversationDetails isVisible={showConversation} selectedChat={selectedChat} />
+      </Layout>
+    )}
+    </div>
   );
 };
 
 export default MessageArea;
-
-
-// {item.online && <div className="online-status"></div>}

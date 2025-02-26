@@ -17,7 +17,7 @@ const Sidebar = ({ onIconClick }) => {
   return (
     <Sider width={60} className="custom-sidebar">
       {/* Avatar */}
-      <div className="avatar-container">
+      <div className="avatar-container-sidebar">
         <UserOutlined className="avatar-icon" />
       </div>
 

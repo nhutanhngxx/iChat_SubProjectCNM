@@ -13,10 +13,10 @@ import "./UserList.css";
 
 const { Header, Content } = Layout;
 
-const UserList = ({ chatList, onSelectChat }) => {
+const UserList = ({ userList, onSelectUser }) => {
   const [searchText, setSearchText] = useState("");
 
-  const filteredChatList = chatList.filter((chat) =>
+  const filteredChatList = userList.filter((chat) =>
     chat.name.toLowerCase().includes(searchText.toLowerCase())
   );
 
@@ -59,7 +59,7 @@ const UserList = ({ chatList, onSelectChat }) => {
           itemLayout="horizontal"
           dataSource={filteredChatList}
           renderItem={(item) => (
-            <List.Item className="chat-item" onClick={() => onSelectChat(item)}>
+            <List.Item className="chat-item" onClick={() => onSelectUser(item)}>
               <div className="avatar-container">
                 <Avatar
                   size={48}
