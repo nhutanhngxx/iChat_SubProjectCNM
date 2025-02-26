@@ -1,5 +1,9 @@
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import {
+  createStackNavigator,
+  TransitionPresets,
+} from "@react-navigation/stack";
 
 import React from "react";
 import { View, Image } from "react-native";
@@ -10,6 +14,7 @@ import MeTab from "../screens/MeTab";
 import Chatting from "../components/messages/Chatting";
 import Option from "../components/messages/Options";
 import MediaStorage from "../components/messages/MediaStorage";
+import SearchScreen from "../components/search/SearchScreen";
 import ViewProfile from "../components/profile/ViewProfile";
 
 import ProfileInformation from "../components/profile/ProfileInformation";
@@ -37,6 +42,11 @@ const ChatStack = () => {
         options={{
           animation: "none",
         }}
+      />
+      <Stack.Screen
+        name="SearchScreen"
+        component={SearchScreen}
+        options={{ animation: "fade", gestureEnabled: false }}
       />
     </Stack.Navigator>
   );

@@ -19,7 +19,6 @@ const ContactTab = () => {
           backgroundColor: "skyblue",
           width: "25%",
           marginHorizontal: "12.5%",
-          marginBottom: 5,
         }}
         variant="default"
         dense
