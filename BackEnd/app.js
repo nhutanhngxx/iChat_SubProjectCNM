@@ -1,0 +1,131 @@
+const express = require('express');
+const app = express();
+const mongoose = require('mongoose');
+app.use(express.json());
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+
+const mongoUrl = "mongodb+srv://nguyenchung:admin@cluster0.8z0ko.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+const JWT_SECRET="hvdvay6ert72839289()aiyg8t87qt72393293883uhefiuh78ttq3ifi78272jdsds039[]]pou89ywe";
+mongoose
+    .connect(mongoUrl)
+    .then(()=>{
+    console.log("Connected to database");
+    }).catch((err)=>{
+        console.log("Error: ",err);
+    })
+    require("./UserDetails");
+const User = mongoose.model("UserInfo");
+
+
+app.get("/",(req,res)=>
+{
+    res.send({status:"Started server"});
+})  
+app.get('/users', async (req, res) => {
+    const users = await User.find();
+    res.send(users);
+});
+
+// Đăng ký tài khoản
+app.post("/register",async(req,res)=>
+{
+    // const {name,email,phone,password}= req.body;
+    const { full_name, gender, dob, phone, password, avatar, status } = req.body;
+    // const oldUser = await User.findOne({email:email});
+    // if(oldUser){
+    //     return res.send({data:"User already exists"});
+    // }
+    // const encryptedPassword = await bcrypt.hash(password,10);
+    // try {
+    //     await User.create({
+    //         name:name,
+    //         email:email,
+    //         phone,
+    //         password:encryptedPassword,
+    //     });
+    //     res.send({status:"ok",data:"User created"});
+    // } catch (error) {
+    //     res.send({status:"error",data:error});
+    // }
+    const oldUser = await User.findOne({ phone: phone });
+    if (oldUser) {
+      return res.send({ status: "error", data: "User already exists" });
+    }
+  
+    const encryptedPassword = await bcrypt.hash(password, 10);
+    try {
+      const newUser = await User.create({
+        full_name,
+        gender,
+        dob,
+        phone,
+        password: encryptedPassword,
+        avatar: avatar || "",
+        status: status || "Active",
+      });
+  
+      res.send({ status: "ok", data: "User created", user: newUser });
+    } catch (error) {
+      res.send({ status: "error", data: error.message });
+    }
+})
+
+// Đăng nhập
+app.post("/login-user",async(req,res)=>
+{
+    // const {email,password}= req.body;
+    // const oldUser = await User.findOne({email:email});
+    // if(!oldUser){
+    //     return res.send({data:"User does not exist"});
+    // }
+    // if(await bcrypt.compare(password,oldUser.password)){
+    //     // res.send({data:"Login Success"});
+    //     const token = jwt.sign({email:oldUser.email},JWT_SECRET);
+    //     if(res.status(201)){
+    //         return res.send({status:"ok",data:token});
+    //     }
+    //     else{
+    //         return res.send({status:"error",data:"Invalid password"});
+    //     }
+
+    // }
+    const { phone, password } = req.body;
+    const user = await User.findOne({ phone });
+  
+    if (!user) {
+      return res.send({ status: "error", data: "User does not exist" });
+    }
+  
+    if (await bcrypt.compare(password, user.password)) {
+      const token = jwt.sign({ phone: user.phone }, JWT_SECRET, { expiresIn: "1h" });
+      return res.send({ status: "ok", data: token });
+    } else {
+      return res.send({ status: "error", data: "Invalid password" });
+    }
+})
+app.post("/userdata", async (req, res) => {
+    const { token } = req.body;
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const user = await User.findOne({ phone: decoded.phone });
+    
+    if (!user) {
+      return res.send({ status: "error", data: "User not found" });
+    }
+
+    res.send({ status: "ok", data: user });
+  } catch (error) {
+    res.send({ status: "error", data: "Invalid token" });
+  }
+  });
+
+
+
+
+
+app.listen(5001,()=>
+{
+    console.log("Server is running on port 5001");
+    
+})
