@@ -16,7 +16,7 @@ const MessagesTab = ({ setUser }) => {
         value={index}
         onChange={setIndex}
         indicatorStyle={{
-          backgroundColor: "skyblue",
+          backgroundColor: "#6166EE",
           width: "25%",
           marginHorizontal: "12.5%",
         }}
@@ -25,11 +25,17 @@ const MessagesTab = ({ setUser }) => {
       >
         <Tab.Item
           title={"Ưu tiên"}
-          titleStyle={{ color: "black", fontWeight: "bold" }}
+          titleStyle={{
+            color: index === 0 ? "#6166EE" : "gray",
+            fontWeight: index === 0 ? "bold" : null,
+          }}
         ></Tab.Item>
         <Tab.Item
           title={"Khác"}
-          titleStyle={{ color: "black", fontWeight: "bold" }}
+          titleStyle={{
+            color: index === 1 ? "#6166EE" : "gray",
+            fontWeight: index === 1 ? "bold" : null,
+          }}
         />
       </Tab>
       <TabView value={index} onChange={setIndex} animationType="spring">

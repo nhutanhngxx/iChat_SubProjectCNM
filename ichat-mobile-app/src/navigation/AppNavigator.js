@@ -46,7 +46,7 @@ const ChatStack = () => {
       <Stack.Screen
         name="SearchScreen"
         component={SearchScreen}
-        options={{ animation: "fade", gestureEnabled: false }}
+        options={{ animation: "fade" }}
       />
     </Stack.Navigator>
   );
@@ -92,7 +92,7 @@ const AppNavigator = ({ setUser }) => {
                 style={{
                   width: 20,
                   height: 20,
-                  // tintColor: focused ? "#2F80ED" : "gray",
+                  tintColor: focused ? null : "rgba(0, 0, 0, 0.25)",
                 }}
               />
               {focused && (
