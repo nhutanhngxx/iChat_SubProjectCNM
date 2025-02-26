@@ -57,12 +57,11 @@ const UuTien = () => {
       </View>
     </TouchableOpacity>
   );
-
   return (
     <View style={styles.wrapper}>
       <FlatList
         data={chatList}
-        keyExtractor={(item) => item.id.toString()}
+        keyExtractor={(item) => item.id}
         renderItem={renderItem}
         showsVerticalScrollIndicator={true}
         keyboardShouldPersistTaps="handled"
@@ -84,6 +83,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     borderBottomWidth: 1,
     borderColor: "#ddd",
+    width: "100%",
   },
   infoContainer: {
     flexDirection: "row",
@@ -96,7 +96,7 @@ const styles = StyleSheet.create({
     borderRadius: 25,
   },
   name: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "bold",
   },
 });
