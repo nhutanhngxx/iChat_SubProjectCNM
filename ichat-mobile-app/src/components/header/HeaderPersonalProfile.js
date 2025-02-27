@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
+
 import {
   Text,
   View,
@@ -8,10 +9,20 @@ import {
   Modal,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import { UserContext } from "../../../src/context/UserContext";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const HeaderMessages = ({ setUser }) => {
+const HeaderMessages = () => {
+  const { user, setUser } = useContext(UserContext);
   const navigation = useNavigation();
   const [modalVisible, setModalVisible] = useState(false);
+
+  const handleLogout = async () => {
+    await AsyncStorage.removeItem("token");
+    await AsyncStorage.removeItem("user");
+    setUser(null);
+    navigation.navigate("Launcher");
+  };
 
   return (
     <View style={styles.headerContainer}>
@@ -47,14 +58,7 @@ const HeaderMessages = ({ setUser }) => {
             </TouchableOpacity>
 
             {/* Tùy chọn: Đăng xuất */}
-            <TouchableOpacity
-              style={styles.option}
-              onPress={() => {
-                setModalVisible(false);
-                // Thêm logic logout
-                navigation.navigate("Launcher");
-              }}
-            >
+            <TouchableOpacity style={styles.option} onPress={handleLogout}>
               <Image
                 source={require("../../assets/icons/cancel.png")}
                 style={styles.optionIcon}

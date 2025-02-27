@@ -48,7 +48,6 @@ app.post("/register", async (req, res) => {
       avatar: avatar || "",
       status: status || "Active", // Online | Offline
     });
-
     res.send({ status: "ok", data: "User created", user: newUser });
   } catch (error) {
     res.send({ status: "error", data: error.message });
@@ -57,38 +56,34 @@ app.post("/register", async (req, res) => {
 
 // Đăng nhập
 app.post("/login", async (req, res) => {
-  // const {email,password}= req.body;
-  // const oldUser = await User.findOne({email:email});
-  // if(!oldUser){
-  //     return res.send({data:"User does not exist"});
-  // }
-  // if(await bcrypt.compare(password,oldUser.password)){
-  //     // res.send({data:"Login Success"});
-  //     const token = jwt.sign({email:oldUser.email},JWT_SECRET);
-  //     if(res.status(201)){
-  //         return res.send({status:"ok",data:token});
-  //     }
-  //     else{
-  //         return res.send({status:"error",data:"Invalid password"});
-  //     }
-
-  // }
   const { phone, password } = req.body;
   const user = await User.findOne({ phone });
-
   if (!user) {
-    return res.send({ status: "error", data: "User does not exist" });
+    return res
+      .status(400)
+      .json({ status: "error", message: "User does not exist" });
   }
-
   if (await bcrypt.compare(password, user.password)) {
-    const token = jwt.sign({ phone: user.phone }, JWT_SECRET, {
+    const token = jwt.sign({ phone: user.phone, id: user._id }, JWT_SECRET, {
       expiresIn: "1h",
     });
-    return res.send({ status: "ok", token: token });
+    return res.send({
+      status: "ok",
+      token,
+      user: {
+        id: user._id,
+        full_name: user.full_name,
+        phone: user.phone,
+        avatar_path: user.avatar_path,
+      },
+    });
   } else {
-    return res.send({ status: "error", data: "Invalid password" });
+    return res
+      .status(400)
+      .json({ status: "error", message: "Invalid password" });
   }
 });
+
 app.post("/userdata", async (req, res) => {
   const { token } = req.body;
   try {
@@ -107,4 +102,50 @@ app.post("/userdata", async (req, res) => {
 
 app.listen(5001, () => {
   console.log("Server is running on port 5001");
+});
+
+// Messages
+require("./Schema/Messages");
+const Message = mongoose.model("Messages");
+
+// API gửi tin nhắn
+app.post("/send-message", async (req, res) => {
+  try {
+    const { sender_id, receiver_id, content, type, chat_type } = req.body;
+    // Kiểm tra đầu vào
+    if (!sender_id || !receiver_id || !content || !type || !chat_type) {
+      return res.send({ status: "error", data: "Missing required fields" });
+    }
+    // Tạo tin nhắn mới
+    const newMessage = await Message.create({
+      sender_id,
+      receiver_id,
+      content,
+      type,
+      chat_type,
+      status: "sent",
+    });
+
+    res.send({
+      status: "ok",
+      data: "Message sent successfully",
+      message: newMessage,
+    });
+  } catch (error) {
+    res.send({ status: "error", data: error.message });
+  }
+});
+
+// Tìm tất cả tin nhắn mà user này là sender hoặc receiver
+app.get("/messages/:userId", async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const messages = await Message.find({
+      $or: [{ sender_id: userId }, { receiver_id: userId }],
+    }).sort({ timestamp: 1 }); // Sắp xếp theo thời gian tăng dần
+
+    res.send({ status: "ok", data: messages });
+  } catch (error) {
+    res.send({ status: "error", data: error.message });
+  }
 });

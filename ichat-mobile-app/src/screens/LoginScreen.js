@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import {
   View,
   Text,
@@ -10,31 +10,32 @@ import {
 } from "react-native";
 import axios from "axios";
 import CustomButton from "../components/common/CustomButton";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { UserContext } from "../context/UserContext";
 
-const LoginScreen = ({ navigation, setUser }) => {
+const LoginScreen = ({ navigation }) => {
+  const { setUser } = useContext(UserContext);
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
 
   const handleLogin = async () => {
     try {
-      const response = await axios.get(
-        "https://67b7e3ed2bddacfb27104090.mockapi.io/ichat/user"
-      );
+      const response = await axios.post("http://192.168.1.229:5001/login", {
+        phone,
+        password,
+      });
+      const { token, user } = response.data;
 
-      const users = response.data; // Lấy danh sách user từ API
-      const user = users.find(
-        (u) => u.phone === phone && u.password === password
-      );
+      // Lưu token vào AsyncStorage để sử dụng ở các Screen kháccc
+      await AsyncStorage.setItem("token", token);
+      await AsyncStorage.setItem("user", JSON.stringify(user));
 
-      if (user) {
-        setUser(user); // Lưu thông tin user sau khi đăng nhập thành công
-        Alert.alert("Đăng nhập thành công!", `Chào mừng ${user.full_name}`);
-      } else {
-        Alert.alert("Lỗi", "Số điện thoại hoặc mật khẩu không đúng!");
-      }
+      setUser(user);
+
+      Alert.alert("Đăng nhập thành công!", `Chào mừng ${user.full_name}`);
+      // navigation.replace("AppNavigator");
     } catch (error) {
-      console.error(error);
-      Alert.alert("Lỗi", "Không thể kết nối đến máy chủ, vui lòng thử lại!");
+      Alert.alert("Lỗi", error.response?.data?.message || "Có lỗi xảy ra!");
     }
   };
 

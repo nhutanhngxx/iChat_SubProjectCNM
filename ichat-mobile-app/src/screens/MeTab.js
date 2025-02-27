@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import {
   Text,
   View,
@@ -11,8 +11,10 @@ import {
 import { useNavigation } from "@react-navigation/native";
 
 import HeaderPersonalProfile from "../components/header/HeaderPersonalProfile";
+import { UserContext } from "../context/UserContext";
 
 const MeTab = ({ navigation }) => {
+  const { user } = useContext(UserContext);
   return (
     <SafeAreaView style={styles.container}>
       <HeaderPersonalProfile />
@@ -27,7 +29,7 @@ const MeTab = ({ navigation }) => {
       <View style={{ alignItems: "center", gap: 10, top: -50 }}>
         <Image source={require("../assets/images/avatars/avatar1.png")} />
         <Text style={{ fontSize: 25, fontWeight: "bold" }}>
-          Nguyễn Nhựt Anh
+          {user.full_name}
         </Text>
         <Text style={{ color: "blue" }}>Cập nhật tiểu sử</Text>
       </View>

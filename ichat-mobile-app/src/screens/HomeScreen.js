@@ -1,14 +1,22 @@
-import React from "react";
-import { Button } from "react-native";
-import { Text, View } from "react-native";
+import React, { useContext } from "react";
+import { View, Text, Button } from "react-native";
+import { UserContext } from "../context/UserContext";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const HomeScreen = ({ navigation }) => {
-  const handleLogout = () => {};
+  const { user, setUser } = useContext(UserContext);
+
+  const handleLogout = async () => {
+    await AsyncStorage.removeItem("token");
+    await AsyncStorage.removeItem("user");
+    setUser(null); // Reset user trong Context
+    navigation.replace("Login");
+  };
 
   return (
-    <View>
-      <Text>Home Screen</Text>
-      <Button title="Logout" onPress={() => handleLogout()}></Button>
+    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+      <Text>Chào mừng {user?.full_name}</Text>
+      <Button title="Đăng xuất" onPress={handleLogout} />
     </View>
   );
 };
