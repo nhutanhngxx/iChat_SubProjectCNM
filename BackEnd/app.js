@@ -14,7 +14,7 @@ mongoose
     }).catch((err)=>{
         console.log("Error: ",err);
     })
-    require("./UserDetails");
+    require("./Schema/UserDetails");
 const User = mongoose.model("UserInfo");
 
 
@@ -30,24 +30,9 @@ app.get('/users', async (req, res) => {
 // Đăng ký tài khoản
 app.post("/register",async(req,res)=>
 {
-    // const {name,email,phone,password}= req.body;
+    
     const { full_name, gender, dob, phone, password, avatar, status } = req.body;
-    // const oldUser = await User.findOne({email:email});
-    // if(oldUser){
-    //     return res.send({data:"User already exists"});
-    // }
-    // const encryptedPassword = await bcrypt.hash(password,10);
-    // try {
-    //     await User.create({
-    //         name:name,
-    //         email:email,
-    //         phone,
-    //         password:encryptedPassword,
-    //     });
-    //     res.send({status:"ok",data:"User created"});
-    // } catch (error) {
-    //     res.send({status:"error",data:error});
-    // }
+    
     const oldUser = await User.findOne({ phone: phone });
     if (oldUser) {
       return res.send({ status: "error", data: "User already exists" });
