@@ -13,6 +13,9 @@ const userDetailSchema = new mongoose.Schema({
   updated_at: { type: Date, default: Date.now }
     
 },{
-    collection: 'UserInfo'
+    collection: 'UserInfo',
+    autoCreate: true
 });
-mongoose.model('UserInfo',userDetailSchema);
+// mongoose.model('UserInfo',userDetailSchema);
+const User = mongoose.model('UserInfo', userDetailSchema);
+module.exports = User;

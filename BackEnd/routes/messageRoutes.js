@@ -1,16 +1,27 @@
 const express = require('express');
 const router = express.Router();
-const mongoose = require('mongoose');
-const Message = mongoose.model('Messages');
+const Messages = require('../Schema/Messages');
+const MessageCard = require('../Schema/MessageCard');
 
-// Tạo tin nhắn mới
-router.post('/add', async (req, res) => {
+// Gửi tin nhắn
+router.post('/messages', async (req, res) => {
     try {
-        const newMessage = new Message(req.body);
+        const newMessage = new Messages(req.body);
         await newMessage.save();
-        res.status(201).json({ message: "Thêm tin nhắn thành công!", data: newMessage });
+
+        // Tự động tạo MessageCard với trạng thái unread
+        const messageCard = new MessageCard({
+            receiver_id: newMessage.receiver_id,
+            message_id: newMessage._id,
+            status: "unread",
+            card_color: "#FF0000", // Màu đỏ cho tin nhắn chưa đọc
+            title: "New Message"
+        });
+        await messageCard.save();
+
+        res.status(201).json({ message: "Message sent successfully", data: newMessage });
     } catch (error) {
-        res.status(500).json({ message: "Lỗi khi thêm tin nhắn", error });
+        res.status(400).json({ error: error.message });
     }
 });
 

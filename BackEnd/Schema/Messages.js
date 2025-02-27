@@ -1,3 +1,4 @@
+const mongoose= require('mongoose');
 const messageSchema = new mongoose.Schema({
     sender_id: { type: mongoose.Schema.Types.ObjectId, ref: 'UserInfo', required: true },
     receiver_id: { type: mongoose.Schema.Types.ObjectId, ref: 'UserInfo', required: true },
@@ -7,7 +8,8 @@ const messageSchema = new mongoose.Schema({
     status: { type: String, enum: ["sent", "received", "Viewed"], default: "sent" },
     chat_type: { type: String, enum: ["private", "group"], required: true }
   }, {
-    collection: 'Messages'
+    collection: 'Messages',
+    autoCreate: true
   });
-  mongoose.model('Messages', messageSchema);
-  
+ const Message = mongoose.model('Messages', messageSchema);
+  module.exports = Message;

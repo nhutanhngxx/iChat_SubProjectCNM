@@ -1,7 +1,9 @@
+const mongoose= require('mongoose');
 const chatSchema = new mongoose.Schema({
     type: { type: String, enum: ["private", "group"], required: true }
   }, {
-    collection: 'Chats'
+    collection: 'Chats',
+    autoCreate: true
   });
-  mongoose.model('Chats', chatSchema);
-  
+ const Chat = mongoose.model('Chats', chatSchema);
+  module.exports = Chat;

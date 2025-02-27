@@ -1,3 +1,4 @@
+const mongoose= require('mongoose');
 const callHistorySchema = new mongoose.Schema({
     caller_id: { type: mongoose.Schema.Types.ObjectId, ref: 'UserInfo', required: true },
     receiver_id: { type: mongoose.Schema.Types.ObjectId, ref: 'UserInfo', required: true },
@@ -7,7 +8,9 @@ const callHistorySchema = new mongoose.Schema({
     end_time: { type: Date, required: true },
     status: { type: String, enum: ["missed", "answered", "declined"], required: true }
   }, {
-    collection: 'CallHistory'
+    collection: 'CallHistory',
+    autoCreate: true
   });
-  mongoose.model('CallHistory', callHistorySchema);
+ const CallHistory = mongoose.model('CallHistory', callHistorySchema);
+ module.exports = CallHistory;
   

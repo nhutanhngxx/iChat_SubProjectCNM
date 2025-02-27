@@ -110,9 +110,10 @@ connectDB();
 
 // Import routes
 const userRoutes = require('./routes/userRoutes');
-
+const messageRoutes = require('./routes/messageRoutes');
 // Sử dụng routes
-app.use('/api/users', userRoutes);
+app.use('', userRoutes);
+app.use('', messageRoutes);
 
 app.get("/", (req, res) => {
     res.send({ status: "Server started" });
