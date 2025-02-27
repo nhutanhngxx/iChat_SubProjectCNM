@@ -1,5 +1,5 @@
-import React from "react";
-import { Layout } from "antd";
+import React, {useState} from "react";
+import { Layout, Avatar, Dropdown } from "antd";
 import {
   MessageOutlined,
   ContactsOutlined,
@@ -7,20 +7,19 @@ import {
   CloudOutlined,
   ScissorOutlined,
   SettingOutlined,
-  UserOutlined,
 } from "@ant-design/icons";
 import "./Sidebar.css";
+import ProfileDropdown from "./DropDownList/Dropdown";
 
 const { Sider } = Layout;
 
 const Sidebar = ({ onIconClick }) => {
+
+
   return (
     <Sider width={60} className="custom-sidebar">
       {/* Avatar */}
-      <div className="avatar-container-sidebar">
-        <UserOutlined className="avatar-icon" />
-      </div>
-
+      <ProfileDropdown />
       {/* Nhóm icon trên */}
       <div className="icon-group">
         <MessageOutlined
