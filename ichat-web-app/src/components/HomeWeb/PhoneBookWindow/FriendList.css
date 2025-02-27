@@ -1,0 +1,147 @@
+/* Đảm bảo chiều cao của body và html không bị tràn */
+html,
+body {
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  overflow: hidden; /* Ngăn chặn tràn màn hình */
+}
+/* Cấu trúc chính */
+.body {
+  display: flex;
+  flex-direction: column;
+  height: 100vh; /* Chiều cao toàn màn hình */
+  width: 100%;
+  overflow: hidden;
+}
+
+/* Nội dung chính */
+.content-body {
+  flex: 1; /* Để phần nội dung co giãn theo màn hình */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  background: linear-gradient(to right, #c2e9fb, #a1c4fd);
+  overflow-y: auto; /* Thêm thanh cuộn nếu nội dung quá dài */
+}
+
+/* Danh sách bạn bè */
+.friend-list,
+.group-list {
+  background: white;
+  width: 100%;
+  padding: 15px;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+  flex-grow: 1; /* Cho phép mở rộng linh hoạt */
+  overflow-y: auto; /* Thêm thanh cuộn nếu danh sách quá dài */
+}
+
+/* Ô tìm kiếm và bộ lọc */
+.search-bar {
+  display: flex;
+  gap: 10px;
+  padding: 10px;
+  justify-content: space-between;
+}
+
+.search-input,
+.sort-select,
+.filter-select {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+}
+/* Thanh tìm kiếm */
+/* .search-bar {
+  padding: 10px;
+} */
+
+.search-input {
+  width: 60%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+}
+
+/* Danh sách bạn bè */
+.friend-list,
+.group-list {
+  margin-left: 15px;
+}
+.friend-item,
+.group-item {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+  transition: background 0.2s ease-in-out;
+}
+
+.friend-item:hover,
+.group-item:hover {
+  background: #f5f5f5;
+}
+
+/* Ảnh đại diện */
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-right: 10px;
+  align-items: center;
+  justify-content: center;
+  display: flex;
+}
+
+.red {
+  background-color: red;
+}
+
+.blue {
+  background-color: #17a2b8;
+}
+
+/* Tên bạn bè */
+.friend-name,
+.group-name {
+  flex: 1;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+/* Nút menu */
+.menu-icon {
+  color: #888;
+  cursor: pointer;
+}
+
+.menu-icon:hover {
+  color: black;
+}
+/* Nhóm danh sách bạn bè */
+.friend-groups,
+.group-items {
+  margin-top: 10px;
+}
+.friend-group {
+  list-style-type: none;
+  padding: 0;
+}
+
+/* Tiêu đề nhóm */
+.group-header {
+  font-size: 18px;
+  font-weight: bold;
+  padding: 8px;
+}
+/* Số lượng bạn bè */
+.friend-count,
+.group-count {
+  font-size: 14px;
+  /* font-weight: 700; */
+  /* margin: 10px 0; */
+  padding: 10px 0;
+  margin-left: 15px;
+}
