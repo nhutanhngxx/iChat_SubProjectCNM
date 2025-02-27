@@ -1,7 +1,9 @@
 import React from "react";
-import { Text, View, Image, TextInput } from "react-native";
+import { Text, View, Image, TextInput, TouchableOpacity } from "react-native";
+import { useNavigation } from "@react-navigation/native";
 
 const HeaderMessages = () => {
+  const navigation = useNavigation();
   return (
     <View
       style={{
@@ -12,7 +14,16 @@ const HeaderMessages = () => {
         paddingHorizontal: 10,
       }}
     >
-      <View style={{ flexDirection: "row", gap: 10, alignItems: "center" }}>
+      <TouchableOpacity
+        style={{
+          flexDirection: "row",
+          gap: 10,
+          alignItems: "center",
+          width: 250,
+          height: 50,
+        }}
+        onPress={() => navigation.navigate("SearchScreen", { autoFocus: true })}
+      >
         <Image
           source={require("../../assets/icons/search.png")}
           style={{ width: 20, height: 20 }}
@@ -20,8 +31,9 @@ const HeaderMessages = () => {
         <TextInput
           style={{ fontSize: 16, width: "100", color: "#2F80ED" }}
           placeholder="Tìm kiếm"
+          editable={false} // Điều hướng sang Screen search riêng
         ></TextInput>
-      </View>
+      </TouchableOpacity>
 
       <View style={{ flexDirection: "row", gap: 10 }}>
         <Image

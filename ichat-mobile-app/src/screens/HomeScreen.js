@@ -2,12 +2,8 @@ import React from "react";
 import { Button } from "react-native";
 import { Text, View } from "react-native";
 
-const HomeScreen = ({ navigation, setUser }) => {
-  const handleLogout = () => {
-    // Giả lập đăng xuat thành công
-    setUser(null);
-    // navigation.navigate("AuthNavigator");
-  };
+const HomeScreen = ({ navigation }) => {
+  const handleLogout = () => {};
 
   return (
     <View>

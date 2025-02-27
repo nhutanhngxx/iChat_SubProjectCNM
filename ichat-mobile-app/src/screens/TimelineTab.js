@@ -198,7 +198,6 @@ const TimelineTab = () => {
   return (
     <SafeAreaView style={styles.container}>
       <HeaderTimeline />
-
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <FlatList
           data={posts}
@@ -244,13 +243,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 5,
     paddingHorizontal: 10,
-    backgroundColor: "rgba(217, 217, 217, 0.5)",
+    gap: 5,
     borderRadius: 10,
     justifyContent: "center",
   },
   optionIcon: {
-    width: 30,
-    height: 30,
+    width: 25,
+    height: 25,
   },
   postContainer: {
     backgroundColor: "rgba(217, 217, 217, 0.25)",
