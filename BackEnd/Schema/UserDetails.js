@@ -15,6 +15,9 @@ const userDetailSchema = new mongoose.Schema(
   },
   {
     collection: "UserInfo",
+    autoCreate: true,
   }
 );
-mongoose.model("UserInfo", userDetailSchema);
+// mongoose.model('UserInfo',userDetailSchema);
+const User = mongoose.model("UserInfo", userDetailSchema);
+module.exports = User;

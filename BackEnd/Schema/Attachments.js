@@ -1,3 +1,4 @@
+const mongoose= require('mongoose');
 const attachmentSchema = new mongoose.Schema({
     message_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Messages', required: true },
     file_url: { type: String, required: true },
@@ -5,7 +6,9 @@ const attachmentSchema = new mongoose.Schema({
     file_size: { type: Number, required: true },
     uploaded_at: { type: Date, default: Date.now }
   }, {
-    collection: 'Attachments'
+    collection: 'Attachments',
+    autoCreate: true
   });
-  mongoose.model('Attachments', attachmentSchema);
+  const Attachments =  mongoose.model('Attachments', attachmentSchema);
+module.exports = Attachments;
   

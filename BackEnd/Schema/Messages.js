@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-
 const messageSchema = new mongoose.Schema(
   {
     sender_id: {
@@ -21,14 +20,15 @@ const messageSchema = new mongoose.Schema(
     timestamp: { type: Date, default: Date.now },
     status: {
       type: String,
-      enum: ["sent", "received", "viewed"],
+      enum: ["sent", "received", "Viewed"],
       default: "sent",
     },
     chat_type: { type: String, enum: ["private", "group"], required: true },
   },
   {
     collection: "Messages",
+    autoCreate: true,
   }
 );
-
-module.exports = mongoose.model("Messages", messageSchema);
+const Message = mongoose.model("Messages", messageSchema);
+module.exports = Message;

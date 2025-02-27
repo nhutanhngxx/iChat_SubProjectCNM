@@ -8,7 +8,8 @@ const messageCardSchema = new mongoose.Schema({
     title: { type: String, required: true } // Tiêu đề của card
 }, {
     collection: 'MessageCards',
-    timestamps: true
+    timestamps: true,
+    autoCreate: true
 });
 
 const MessageCard = mongoose.model('MessageCard', messageCardSchema);
