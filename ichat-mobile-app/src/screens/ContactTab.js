@@ -16,7 +16,7 @@ const ContactTab = () => {
         value={index}
         onChange={setIndex}
         indicatorStyle={{
-          backgroundColor: "skyblue",
+          backgroundColor: "#6166EE",
           width: "25%",
           marginHorizontal: "12.5%",
         }}

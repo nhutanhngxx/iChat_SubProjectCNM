@@ -22,7 +22,6 @@ const MessagesTab = ({ setUser }) => {
         }}
         variant="default"
         dense
-        // style={{ backgroundColor: "#fff" }}
       >
         <Tab.Item
           title={"Ưu tiên"}

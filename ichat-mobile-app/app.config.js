@@ -6,8 +6,16 @@ export default {
     },
     ios: {
       infoPlist: {
-        UIStatusBarStyle: "UIStatusBarStyleDarkContent", // Hoặc "UIStatusBarStyleLightContent"
+        NSCameraUsageDescription: "Ứng dụng cần truy cập camera để quét mã QR.",
       },
     },
+    plugins: [
+      [
+        "expo-barcode-scanner",
+        {
+          cameraPermission: "Ứng dụng cần truy cập camera để quét mã QR.",
+        },
+      ],
+    ],
   },
 };

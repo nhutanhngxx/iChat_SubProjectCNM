@@ -7,6 +7,7 @@ import {
   Text,
   TouchableOpacity,
   Image,
+  Alert,
 } from "react-native";
 import { Tab, TabView } from "@rneui/themed";
 
@@ -23,10 +24,23 @@ const SearchScreen = () => {
 
   const [searchText, setSearchText] = useState("");
   const [index, setIndex] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [searchResult, setSearchResult] = useState(null);
 
   // Dữ liệu tìm kiếm giả lập
   const history = ["Hà Nội", "React Native", "Chat App"];
   const contacts = ["Nguyễn Nhựt Anh", "Trần Minh Quân", "Lê Phương Thảo"];
+  const allMessages = [
+    { id: "1", sender: "Alice", content: "Hello, how are you?", chatId: "101" },
+    { id: "2", sender: "Bob", content: "Let's meet tomorrow!", chatId: "102" },
+    {
+      id: "3",
+      sender: "Alice",
+      content: "Check out this new project!",
+      chatId: "101",
+    },
+    { id: "4", sender: "Charlie", content: "Hey, what's up?", chatId: "103" },
+  ];
 
   // Kết quả tìm kiếm trả về của Tin nhắn => click vào sẽ vào cuộc trò chuyện
   const messages = [{ id: "1", type: "message", content: searchText }];
@@ -34,6 +48,63 @@ const SearchScreen = () => {
   const users = [
     //     { id: "3", type: "user", name: searchText + " Nguyễn Nhựt Anh" },
   ];
+  // Xử lý tìm kiếm
+  const handleSearch = async () => {
+    if (!searchText.match(/^\d{9,11}$/)) {
+      Alert.alert("Lỗi", "Vui lòng nhập số điện thoại hợp lệ.");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await fetch(
+        `https://ichat/search-user?phone=${searchText}` // truyền sdt vào api để tìm contact chính xác nhất
+      );
+      const data = await response.json();
+
+      if (data.success) {
+        setSearchResult({
+          id: data.user.id,
+          name: data.user.name,
+          avatar: data.user.avatar,
+          isFriend: data.user.isFriend,
+        });
+      } else {
+        setSearchResult(null);
+        Alert.alert("Không tìm thấy", "Số điện thoại không tồn tại.");
+      }
+    } catch (error) {
+      Alert.alert("Lỗi", "Không thể kết nối đến server.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Xử lý tìm kiếm tin nhất trong tất cả tin nhắn ở database
+  const filteredMessages = allMessages.filter((msg) =>
+    msg.content.toLowerCase().includes(searchText.toLowerCase())
+  );
+
+  // Xử lý gửi lời mời kết bạn
+  const sendFriendRequest = async () => {
+    Alert.alert("Thành công", "Đã gửi lời mời kết bạn!");
+    // try {
+    //   const response = await fetch(
+    //     `https://ichat/send-friend-request?to=${searchResult.id}`,
+    //     { method: "POST" }
+    //   );
+    //   const data = await response.json();
+
+    //   if (data.success) {
+    //     Alert.alert("Thành công", "Đã gửi lời mời kết bạn!");
+    //     setSearchResult({ ...searchResult, isFriend: true });
+    //   } else {
+    //     Alert.alert("Lỗi", "Không thể gửi lời mời kết bạn.");
+    //   }
+    // } catch (error) {
+    //   Alert.alert("Lỗi", "Không thể kết nối đến server.");
+    // }
+  };
 
   // Kết hợp tin nhắn và tài khoản
   const allResults = [...messages, ...users];
@@ -155,19 +226,30 @@ const SearchScreen = () => {
             {/* Tab "Tất cả" */}
             <TabView.Item style={{ width: "100%", padding: 10 }}>
               <FlatList
-                data={allResults}
+                data={filteredMessages}
                 renderItem={({ item }) => (
-                  <View style={{ padding: 10 }}>
-                    {item.type === "message" ? (
-                      <Text style={{ fontSize: 16, color: "blue" }}>
-                        {item.content}
-                      </Text>
-                    ) : (
-                      <Text style={{ fontSize: 16, color: "green" }}>
-                        {item.name}
-                      </Text>
-                    )}
-                  </View>
+                  <TouchableOpacity
+                    onPress={() =>
+                      navigation.navigate("ChatScreen", { chatId: item.chatId })
+                    }
+                    style={{
+                      paddingVertical: 10,
+                      paddingHorizontal: 15,
+                      borderBottomWidth: 1,
+                      borderBottomColor: "#ddd",
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontWeight: "bold",
+                        fontSize: 18,
+                        marginBottom: 5,
+                      }}
+                    >
+                      {item.sender}
+                    </Text>
+                    <Text>{item.content}</Text>
+                  </TouchableOpacity>
                 )}
                 keyExtractor={(item) => item.id}
               />
@@ -175,15 +257,34 @@ const SearchScreen = () => {
 
             {/* Tab "Tin nhắn" */}
             <TabView.Item style={{ width: "100%", padding: 10 }}>
-              {messages && messages.length > 0 ? (
+              {searchText !== "" && filteredMessages.length > 0 ? (
                 <FlatList
-                  data={messages}
+                  data={filteredMessages}
                   renderItem={({ item }) => (
-                    <View style={{ padding: 10 }}>
-                      <Text style={{ fontSize: 16, color: "blue" }}>
-                        {item.content}
+                    <TouchableOpacity
+                      onPress={() =>
+                        navigation.navigate("ChatScreen", {
+                          chatId: item.chatId,
+                        })
+                      }
+                      style={{
+                        paddingVertical: 10,
+                        paddingHorizontal: 15,
+                        borderBottomWidth: 1,
+                        borderBottomColor: "#ddd",
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontWeight: "bold",
+                          fontSize: 18,
+                          marginBottom: 5,
+                        }}
+                      >
+                        {item.sender}
                       </Text>
-                    </View>
+                      <Text>{item.content}</Text>
+                    </TouchableOpacity>
                   )}
                   keyExtractor={(item) => item.id}
                 />

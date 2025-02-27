@@ -17,8 +17,11 @@ import MediaStorage from "../components/messages/MediaStorage";
 import SearchScreen from "../components/search/SearchScreen";
 import ViewProfile from "../components/profile/ViewProfile";
 
+import AddFriend from "../components/contact/AddFriend";
+
 import ProfileInformation from "../components/profile/ProfileInformation";
 import ChangeInformation from "../components/profile/ChangeInformation";
+import QRScanner from "../components/camera/QRScannerScreen";
 
 const BottomTab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -48,6 +51,8 @@ const ChatStack = () => {
         component={SearchScreen}
         options={{ animation: "fade" }}
       />
+      <Stack.Screen name="QRScanner" component={QRScanner} />
+      <Stack.Screen name="AddFriend" component={AddFriend} />
     </Stack.Navigator>
   );
 };
