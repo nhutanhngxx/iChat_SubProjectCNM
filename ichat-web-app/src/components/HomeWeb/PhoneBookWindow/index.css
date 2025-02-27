@@ -1,10 +1,3 @@
-/* .book-window {
-  display: flex;
-  height: 100vh;
-  background: linear-gradient(to right, #e0f7fa, #bbdefb);
-  padding: 16px;
-  border-radius: 8px;
-} */
 .book-window {
   display: flex;
   height: 100vh;
@@ -69,17 +62,20 @@
 .menu .menu-item {
   display: flex;
   align-items: center;
-  padding: 30px;
-  border-radius: 4px;
-  cursor: pointer;
-  height: 30px;
+  gap: 8px; /* Khoảng cách giữa icon và text */
+  height: 50px;
+  padding: 10px;
 }
 
 /* Nội dung trong menu-item */
 .menu .menu-item .icons {
-  width: 20px;
-  height: 20px;
-  margin-right: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding-top: 10px;
+  font-size: 20px; /* Điều chỉnh kích thước icon nếu cần */
 }
 .menu .menu-item span {
   font-size: 16px;
