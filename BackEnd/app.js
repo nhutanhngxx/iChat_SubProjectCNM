@@ -62,7 +62,7 @@ app.post("/register",async(req,res)=>
         phone,
         password: encryptedPassword,
         avatar: avatar || "",
-        status: status || "Active",
+        status: status || "Active", // Online | Offline
       });
   
       res.send({ status: "ok", data: "User created", user: newUser });
@@ -72,7 +72,7 @@ app.post("/register",async(req,res)=>
 })
 
 // Đăng nhập
-app.post("/login-user",async(req,res)=>
+app.post("/login",async(req,res)=>
 {
     // const {email,password}= req.body;
     // const oldUser = await User.findOne({email:email});
@@ -99,7 +99,7 @@ app.post("/login-user",async(req,res)=>
   
     if (await bcrypt.compare(password, user.password)) {
       const token = jwt.sign({ phone: user.phone }, JWT_SECRET, { expiresIn: "1h" });
-      return res.send({ status: "ok", data: token });
+      return res.send({ status: "ok", "token": token });
     } else {
       return res.send({ status: "error", data: "Invalid password" });
     }

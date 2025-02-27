@@ -1,11 +1,7 @@
 const mongoose= require('mongoose');
 
 const userDetailSchema = new mongoose.Schema({
-    // name: String,
-    // email: {type: String, unique: true},
-    // phone: Number,
-    // password: String,
-    full_name: { type: String, required: true },
+full_name: { type: String, required: true },
   gender: { type: String, enum: ["Male", "Female", "Other"], required: true },
   dob: { type: Date, required: true },
   phone: { type: String, required: true, unique: true },
