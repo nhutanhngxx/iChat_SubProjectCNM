@@ -1,0 +1,49 @@
+.hello-window {
+    display: flex;
+    flex-grow: 1;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    justify-content: center;
+    background-image: url("https://s3-alpha-sig.figma.com/img/ce79/b078/28d15d661eadace3a796a49b921551e8?Expires=1740960000&Key-Pair-Id=APKAQ4GOSFWCW27IBOMQ&Signature=gptVUdcqw7Njio0k4eFXDlJsa7DWDLGEaI0a1ozjiDmhORRWr07hOImthugdU1ehIemHq8DLvNLeO-CJNSvu0tthvyhjBXfgh8F5bDAc-GMQuppIuip4AHMXpe77xHc3JQmkUqd3JiMN9swolunbwz~zKFme1VwELqwF65kVD4aA7SPk8qBNsgBB2PUC~4jrdxxceQV4PgfvZMkXb9hZd76Mlgd2LvlaI39tV2H1MXhATNIsMmvxebeKYErb67M49F5vwD2nj48wG6FZf8Vbhrj1LeiwW39JdaE3F6NpiwJr2AujCxOtRXVWdNAsAuewu9CQuJu7H2Hxau94BSOaig__");
+  }
+  
+  .hello-window h2 {
+    font-size: 20px;
+    font-weight: 500;
+    color: #252525;
+  }
+  
+  .hello-window .highlight {
+    font-weight: bold;
+    color: #000;
+  }
+  
+  .description {
+    font-size: 14px;
+    max-width: 500px;
+    margin-top: 8px;
+  }
+  
+  .image-container {
+    margin-top: 16px;
+  }
+  
+  .hello-image {
+    width: 240px;
+    height: auto;
+  }
+  
+  .tagline {
+    font-size: 16px;
+    font-weight: bold;
+    margin-top: 12px;
+  }
+  
+  .extra-text {
+    font-size: 13px;
+    color: #353434;
+    max-width: 500px;
+    margin-top: 6px;
+  }
+  

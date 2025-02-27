@@ -1,0 +1,71 @@
+.login-container {
+    background: #f0f2f5;
+    min-height: 100vh;
+  }
+  
+  .login-card {
+    border-radius: 15px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+  }
+  
+  .logo-section {
+    text-align: center;
+    margin-bottom: 30px;
+  }
+  
+  .logo {
+    height: 80px;
+    margin-bottom: 15px;
+  }
+  
+  .brand-name {
+    color: #1890ff;
+    margin-bottom: 5px !important;
+  }
+  
+  .slogan {
+    color: #666;
+    font-size: 14px;
+  }
+  
+  .login-input {
+    margin-bottom: 20px;
+    border-radius: 8px;
+  }
+  
+  .input-icon {
+    color: rgba(0, 0, 0, 0.25);
+  }
+  
+  .login-button {
+    height: 45px;
+    border-radius: 8px;
+    font-weight: 500;
+  }
+  
+  .terms {
+    margin-top: 20px;
+    font-size: 12px;
+    color: #666;
+    text-align: center;
+  }
+  
+  .terms a {
+    color: #1890ff;
+  }
+  
+  .alert {
+    margin-bottom: 20px;
+  }
+  
+  .countdown {
+    text-align: right;
+    color: #ff4d4f;
+    font-size: 12px;
+    margin-bottom: 15px;
+  }
+  
+  .back-button {
+    margin-top: 10px;
+  }
