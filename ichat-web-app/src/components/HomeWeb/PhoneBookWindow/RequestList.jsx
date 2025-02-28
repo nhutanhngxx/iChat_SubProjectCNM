@@ -4,8 +4,11 @@ import { FaUserPlus, FaTimes, FaCheck } from "react-icons/fa";
 import { FaFacebookMessenger } from "react-icons/fa";
 import "./modal.css";
 import { CiRedo } from "react-icons/ci";
-import { message } from "antd";
-
+import { CiEdit } from "react-icons/ci";
+import { MdClose } from "react-icons/md";
+import { FaUserGroup } from "react-icons/fa6";
+import { MdBlock } from "react-icons/md";
+import { IoIosWarning } from "react-icons/io";
 const initialRequestData = [
   {
     id: 1,
@@ -18,7 +21,7 @@ const initialRequestData = [
     status: "active",
     created_at: "2024-02-27T10:00:00Z",
     updated_at: "2024-02-27T10:00:00Z",
-    message: "Chào bạn, mình muốn kết bạn với bạn",
+    message: "Chào bạn, mình tên Nguyễn Thành Cương, mình muốn kết bạn với bạn",
     received: true,
   },
   {
@@ -78,20 +81,23 @@ const initialRequestData = [
 const initialSuggestedFriends = [
   {
     id: 6,
-    name: "Lê Hoàng",
-    avatar: "https://i.ibb.co/B2S2WVRX/Pamela2.jpg",
+    full_name: "Lê Hoàng Châu",
+    avatar_path: "https://i.ibb.co/B2S2WVRX/Pamela2.jpg",
+    cover_path: "https://i.ibb.co/B2S2WVRX/Pamela2.jpg",
     group: 11,
   },
   {
     id: 7,
-    name: "Trần Minh",
-    avatar: "https://i.ibb.co/B2S2WVRX/Pamela2.jpg",
+    full_name: "Trần Minh Tuyết",
+    avatar_path: "https://i.ibb.co/B2S2WVRX/Pamela2.jpg",
+    cover_path: "https://i.ibb.co/B2S2WVRX/Pamela2.jpg",
     group: 6,
   },
   {
     id: 8,
-    name: "Phạm Thư",
-    avatar: "https://i.ibb.co/B2S2WVRX/Pamela2.jpg",
+    full_name: "Phạm Thị Vy",
+    avatar_path: "https://i.ibb.co/B2S2WVRX/Pamela2.jpg",
+    cover_path: "https://i.ibb.co/B2S2WVRX/Pamela2.jpg",
     group: 3,
   },
 ];
@@ -102,13 +108,16 @@ const RequestList = () => {
     initialSuggestedFriends
   );
   const [userInfo, setUserInfo] = useState(null);
+  const [modalType, setModalType] = useState("");
 
-  const handleOpenUserInfo = (user) => {
+  const handleOpenUserInfo = (user, type) => {
+    setModalType(type);
     setUserInfo(user);
   };
 
   const closeUserInfoModal = () => {
     setUserInfo(null);
+    setModalType("");
   };
 
   const [modalData, setModalData] = useState(null);
@@ -176,7 +185,7 @@ const RequestList = () => {
                 <div className="request-info">
                   <div
                     className="info-user"
-                    onClick={() => handleOpenUserInfo(request)}
+                    onClick={() => handleOpenUserInfo(request, "received")}
                   >
                     <img
                       src={request.avatar_path}
@@ -227,7 +236,10 @@ const RequestList = () => {
                 <div className="request-info sent ">
                   <div className="info info-rq">
                     <div className="info-rq-left">
-                      <div className="info-user">
+                      <div
+                        className="info-user"
+                        onClick={() => handleOpenUserInfo(request, "sent")}
+                      >
                         <img
                           src={request.avatar_path}
                           alt={request.full_name}
@@ -270,15 +282,18 @@ const RequestList = () => {
           {suggestedFriends.map((friend) => (
             <div key={friend.id} className="request-card suggested">
               <div className="request-info suggestion">
-                <div className="info-suggestion info-user">
+                <div
+                  className="info-suggestion info-user"
+                  onClick={() => handleOpenUserInfo(friend, "suggested")}
+                >
                   <img
-                    src={friend.avatar}
-                    alt={friend.name}
+                    src={friend.avatar_path}
+                    alt={friend.full_name}
                     className="avatar"
                   />
 
                   <div className="group-together">
-                    <strong>{friend.name}</strong>
+                    <strong>{friend.full_name}</strong>
                     <p>{friend.group} nhóm bạn chung</p>
                   </div>
                 </div>
@@ -310,16 +325,16 @@ const RequestList = () => {
       {/* Modal xác nhận */}
       {modalData && (
         <div className="modal-overlay">
-          <div className="modal">
-            <p>
-              Bạn có chắc chắn muốn{" "}
-              {modalData.type === "accept" ? "đồng ý" : "từ chối"}?
-            </p>
+          <div className="modal modal-confirm">
+            <h2>
+              Bạn có chắc chắn muốn
+              {modalData.type === "accept" ? " đồng ý" : " từ chối"}?
+            </h2>
             <div className="modal-actions">
-              <button className="btn confirm" onClick={handleConfirmAction}>
+              <button className="btn btn-confirm" onClick={handleConfirmAction}>
                 Xác nhận
               </button>
-              <button className="btn cancel" onClick={closeModal}>
+              <button className="btn btn-cancel" onClick={closeModal}>
                 Hủy
               </button>
             </div>
@@ -330,46 +345,94 @@ const RequestList = () => {
       {userInfo && (
         <div className="modal-overlay">
           <div className="modal">
-            <div className="modal-header">
-              <div className="cover-pic">
-                <img src="https://i.ibb.co/B2S2WVRX/Pamela2.jpg" alt="cover" />
+            <div className="modal-title">
+              <h4>Thông tin tài khoản</h4>
+              <div className="close-btn" onClick={closeUserInfoModal}>
+                <MdClose />
               </div>
-              <div>
-                <div className="modal-info">
+            </div>
+            <div className="modal-users">
+              <div className="modal-header">
+                <div className="cover-pic">
                   <img
-                    src={userInfo.avatar}
-                    alt={userInfo.name}
-                    className="avatar"
+                    src="https://i.ibb.co/B2S2WVRX/Pamela2.jpg"
+                    alt="cover"
                   />
-                  <h3>{userInfo.name}</h3>
+                  <div style={{ background: "pink" }}>
+                    <div className="modal-info">
+                      <img
+                        src={userInfo.avatar_path}
+                        alt={userInfo.name}
+                        className="avatar"
+                      />
+                      <div className="detail-info">
+                        <h3>{userInfo.full_name}</h3>
+                        <div className="icon-edit-nameUser">
+                          <CiEdit />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div className="modal-message">
-                  <p>{userInfo.message}</p>
-                </div>
+              </div>
+              <div style={{ marginTop: "80px" }}>
+                {modalType === "received" && (
+                  <div className="modal-message">
+                    <p>{userInfo.message}</p>
+                  </div>
+                )}
+
                 <div className="modal-button">
-                  <button>Đồng ý</button>
-                  <button>Từ chối</button>
+                  {modalType === "received" && (
+                    <>
+                      <button className="btn-accept">Đồng ý</button>
+                      <button className="btn-message">Nhắn tin</button>
+                    </>
+                  )}
+
+                  {modalType === "sent" && (
+                    <>
+                      <button className="btn-cancel">Hủy kết bạn</button>
+                      <button className="btn-message">Nhắn tin</button>
+                    </>
+                  )}
+
+                  {modalType === "suggested" && (
+                    <>
+                      <button className="btn-add-friend">Kết bạn</button>
+                      <button className="btn-message">Nhắn tin</button>
+                    </>
+                  )}
                 </div>
               </div>
-            </div>
-            <div className="modal-content-info">
-              <h3>Thông tin cá nhân</h3>
-              <p> Giới tính: Nam</p>
+              <div className="modal-content-info">
+                <h3>Thông tin cá nhân</h3>
+                <p>
+                  Giới tính: <span>Nam</span>
+                </p>
 
-              <p> Ngày sinh: 08/11/2000</p>
-            </div>
-            <div>
-              <div>
-                <p>Nhóm chung</p>
+                <p>
+                  Ngày sinh: <span>08/11/2000</span>
+                </p>
               </div>
-              <div>Chặn tin nhắn và cuộc gọi</div>
-              <div>Báo xấu</div>
+              <div className="modal-content-other">
+                <div>
+                  <FaUserGroup />
+                  <p>
+                    Nhóm chung (<span>8</span>)
+                  </p>
+                </div>
+                <div>
+                  <MdBlock />
+                  <p>Chặn tin nhắn và cuộc gọi</p>
+                </div>
+                <div>
+                  <IoIosWarning />
+                  <p>Báo xấu</p>
+                </div>
+              </div>
+              <div></div>
             </div>
-            <div></div>
-
-            <button className="btn" onClick={closeUserInfoModal}>
-              Đóng
-            </button>
           </div>
         </div>
       )}

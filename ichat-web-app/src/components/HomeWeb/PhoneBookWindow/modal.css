@@ -5,11 +5,29 @@
   left: 50%;
   transform: translate(-50%, -50%);
   background: white;
-  padding: 20px;
   border-radius: 10px;
   z-index: 1000;
   text-align: center;
   width: 400px;
+  height: 90%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.modal-confirm {
+  height: 30%;
+  padding: 20px 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+}
+.modal-confirm .modal-actions {
+  display: flex;
+  justify-content: space-around;
+  gap: 20px;
+}
+.modal-confirm .modal-actions button {
+  width: 40%;
 }
 
 /* Overlay mờ phía sau modal */
@@ -23,40 +41,7 @@
   z-index: 999;
 }
 
-/* Nút trong modal */
-.modal button {
-  margin: 10px;
-  padding: 10px 15px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 16px;
-  width: 100px;
-}
-.modal p {
-  font-size: 16px;
-  margin: 10px;
-  font-weight: bold;
-}
-.modal button:first-child {
-  background: linear-gradient(45deg, #56ccf2, #2f80ed);
-  color: white;
-}
-
-.modal button:last-child {
-  background: linear-gradient(45deg, #ff416c, #ff4b2b);
-  color: white;
-}
-.modal-actions {
-  display: flex;
-}
-.user-avatar {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  margin-bottom: 10px;
-}
-
+/* Nút đóng modal */
 .close-btn {
   position: absolute;
   top: 10px;
@@ -64,10 +49,172 @@
   font-size: 20px;
   cursor: pointer;
 }
-/* Modal Thông tin người dùng */
+
+/* Phần tiêu đề của modal */
+.modal-title {
+  font-size: 20px;
+  font-weight: bold;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  border-bottom: 1px solid #999999;
+  background: white;
+  z-index: 10;
+}
+
+/* Phần chứa nội dung có thể cuộn */
+.modal-users {
+  flex: 1;
+  overflow-y: auto;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  position: relative;
+  padding-bottom: 20px;
+}
+
+/* Ẩn thanh cuộn */
+.modal-users::-webkit-scrollbar {
+  display: none;
+}
+
+/* Ảnh cover luôn cố định */
 .cover-pic {
   width: 100%;
   height: 200px;
+  position: relative;
+  z-index: 1;
+}
+
+.cover-pic img {
+  width: 100%;
+  height: 100%;
   object-fit: cover;
-  border-radius: 10px;
+}
+
+/* Avatar và thông tin người dùng */
+.modal-info {
+  display: flex;
+  align-items: center;
+  padding: 10px 10px;
+  gap: 10px;
+  position: absolute;
+  z-index: 2;
+  text-align: center;
+  bottom: -80px;
+}
+
+.modal-info img {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  border: 5px solid white;
+  object-fit: cover;
+}
+
+.detail-info {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 8px;
+}
+
+/* Nội dung chính */
+.modal-message {
+  border: 1px solid #999999;
+  margin: 0px 20px;
+  border-radius: 5px;
+  padding: 5px;
+  text-align: left;
+  padding-top: 5px;
+  width: 90%;
+}
+.modal-message p {
+  /* margin-top: 5px; */
+  margin: 5px 10px;
+  width: 90%;
+}
+
+.modal-content-info,
+.modal-content-other {
+  padding: 10px;
+  text-align: left;
+  border-top: 1px solid #999999;
+  padding: 20px 20px;
+}
+
+/* Nút trong modal */
+.modal-button {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px;
+  /* width: 90%; */
+  padding: 15px 20px;
+}
+
+.modal button {
+  padding: 10px 15px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  width: 100px;
+}
+.modal-button button {
+  width: 50%;
+  padding: 10px 15px;
+}
+.modal button:first-child {
+  background: #aca9a9;
+  color: #000000;
+}
+
+.modal button:last-child {
+  background: #a8e9fe;
+  color: #160bec;
+}
+.modal-content {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px;
+  text-align: left;
+}
+.modal-content-info span {
+  font-weight: 500;
+  margin-left: 10px;
+}
+.modal-content-info p {
+  margin-top: 10px;
+}
+.modal-content-info h3 {
+  font-size: larger;
+}
+.modal-content-other div {
+  display: flex;
+  justify-content: start;
+  align-items: center;
+  cursor: pointer;
+  padding: 10px;
+  text-align: center;
+}
+.modal-content-other div:hover {
+  background: #f0f0f0;
+  border-radius: 5px;
+}
+.modal-content-other div p {
+  margin-left: 10px;
+  align-items: center;
+  margin-top: 11px;
+}
+.icon-edit-nameUser {
+  cursor: pointer;
+  padding: 5px;
+}
+.icon-edit-nameUser:hover {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 50px;
+  padding: 5px;
+  color: #000000;
 }
