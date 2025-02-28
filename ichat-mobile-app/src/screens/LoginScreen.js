@@ -20,18 +20,15 @@ const LoginScreen = ({ navigation }) => {
 
   const handleLogin = async () => {
     try {
-      const response = await axios.post("http://192.168.1.229:5001/login", {
+      const response = await axios.post("http://192.168.1.37:5001/login", {
         phone,
         password,
       });
       const { token, user } = response.data;
-
       // Lưu token vào AsyncStorage để sử dụng ở các Screen kháccc
       await AsyncStorage.setItem("token", token);
       await AsyncStorage.setItem("user", JSON.stringify(user));
-
       setUser(user);
-
       Alert.alert("Đăng nhập thành công!", `Chào mừng ${user.full_name}`);
       // navigation.replace("AppNavigator");
     } catch (error) {

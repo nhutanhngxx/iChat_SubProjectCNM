@@ -106,6 +106,7 @@ connectDB();
 // Import routes
 const userRoutes = require("./routes/userRoutes");
 const messageRoutes = require("./routes/messageRoutes");
+
 // Sử dụng routes
 app.use("", userRoutes);
 app.use("", messageRoutes);

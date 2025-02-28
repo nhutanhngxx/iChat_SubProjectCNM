@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useContext, useState, useEffect } from "react";
 import {
   Text,
   View,
@@ -8,61 +8,162 @@ import {
   FlatList,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { UserContext } from "@/src/context/UserContext";
+import axios from "axios";
 
-const chatList = [
-  {
-    id: "1",
-    name: "Nguyễn Nhựt Anh",
-    lastMessage: "[Hình ảnh]",
-    time: "1 phút trước",
-    avatar: require("../../assets/images/avatars/avatar1.png"),
-  },
-  {
-    id: "2",
-    name: "Trần Minh Quân",
-    lastMessage: "Xin chào!",
-    time: "5 phút trước",
-    avatar: require("../../assets/images/avatars/avatar2.png"),
-  },
-  {
-    id: "3",
-    name: "Lê Phương Thảo",
-    lastMessage: "Bạn khỏe không?",
-    time: "10 phút trước",
-    avatar: require("../../assets/images/avatars/avatar3.png"),
-  },
-];
+// Tính thời gian
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+import "dayjs/locale/vi"; // Tiếng việt nè
+
+dayjs.extend(relativeTime);
+dayjs.locale("vi");
+
+const getTimeAgo = (timestamp) => {
+  return dayjs(timestamp).fromNow(); // Hiển thị "X phút trước"
+};
 
 const UuTien = () => {
   const navigation = useNavigation();
+  const { user } = useContext(UserContext);
+  const [chatList, setChatList] = useState([]);
+  const [allUser, setAllUser] = useState([]);
+
+  const fetchUsers = async () => {
+    try {
+      console.log("Fetching users...");
+      const response = await axios.get("http://192.168.1.37:5001/users");
+      console.log("User data from API:", response.data);
+      setAllUser(response.data);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (allUser.length === 0 || !user?.id) return;
+    console.log("Fetching chat list for user ID:", user.id);
+    fetchChatList();
+  }, [user, allUser]);
+
+  const fetchChatList = async () => {
+    try {
+      const response = await axios.get(
+        `http://192.168.1.37:5001/messages/${user.id}`
+      );
+
+      if (response.data.status === "ok" && Array.isArray(response.data.data)) {
+        setChatList(formatChatList(response.data.data, allUser));
+      } else {
+        console.error("API không trả về dữ liệu hợp lệ:", response.data);
+      }
+    } catch (error) {
+      console.error("Lỗi khi lấy danh sách chat:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  // Lọc lại dữ liệu tin nhắn theo từng người dùng
+  const formatChatList = (messages, allUser) => {
+    if (!Array.isArray(messages)) return [];
+
+    const chatMap = new Map();
+
+    messages.forEach((msg) => {
+      const chatUserId =
+        msg.sender_id === user.id ? msg.receiver_id : msg.sender_id;
+      const chatUser = allUser.find((u) => u._id === chatUserId);
+      const fullName = chatUser ? chatUser.full_name : "Người dùng ẩn danh";
+
+      const lastMessageTime = new Date(msg.timestamp).getTime();
+      const timeDiff = getTimeAgo(lastMessageTime);
+
+      if (
+        !chatMap.has(chatUserId) ||
+        lastMessageTime > chatMap.get(chatUserId).lastMessageTime
+      ) {
+        chatMap.set(chatUserId, {
+          id: chatUserId,
+          name: fullName,
+          lastMessage: msg.type === "image" ? "[Hình ảnh]" : msg.content,
+          lastMessageTime: lastMessageTime,
+          time: timeDiff,
+          avatar: require("../../assets/images/avatars/avatar1.png"),
+        });
+      }
+    });
+
+    // return Array.from(chatMap.values());
+    return Array.from(chatMap.values()).sort(
+      (a, b) => b.lastMessageTime - a.lastMessageTime
+    );
+  };
+
+  useEffect(() => {
+    if (!user?.id) return;
+
+    // Gọi fetch lần đầu tiên
+    fetchChatList();
+
+    // Thiết lập interval để fetch tin nhắn mới mỗi 5 giây
+    const interval = setInterval(() => {
+      console.log("Fetching chat list at:", new Date().toLocaleTimeString());
+      fetchChatList();
+    }, 1000);
+
+    // Cleanup interval khi component unmount
+    return () => clearInterval(interval);
+  }, [user, allUser]);
 
   const handleOpenChatting = (chat) => {
+    console.log("Received chat:", chat);
+    console.log("Type of chat:", typeof chat);
+
     navigation.navigate("Chatting", { chat });
   };
 
-  const renderItem = ({ item }) => (
-    <TouchableOpacity
-      style={styles.container}
-      onPress={() => handleOpenChatting(item)}
-    >
-      <View style={styles.infoContainer}>
-        <Image source={item.avatar} style={styles.avatar} />
-        <View>
-          <Text style={styles.name}>{item.name}</Text>
-          <Text>{item.lastMessage}</Text>
+  const renderItem = ({ item }) => {
+    if (!item) return null;
+
+    return (
+      <TouchableOpacity
+        style={styles.container}
+        onPress={() => handleOpenChatting(item)}
+      >
+        <View style={styles.infoContainer}>
+          {item.avatar && <Image source={item.avatar} style={styles.avatar} />}
+          <View>
+            <Text style={styles.name}>{item.name}</Text>
+            <Text>{item.lastMessage}</Text>
+          </View>
         </View>
-      </View>
-      <View>
-        <Text>{item.time}</Text>
-      </View>
-    </TouchableOpacity>
-  );
+        <View>
+          <Text>{item.time}</Text>
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
   return (
     <View style={styles.wrapper}>
-      <FlatList
+      {/* <FlatList
         data={chatList}
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
+        showsVerticalScrollIndicator={true}
+        keyboardShouldPersistTaps="handled"
+      /> */}
+      <FlatList
+        data={chatList}
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={({ item }) => {
+          console.log("Rendering item:", item);
+          return renderItem({ item });
+        }}
         showsVerticalScrollIndicator={true}
         keyboardShouldPersistTaps="handled"
       />

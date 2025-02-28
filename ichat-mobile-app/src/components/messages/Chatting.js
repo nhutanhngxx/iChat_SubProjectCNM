@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext, useRef } from "react";
 import {
   Text,
   View,
@@ -15,18 +15,40 @@ import {
 } from "react-native";
 
 import { useNavigation } from "@react-navigation/native";
+import { UserContext } from "@/src/context/UserContext";
+import axios from "axios";
 
 const Chatting = ({ route }) => {
   const navigation = useNavigation();
+  const { user } = useContext(UserContext);
+  const { chat } = route.params || {}; // Lấy thông tin từ màn hình MessageTab/UuTien
+  const flatListRef = useRef(null);
   const [inputMessage, setInputMessage] = useState("");
-  const { chat } = route.params || {};
-  const [messages, setMessages] = useState([
-    { id: "1", text: "Hello!", sender: "them" },
-    { id: "2", text: "Hi, how are you?", sender: "me" },
-    { id: "3", text: "I am good, thank you!", sender: "them" },
-  ]);
+  const [messages, setMessages] = useState([]);
+
+  const fetchMessages = async () => {
+    try {
+      const response = await axios.get(
+        `http://192.168.1.37:5001/messages/${user.id}/${chat.id}`
+      );
+      if (response.data.status === "ok") {
+        setMessages(response.data.data);
+      }
+    } catch (error) {
+      console.error("Lỗi khi lấy tin nhắn:", error);
+    }
+  };
 
   useEffect(() => {
+    if (chat?.id && user?.id) {
+      fetchMessages();
+      const interval = setInterval(fetchMessages, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [user, chat]);
+
+  useEffect(() => {
+    console.log(chat);
     navigation.getParent()?.setOptions({ tabBarStyle: { display: "none" } });
 
     return () => {
@@ -41,13 +63,48 @@ const Chatting = ({ route }) => {
     };
   }, []);
 
-  const sendMessage = () => {
+  useEffect(() => {
+    // Cuộn xuống cuối khi có tin nhắn mới
+    if (flatListRef.current && messages.length > 0) {
+      flatListRef.current.scrollToEnd({ animated: true });
+    }
+  }, [messages]);
+
+  const sendMessage = async () => {
     if (inputMessage.trim()) {
-      setMessages([
-        ...messages,
-        { id: Date.now().toString(), text: inputMessage, sender: "me" },
-      ]);
-      setInputMessage("");
+      try {
+        const newMessage = {
+          sender_id: user.id,
+          receiver_id: chat.id,
+          content: inputMessage,
+          type: "text",
+          chat_type: "private",
+        };
+
+        console.log("Dữ liệu gửi đi:", newMessage);
+
+        const response = await axios.post(
+          "http://192.168.1.37:5001/send-message",
+          newMessage
+        );
+
+        console.log("Phản hồi từ server:", response.data);
+
+        if (response.data.message !== "Message sent successfully") {
+          throw new Error(`Lỗi khi gửi tin nhắn: ${response.data.message}`);
+        }
+
+        // Cập nhật danh sách tin nhắn bằng dữ liệu từ API
+        setMessages((prevMessages) => [...prevMessages, response.data.data]);
+
+        // Xóa input
+        setInputMessage("");
+      } catch (error) {
+        console.error(
+          "Lỗi khi gửi tin nhắn:",
+          error.response?.data || error.message
+        );
+      }
     }
   };
 
@@ -106,21 +163,65 @@ const Chatting = ({ route }) => {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={Platform.OS === "ios" ? 50 : 0}
       >
-        <FlatList
+        {/* <FlatList
           data={messages}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => item._id}
           renderItem={({ item }) => (
             <View
               style={[
                 styles.message,
-                item.sender === "me" ? styles.myMessage : styles.theirMessage,
+                item.sender_id === user.id
+                  ? styles.myMessage
+                  : styles.theirMessage,
               ]}
             >
-              <Text style={styles.messageText}>{item.text}</Text>
+              <Text style={styles.messageText}>{item.content}</Text>
             </View>
           )}
           contentContainerStyle={styles.messagesContainer}
+        /> */}
+        <FlatList
+          ref={flatListRef}
+          data={messages}
+          keyExtractor={(item) => item._id}
+          renderItem={({ item, index }) => {
+            const isLastMessage = index === messages.length - 1;
+            return (
+              <View
+                style={[
+                  styles.message,
+                  item.sender_id === user.id
+                    ? styles.myMessage
+                    : styles.theirMessage,
+                ]}
+              >
+                <Text style={styles.messageText}>{item.content}</Text>
+                <Text style={styles.timestamp}>
+                  {new Date(item.timestamp).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </Text>
+
+                {isLastMessage && item.sender_id === user.id && (
+                  <Text style={styles.status}>
+                    {item.status === "sent"
+                      ? "Đã gửi"
+                      : item.status === "received"
+                      ? "Đã nhận"
+                      : "Đã xem"}
+                  </Text>
+                )}
+              </View>
+            );
+          }}
+          contentContainerStyle={styles.messagesContainer}
+          onContentSizeChange={() =>
+            flatListRef.current?.scrollToEnd({ animated: true })
+          } // Cuộn khi nội dung thay đổi
+          onLayout={() => flatListRef.current?.scrollToEnd({ animated: true })} // Cuộn tin nhắn mới nhất
         />
+
         <View style={styles.inputContainer}>
           <Image
             source={require("../../assets/icons/gif.png")}
@@ -237,6 +338,21 @@ const styles = StyleSheet.create({
   iconsInHeader: {
     width: 18,
     height: 18,
+  },
+  timestamp: {
+    fontSize: 12,
+    color: "gray",
+    alignSelf: "flex-end",
+    marginTop: 2,
+    opacity: 0.8,
+    paddingTop: 5,
+  },
+  status: {
+    fontSize: 12,
+    color: "blue",
+    alignSelf: "flex-end",
+    marginTop: 2,
+    opacity: 0.8,
   },
 });
 

@@ -8,12 +8,11 @@ import {
   StyleSheet,
   TextInput,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
 
 import HeaderPersonalProfile from "../components/header/HeaderPersonalProfile";
 import { UserContext } from "../context/UserContext";
 
-const MeTab = ({ navigation }) => {
+const MeTab = () => {
   const { user } = useContext(UserContext);
   return (
     <SafeAreaView style={styles.container}>
@@ -25,6 +24,7 @@ const MeTab = ({ navigation }) => {
           backgroundColor: "rgba(217, 217, 217, 0.5)",
         }}
       ></View>
+
       {/* Tài khoản */}
       <View style={{ alignItems: "center", gap: 10, top: -50 }}>
         <Image source={require("../assets/images/avatars/avatar1.png")} />
@@ -33,6 +33,7 @@ const MeTab = ({ navigation }) => {
         </Text>
         <Text style={{ color: "blue" }}>Cập nhật tiểu sử</Text>
       </View>
+
       {/* Lọc nội dung đăng tải: Hình ảnh, Video, Nhiều yêu thích */}
       <View
         style={{
@@ -96,6 +97,7 @@ const MeTab = ({ navigation }) => {
           <Text>Nhiều yêu thích</Text>
         </TouchableOpacity>
       </View>
+
       {/* Nội dung đăng tải */}
       <View style={{ top: -10, flex: 1 }}>
         <View

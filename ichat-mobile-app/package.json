@@ -25,6 +25,7 @@
     "@rneui/themed": "^4.0.0-rc.8",
     "axios": "^1.8.1",
     "bcryptjs": "^3.0.2",
+    "dayjs": "^1.11.13",
     "expo": "^52.0.35",
     "expo-barcode-scanner": "^13.0.1",
     "expo-blur": "^14.0.2",
