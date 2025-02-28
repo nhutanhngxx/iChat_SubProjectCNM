@@ -39,10 +39,24 @@ const MessagesTab = ({ setUser }) => {
         />
       </Tab>
       <TabView value={index} onChange={setIndex} animationType="spring">
-        <TabView.Item>
+        <TabView.Item
+          style={{
+            width: "100%",
+            flex: 1,
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
           <UutienMessages />
         </TabView.Item>
-        <TabView.Item>
+        <TabView.Item
+          style={{
+            width: "100%",
+            flex: 1,
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
           <KhacMessages />
         </TabView.Item>
       </TabView>

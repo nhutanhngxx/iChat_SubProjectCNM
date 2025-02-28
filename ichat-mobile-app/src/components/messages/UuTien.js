@@ -33,7 +33,7 @@ const UuTien = () => {
   const fetchUsers = async () => {
     try {
       console.log("Fetching users...");
-      const response = await axios.get("http://192.168.1.37:5001/users");
+      const response = await axios.get("http://192.168.1.51:5001/users");
       console.log("User data from API:", response.data);
       setAllUser(response.data);
     } catch (error) {
@@ -50,7 +50,7 @@ const UuTien = () => {
   const fetchChatList = async () => {
     try {
       const response = await axios.get(
-        `http://192.168.1.37:5001/messages/${user.id}`
+        `http://192.168.1.51:5001/messages/${user.id}`
       );
 
       if (response.data.status === "ok" && Array.isArray(response.data.data)) {
@@ -150,23 +150,24 @@ const UuTien = () => {
 
   return (
     <View style={styles.wrapper}>
-      {/* <FlatList
-        data={chatList}
-        keyExtractor={(item) => item.id}
-        renderItem={renderItem}
-        showsVerticalScrollIndicator={true}
-        keyboardShouldPersistTaps="handled"
-      /> */}
-      <FlatList
-        data={chatList}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => {
-          console.log("Rendering item:", item);
-          return renderItem({ item });
-        }}
-        showsVerticalScrollIndicator={true}
-        keyboardShouldPersistTaps="handled"
-      />
+      {chatList.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>
+            Hiện không có cuộc trò chuyện nào.
+          </Text>
+        </View>
+      ) : (
+        <FlatList
+          data={chatList}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={({ item }) => {
+            console.log("Rendering item:", item);
+            return renderItem({ item });
+          }}
+          showsVerticalScrollIndicator={true}
+          keyboardShouldPersistTaps="handled"
+        />
+      )}
     </View>
   );
 };
@@ -175,6 +176,7 @@ const styles = StyleSheet.create({
   wrapper: {
     flex: 1,
     backgroundColor: "#fff",
+    justifyContent: "center",
   },
   container: {
     height: 70,
@@ -200,6 +202,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     marginBottom: 5,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    width: "100%",
+  },
+  emptyText: {
+    fontSize: 16,
+    color: "#888",
   },
 });
 
