@@ -12,10 +12,10 @@ import { useNavigation } from "@react-navigation/native";
 
 import HeaderPersonalProfile from "../components/header/HeaderPersonalProfile";
 
-const MeTab = ({ navigation }) => {
+const MeTab = ({ navigation, setUser }) => {
   return (
     <SafeAreaView style={styles.container}>
-      <HeaderPersonalProfile />
+      <HeaderPersonalProfile setUser={setUser} />
       <View
         style={{
           height: 80,

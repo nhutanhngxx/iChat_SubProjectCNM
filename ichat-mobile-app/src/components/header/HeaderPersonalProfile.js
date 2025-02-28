@@ -51,8 +51,7 @@ const HeaderMessages = ({ setUser }) => {
               style={styles.option}
               onPress={() => {
                 setModalVisible(false);
-                // Thêm logic logout
-                navigation.navigate("Launcher");
+                setUser(null);
               }}
             >
               <Image

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   StyleSheet,
 } from "react-native";
 import { Dimensions } from "react-native";
+import ModalCreateGroup from "../ModalCreateGroup";
 
 const groupList = [
   {
@@ -30,6 +31,15 @@ const numberGroup = groupList.length;
 
 const GroupTab = () => {
   const { width } = Dimensions.get("window");
+  const [isShowModal, setIsShowModal] = useState(false);
+
+  const handleOpenModal = () => {
+    setIsShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsShowModal(false);
+  };
 
   const renderItem = ({ item }) => (
     <View style={styles.itemContainer}>
@@ -45,9 +55,11 @@ const GroupTab = () => {
 
   return (
     <View style={styles.container}>
+      <ModalCreateGroup isVisible={isShowModal} onClose={handleCloseModal} />
+
       <TouchableOpacity
         style={styles.addNewGroupButton}
-        onPress={() => alert("Tạo nhóm mới")}
+        onPress={() => handleOpenModal()}
       >
         <Image
           source={require("../../assets/icons/add-group.png")}
@@ -60,7 +72,7 @@ const GroupTab = () => {
       <View style={styles.header}>
         <Text style={{ fontSize: 13 }}>
           Nhóm đã tham gia{" "}
-          <Text style={{ fontWeight: "bold" }}>({groupList.length})</Text>
+          <Text style={{ fontWeight: "bold" }}>({numberGroup})</Text>
         </Text>
 
         <TouchableOpacity
