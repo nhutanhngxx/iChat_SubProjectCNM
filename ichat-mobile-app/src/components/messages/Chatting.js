@@ -29,7 +29,7 @@ const Chatting = ({ route }) => {
   const fetchMessages = async () => {
     try {
       const response = await axios.get(
-        `http://192.168.1.37:5001/messages/${user.id}/${chat.id}`
+        `http://192.168.40.63:5001/messages/${user.id}/${chat.id}`
       );
       if (response.data.status === "ok") {
         setMessages(response.data.data);
@@ -84,7 +84,7 @@ const Chatting = ({ route }) => {
         console.log("Dữ liệu gửi đi:", newMessage);
 
         const response = await axios.post(
-          "http://192.168.1.37:5001/send-message",
+          "http://192.168.40.63:5001/send-message",
           newMessage
         );
 
