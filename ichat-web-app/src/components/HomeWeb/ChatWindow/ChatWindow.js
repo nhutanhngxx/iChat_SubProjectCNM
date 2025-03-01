@@ -1,14 +1,13 @@
 import React, { useState } from "react";
-import { Layout, Input, Button } from "antd";
-import { SendOutlined } from "@ant-design/icons";
+import { Layout, Modal } from "antd";
+
+import SearchBar from "../Common/SearchBar";
 import UserList from "./UserList";
 import HelloWindow from "./HelloWindow";
 import MessageArea from "./MessageArea";
-import MessageList from "./MessageList";
-import ConversationDetails from "./ConversationDetails";
+import ComponentLeft from "./ComponentLeft";
+import ComponentLeftSearch from "./ComponentLeftSearch";
 import "./ChatWindow.css";
-
-const { Sider, Content } = Layout;
 
 // Mock data
 const userList = [
@@ -61,46 +60,25 @@ const userList = [
 
 const ChatWindow = () => {
   const [selectedUser, setSelectedUser] = useState(null);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
-  
-  const [messages, setMessages] = useState([]);
-  const [inputMessage, setInputMessage] = useState("");
-  const [files, setFiles] = useState([]);
-
-
-  const handleSelectUser= (user) => {
+  const handleSelectUser = (user) => {
     setSelectedUser(user);
-  };
-
-  const handleSendMessage = () => {
-    if (inputMessage.trim()) {
-      const newMessage = {
-        id: messages.length + 1,
-        text: inputMessage,
-        sender: "You",
-        senderAvatar: "https://i.pravatar.cc/300",
-        timestamp: new Date().toLocaleTimeString(),
-      };
-      setMessages([...messages, newMessage]);
-      setInputMessage("");
-    }
-  };
-
-  const handleFileUpload = (event) => {
-    const file = event.target.files[0];
-    const newFile = {
-      id: files.length + 1,
-      name: file.name,
-      url: URL.createObjectURL(file),
-    };
-    setFiles([...files, newFile]);
+    setIsSearchOpen(false);
   };
 
   return (
     <Layout className="chat-window">
-      <UserList userList={userList} onSelectUser={handleSelectUser} />
+      <ComponentLeftSearch
+        userList={userList}
+        onSelectUser={handleSelectUser}
+      />
+      {/* <div className="search-user-list-container">
+        <SearchBar onFocus={() => setIsSearchOpen(true)} />
+        <UserList userList={userList} onSelectUser={handleSelectUser} />
+      </div> */}
 
-      {/* Phần điều kiện hiển thị */}
+      {/* Hiển thị màn hình chat hoặc màn hình chào */}
       {selectedUser ? (
         <MessageArea selectedChat={selectedUser} />
       ) : (

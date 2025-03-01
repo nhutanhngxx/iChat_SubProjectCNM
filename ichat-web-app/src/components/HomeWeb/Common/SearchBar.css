@@ -1,0 +1,30 @@
+.search-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 20px;
+}
+
+.search-bar {
+  flex: 1;
+  border-radius: 24px;
+  padding-left: 10px;
+}
+
+.search-icon {
+  font-size: 16px;
+  color: #999;
+}
+
+.icons {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 0px;
+}
+
+.user-icon,
+.group-icon {
+  font-size: 20px;
+  cursor: pointer;
+  color: #000;
+}

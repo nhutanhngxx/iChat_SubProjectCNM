@@ -1,17 +1,26 @@
 import React, { useState } from "react";
-import { Layout, List, Avatar, Badge, Row, Col, Input, Menu, Dropdown} from "antd";
+import {
+  Layout,
+  List,
+  Avatar,
+  Badge,
+  Row,
+  Col,
+  Menu,
+  Dropdown,
+  Modal,
+} from "antd";
 import {
   VideoCameraOutlined,
   PhoneOutlined,
   NotificationOutlined,
-  SearchOutlined,
-  UserOutlined,
-  UsergroupAddOutlined,
   MoreOutlined,
 } from "@ant-design/icons";
 import "./UserList.css";
 
-const { Header, Content } = Layout;
+import SearchBar from "../Common/SearchBar";
+
+const { Content } = Layout;
 
 const UserList = ({ userList, onSelectUser }) => {
   const [searchText, setSearchText] = useState("");
@@ -32,19 +41,6 @@ const UserList = ({ userList, onSelectUser }) => {
   return (
     <Layout className="chat-sidebar">
       <Content className="chat-list">
-        <div className="search-container">
-          <Input
-            prefix={<SearchOutlined className="search-icon" />}
-            placeholder="Tìm kiếm"
-            className="search-bar"
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-          />
-          <div className="icons">
-            <UserOutlined className="user-icon" />
-            <UsergroupAddOutlined className="group-icon" />
-          </div>
-        </div>
         {/* Header Tabs */}
         <div className="chat-header-user-list">
           <span className="active">Tất cả</span>
@@ -76,7 +72,7 @@ const UserList = ({ userList, onSelectUser }) => {
                   </Col>
                 </Row>
                 <Row justify="space-between">
-                  <Col >
+                  <Col>
                     <span className={`last-message ${item.type}`}>
                       {item.type === "video" && <VideoCameraOutlined />}
                       {item.type === "audio" && <PhoneOutlined />}
@@ -84,7 +80,9 @@ const UserList = ({ userList, onSelectUser }) => {
                       {item.lastMessage}
                     </span>
                   </Col>
-                  <Col><Badge count={item.unread} offset={[0, 0]}></Badge></Col>
+                  <Col>
+                    <Badge count={item.unread} offset={[0, 0]}></Badge>
+                  </Col>
                 </Row>
               </div>
             </List.Item>

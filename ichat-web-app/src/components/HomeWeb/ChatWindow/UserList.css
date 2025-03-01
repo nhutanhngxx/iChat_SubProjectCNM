@@ -4,41 +4,8 @@
   width: 364px !important;
   min-width: 364px;
   max-width: 364px;
-  background: url("https://i.ibb.co/v471Jbbx/bgApp.png") no-repeat center/cover;
   border-right: 1px solid #c6ddf5;
   height: 100vh;
-}
-
-.search-container {
-  display: flex;
-  align-items: center;
-  gap: 8px; /* Khoảng cách giữa input và icon */
-  padding: 10px 20px;
-}
-
-.search-bar {
-  flex: 1;
-  border-radius: 24px;
-  padding-left: 10px;
-}
-
-.search-icon {
-  font-size: 16px;
-  color: #999;
-}
-
-.icons {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 12px;
-
-}
-
-.user-icon,
-.group-icon {
-  font-size: 20px;
-  cursor: pointer;
-  color: #000; /* Màu đen như trong ảnh */
 }
 
 /* Header Tabs */
@@ -73,10 +40,6 @@
   padding: 15px 0;
   height: calc(100vh - 82px); /* Adjust height based on header */
   overflow-y: auto;
-}
-
-.search-bar {
-  margin-bottom: 15px;
 }
 
 .chat-item {
@@ -117,7 +80,6 @@
   margin-left: 12px;
   width: calc(100% - 60px); /* 60px = kích thước avatar + margin */
   overflow: hidden;
-
 }
 
 /* Tên người chat */
