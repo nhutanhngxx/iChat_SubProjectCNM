@@ -20,7 +20,7 @@ const LoginScreen = ({ navigation }) => {
 
   const handleLogin = async () => {
     try {
-      const response = await axios.post("http://192.168.1.51:5001/login", {
+      const response = await axios.post("http://172.20.10.2:5001/login", {
         phone,
         password,
       });

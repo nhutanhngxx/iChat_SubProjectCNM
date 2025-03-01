@@ -17,6 +17,7 @@ import addFriendIcon from "../../assets/icons/add-friend.png";
 const HeaderMessages = () => {
   const navigation = useNavigation();
   const [modalVisible, setModalVisible] = useState(false);
+
   // const [hasPermission, setHasPermission] = useState(null);
   // useEffect(() => {
   //   (async () => {
@@ -120,23 +121,21 @@ const HeaderMessages = () => {
               <Text style={{ fontSize: 16 }}>Thêm bạn bè</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity
+            {/* <TouchableOpacity
               style={{
                 padding: 10,
                 flexDirection: "row",
                 alignItems: "center",
                 gap: 5,
               }}
-              onPress={() => {
-                setModalVisible(false);
-              }}
+              onPress={() => handleOpenModal()}
             >
               <Image
                 source={createGroupIcon}
                 style={{ width: 25, height: 25 }}
               />
               <Text style={{ fontSize: 16 }}>Tạo nhóm mới</Text>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
 
             <TouchableOpacity
               style={{

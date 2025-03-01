@@ -28,11 +28,11 @@ const Option = ({ route }) => {
   const deleteChatHistory = async () => {
     try {
       const response = await axios.delete(
-        `http://192.168.1.51:5001/messages/${user.id}/${id}`
+        `http://172.20.10.2:5001/messages/${user.id}/${id}`
       );
 
       if (response.data.status === "ok") {
-        navigation.navigate("MessageTab");
+        navigation.navigate("MessagesStack");
       }
     } catch (error) {
       console.error("Lỗi khi xóa lịch sử trò chuyện:", error);

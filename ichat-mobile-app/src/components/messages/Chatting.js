@@ -45,17 +45,21 @@ const Chatting = ({ route }) => {
 
   // Thu hồi tin nhắn
   const handleRecallMessage = async () => {
+    console.log("Mess deleting: ", selectedMessage);
     if (!selectedMessage) return;
 
     try {
       const response = await axios.delete(
-        `http://192.168.1.51:5001/messages/${selectedMessage._id}`
+        `http://172.20.10.2:5001/${selectedMessage._id}`
       );
+
+      console.log("Response từ server:", response.data);
 
       if (response.data.status === "ok") {
         setMessages((prevMessages) =>
           prevMessages.filter((msg) => msg._id !== selectedMessage._id)
         );
+        console.log("Tin nhắn đã được loại bỏ khỏi danh sách trên UI.");
       }
 
       setModalVisible(false);
@@ -75,7 +79,7 @@ const Chatting = ({ route }) => {
   const fetchMessages = async () => {
     try {
       const response = await axios.get(
-        `http://192.168.1.51:5001/messages/${user.id}/${chat.id}`
+        `http://172.20.10.2:5001/messages/${user.id}/${chat.id}`
       );
       if (response.data.status === "ok") {
         setMessages(response.data.data);
@@ -131,7 +135,7 @@ const Chatting = ({ route }) => {
         };
 
         const response = await axios.post(
-          "http://192.168.1.51:5001/messages/reply",
+          "http://172.20.10.2:5001/messages/reply",
           newMessage
         );
 
@@ -280,7 +284,17 @@ const Chatting = ({ route }) => {
           >
             <View style={styles.modalContainer}>
               <View style={styles.modalContent}>
-                <View style={styles.row}>
+                <View
+                  style={[
+                    styles.row,
+                    {
+                      backgroundColor: "white",
+                      width: "100%",
+                      borderRadius: 10,
+                      padding: 10,
+                    },
+                  ]}
+                >
                   <TouchableOpacity>
                     <Image
                       source={require("../../assets/icons/emoji-haha.png")}
@@ -312,90 +326,100 @@ const Chatting = ({ route }) => {
                     />
                   </TouchableOpacity>
                 </View>
-                <View style={styles.row}>
-                  <TouchableOpacity
-                    style={styles.actionButton}
-                    onPress={() => handleReply(selectedMessage)}
-                  >
-                    <Image
-                      source={require("../../assets/icons/reply-message.png")}
-                      style={styles.icon}
-                    />
-                    <Text style={styles.modalOption}>Trả lời</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.actionButton}
-                    onPress={() => console.log("Chuyển tiếp tin nhắn")}
-                  >
-                    <Image
-                      source={require("../../assets/icons/forward-message.png")}
-                      style={styles.icon}
-                    />
-                    <Text style={styles.modalOption}>Chuyển tiếp</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.actionButton}
-                    onPress={() => console.log("Ghim tin nhắn")}
-                  >
-                    <Image
-                      source={require("../../assets/icons/pin.png")}
-                      style={styles.icon}
-                    />
-                    <Text style={styles.modalOption}>Ghim</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.actionButton}
-                    onPress={handleRecallMessage}
-                  >
-                    <Image
-                      source={require("../../assets/icons/recall.png")}
-                      style={styles.icon}
-                    />
-                    <Text style={styles.modalOption}>Thu hồi</Text>
-                  </TouchableOpacity>
-                </View>
 
-                <View style={styles.row}>
-                  <TouchableOpacity
-                    style={styles.actionButton}
-                    onPress={() => console.log("Xem chi tiết tin nhắn")}
-                  >
-                    <Image
-                      source={require("../../assets/icons/details.png")}
-                      style={styles.icon}
-                    />
-                    <Text style={styles.modalOption}>Xem chi tiết</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.actionButton}
-                    onPress={() => console.log("Lưu vào Cloud")}
-                  >
-                    <Image
-                      source={require("../../assets/icons/save-cloud.png")}
-                      style={styles.icon}
-                    />
-                    <Text style={styles.modalOption}>Lưu vào Cloud</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.actionButton}
-                    onPress={handleCopyMessage}
-                  >
-                    <Image
-                      source={require("../../assets/icons/copy.png")}
-                      style={styles.icon}
-                    />
-                    <Text style={styles.modalOption}>Sao chép</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.actionButton}
-                    onPress={() => console.log("Xóa tin nhắn vĩnh viễn")}
-                  >
-                    <Image
-                      source={require("../../assets/icons/delete-message.png")}
-                      style={styles.icon}
-                    />
-                    <Text style={styles.modalOption}>Xóa</Text>
-                  </TouchableOpacity>
+                <View
+                  style={{
+                    backgroundColor: "white",
+                    width: "100%",
+                    borderRadius: 10,
+                    padding: 10,
+                  }}
+                >
+                  <View style={styles.row}>
+                    <TouchableOpacity
+                      style={styles.actionButton}
+                      onPress={() => handleReply(selectedMessage)}
+                    >
+                      <Image
+                        source={require("../../assets/icons/reply-message.png")}
+                        style={styles.icon}
+                      />
+                      <Text style={styles.modalOption}>Trả lời</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.actionButton}
+                      onPress={() => console.log("Chuyển tiếp tin nhắn")}
+                    >
+                      <Image
+                        source={require("../../assets/icons/forward-message.png")}
+                        style={styles.icon}
+                      />
+                      <Text style={styles.modalOption}>Chuyển tiếp</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.actionButton}
+                      onPress={() => console.log("Ghim tin nhắn")}
+                    >
+                      <Image
+                        source={require("../../assets/icons/pin.png")}
+                        style={styles.icon}
+                      />
+                      <Text style={styles.modalOption}>Ghim</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.actionButton}
+                      onPress={() => handleRecallMessage(selectedMessage)}
+                    >
+                      <Image
+                        source={require("../../assets/icons/recall.png")}
+                        style={styles.icon}
+                      />
+                      <Text style={styles.modalOption}>Thu hồi</Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  <View style={styles.row}>
+                    <TouchableOpacity
+                      style={styles.actionButton}
+                      onPress={() => console.log("Xem chi tiết tin nhắn")}
+                    >
+                      <Image
+                        source={require("../../assets/icons/details.png")}
+                        style={styles.icon}
+                      />
+                      <Text style={styles.modalOption}>Xem chi tiết</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.actionButton}
+                      onPress={() => console.log("Lưu vào Cloud")}
+                    >
+                      <Image
+                        source={require("../../assets/icons/save-cloud.png")}
+                        style={styles.icon}
+                      />
+                      <Text style={styles.modalOption}>Lưu vào Cloud</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.actionButton}
+                      onPress={handleCopyMessage}
+                    >
+                      <Image
+                        source={require("../../assets/icons/copy.png")}
+                        style={styles.icon}
+                      />
+                      <Text style={styles.modalOption}>Sao chép</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.actionButton}
+                      onPress={() => console.log("Xóa tin nhắn vĩnh viễn")}
+                    >
+                      <Image
+                        source={require("../../assets/icons/delete-message.png")}
+                        style={styles.icon}
+                      />
+                      <Text style={styles.modalOption}>Xóa</Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
               </View>
             </View>
@@ -603,7 +627,7 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     width: "80%",
-    backgroundColor: "white",
+    // backgroundColor: "white",
     borderRadius: 10,
     padding: 20,
   },

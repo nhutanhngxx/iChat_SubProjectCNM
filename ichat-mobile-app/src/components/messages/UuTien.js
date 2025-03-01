@@ -33,7 +33,7 @@ const UuTien = () => {
   const fetchUsers = async () => {
     try {
       console.log("Fetching users...");
-      const response = await axios.get("http://192.168.1.51:5001/users");
+      const response = await axios.get("http://172.20.10.2:5001/users");
       console.log("User data from API:", response.data);
       setAllUser(response.data);
     } catch (error) {
@@ -50,7 +50,7 @@ const UuTien = () => {
   const fetchChatList = async () => {
     try {
       const response = await axios.get(
-        `http://192.168.1.51:5001/messages/${user.id}`
+        `http://172.20.10.2:5001/messages/${user.id}`
       );
 
       if (response.data.status === "ok" && Array.isArray(response.data.data)) {

@@ -92,7 +92,7 @@ router.delete("/:messageId", async (req, res) => {
     // Xóa tin nhắn
     await Messages.findByIdAndDelete(messageId);
 
-    res.json({ message: "Message deleted successfully" });
+    res.json({ status: "ok", message: "Message deleted successfully" });
   } catch (error) {
     console.error("Error deleting message:", error);
     res.status(500).json({ error: "Internal Server Error" });
