@@ -6,7 +6,15 @@
   align-items: center;
   padding: 10px 0;
 }
-
+.sidebar-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  height: 90%;
+  width: 100%;
+}
 .avatar-container-sidebar {
   width: 45px;
   height: 45px;
@@ -16,6 +24,7 @@
   justify-content: center;
   align-items: center;
   margin-bottom: 20px;
+  cursor: pointer;
 }
 
 .avatar-icon {
@@ -34,7 +43,7 @@
 }
 
 .sidebar-icon {
-  font-size: 24px;
+  font-size: 30px;
   color: white;
   padding: 10px;
   border-radius: 10px;

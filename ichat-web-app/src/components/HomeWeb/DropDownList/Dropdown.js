@@ -29,7 +29,7 @@ const ProfileDropdown = () => {
   const menu = (
     <Menu className="profile-menu">
       <Menu.Item key="0">
-        <strong>Đinh Nguyễn Chung</strong>
+        <strong>Đinh Nguyên Chung</strong>
       </Menu.Item>
       <Menu.Divider />
       <Menu.Item key="1" onClick={handleOpenProfile}>
@@ -50,7 +50,7 @@ const ProfileDropdown = () => {
     <>
       <Dropdown overlay={menu} trigger={["click"]} placement="bottomRight">
         <div className="avatar-container-sidebar">
-          <UserOutlined className="avatar-icon" />
+          <img src="https://i.ibb.co/7Njf5HW0/avt.jpg"></img>
         </div>
       </Dropdown>
       <ProfileModal

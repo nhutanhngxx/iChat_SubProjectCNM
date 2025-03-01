@@ -1,0 +1,27 @@
+.interface-settings {
+  padding: 20px;
+}
+
+.setting-item {
+  margin-bottom: 20px;
+}
+
+.setting-item label {
+  display: block;
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+
+.background-options {
+  margin-top: 10px;
+}
+
+.background-options label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.background-options .ant-switch {
+  margin-left: 10px;
+}
