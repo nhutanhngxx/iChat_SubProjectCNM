@@ -3,13 +3,11 @@ import { FaUserFriends, FaUserPlus } from "react-icons/fa";
 import { FaUsers } from "react-icons/fa6";
 import { BsFillPersonLinesFill } from "react-icons/bs";
 import { BsPersonAdd } from "react-icons/bs";
-import { PiUsersThreeFill } from "react-icons/pi";
 
 import "./index.css"; // Import CSS
 import FriendList from "./FriendList";
 import GroupList from "./GroupList";
 import RequestList from "./RequestList";
-import RequestGroupList from "./RequestGroupList";
 
 const PhoneBookWindow = () => {
   const [activeTab, setActiveTab] = useState("friends");
@@ -52,15 +50,6 @@ const PhoneBookWindow = () => {
             <BsPersonAdd className="text-gray-600 mr-2 icons" />
             <span>Lời mời kết bạn</span>
           </div>
-          <div
-            className={`menu-item ${
-              activeTab === "requestsgroups" ? "active" : ""
-            }`}
-            onClick={() => setActiveTab("requestsgroups")}
-          >
-            <PiUsersThreeFill className="text-gray-600 mr-2 icons" />
-            <span>Lời mời vào nhóm cộng đồng</span>
-          </div>
         </div>
       </div>
 
@@ -69,7 +58,6 @@ const PhoneBookWindow = () => {
         {activeTab === "friends" && <FriendList />}
         {activeTab === "groups" && <GroupList />}
         {activeTab === "requests" && <RequestList />}
-        {activeTab === "requestsgroups" && <RequestGroupList />}
       </div>
     </div>
   );
