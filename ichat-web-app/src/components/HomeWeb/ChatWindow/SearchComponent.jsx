@@ -3,7 +3,7 @@ import { Input, Button } from "antd";
 import { SearchOutlined, CloseOutlined } from "@ant-design/icons";
 import "./SearchComponent.css";
 
-const SearchComponent = ({ searchText, setSearchText }) => {
+const SearchComponent = ({ searchText, setSearchText, onClose }) => {
   const handleClear = () => {
     setSearchText("");
   };
@@ -22,7 +22,7 @@ const SearchComponent = ({ searchText, setSearchText }) => {
         value={searchText}
         onChange={(e) => setSearchText(e.target.value)}
       />
-      <Button type="text" className="close" onClick={false}>
+      <Button type="text" className="close" onClick={onClose}>
         <p style={{ margin: 0 }}>Đóng</p>
       </Button>
     </div>

@@ -1,15 +1,13 @@
 import React, { useState } from "react";
 import { Layout, Modal } from "antd";
 
-import SearchBar from "../Common/SearchBar";
-import UserList from "./UserList";
 import HelloWindow from "./HelloWindow";
 import MessageArea from "./MessageArea";
 import ComponentLeft from "./ComponentLeft";
 import ComponentLeftSearch from "./ComponentLeftSearch";
+
 import "./ChatWindow.css";
 
-// Mock data
 const userList = [
   {
     id: 1,
@@ -69,14 +67,7 @@ const ChatWindow = () => {
 
   return (
     <Layout className="chat-window">
-      <ComponentLeftSearch
-        userList={userList}
-        onSelectUser={handleSelectUser}
-      />
-      {/* <div className="search-user-list-container">
-        <SearchBar onFocus={() => setIsSearchOpen(true)} />
-        <UserList userList={userList} onSelectUser={handleSelectUser} />
-      </div> */}
+      <ComponentLeft userList={userList} onSelectUser={handleSelectUser} />
 
       {/* Hiển thị màn hình chat hoặc màn hình chào */}
       {selectedUser ? (
