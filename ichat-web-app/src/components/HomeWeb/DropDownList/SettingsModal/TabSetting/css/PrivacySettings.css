@@ -8,6 +8,8 @@
 
 .setting-item {
   margin-bottom: 15px;
+  display: flex;
+  justify-content: space-between;
 }
 
 .setting-item label {
@@ -37,4 +39,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+.blockList-contents.slide-in,
+.quick-message-content.slide-in {
+  transform: translateX(-68%);
 }

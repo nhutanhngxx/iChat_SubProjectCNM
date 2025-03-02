@@ -5,7 +5,19 @@
 .setting-item {
   margin-bottom: 20px;
 }
-
+.setting-item .radio-group {
+  display: flex;
+  gap: 10px;
+}
+.setting-item .radio-group div {
+  justify-items: center;
+}
+.setting-item .radio-group div img {
+  width: 100%;
+  height: auto;
+  margin-right: 10px;
+  margin-bottom: 20px;
+}
 .setting-item label {
   display: block;
   margin-bottom: 10px;

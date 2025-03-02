@@ -6,7 +6,7 @@ import "./Dropdown.css";
 import ProfileModal from "./ProfileModal/ProfileModal";
 import SettingsModal from "./SettingsModal/SettingsModal";
 
-const ProfileDropdown = () => {
+const ProfileDropdown = ({ onOpenSettings }) => {
   const [isProfileModalVisible, setProfileModalVisible] = useState(false);
   const [isSettingsModalVisible, setSettingsModalVisible] = useState(false);
 
@@ -36,7 +36,7 @@ const ProfileDropdown = () => {
         Hồ sơ của bạn
       </Menu.Item>
 
-      <Menu.Item key="2" onClick={handleOpenSettings}>
+      <Menu.Item key="2" onClick={handleOpenSettings || onOpenSettings}>
         Cài đặt
       </Menu.Item>
       <Menu.Divider />

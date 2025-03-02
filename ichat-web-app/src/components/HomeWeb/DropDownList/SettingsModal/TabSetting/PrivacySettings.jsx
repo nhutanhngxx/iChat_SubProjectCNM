@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import "./css/PrivacySettings.css";
 import { FiChevronRight } from "react-icons/fi";
 import { Switch, Select, Checkbox } from "antd";
+import { FaChevronLeft } from "react-icons/fa";
 const { Option } = Select;
 
 const PrivacySettings = () => {
@@ -26,39 +27,40 @@ const PrivacySettings = () => {
       [option]: !friendRequestOptions[option],
     });
   };
-
+  // Mở danh sách chặn
+  const [showBlockList, setShowBlockList] = useState(false);
+  const handleBlockListClick = () => {
+    setShowBlockList(true);
+  };
+  const handleBackClick = () => {
+    setShowBlockList(false);
+  };
   return (
     <div className="privacy-settings">
-      <h2>Cá nhân</h2>
-      <div className="setting-item">
-        <label>
-          Hiện ngày sinh
+      <div className={`main-content ${showBlockList ? "shift-left" : ""}`}>
+        <h2>Cá nhân</h2>
+        <div className="setting-item">
+          <p>Hiện ngày sinh</p>
           <Switch checked={showBirthday} onChange={(e) => setShowBirthday(e)} />
-        </label>
-      </div>
-      <div className="setting-item">
-        <label>
-          Hiển thị trạng thái truy cập
+        </div>
+        <div className="setting-item">
+          <p>Hiển thị trạng thái truy cập</p>
           <Switch
             checked={showOnlineStatus}
             onChange={(e) => setShowOnlineStatus(e)}
           />
-        </label>
-      </div>
+        </div>
 
-      <h2>Tin nhắn và cuộc gọi</h2>
-      <div className="setting-item">
-        <label>
-          Hiện trạng thái "Đã xem"
+        <h2>Tin nhắn và cuộc gọi</h2>
+        <div className="setting-item">
+          <p>Hiện trạng thái "Đã xem"</p>
           <Switch
             checked={showSeenStatus}
             onChange={(e) => setShowSeenStatus(e)}
           />
-        </label>
-      </div>
-      <div className="setting-item">
-        <label>
-          Cho phép nhắn tin
+        </div>
+        <div className="setting-item">
+          <p>Cho phép nhắn tin</p>
           <Select
             value={allowMessaging}
             onChange={(value) => setAllowMessaging(value)}
@@ -67,11 +69,9 @@ const PrivacySettings = () => {
             <Option value="all">Tất cả mọi người</Option>
             <Option value="specific">Bạn bè</Option>
           </Select>
-        </label>
-      </div>
-      <div className="setting-item">
-        <label>
-          Cho phép gọi điện
+        </div>
+        <div className="setting-item">
+          <p>Cho phép gọi điện</p>
           <Select
             value={allowCalls}
             onChange={(value) => setAllowCalls(value)}
@@ -83,28 +83,27 @@ const PrivacySettings = () => {
             <Option value="specific">Bạn bè</Option>
             <Option value="all">Tất cả mọi người</Option>
           </Select>
-        </label>
-      </div>
-      <h2>Chặn tin nhắn </h2>
-      <div className="setting-item">
-        <button className="button-blockList">
-          <div> Danh sách chặn</div>
-          <div>
-            <FiChevronRight />
-          </div>
-        </button>
-      </div>
-      <h2>Nguồn tìm kiếm</h2>
-      <div className="setting-item">
-        <label>
-          Cho phép người lạ tìm thấy và kết bạn qua số điện thoại
-          <Switch
-            checked={allowStrangerSearch}
-            onChange={(e) => setAllowStrangerSearch(e)}
-          />
-        </label>
-      </div>
-      {/* <div className="setting-item">
+        </div>
+        <h2>Chặn tin nhắn </h2>
+        <div className="setting-item">
+          <button className="button-blockList" onClick={handleBlockListClick}>
+            <div> Danh sách chặn</div>
+            <div>
+              <FiChevronRight />
+            </div>
+          </button>
+        </div>
+        <h2>Nguồn tìm kiếm</h2>
+        <div className="setting-item">
+          <p>
+            Cho phép người lạ tìm thấy và kết bạn qua số điện thoại
+            <Switch
+              checked={allowStrangerSearch}
+              onChange={(e) => setAllowStrangerSearch(e)}
+            />
+          </p>
+        </div>
+        {/* <div className="setting-item">
         <label>
           Cho phép người lạ kết bạn
           <Switch
@@ -114,46 +113,51 @@ const PrivacySettings = () => {
         </label>
       </div> */}
 
-      <h2>Cho phép người lạ kết bạn</h2>
-      <div className="setting-item">
-        <label>
+        <h2>Cho phép người lạ kết bạn</h2>
+        <div className="setting-item">
           <Checkbox
             checked={friendRequestOptions.qrCode}
             onChange={() => handleFriendRequestOptionChange("qrCode")}
           >
             Mã QR của tôi
           </Checkbox>
-        </label>
-      </div>
-      <div className="setting-item">
-        <label>
+        </div>
+        <div className="setting-item">
           <Checkbox
             checked={friendRequestOptions.commonGroups}
             onChange={() => handleFriendRequestOptionChange("commonGroups")}
           >
             Nhóm chung
           </Checkbox>
-        </label>
-      </div>
-      <div className="setting-item">
-        <label>
+        </div>
+        <div className="setting-item">
           <Checkbox
             checked={friendRequestOptions.zaloCard}
             onChange={() => handleFriendRequestOptionChange("zaloCard")}
           >
             Danh thiếp Zalo
           </Checkbox>
-        </label>
-      </div>
-      <div className="setting-item">
-        <label>
+        </div>
+        <div className="setting-item">
           <Checkbox
             checked={friendRequestOptions.suggestedFriends}
             onChange={() => handleFriendRequestOptionChange("suggestedFriends")}
           >
             Gợi ý "Có thể bạn quen"
           </Checkbox>
-        </label>
+        </div>
+      </div>
+      <div className={`blockList-contents ${showBlockList ? "slide-in" : ""}`}>
+        <div style={{ gap: "10px", display: "flex", alignItems: "center" }}>
+          <FaChevronLeft
+            style={{ marginBottom: "8px", fontSize: "20px", cursor: "pointer" }}
+            onClick={handleBackClick}
+          />
+          <h1>Danh sách đã chặn</h1>
+        </div>
+        <div className="box-blockList">
+          <p>Bạn chưa chặn ai</p>
+        </div>
       </div>
     </div>
   );

@@ -16,6 +16,9 @@ import GeneralSettings from "./TabSetting/GeneralSettings";
 import SecuritySettings from "./TabSetting/AccountSecurity";
 import PrivacySettings from "./TabSetting/PrivacySettings";
 import InterfaceSettings from "./TabSetting/InterfaceSettings";
+import NotificationSettings from "./TabSetting/Notifications";
+import MessageSettings from "./TabSetting/Messages";
+import ToolSettings from "./TabSetting/ToolSettings";
 const { Option } = Select;
 
 const SettingsModal = ({ visible, onClose }) => {
@@ -36,6 +39,7 @@ const SettingsModal = ({ visible, onClose }) => {
         {/* Sidebar Menu */}
         <div className="settings-sidebar">
           <Menu
+            className="settings-menu"
             mode="vertical"
             selectedKeys={[selectedMenu]}
             onClick={(e) => setSelectedMenu(e.key)}
@@ -81,10 +85,10 @@ const SettingsModal = ({ visible, onClose }) => {
           {selectedMenu === "privacy" && <PrivacySettings />}
           {selectedMenu === "sync" && <h1>Sync</h1>}
           {selectedMenu === "interface" && <InterfaceSettings />}
-          {selectedMenu === "notifications" && <h1>Notifications</h1>}
-          {selectedMenu === "messages" && <h1>Messages</h1>}
+          {selectedMenu === "notifications" && <NotificationSettings />}
+          {selectedMenu === "messages" && <MessageSettings />}
           {selectedMenu === "calls" && <h1>Calls</h1>}
-          {selectedMenu === "tools" && <h1>Tools</h1>}
+          {selectedMenu === "tools" && <ToolSettings />}
         </div>
       </div>
     </Modal>

@@ -51,9 +51,8 @@ const SecuritySettings = () => {
           di động sau khi đăng nhập trên thiết bị lạ.
         </p>
         <button className="button-security" onClick={toggleTwoFactorAuth}>
-          {twoFactorAuthEnabled
-            ? "Bảo mật 2 lớp Đã bật"
-            : "Bảo mật 2 lớp Đã tắt"}
+          <p>Bảo mật 2 lớp</p>
+          <p>{twoFactorAuthEnabled ? "Đã bật" : "Đã tắt"}</p>
         </button>
       </div>
 

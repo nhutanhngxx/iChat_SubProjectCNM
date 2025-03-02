@@ -8,7 +8,9 @@
 }
 
 .main-content,
-.change-password-content {
+.change-password-content,
+.blockList-contents,
+.quick-message-content {
   transition: transform 0.5s ease-in-out;
   width: 100%;
   display: flex;
@@ -20,7 +22,9 @@
   transform: translateX(-100%);
 }
 
-.change-password-content {
+.change-password-content,
+.blockList-contents,
+.quick-message-content {
   position: absolute;
   top: 0;
   right: -100%;
@@ -54,14 +58,22 @@
 }
 
 .button-security {
-  background: rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: space-between; /* Giữ nguyên */
+  align-items: center; /* Căn giữa icon và text theo chiều dọc */
+  font-weight: 500;
+  margin: 16px 10px;
+  background: #ffffff;
+  width: 90%;
   border: none;
-  width: 100%;
-  padding: 10px;
   cursor: pointer;
-  font-size: 16px;
-  border-radius: 5px;
-  margin-bottom: 20px;
+  gap: 10px;
+  padding: 10px 16px; /* Đảm bảo có khoảng cách trên dưới */
+  height: 50px; /* Đặt chiều cao để dễ căn giữa */
+}
+
+.button-security p:last-child {
+  color: #007bff;
 }
 
 .change-password-content form {
@@ -125,4 +137,18 @@
   display: flex;
 
   margin-bottom: 5px;
+}
+.box-blockList {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid #dbdbdb;
+  min-height: 100px;
+  max-width: 66%;
+  border-radius: 10px;
+}
+.box-blockList p {
+  width: 100%;
+  text-align: center;
 }

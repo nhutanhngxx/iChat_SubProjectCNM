@@ -16,13 +16,16 @@
 .settings-sidebar {
   width: 250px;
   background: #f0f2f5;
-  padding: 16px;
   height: 100%;
   overflow-y: auto;
 }
 
+.settings-sidebar .settings-menu {
+  height: 100%;
+}
 .settings-content {
   flex: 1;
+  /* width: calc(100% - 250px); */
   padding: 24px;
   height: 100%;
 }
