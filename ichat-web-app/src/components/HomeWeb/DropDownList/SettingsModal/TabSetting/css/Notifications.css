@@ -1,0 +1,39 @@
+.notification-settings {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  height: 100%;
+}
+
+.setting-item.notify-new-message {
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  width: 130%;
+}
+
+.setting-item label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.setting-item-notify-sound-new {
+  display: flex;
+  flex-direction: column;
+  width: 130%;
+}
+.setting-item-notify-sound-new .setting-item-notify-sound-new-switch {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.setting-item p {
+  margin: 5px 0 0;
+  color: #666;
+  font-size: 14px;
+}
+
+.setting-item .ant-switch {
+  margin-left: 10px;
+}

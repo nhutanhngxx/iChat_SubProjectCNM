@@ -4,7 +4,8 @@ body {
   height: 100vh;
   margin: 0;
   padding: 0;
-  overflow: hidden; /* Ngăn chặn tràn màn hình */
+  overflow-x: hidden; /* Ngăn chặn tràn màn hình */
+  overflow-y: auto;
 }
 /* Cấu trúc chính */
 .body {
@@ -12,18 +13,21 @@ body {
   flex-direction: column;
   height: 100vh; /* Chiều cao toàn màn hình */
   width: 100%;
+  max-width: 100%;
   overflow: hidden;
 }
 
 /* Nội dung chính */
 .content-body {
-  flex: 1; /* Để phần nội dung co giãn theo màn hình */
+  flex: 1;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: flex-start;
   background: linear-gradient(to right, #c2e9fb, #a1c4fd);
-  overflow-y: auto; /* Thêm thanh cuộn nếu nội dung quá dài */
+  overflow-y: auto; /* Chỉ cuộn dọc */
+  overflow-x: hidden; /* Ngăn cuộn ngang */
+  width: 100%; /* Ngăn mở rộng */
 }
 
 /* Danh sách bạn bè */

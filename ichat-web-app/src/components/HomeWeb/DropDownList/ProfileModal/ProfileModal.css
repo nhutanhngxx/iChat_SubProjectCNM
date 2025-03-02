@@ -3,6 +3,7 @@
 .profile-modal .ant-modal-content {
   border-radius: 12px;
   overflow: hidden;
+  padding: 20px 0px;
 }
 
 .modal-header {
@@ -12,9 +13,7 @@
   font-size: 16px;
   font-weight: 500;
   color: #333;
-}
-
-.profile-container {
+  padding: 0px 10px;
 }
 
 .cover-photo {
@@ -51,8 +50,8 @@
 
 .edit-icon {
   position: absolute;
-  top: 50px;
-  right: 50px;
+  top: 70px;
+  right: 95px;
   color: #1890ff;
   cursor: pointer;
   background-color: white;
@@ -62,7 +61,7 @@
 }
 
 .info-section {
-  padding: 16px;
+  padding: 0px 20px;
   text-align: left;
   background-color: #fafafa;
   border-radius: 8px;
@@ -84,16 +83,46 @@
   color: #999;
   margin-top: 16px;
 }
+.update-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #fafafa;
+}
 
 .update-button {
-  margin-top: 16px;
-  background-color: #1890ff;
-  border-color: #1890ff;
-  border-radius: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   font-weight: 500;
+  margin: 16px 10px;
+  background: #ffffff;
+  width: 90%;
+  border: none;
+  cursor: pointer;
+  gap: 10px;
+  padding: 10px 0; /* Đảm bảo nút có đủ chiều cao */
+}
+
+.update-button div {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.update-button p {
+  font-size: 16px;
+  text-align: center;
+  margin: 0; /* Xóa margin mặc định của p */
+}
+
+.update-button .icon-ciedit {
+  font-size: 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .update-button:hover {
-  background-color: #40a9ff;
-  border-color: #40a9ff;
+  background-color: rgba(0, 0, 0, 0.1);
 }

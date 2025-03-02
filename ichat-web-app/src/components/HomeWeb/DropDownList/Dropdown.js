@@ -6,7 +6,7 @@ import "./Dropdown.css";
 import ProfileModal from "./ProfileModal/ProfileModal";
 import SettingsModal from "./SettingsModal/SettingsModal";
 
-const ProfileDropdown = () => {
+const ProfileDropdown = ({ onOpenSettings }) => {
   const [isProfileModalVisible, setProfileModalVisible] = useState(false);
   const [isSettingsModalVisible, setSettingsModalVisible] = useState(false);
 
@@ -29,14 +29,14 @@ const ProfileDropdown = () => {
   const menu = (
     <Menu className="profile-menu">
       <Menu.Item key="0">
-        <strong>Đinh Nguyễn Chung</strong>
+        <strong>Đinh Nguyên Chung</strong>
       </Menu.Item>
       <Menu.Divider />
       <Menu.Item key="1" onClick={handleOpenProfile}>
         Hồ sơ của bạn
       </Menu.Item>
 
-      <Menu.Item key="2" onClick={handleOpenSettings}>
+      <Menu.Item key="2" onClick={handleOpenSettings || onOpenSettings}>
         Cài đặt
       </Menu.Item>
       <Menu.Divider />
@@ -50,7 +50,7 @@ const ProfileDropdown = () => {
     <>
       <Dropdown overlay={menu} trigger={["click"]} placement="bottomRight">
         <div className="avatar-container-sidebar">
-          <UserOutlined className="avatar-icon" />
+          <img src="https://i.ibb.co/7Njf5HW0/avt.jpg"></img>
         </div>
       </Dropdown>
       <ProfileModal

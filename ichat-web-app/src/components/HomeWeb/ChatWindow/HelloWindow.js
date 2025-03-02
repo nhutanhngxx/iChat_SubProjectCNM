@@ -3,7 +3,7 @@ import "./HelloWindow.css"; // Import file CSS
 
 const HelloWindow = () => {
   return (
-    <div className="hello-window">
+    <div className="hello-window" style={{ height: "100vh" }}>
       {/* Tiêu đề */}
       <h2>
         Chào mừng đến với <span className="highlight">iChat</span>
@@ -11,8 +11,8 @@ const HelloWindow = () => {
 
       {/* Mô tả */}
       <p className="description">
-        Nền tảng chat tin nhắn hiện đại giúp bạn kết nối với bạn bè, gia đình
-        và đồng nghiệp một cách dễ dàng.
+        Nền tảng chat tin nhắn hiện đại giúp bạn kết nối với bạn bè, gia đình và
+        đồng nghiệp một cách dễ dàng.
       </p>
 
       {/* Hình ảnh */}

@@ -12,7 +12,13 @@ import {
   GlobalOutlined,
 } from "@ant-design/icons";
 import "./SettingsModal.css";
-
+import GeneralSettings from "./TabSetting/GeneralSettings";
+import SecuritySettings from "./TabSetting/AccountSecurity";
+import PrivacySettings from "./TabSetting/PrivacySettings";
+import InterfaceSettings from "./TabSetting/InterfaceSettings";
+import NotificationSettings from "./TabSetting/Notifications";
+import MessageSettings from "./TabSetting/Messages";
+import ToolSettings from "./TabSetting/ToolSettings";
 const { Option } = Select;
 
 const SettingsModal = ({ visible, onClose }) => {
@@ -33,6 +39,7 @@ const SettingsModal = ({ visible, onClose }) => {
         {/* Sidebar Menu */}
         <div className="settings-sidebar">
           <Menu
+            className="settings-menu"
             mode="vertical"
             selectedKeys={[selectedMenu]}
             onClick={(e) => setSelectedMenu(e.key)}
@@ -71,34 +78,17 @@ const SettingsModal = ({ visible, onClose }) => {
         <div className="settings-content">
           {selectedMenu === "general" && (
             <>
-              <h3>Danh bạ</h3>
-              <p>Danh sách bạn bè được hiển thị trong danh bạ</p>
-              <Radio.Group
-                onChange={(e) => setContactsOption(e.target.value)}
-                value={contactsOption}
-              >
-                <Radio value="all">Hiển thị tất cả bạn bè</Radio>
-                <Radio value="zaloOnly">Chỉ hiển thị bạn bè đang sử dụng Zalo</Radio>
-              </Radio.Group>
-
-              <h3>Ngôn ngữ</h3>
-              <p>Thay đổi ngôn ngữ</p>
-              <Select value={language} onChange={(value) => setLanguage(value)} style={{ width: "100%" }}>
-                <Option value="vi">Tiếng Việt</Option>
-                <Option value="en">English</Option>
-              </Select>
-
-              <h3>Khởi động & ghi nhớ tài khoản</h3>
-              <div className="settings-switch">
-                <p>Khởi động Zalo khi mở máy</p>
-                <Switch defaultChecked />
-              </div>
-              <div className="settings-switch">
-                <p>Ghi nhớ tài khoản đăng nhập</p>
-                <Switch defaultChecked />
-              </div>
+              <GeneralSettings />
             </>
           )}
+          {selectedMenu === "security" && <SecuritySettings />}
+          {selectedMenu === "privacy" && <PrivacySettings />}
+          {selectedMenu === "sync" && <h1>Sync</h1>}
+          {selectedMenu === "interface" && <InterfaceSettings />}
+          {selectedMenu === "notifications" && <NotificationSettings />}
+          {selectedMenu === "messages" && <MessageSettings />}
+          {selectedMenu === "calls" && <h1>Calls</h1>}
+          {selectedMenu === "tools" && <ToolSettings />}
         </div>
       </div>
     </Modal>
