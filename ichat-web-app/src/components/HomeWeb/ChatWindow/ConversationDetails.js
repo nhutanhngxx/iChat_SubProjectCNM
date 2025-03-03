@@ -12,7 +12,7 @@ const ConversationDetails = ({ isVisible, selectedChat }) => {
   if (!isVisible) return null; // Ẩn component nếu isVisible = false
 
   return (
-    <div className="conversation-details">
+    <div className="conversation-details" style={{ padding: "20px" }}>
       <div className="header">
         <h2>Thông tin hội thoại</h2>
         <div className="avatar">

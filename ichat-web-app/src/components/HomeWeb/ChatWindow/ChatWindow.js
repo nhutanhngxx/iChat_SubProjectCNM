@@ -68,12 +68,6 @@ const ChatWindow = () => {
   return (
     <Layout className="chat-window">
       <ComponentLeft userList={userList} onSelectUser={handleSelectUser} />
-      {/* <ComponentLeftSearch
-        isOpen={isSearchOpen}
-        onClose={() => setIsSearchOpen(false)}
-        onSelectUser={handleSelectUser}
-        userList={userList}
-      /> */}
 
       {/* Hiển thị màn hình chat hoặc màn hình chào */}
       {selectedUser ? (
