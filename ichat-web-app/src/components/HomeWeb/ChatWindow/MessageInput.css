@@ -13,6 +13,7 @@
   margin-bottom: 6px;
   height: 40px;
   margin-inline: 20px;
+  align-items: center;
 }
 
 .toolbar-icon {
@@ -20,6 +21,8 @@
   color: #2d3e50; /* Màu tối hơn */
   cursor: pointer;
   transition: color 0.2s ease-in-out;
+  display: flex; /* Đảm bảo toolbar-icon là flex container */
+  align-items: center;
 }
 
 .toolbar-icon:hover {
@@ -59,4 +62,71 @@
 
 .action-icon:hover {
   transform: scale(1.1);
+}
+
+/* Style cho modal danh thiếp */
+.contact-modal-content {
+  display: flex;
+  gap: 16px;
+}
+
+.contact-tabs {
+  flex: 1;
+}
+
+.contact-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.contact-item {
+  padding: 8px 0;
+  display: flex;
+  align-items: center;
+}
+
+.contact-avatar {
+  margin-right: 8px;
+}
+
+.contact-name {
+  margin-left: 8px;
+  font-size: 14px;
+  color: #333;
+}
+
+/* Style cho popover của MoreOutlined */
+.more-popover {
+  padding: 0;
+}
+
+.more-options-popover {
+  background-color: #f0f0f0; /* Màu nền xám nhạt như trong hình */
+  border-radius: 8px; /* Viền bo tròn */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); /* Bóng mờ */
+  padding: 8px;
+  width: 200px; /* Kích thước phù hợp với hình */
+}
+
+.option-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px;
+  font-size: 14px;
+  color: #333;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.option-item:hover {
+  background-color: #e6f7ff; /* Màu nền khi hover */
+  color: #1890ff;
+}
+
+.info-icon {
+  font-size: 12px;
+  color: #999;
+  margin-left: 8px;
+  cursor: help; /* Con trỏ hỏi thông tin */
 }
