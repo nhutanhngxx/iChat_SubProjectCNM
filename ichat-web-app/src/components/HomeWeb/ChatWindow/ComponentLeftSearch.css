@@ -34,7 +34,6 @@
   border-radius: 8px;
   transition: all 0.3s;
   cursor: pointer;
-  margin-bottom: 8px;
   display: flex;
   align-items: center;
 }
@@ -56,7 +55,7 @@
   color: royalblue;
 }
 
-.message-container {
+.message-container-component-left-search {
   width: 100%;
   max-width: 400px;
   margin: 10px auto;

@@ -273,7 +273,7 @@ const MessageFilter = ({
 
 // Component MessageList
 const MessageList = ({ messages, filteredSearchMessages }) => (
-  <div className="message-container">
+  <div className="message-container-component-left-search">
     <div className="title-tabpane">
       Tin nhắn ({filteredSearchMessages.length})
     </div>

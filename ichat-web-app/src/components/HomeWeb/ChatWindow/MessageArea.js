@@ -107,7 +107,11 @@ const MessageArea = ({ selectedChat }) => {
         <Content className="message-area-content">
           <div className="message-container">
             {messages.map((message) => (
-              <Message key={message.id} message={message} selectedChat={selectedChat} />
+              <Message
+                key={message.id}
+                message={message}
+                selectedChat={selectedChat}
+              />
             ))}
           </div>
         </Content>
@@ -118,10 +122,13 @@ const MessageArea = ({ selectedChat }) => {
         />
       </Layout>
       {showConversation && (
-      <Layout className="conversation-details">
-        <ConversationDetails isVisible={showConversation} selectedChat={selectedChat} />
-      </Layout>
-    )}
+        <Layout className="conversation-details">
+          <ConversationDetails
+            isVisible={showConversation}
+            selectedChat={selectedChat}
+          />
+        </Layout>
+      )}
     </div>
   );
 };

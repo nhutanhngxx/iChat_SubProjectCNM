@@ -5,7 +5,7 @@ import "./Message.css";
 const Message = ({ message, selectedChat }) => {
   return (
     <div className={`message ${message.type}`}>
-      {message.type === "received" && (
+      {message.type === "received" ? (
         <div className="avatar-message">
           <Avatar
             size={32}
@@ -13,7 +13,7 @@ const Message = ({ message, selectedChat }) => {
             className="profile-avatar-message"
           />
         </div>
-      )}
+      ) : null}
       <div className="message-content">
         <p>{message.text}</p>
         <span className="timestamp">{message.timestamp}</span>

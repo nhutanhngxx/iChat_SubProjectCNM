@@ -1,27 +1,44 @@
-.message {
-    display: flex;
-    align-items: center;
-    margin-bottom: 8px;
-  }
-  
-  .message.received {
-    flex-direction: row;
-  }
-  
-  .message.sent {
-    flex-direction: row-reverse;
-  }
-  
-  .avatar-message {
-    margin-right: 8px;
-  }
-  
-  .message-content {
-    background-color: #f0f0f0;
-    padding: 10px;
-    border-radius: 10px;
-    max-width: 60%;
-  }
-  
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
 
-  
+.message {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+  width: fit-content; /* Đảm bảo container chỉ rộng vừa đủ nội dung */
+  min-width: 200px;
+  margin-left: 0; /* Cho tin nhắn gửi đẩy sang phải */
+  margin-right: 0; /* Cho tin nhắn nhận đẩy sang trái */
+}
+
+.message.received {
+  flex-direction: row;
+}
+
+.message.sent {
+  flex-direction: row-reverse;
+  margin-left: auto;
+}
+
+.avatar-message {
+  margin-right: 8px;
+}
+
+.message-content {
+  background-color: #f0f0f0;
+  padding: 10px;
+  border-radius: 10px;
+  width: fit-content;
+  max-width: 70%; /* Giới hạn tối đa để tránh tràn màn hình */
+  word-wrap: break-word; /* Cho phép ngắt từ nếu nội dung rất dài */
+}
+
+.timestamp {
+  display: block; /* Đảm bảo timestamp nằm dưới text, không chiếm không gian ngang quá mức */
+  font-size: 12px;
+  color: #999;
+  margin-top: 4px; /* Khoảng cách giữa text và timestamp */
+}

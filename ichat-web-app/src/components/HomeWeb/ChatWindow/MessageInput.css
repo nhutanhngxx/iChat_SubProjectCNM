@@ -37,7 +37,6 @@
 .message-input-box input {
   flex-grow: 1;
   border: none;
-
   background: transparent;
   font-size: 15px;
   color: #2d3e50;
