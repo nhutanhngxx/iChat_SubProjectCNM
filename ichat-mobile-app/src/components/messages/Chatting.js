@@ -50,7 +50,7 @@ const Chatting = ({ route }) => {
 
     try {
       const response = await axios.delete(
-        `http://172.20.10.2:5001/${selectedMessage._id}`
+        `http://192.168.1.237:5001/${selectedMessage._id}`
       );
 
       console.log("Response từ server:", response.data);
@@ -79,7 +79,7 @@ const Chatting = ({ route }) => {
   const fetchMessages = async () => {
     try {
       const response = await axios.get(
-        `http://172.20.10.2:5001/messages/${user.id}/${chat.id}`
+        `http://192.168.1.237:5001/messages/${user.id}/${chat.id}`
       );
       if (response.data.status === "ok") {
         setMessages(response.data.data);
@@ -135,7 +135,7 @@ const Chatting = ({ route }) => {
         };
 
         const response = await axios.post(
-          "http://172.20.10.2:5001/messages/reply",
+          "http://192.168.1.237:5001/messages/reply",
           newMessage
         );
 
@@ -276,6 +276,7 @@ const Chatting = ({ route }) => {
           } // Cuộn khi nội dung thay đổi
           onLayout={() => flatListRef.current?.scrollToEnd({ animated: true })} // Cuộn tin nhắn mới nhất
         />
+
         {/* Modal Thao Tác Tin Nhắn */}
         <Modal visible={modalVisible} transparent animationType="none">
           <Pressable
@@ -626,8 +627,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   modalContainer: {
-    width: "80%",
-    // backgroundColor: "white",
+    width: "90%",
     borderRadius: 10,
     padding: 20,
   },
@@ -636,7 +636,7 @@ const styles = StyleSheet.create({
   },
   row: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "space-around",
     width: "100%",
     marginBottom: 15,
   },
@@ -647,11 +647,11 @@ const styles = StyleSheet.create({
     height: 70,
   },
   icon: {
-    width: 30,
-    height: 30,
+    width: 25,
+    height: 25,
   },
   modalOption: {
-    fontSize: 14,
+    fontSize: 12,
     marginTop: 10,
     textAlign: "center",
     opacity: 0.8,

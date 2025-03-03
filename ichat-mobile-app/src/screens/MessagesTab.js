@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useContext, useEffect } from "react";
 import { View, StyleSheet } from "react-native";
 import { Tab } from "@rneui/themed";
 import { TabView } from "@rneui/base";
@@ -7,8 +7,12 @@ import HeaderMessages from "../components/header/HeaderMessagesTab";
 import UutienMessages from "../components/messages/UuTien";
 import KhacMessages from "../components/messages/Khac";
 
-const MessagesTab = ({ setUser }) => {
+import { UserContext } from "../context/UserContext";
+
+const MessagesTab = () => {
   const [index, setIndex] = useState(0);
+  const { user } = useContext(UserContext);
+
   return (
     <View style={styles.container}>
       <HeaderMessages />

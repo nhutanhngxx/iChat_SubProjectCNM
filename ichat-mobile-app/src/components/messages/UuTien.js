@@ -33,8 +33,8 @@ const UuTien = () => {
   const fetchUsers = async () => {
     try {
       console.log("Fetching users...");
-      const response = await axios.get("http://172.20.10.2:5001/users");
-      console.log("User data from API:", response.data);
+      const response = await axios.get("http://192.168.1.237:5001/users");
+      // console.log("User data from API:", response.data);
       setAllUser(response.data);
     } catch (error) {
       console.error("Error fetching users:", error);
@@ -48,9 +48,10 @@ const UuTien = () => {
   }, [user, allUser]);
 
   const fetchChatList = async () => {
+    console.log("Loading all messages...");
     try {
       const response = await axios.get(
-        `http://172.20.10.2:5001/messages/${user.id}`
+        `http://192.168.1.237:5001/messages/${user.id}`
       );
 
       if (response.data.status === "ok" && Array.isArray(response.data.data)) {

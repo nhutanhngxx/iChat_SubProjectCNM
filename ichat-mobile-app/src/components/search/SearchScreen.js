@@ -142,7 +142,13 @@ const SearchScreen = () => {
         >
           <TextInput
             ref={searchInputRef}
-            style={{ flex: 1, fontSize: 16, paddingHorizontal: 5, height: 35 }}
+            style={{
+              flex: 1,
+              fontSize: 14,
+              paddingHorizontal: 10,
+              height: 35,
+              justifyContent: "center",
+            }}
             placeholder="Tìm kiếm"
             value={searchText}
             onChangeText={setSearchText}
@@ -151,7 +157,7 @@ const SearchScreen = () => {
             <TouchableOpacity onPress={() => setSearchText("")}>
               <Image
                 source={require("../../assets/icons/close.png")}
-                style={{ width: 20, height: 20, marginLeft: 5 }}
+                style={{ width: 20, height: 20, marginRight: 5 }}
               />
             </TouchableOpacity>
           )}

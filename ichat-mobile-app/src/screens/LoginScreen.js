@@ -20,7 +20,7 @@ const LoginScreen = ({ navigation }) => {
 
   const handleLogin = async () => {
     try {
-      const response = await axios.post("http://172.20.10.2:5001/login", {
+      const response = await axios.post("http://192.168.1.237:5001/login", {
         phone,
         password,
       });
@@ -29,6 +29,7 @@ const LoginScreen = ({ navigation }) => {
       await AsyncStorage.setItem("token", token);
       await AsyncStorage.setItem("user", JSON.stringify(user));
       setUser(user);
+      console.log("Users: ", user);
       Alert.alert("Đăng nhập thành công!", `Chào mừng ${user.full_name}`);
       // navigation.replace("AppNavigator");
     } catch (error) {

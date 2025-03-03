@@ -155,7 +155,7 @@ const ModalCreateGroup = ({ isVisible, onClose }) => {
 
   useEffect(() => {
     // Kiểm tra xem đã chọn thành viên và đã được đặt tên chưa
-    if (groupList.length <= 2 || groupName === "") {
+    if (groupList.length < 2 || groupName === "") {
       setIsDisabled(true);
     } else {
       setIsDisabled(false);
@@ -170,7 +170,6 @@ const ModalCreateGroup = ({ isVisible, onClose }) => {
         groupList.map((item) => item.id).join(", ")
     );
     console.log("Group List: ", groupList);
-
     // Reset state
     setGroupList([]);
     setIsChecked({});
@@ -334,6 +333,8 @@ const ModalCreateGroup = ({ isVisible, onClose }) => {
                 {">"}
               </Button> */}
               <TouchableOpacity
+                disabled={isDisabled}
+                onPress={handleCreateGroup}
                 style={{
                   height: 50,
                   width: 50,
@@ -348,7 +349,7 @@ const ModalCreateGroup = ({ isVisible, onClose }) => {
                   style={{
                     width: 25,
                     height: 25,
-                    tintColor: groupList.length < 2 ? "blue" : "white",
+                    tintColor: "white",
                   }}
                 />
               </TouchableOpacity>
