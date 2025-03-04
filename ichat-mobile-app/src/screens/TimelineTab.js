@@ -8,6 +8,8 @@ import {
   Image,
   TextInput,
   FlatList,
+  TouchableWithoutFeedback,
+  Keyboard,
 } from "react-native";
 
 import HeaderTimeline from "../components/header/HeaderTimeline";
@@ -76,33 +78,14 @@ const posts = [
 const TimelineTab = () => {
   const renderPost = ({ item }) => {
     return (
-      <View
-        style={{
-          backgroundColor: "rgba(217, 217, 217, 0.25)",
-          margin: 10,
-          borderRadius: 10,
-          padding: 10,
-        }}
-      >
+      <View style={styles.postContainer}>
         {/* Header post */}
-        <View
-          style={{
-            paddingBottom: 10,
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <View style={{ flexDirection: "row", alignItems: "center" }}>
-            <Image
-              source={item.user.avatar}
-              style={{ width: 50, height: 50, marginRight: 10 }}
-            />
-            <View style={{ gap: 5 }}>
-              <Text style={{ fontSize: 16, fontWeight: "bold" }}>
-                {item.user.name}
-              </Text>
-              <Text style={{ color: "gray", fontSize: 12 }}>
+        <View style={styles.postHeader}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+            <Image source={item.user.avatar} style={styles.avatar} />
+            <View>
+              <Text style={styles.userName}>{item.user.name}</Text>
+              <Text style={styles.timestamp}>
                 {getTimeDifference(item.timestamp)}
               </Text>
             </View>
@@ -116,10 +99,7 @@ const TimelineTab = () => {
 
         {/* Content post */}
         <View style={{ paddingTop: 10 }}>
-          <Text style={{ fontSize: 16, paddingBottom: 10 }}>
-            {item.content}
-          </Text>
-
+          <Text style={styles.postContent}>{item.content}</Text>
           {/* Hiển thị ảnh đăng */}
           {item.images.length > 0 && (
             <View style={{ marginTop: 10 }}>
@@ -145,151 +125,94 @@ const TimelineTab = () => {
         </View>
 
         {/* Likes, Comments */}
-        <View
-          style={{
-            flexDirection: "row",
-            gap: 40,
-            paddingTop: 20,
-            paddingBottom: 10,
-          }}
-        >
-          <View style={{ flexDirection: "row", gap: 10, alignItems: "center" }}>
+        <View style={styles.actionsContainer}>
+          <View style={styles.action}>
             <TouchableOpacity>
               <Image
                 source={require("../assets/icons/heart-outline.png")}
-                style={{ width: 20, height: 20 }}
+                style={styles.icon}
               />
             </TouchableOpacity>
-            <Text style={{ fontSize: 16 }}>Thích</Text>
-            <Image
-              source={require("../assets/icons/heart.png")}
-              style={{ width: 20, height: 20 }}
-            />
-            <Text>{item.likes}</Text>
+            <Text style={styles.actionText}>{item.likes}</Text>
           </View>
-          <View style={{ flexDirection: "row", gap: 10, alignItems: "center" }}>
+          <View style={styles.action}>
             <TouchableOpacity>
               <Image
                 source={require("../assets/icons/comment.png")}
-                style={{ width: 20, height: 20 }}
+                style={styles.icon}
               />
             </TouchableOpacity>
-            <Text>{item.likes}</Text>
+            <Text style={styles.actionText}>{item.comments}</Text>
           </View>
         </View>
       </View>
     );
   };
-  return (
-    <SafeAreaView style={styles.container}>
-      <HeaderTimeline />
 
-      <View style={{ padding: 10, flexDirection: "row", gap: 15 }}>
+  const renderHeader = () => (
+    <View style={styles.createPostContainer}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 15 }}>
         <Image
           source={require("../assets/images/avatars/avatar1.png")}
-          style={{ width: 50, height: 50 }}
+          style={styles.avatar}
         />
         <TextInput
-          style={{ fontSize: 16 }}
+          style={styles.input}
           placeholder="Hôm nay bạn cảm thấy thế nào?"
         />
       </View>
 
-      <View
-        style={{
-          paddingHorizontal: 10,
-          flexDirection: "row",
-          justifyContent: "space-between",
-        }}
-      >
-        <TouchableOpacity
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            gap: 5,
-            padding: 5,
-            backgroundColor: "rgba(217, 217, 217, 0.5)",
-            width: "100",
-            borderRadius: 10,
-          }}
-        >
+      <View style={styles.postOptions}>
+        <TouchableOpacity style={styles.postOption}>
           <Image
             source={require("../assets/icons/image.png")}
-            style={{ width: 30, height: 30 }}
+            style={styles.optionIcon}
           />
           <Text>Hình ảnh</Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            gap: 5,
-            padding: 5,
-            backgroundColor: "rgba(217, 217, 217, 0.5)",
-            width: "80",
-            borderRadius: 10,
-          }}
-        >
+        <TouchableOpacity style={styles.postOption}>
           <Image
             source={require("../assets/icons/video.png")}
-            style={{ width: 30, height: 30 }}
+            style={styles.optionIcon}
           />
           <Text>Video</Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            gap: 5,
-            padding: 5,
-            backgroundColor: "rgba(217, 217, 217, 0.5)",
-            width: "90",
-            borderRadius: 10,
-          }}
-        >
+        <TouchableOpacity style={styles.postOption}>
           <Image
             source={require("../assets/icons/album.png")}
-            style={{ width: 30, height: 30 }}
+            style={styles.optionIcon}
           />
           <Text>Album</Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            gap: 5,
-            padding: 5,
-            backgroundColor: "rgba(217, 217, 217, 0.5)",
-            width: "90",
-            borderRadius: 10,
-          }}
-        >
+        {/* <TouchableOpacity style={styles.postOption}>
           <Image
             source={require("../assets/icons/memories.png")}
-            style={{ width: 30, height: 30 }}
+            style={styles.optionIcon}
           />
           <Text>Kỉ niệm</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
+    </View>
+  );
 
-      {/* Story */}
-      <View></View>
-
-      {/* All Post */}
-      <View style={{ flex: 1 }}>
+  return (
+    <SafeAreaView style={styles.container}>
+      <HeaderTimeline />
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <FlatList
           data={posts}
           renderItem={renderPost}
-          keyExtractor={(item, index) => index.toString()}
+          keyExtractor={(item) => item.id.toString()}
+          ListHeaderComponent={renderHeader}
           ListFooterComponent={() => (
-            <View style={{ padding: 20, alignItems: "center" }}>
-              <Text style={{ fontSize: 16, opacity: 0.5 }}>
+            <View style={styles.footer}>
+              <Text style={styles.footerText}>
                 Bạn đã xem hết bài đăng hiện tại
               </Text>
             </View>
           )}
         />
-      </View>
+      </TouchableWithoutFeedback>
     </SafeAreaView>
   );
 };
@@ -298,6 +221,89 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "white",
+  },
+  createPostContainer: {
+    padding: 10,
+    backgroundColor: "#fff",
+    borderBottomWidth: 1,
+    borderBottomColor: "#ddd",
+  },
+  input: {
+    fontSize: 16,
+    flex: 1,
+  },
+  postOptions: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    gap: 10,
+    marginTop: 10,
+  },
+  postOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    gap: 5,
+    borderRadius: 10,
+    justifyContent: "center",
+  },
+  optionIcon: {
+    width: 25,
+    height: 25,
+  },
+  postContainer: {
+    backgroundColor: "rgba(217, 217, 217, 0.25)",
+    margin: 10,
+    borderRadius: 10,
+    padding: 10,
+  },
+  postHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  avatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+  },
+  userName: {
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  timestamp: {
+    color: "gray",
+    fontSize: 12,
+  },
+  postContent: {
+    fontSize: 16,
+    paddingBottom: 10,
+  },
+  actionsContainer: {
+    flexDirection: "row",
+    gap: 40,
+    paddingTop: 20,
+    paddingBottom: 10,
+  },
+  action: {
+    flexDirection: "row",
+    gap: 10,
+    alignItems: "center",
+  },
+  icon: {
+    width: 20,
+    height: 20,
+  },
+  actionText: {
+    fontSize: 16,
+  },
+  footer: {
+    padding: 20,
+    alignItems: "center",
+  },
+  footerText: {
+    fontSize: 16,
+    opacity: 0.5,
   },
 });
 

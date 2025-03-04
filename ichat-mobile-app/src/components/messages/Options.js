@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import {
   Text,
   View,
@@ -10,18 +10,37 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
 } from "react-native";
 
 import { useNavigation } from "@react-navigation/native";
+import { UserContext } from "@/src/context/UserContext";
+import axios from "axios";
 
 import HeaderOption from "../header/HeaderOption";
 
 const Option = ({ route }) => {
   const navigation = useNavigation();
-  const { name, avatar } = route.params || {};
+  const { user } = useContext(UserContext);
+  const { id, name, avatar } = route.params || {};
+
+  // Xóa tất cả tin nhắn giữa 2 người
+  const deleteChatHistory = async () => {
+    try {
+      const response = await axios.delete(
+        `http://192.168.1.6:5001/messages/${user.id}/${id}`
+      );
+
+      if (response.data.status === "ok") {
+        navigation.navigate("MessagesStack");
+      }
+    } catch (error) {
+      console.error("Lỗi khi xóa lịch sử trò chuyện:", error);
+    }
+  };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <HeaderOption />
       <View style={styles.profileContainer}>
         <Image source={avatar} style={styles.avatar} />
@@ -63,11 +82,10 @@ const Option = ({ route }) => {
         </View>
       </View>
 
-      <View
-        style={{
-          paddingLeft: 20,
-          gap: 15,
-        }}
+      <ScrollView
+        style={{ flex: 1, paddingLeft: 20 }}
+        contentContainerStyle={{ gap: 15, paddingBottom: 20 }}
+        showsVerticalScrollIndicator={false}
       >
         <View
           style={{
@@ -95,7 +113,6 @@ const Option = ({ route }) => {
             />
           </TouchableOpacity>
         </View>
-
         <View style={{ gap: 15 }}>
           <View
             style={{
@@ -129,7 +146,6 @@ const Option = ({ route }) => {
             <Text style={styles.title}>Xem các nhóm chung (5)</Text>
           </TouchableOpacity>
         </View>
-
         <View style={{ gap: 15 }}>
           <View
             style={{
@@ -155,7 +171,10 @@ const Option = ({ route }) => {
             <Text style={styles.title}>Xóa khỏi danh sách bạn bè</Text>
           </TouchableOpacity>
           {/* 7 */}
-          <TouchableOpacity style={styles.component}>
+          <TouchableOpacity
+            style={styles.component}
+            onPress={deleteChatHistory}
+          >
             <Image
               source={require("../../assets/icons/delete.png")}
               style={styles.icon}
@@ -163,8 +182,8 @@ const Option = ({ route }) => {
             <Text style={styles.title}>Xóa lịch sử trò chuyện</Text>
           </TouchableOpacity>
         </View>
-      </View>
-    </SafeAreaView>
+      </ScrollView>
+    </View>
   );
 };
 

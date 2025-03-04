@@ -1,19 +1,40 @@
-import React from "react";
+import React, { useState, useContext } from "react";
 import {
   View,
   Text,
   StyleSheet,
   ImageBackground,
   SafeAreaView,
-  Image,
   TextInput,
-  TouchableOpacity,
+  Alert,
 } from "react-native";
+import axios from "axios";
 import CustomButton from "../components/common/CustomButton";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { UserContext } from "../context/UserContext";
 
-const LoginScreen = ({ navigation, setUser }) => {
-  const handleLogin = () => {
-    setUser(true);
+const LoginScreen = ({ navigation }) => {
+  const { setUser } = useContext(UserContext);
+  const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
+
+  const handleLogin = async () => {
+    try {
+      const response = await axios.post("http://192.168.1.6:5001/login", {
+        phone,
+        password,
+      });
+      const { token, user } = response.data;
+      // Lưu token vào AsyncStorage để sử dụng ở các Screen kháccc
+      await AsyncStorage.setItem("token", token);
+      await AsyncStorage.setItem("user", JSON.stringify(user));
+      setUser(user);
+      console.log("Users: ", user);
+      Alert.alert("Đăng nhập thành công!", `Chào mừng ${user.full_name}`);
+      // navigation.replace("AppNavigator");
+    } catch (error) {
+      Alert.alert("Lỗi", error.response?.data?.message || "Có lỗi xảy ra!");
+    }
   };
 
   return (
@@ -27,8 +48,20 @@ const LoginScreen = ({ navigation, setUser }) => {
             <Text style={styles.title}>iChat</Text>
             <View style={styles.content}>
               <Text style={styles.label}>Đăng nhập</Text>
-              <TextInput style={styles.input} placeholder="Số điện thoại" />
-              <TextInput style={styles.input} placeholder="Mật khẩu" />
+              <TextInput
+                style={styles.input}
+                placeholder="Số điện thoại"
+                keyboardType="phone-pad"
+                value={phone}
+                onChangeText={setPhone}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Mật khẩu"
+                secureTextEntry
+                value={password}
+                onChangeText={setPassword}
+              />
               <Text
                 onPress={() => alert("Quên mật khẩu?")}
                 style={styles.forgotPassword}
@@ -40,12 +73,13 @@ const LoginScreen = ({ navigation, setUser }) => {
           <View style={{ gap: 20 }}>
             <CustomButton
               title="Đăng nhập"
-              onPress={() => handleLogin()}
+              onPress={handleLogin}
               backgroundColor={"#48A2FC"}
             />
           </View>
         </View>
-        <View>
+
+        <View style={{ position: "absolute", bottom: 20, alignSelf: "center" }}>
           <Text
             style={styles.question}
             onPress={() => alert("Những câu hỏi thường gặp")}

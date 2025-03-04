@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -8,6 +8,8 @@ import {
   StyleSheet,
 } from "react-native";
 import { Dimensions } from "react-native";
+import ModalCreateGroup from "./ModalCreateGroup";
+import { useNavigation } from "@react-navigation/native";
 
 const groupList = [
   {
@@ -26,13 +28,31 @@ const groupList = [
   },
 ];
 
-const numberGroup = groupList.length;
-
 const GroupTab = () => {
+  const navigation = useNavigation();
   const { width } = Dimensions.get("window");
+  const [isShowModal, setIsShowModal] = useState(false);
+
+  const handleOpenModal = () => {
+    setIsShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsShowModal(false);
+  };
+
+  const handleOpenChatting = (chat) => {
+    console.log("Received chat:", chat);
+    console.log("Type of chat:", typeof chat);
+
+    navigation.navigate("Chatting", { chat });
+  };
 
   const renderItem = ({ item }) => (
-    <View style={styles.itemContainer}>
+    <TouchableOpacity
+      style={styles.itemContainer}
+      onPress={() => handleOpenChatting(item)}
+    >
       <View style={styles.item_leftSide}>
         <Image source={item.avatar} style={{ width: 50, height: 50 }} />
         <Text style={{ fontWeight: "500", fontSize: 16 }}>{item.name}</Text>
@@ -40,14 +60,16 @@ const GroupTab = () => {
       <View style={{ display: "flex", flexDirection: "row", gap: 20 }}>
         <Text style={{ fontSize: 12 }}>{item.time}</Text>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
   return (
     <View style={styles.container}>
+      <ModalCreateGroup isVisible={isShowModal} onClose={handleCloseModal} />
+
       <TouchableOpacity
         style={styles.addNewGroupButton}
-        onPress={() => alert("Tạo nhóm mới")}
+        onPress={() => handleOpenModal()}
       >
         <Image
           source={require("../../assets/icons/add-group.png")}

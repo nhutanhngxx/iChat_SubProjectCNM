@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import { Text, View, Button, SafeAreaView, StyleSheet } from "react-native";
-import { Tab } from "@rneui/themed";
 
 import HeaderContactTab from "../components/header/HeaderContactTab";
 import FriendTab from "../components/contact/FriendTab";
 import GroupTab from "../components/contact/GroupTab";
+import { Tab } from "@rneui/themed";
 import { TabView } from "@rneui/base";
 
 const ContactTab = () => {
@@ -17,21 +17,26 @@ const ContactTab = () => {
         value={index}
         onChange={setIndex}
         indicatorStyle={{
-          backgroundColor: "skyblue",
+          backgroundColor: "#6166EE",
           width: "25%",
           marginHorizontal: "12.5%",
-          marginBottom: 5,
         }}
         variant="default"
         dense
       >
         <Tab.Item
-          title={"Friend"}
-          titleStyle={{ color: "black", fontWeight: "bold" }}
+          title={"Bạn bè"}
+          titleStyle={{
+            color: index === 0 ? "#6166EE" : "gray",
+            fontWeight: index === 0 ? "bold" : null,
+          }}
         ></Tab.Item>
         <Tab.Item
-          title={"Group"}
-          titleStyle={{ color: "black", fontWeight: "bold" }}
+          title={"Nhóm"}
+          titleStyle={{
+            color: index === 1 ? "#6166EE" : "gray",
+            fontWeight: index === 1 ? "bold" : null,
+          }}
         />
       </Tab>
 

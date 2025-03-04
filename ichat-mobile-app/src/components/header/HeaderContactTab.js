@@ -4,7 +4,7 @@ const HeaderContactTab = () => {
   return (
     <View
       style={{
-        height: 40,
+        height: 50,
         justifyContent: "space-between",
         flexDirection: "row",
         alignItems: "center",
@@ -18,7 +18,7 @@ const HeaderContactTab = () => {
         />
         <TextInput
           style={{
-            fontSize: 18,
+            fontSize: 16,
             width: "100",
             color: "#2F80ED",
           }}

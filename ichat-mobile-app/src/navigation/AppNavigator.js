@@ -1,5 +1,9 @@
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import {
+  createStackNavigator,
+  TransitionPresets,
+} from "@react-navigation/stack";
 
 import React from "react";
 import { View, Image } from "react-native";
@@ -10,7 +14,15 @@ import MeTab from "../screens/MeTab";
 import Chatting from "../components/messages/Chatting";
 import Option from "../components/messages/Options";
 import MediaStorage from "../components/messages/MediaStorage";
+import SearchScreen from "../components/search/SearchScreen";
 import ViewProfile from "../components/profile/ViewProfile";
+
+import AddFriend from "../components/contact/AddFriend";
+import FriendRequest from "../components/contact/FriendRequest";
+
+import ProfileInformation from "../components/profile/ProfileInformation";
+import ChangeInformation from "../components/profile/ChangeInformation";
+import QRScanner from "../components/camera/QRScannerScreen";
 
 const BottomTab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -19,13 +31,62 @@ const ChatStack = () => {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="MessagesStack" component={MessageTab} />
-      <Stack.Screen name="Chatting" component={Chatting} />
+      <Stack.Screen
+        name="Chatting"
+        component={Chatting}
+        options={{
+          animation: "none",
+        }}
+      />
       <Stack.Screen name="Option" component={Option} />
       <Stack.Screen name="MediaStorage" component={MediaStorage} />
-      <Stack.Screen name="ViewProfile" component={ViewProfile} />
+      <Stack.Screen
+        name="ViewProfile"
+        component={ViewProfile}
+        options={{
+          animation: "none",
+        }}
+      />
+      <Stack.Screen
+        name="SearchScreen"
+        component={SearchScreen}
+        options={{ animation: "fade" }}
+      />
+      <Stack.Screen name="QRScanner" component={QRScanner} />
+      <Stack.Screen name="AddFriend" component={AddFriend} />
     </Stack.Navigator>
   );
 };
+
+const ContactStack = () => {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="ContactTab" component={ContactTab} />
+      <Stack.Screen name="AddFriend" component={AddFriend} />
+      <Stack.Screen name="FriendRequest" component={FriendRequest} />
+    </Stack.Navigator>
+  );
+};
+
+const MeStack = () => (
+  <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Screen name="MeTab" component={MeTab} />
+    <Stack.Screen
+      name="ProfileInformation"
+      component={ProfileInformation}
+      options={{
+        animation: "none",
+      }}
+    />
+    <Stack.Screen
+      name="ChangeInformation"
+      component={ChangeInformation}
+      options={{
+        animation: "none",
+      }}
+    />
+  </Stack.Navigator>
+);
 
 const AppNavigator = ({ setUser }) => {
   return (
@@ -47,7 +108,7 @@ const AppNavigator = ({ setUser }) => {
                 style={{
                   width: 20,
                   height: 20,
-                  // tintColor: focused ? "#2F80ED" : "gray",
+                  tintColor: focused ? null : "rgba(0, 0, 0, 0.25)",
                 }}
               />
               {focused && (
@@ -81,7 +142,7 @@ const AppNavigator = ({ setUser }) => {
       />
       <BottomTab.Screen
         name="Contact"
-        children={(props) => <ContactTab {...props} setUser={setUser} />}
+        children={(props) => <ContactStack {...props} setUser={setUser} />}
       />
       <BottomTab.Screen
         name="Timeline"
@@ -89,7 +150,7 @@ const AppNavigator = ({ setUser }) => {
       />
       <BottomTab.Screen
         name="Me"
-        children={(props) => <MeTab {...props} setUser={setUser} />}
+        children={(props) => <MeStack {...props} setUser={setUser} />}
       />
     </BottomTab.Navigator>
   );

@@ -43,7 +43,7 @@ const RegisterScreen = ({ navigation }) => {
             <Text style={styles.title}>iChat</Text>
             <View style={styles.content}>
               <Text style={styles.label}>Tạo tài khoản mới</Text>
-              
+
               {/* Input phone number */}
               <View style={styles.countryCodeContainer}>
                 <View style={styles.countryCode}>
@@ -254,7 +254,9 @@ const styles = StyleSheet.create({
     fontWeight: "400",
     fontSize: 16,
     textAlign: "center",
-    marginTop: 20,
+    // marginTop: 20,
+    position: "absolute",
+    bottom: -140,
   },
 });
 

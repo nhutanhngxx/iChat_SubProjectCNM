@@ -1,0 +1,48 @@
+.custom-sidebar {
+  height: 100vh;
+  background: rgba(0, 103, 102, 1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 0;
+}
+
+.avatar-container-sidebar {
+  width: 45px;
+  height: 45px;
+  background: #c4c4c4; /* Màu avatar */
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.avatar-icon {
+  font-size: 24px;
+  color: white;
+}
+
+.icon-group {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.icon-group.bottom {
+  margin-top: 80px; /* Đẩy nhóm này xuống dưới */
+}
+
+.sidebar-icon {
+  font-size: 24px;
+  color: white;
+  padding: 10px;
+  border-radius: 10px;
+  transition: background 0.3s;
+  cursor: pointer;
+}
+
+.sidebar-icon.active,
+.sidebar-icon:hover {
+  background: rgba(255, 255, 255, 0.3);
+}

@@ -58,7 +58,8 @@ expo start
 ### 3️⃣ Khởi chạy Backend
 ```null
 ```
-🏗️ Thành viên nhóm
+
+## 🏗️ Thành viên nhóm
 - Nguyễn Nhựt Anh - Phụ trách Mobile App
 - Đinh Nguyên Chung - Phụ trách Frontend Web
 - Nguyễn Thành Cương - Phụ trách Mobile App

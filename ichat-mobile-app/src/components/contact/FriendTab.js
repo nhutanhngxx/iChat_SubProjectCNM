@@ -1,3 +1,4 @@
+import { useNavigation } from "@react-navigation/native";
 import React from "react";
 import {
   View,
@@ -37,22 +38,29 @@ const friendList = [
 const addRequest = 20;
 
 const FriendTab = () => {
-  const { width } = Dimensions.get("window");
   const navigation = useNavigation();
+  const { width } = Dimensions.get("window");
 
   //   const handleOpenChatting = (chat) => {
   //     navigation.navigate("Contact", { chat });
   //   };
 
+  const handleOpenChatting = (chat) => {
+    console.log("Received chat:", chat);
+    console.log("Type of chat:", typeof chat);
+
+    navigation.navigate("Chatting", { chat });
+  };
+
   const renderItem = ({ item }) => (
-    <View style={styles.itemContainer}>
-      <TouchableOpacity
-        style={styles.item_leftSide}
-        // onPress={() => handleOpenChatting(item)}
-      >
+    <TouchableOpacity
+      style={styles.itemContainer}
+      onPress={() => handleOpenChatting(item)}
+    >
+      <View style={styles.item_leftSide}>
         <Image source={item.avatar} style={{ width: 50, height: 50 }} />
         <Text style={{ fontWeight: "500", fontSize: 16 }}>{item.name}</Text>
-      </TouchableOpacity>
+      </View>
       <View style={{ display: "flex", flexDirection: "row", gap: 20 }}>
         <Image
           source={require("../../assets/icons/phone-call.png")}
@@ -63,22 +71,22 @@ const FriendTab = () => {
           style={{ width: 25, height: 25, marginTop: 2 }}
         />
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
   return (
     <View style={styles.container}>
       <TouchableOpacity
         style={styles.addRequest}
-        onPress={() => alert("Xem danh sách lời mời kết bạn")}
+        onPress={() => navigation.navigate("FriendRequest")}
       >
         <Image
           source={require("../../assets/icons/request.png")}
           style={{ width: 20, height: 20, marginTop: 2 }}
         />
         <Text>
-          Yêu cầu kết bạn{" "}
-          <Text style={{ fontWeight: "bold" }}>({addRequest})</Text>
+          Yêu cầu kết bạn
+          <Text style={{ fontWeight: "bold" }}> ({addRequest})</Text>
         </Text>
       </TouchableOpacity>
 
@@ -102,7 +110,7 @@ const FriendTab = () => {
       <View style={{ width: width - 40 }}>
         <FlatList
           data={friendList}
-          keyExtractor={(item) => item.id.toString()}
+          keyExtractor={(item) => item.id}
           renderItem={renderItem}
         />
       </View>
