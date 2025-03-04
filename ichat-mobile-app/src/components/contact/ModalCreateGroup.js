@@ -18,105 +18,21 @@ const friendList = [
     name: "Nguyễn Nhựt Anh",
     lastMessage: "[Hình ảnh]",
     time: "1 phút trước",
-    avatar: require("../assets/images/avatars/avatar1.png"),
+    avatar: require("../../assets/images/avatars/avatar1.png"),
   },
   {
     id: "2",
     name: "Trần Minh Quân",
     lastMessage: "Xin chào!",
     time: "5 phút trước",
-    avatar: require("../assets/images/avatars/avatar2.png"),
+    avatar: require("../../assets/images/avatars/avatar2.png"),
   },
   {
     id: "3",
     name: "Lê Phương Thảo",
     lastMessage: "Bạn khỏe không?",
     time: "10 phút trước",
-    avatar: require("../assets/images/avatars/avatar3.png"),
-  },
-  {
-    id: "4",
-    name: "Nguyễn Nhựt Anh",
-    lastMessage: "[Hình ảnh]",
-    time: "1 phút trước",
-    avatar: require("../assets/images/avatars/avatar1.png"),
-  },
-  {
-    id: "5",
-    name: "Trần Minh Quân",
-    lastMessage: "Xin chào!",
-    time: "5 phút trước",
-    avatar: require("../assets/images/avatars/avatar2.png"),
-  },
-  {
-    id: "6",
-    name: "Lê Phương Thảo",
-    lastMessage: "Bạn khỏe không?",
-    time: "10 phút trước",
-    avatar: require("../assets/images/avatars/avatar3.png"),
-  },
-  {
-    id: "7",
-    name: "Nguyễn Nhựt Anh",
-    lastMessage: "[Hình ảnh]",
-    time: "1 phút trước",
-    avatar: require("../assets/images/avatars/avatar1.png"),
-  },
-  {
-    id: "8",
-    name: "Trần Minh Quân",
-    lastMessage: "Xin chào!",
-    time: "5 phút trước",
-    avatar: require("../assets/images/avatars/avatar2.png"),
-  },
-  {
-    id: "9",
-    name: "Lê Phương Thảo",
-    lastMessage: "Bạn khỏe không?",
-    time: "10 phút trước",
-    avatar: require("../assets/images/avatars/avatar3.png"),
-  },
-  {
-    id: "10",
-    name: "Nguyễn Nhựt Anh",
-    lastMessage: "[Hình ảnh]",
-    time: "1 phút trước",
-    avatar: require("../assets/images/avatars/avatar1.png"),
-  },
-  {
-    id: "11",
-    name: "Trần Minh Quân",
-    lastMessage: "Xin chào!",
-    time: "5 phút trước",
-    avatar: require("../assets/images/avatars/avatar2.png"),
-  },
-  {
-    id: "12",
-    name: "Lê Phương Thảo",
-    lastMessage: "Bạn khỏe không?",
-    time: "10 phút trước",
-    avatar: require("../assets/images/avatars/avatar3.png"),
-  },
-  {
-    id: "13",
-    name: "Nguyễn Nhựt Anh",
-    lastMessage: "[Hình ảnh]",
-    time: "1 phút trước",
-    avatar: require("../assets/images/avatars/avatar1.png"),
-  },
-  {
-    id: "14",
-    name: "Trần Minh Quân",
-    lastMessage: "Xin chào!",
-    time: "5 phút trước",
-    avatar: require("../assets/images/avatars/avatar2.png"),
-  },
-  {
-    id: "15",
-    name: "Lê Phương Thảo",
-    lastMessage: "Bạn khỏe không?",
-    time: "10 phút trước",
-    avatar: require("../assets/images/avatars/avatar3.png"),
+    avatar: require("../../assets/images/avatars/avatar3.png"),
   },
 ];
 
@@ -209,7 +125,7 @@ const ModalCreateGroup = ({ isVisible, onClose }) => {
         onPress={() => handleToggleFriend(item)}
       >
         <Image
-          source={require("../assets/icons/close.png")}
+          source={require("../../assets/icons/close.png")}
           style={{
             width: 25,
             height: 25,
@@ -236,7 +152,7 @@ const ModalCreateGroup = ({ isVisible, onClose }) => {
           >
             <TouchableOpacity onPress={onClose}>
               <Image
-                source={require("../assets/icons/go-back.png")}
+                source={require("../../assets/icons/go-back.png")}
                 style={{ width: 25, height: 25 }}
               />
             </TouchableOpacity>
@@ -264,7 +180,7 @@ const ModalCreateGroup = ({ isVisible, onClose }) => {
           >
             <TouchableOpacity>
               <Image
-                source={require("../assets/icons/image.png")}
+                source={require("../../assets/icons/image.png")}
                 style={{ width: 40, height: 40 }}
               />
             </TouchableOpacity>
@@ -291,7 +207,7 @@ const ModalCreateGroup = ({ isVisible, onClose }) => {
           >
             <TouchableOpacity>
               <Image
-                source={require("../assets/icons/search.png")}
+                source={require("../../assets/icons/search.png")}
                 style={{ width: 20, height: 20 }}
               />
             </TouchableOpacity>
@@ -345,7 +261,7 @@ const ModalCreateGroup = ({ isVisible, onClose }) => {
                 }}
               >
                 <Image
-                  source={require("../assets/icons/send.png")}
+                  source={require("../../assets/icons/send.png")}
                   style={{
                     width: 25,
                     height: 25,

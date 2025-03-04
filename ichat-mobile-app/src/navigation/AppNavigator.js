@@ -18,6 +18,7 @@ import SearchScreen from "../components/search/SearchScreen";
 import ViewProfile from "../components/profile/ViewProfile";
 
 import AddFriend from "../components/contact/AddFriend";
+import FriendRequest from "../components/contact/FriendRequest";
 
 import ProfileInformation from "../components/profile/ProfileInformation";
 import ChangeInformation from "../components/profile/ChangeInformation";
@@ -53,6 +54,16 @@ const ChatStack = () => {
       />
       <Stack.Screen name="QRScanner" component={QRScanner} />
       <Stack.Screen name="AddFriend" component={AddFriend} />
+    </Stack.Navigator>
+  );
+};
+
+const ContactStack = () => {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="ContactTab" component={ContactTab} />
+      <Stack.Screen name="AddFriend" component={AddFriend} />
+      <Stack.Screen name="FriendRequest" component={FriendRequest} />
     </Stack.Navigator>
   );
 };
@@ -131,7 +142,7 @@ const AppNavigator = ({ setUser }) => {
       />
       <BottomTab.Screen
         name="Contact"
-        children={(props) => <ContactTab {...props} setUser={setUser} />}
+        children={(props) => <ContactStack {...props} setUser={setUser} />}
       />
       <BottomTab.Screen
         name="Timeline"
