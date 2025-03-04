@@ -29,6 +29,7 @@ const LoginScreen = ({ navigation }) => {
       await AsyncStorage.setItem("token", token);
       await AsyncStorage.setItem("user", JSON.stringify(user));
       setUser(user);
+      console.log("Users: ", user);
       Alert.alert("Đăng nhập thành công!", `Chào mừng ${user.full_name}`);
       // navigation.replace("AppNavigator");
     } catch (error) {

@@ -24,6 +24,28 @@ const messageSchema = new mongoose.Schema(
       default: "sent",
     },
     chat_type: { type: String, enum: ["private", "group"], required: true },
+    // Mảng chứa các reaction, cho phép null hoặc rỗng
+    reactions: {
+      type: [
+        {
+          user_id: { type: mongoose.Schema.Types.ObjectId, ref: "UserInfo" },
+          reaction_type: {
+            type: String,
+            enum: ["like", "love", "haha", "wow", "sad", "angry"],
+            required: true,
+          },
+          timestamp: { type: Date, default: Date.now },
+        },
+      ],
+      default: [], // Mặc định là mảng rỗng, không bắt buộc phải có dữ liệu
+    },
+    // Trạng thái ghim tin nhắn
+    is_pinned: { type: Boolean, default: false },
+    reply_to: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Messages",
+      default: null,
+    },
   },
   {
     collection: "Messages",

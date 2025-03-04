@@ -9,6 +9,7 @@ import { TabView } from "@rneui/base";
 
 const ContactTab = () => {
   const [index, setIndex] = useState(0);
+
   return (
     <SafeAreaView style={styles.container}>
       <HeaderContactTab />
