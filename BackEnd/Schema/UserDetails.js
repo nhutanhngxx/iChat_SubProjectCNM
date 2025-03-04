@@ -16,8 +16,19 @@ const userDetailSchema = new mongoose.Schema(
   {
     collection: "UserInfo",
     autoCreate: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
   }
 );
-// mongoose.model('UserInfo',userDetailSchema);
+
+// Thêm một virtual field để định dạng lại `dob` theo miền của Việt Nam
+userDetailSchema.virtual("dobFormatted").get(function () {
+  if (!this.dob) return "";
+  const date = new Date(this.dob);
+  return new Date(
+    date.getTime() + date.getTimezoneOffset() * 60000
+  ).toLocaleDateString("vi-VN");
+});
+
 const User = mongoose.model("UserInfo", userDetailSchema);
 module.exports = User;

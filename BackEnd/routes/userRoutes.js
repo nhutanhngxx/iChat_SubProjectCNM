@@ -70,8 +70,9 @@ router.post("/login", async (req, res) => {
           dob: user.dob,
           phone: user.phone,
           avatar_path: user.avatar_path,
-          // cover_path: user.cover_path,
-          // status: user.status,
+          cover_path: user.cover_path,
+          status: user.status,
+          dobFormatted: user.dobFormatted,
         },
       });
     } else {
@@ -114,6 +115,7 @@ router.post("/login", async (req, res) => {
 //         .json({ status: "error", message: "Invalid password" });
 //     }
 //   });
+
 // Lấy thông tin User từ token
 router.post("/userdata", async (req, res) => {
   const { token } = req.body;
@@ -131,10 +133,27 @@ router.post("/userdata", async (req, res) => {
     res.status(401).json({ status: "error", message: "Invalid token" });
   }
 });
-//get all users
+
+// Lấy tất cả user từ database (Tìm kiếm nếu tìm thấy)
 router.get("/users", async (req, res) => {
-  const users = await User.find();
-  res.send(users);
+  const { search } = req.query;
+
+  try {
+    let users;
+    if (!search) {
+      users = await User.find(); // Nếu không có search, trả về toàn bộ user
+    } else if (/^\d+$/.test(search)) {
+      // Nếu chỉ chứa số, tìm chính xác theo số điện thoại
+      users = await User.find({ phone: search });
+    } else {
+      // Nếu chứa ký tự, tìm tương đối theo full_name
+      users = await User.find({ full_name: { $regex: search, $options: "i" } });
+    }
+
+    res.json({ status: "ok", users });
+  } catch (error) {
+    res.status(500).json({ status: "error", message: error.message });
+  }
 });
 
 module.exports = router;

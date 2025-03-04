@@ -2,7 +2,6 @@ import React, { useState, useEffect, useContext } from "react";
 import { Text, View, Image, TouchableOpacity, StyleSheet } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { UserContext } from "../../../src/context/UserContext";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import avatar from "../../assets/images/avatars/avatar1.png";
 
@@ -80,11 +79,22 @@ const ProfileInformation = () => {
         </Text>
         <View style={styles.container}>
           <Text style={styles.title}>Giới tính</Text>
-          <Text style={styles.value}>{user.gender || "Chưa cập nhật"}</Text>
+          <Text style={styles.value}>
+            {user.gender
+              ? user.gender === "Male"
+                ? "Nam"
+                : user.gender === "Female"
+                ? "Nữ"
+                : user.gender
+              : "Chưa cập nhật"}
+          </Text>
         </View>
+
         <View style={styles.container}>
           <Text style={styles.title}>Ngày sinh</Text>
-          <Text style={styles.value}>{user.dob || "Chưa cập nhật"}</Text>
+          <Text style={styles.value}>
+            {user.dobFormatted || "Chưa cập nhật"}
+          </Text>
         </View>
         <View style={styles.container}>
           <Text style={styles.title}>Số điện thoại</Text>

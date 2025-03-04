@@ -21,7 +21,7 @@ dayjs.extend(relativeTime);
 dayjs.locale("vi");
 
 const getTimeAgo = (timestamp) => {
-  return dayjs(timestamp).fromNow(); // Hiển thị "X phút trước"
+  return dayjs(timestamp).fromNow(); // Hiển thị "x phút trước"
 };
 
 const UuTien = () => {
@@ -33,11 +33,17 @@ const UuTien = () => {
   const fetchUsers = async () => {
     try {
       console.log("Fetching users...");
-      const response = await axios.get("http://192.168.1.237:5001/users");
-      // console.log("User data from API:", response.data);
-      setAllUser(response.data);
+      const response = await axios.get("http://192.168.1.50:5001/users");
+
+      if (response.data.status === "ok" && Array.isArray(response.data.users)) {
+        setAllUser(response.data.users);
+      } else {
+        console.error("Lỗi: API trả về dữ liệu không hợp lệ", response.data);
+        setAllUser([]); // Gán rỗng nếu API lỗi
+      }
     } catch (error) {
       console.error("Error fetching users:", error);
+      setAllUser([]); // Gán rỗng nếu lỗi
     }
   };
 
@@ -51,7 +57,7 @@ const UuTien = () => {
     console.log("Loading all messages...");
     try {
       const response = await axios.get(
-        `http://192.168.1.237:5001/messages/${user.id}`
+        `http://192.168.1.50:5001/messages/${user.id}`
       );
 
       if (response.data.status === "ok" && Array.isArray(response.data.data)) {
@@ -162,7 +168,6 @@ const UuTien = () => {
           data={chatList}
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => {
-            console.log("Rendering item:", item);
             return renderItem({ item });
           }}
           showsVerticalScrollIndicator={true}

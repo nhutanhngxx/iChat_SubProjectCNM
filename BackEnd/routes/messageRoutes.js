@@ -257,4 +257,24 @@ router.post("/messages/reply", async (req, res) => {
   }
 });
 
+// API tìm kiếm tin nhắn theo nội dung
+router.get("/messages", async (req, res) => {
+  try {
+    const { search } = req.query;
+
+    if (!search) {
+      return res.status(400).json({ error: "Search query is required" });
+    }
+
+    const messages = await Messages.find({
+      content: { $regex: search, $options: "i" }, // Tìm kiếm không phân biệt hoa thường
+    }).sort({ createdAt: -1 });
+
+    res.json({ status: "ok", data: messages });
+  } catch (error) {
+    console.error("Error searching messages:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
 module.exports = router;

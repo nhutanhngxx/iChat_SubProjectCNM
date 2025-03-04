@@ -50,7 +50,7 @@ const Chatting = ({ route }) => {
 
     try {
       const response = await axios.delete(
-        `http://192.168.1.237:5001/${selectedMessage._id}`
+        `http://192.168.1.50:5001/${selectedMessage._id}`
       );
 
       console.log("Response từ server:", response.data);
@@ -79,7 +79,7 @@ const Chatting = ({ route }) => {
   const fetchMessages = async () => {
     try {
       const response = await axios.get(
-        `http://192.168.1.237:5001/messages/${user.id}/${chat.id}`
+        `http://192.168.1.50:5001/messages/${user.id}/${chat.id}`
       );
       if (response.data.status === "ok") {
         setMessages(response.data.data);
@@ -135,7 +135,7 @@ const Chatting = ({ route }) => {
         };
 
         const response = await axios.post(
-          "http://192.168.1.237:5001/messages/reply",
+          "http://192.168.1.50:5001/messages/reply",
           newMessage
         );
 
