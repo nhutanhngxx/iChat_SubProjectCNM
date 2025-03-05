@@ -1,6 +1,8 @@
-import { View, Image, TextInput } from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import { View, Image, TextInput, TouchableOpacity } from "react-native";
 
 const HeaderContactTab = () => {
+  const navigation = useNavigation();
   return (
     <View
       style={{
@@ -26,12 +28,15 @@ const HeaderContactTab = () => {
         ></TextInput>
       </View>
 
-      <View style={{ flexDirection: "row", gap: 10 }}>
+      <TouchableOpacity
+        style={{ flexDirection: "row", gap: 10 }}
+        onPress={() => navigation.navigate("AddFriend")}
+      >
         <Image
           source={require("../../assets/icons/add-friend.png")}
           style={{ width: 20, height: 20 }}
         />
-      </View>
+      </TouchableOpacity>
     </View>
   );
 };

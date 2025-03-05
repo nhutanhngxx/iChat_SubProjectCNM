@@ -121,6 +121,7 @@ const RequestSend = () => {
     alert("Recall request to: " + item.name);
   };
 
+  // Hiển thị danh sách lời mời kết bạn
   const renderItem = ({ item }) => (
     <TouchableOpacity
       style={styles.item_container}
@@ -202,7 +203,6 @@ const FriendRequest = () => {
       </SafeAreaView>
 
       {/* List Friend Request */}
-      {/* <RequestAdd /> */}
       <SafeAreaView style={{ flex: 1, backgroundColor: "white" }}>
         <Tab
           value={index}

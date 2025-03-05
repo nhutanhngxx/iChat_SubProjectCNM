@@ -35,7 +35,7 @@ const friendList = [
   },
 ];
 
-const addRequest = 20;
+const addRequest = 3;
 
 const FriendTab = () => {
   const navigation = useNavigation();
