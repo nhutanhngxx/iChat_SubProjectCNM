@@ -1,4 +1,5 @@
 import { useNavigation } from "@react-navigation/native";
+import { Avatar } from "@rneui/themed";
 import React from "react";
 import {
   View,
@@ -9,7 +10,6 @@ import {
   StyleSheet,
 } from "react-native";
 import { Dimensions } from "react-native";
-import { useNavigation } from "@react-navigation/native";
 
 const friendList = [
   {
@@ -58,7 +58,7 @@ const FriendTab = () => {
       onPress={() => handleOpenChatting(item)}
     >
       <View style={styles.item_leftSide}>
-        <Image source={item.avatar} style={{ width: 50, height: 50 }} />
+        <Avatar size={50} rounded source={item.avatar} />
         <Text style={{ fontWeight: "500", fontSize: 16 }}>{item.name}</Text>
       </View>
       <View style={{ display: "flex", flexDirection: "row", gap: 20 }}>
