@@ -1,6 +1,6 @@
 import { useNavigation } from "@react-navigation/native";
 import { Avatar, Tab, TabView } from "@rneui/themed";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Text,
   SafeAreaView,
@@ -16,31 +16,50 @@ const friendRequest = [
   {
     id: "1",
     name: "Nguyễn Nhựt Anh",
-    lastMessage: "[Hình ảnh]",
-    time: "1 phút trước",
     avatar: require("../../assets/images/avatars/avatar1.png"),
   },
   {
     id: "2",
     name: "Trần Minh Quân",
-    lastMessage: "Xin chào!",
-    time: "5 phút trước",
     avatar: require("../../assets/images/avatars/avatar2.png"),
   },
   {
     id: "3",
     name: "Lê Phương Thảo",
-    lastMessage: "Bạn khỏe không?",
-    time: "10 phút trước",
     avatar: require("../../assets/images/avatars/avatar3.png"),
   },
 ];
 
-const RequestAdd = () => {
+const RequestRecieve = () => {
+  const [listRequest, setListRequest] = useState([]);
+  useEffect(() => {
+    setListRequest(listRequest);
+  }, []);
+
+  // Xem thông tin của người gửi lời mời kết bạn
   const handleViewProfile = (item) => {
     alert("View profile of: " + item.name);
   };
 
+  // Chấp nhận lời mời kết bạn
+  const handleAcceptRequest = (item) => {
+    const newListRequest = listRequest.filter(
+      (request) => request.id !== item.id
+    );
+    setListRequest(newListRequest);
+    alert("Accept request from: " + item.name);
+  };
+
+  // Từ chối lời mời kết bạn
+  const handleDeclineRequest = (item) => {
+    const newListRequest = listRequest.filter(
+      (request) => request.id !== item.id
+    );
+    setListRequest(newListRequest);
+    alert("Decline request from: " + item.name);
+  };
+
+  // Hiển thị danh sách lời mời kết bạn
   const renderItem = ({ item }) => (
     <TouchableOpacity
       style={styles.item_container}
@@ -74,7 +93,7 @@ const RequestAdd = () => {
   return (
     <View style={{ paddingHorizontal: 15, marginTop: 10 }}>
       <FlatList
-        data={friendRequest}
+        data={listRequest}
         renderItem={renderItem}
         keyExtractor={(item) => item.id.toString()}
       />
@@ -83,12 +102,23 @@ const RequestAdd = () => {
 };
 
 const RequestSend = () => {
+  const [listRequest, setListRequest] = useState([]);
+  useEffect(() => {
+    setListRequest(friendRequest);
+  }, []);
+
+  // Xem thông tin của người nhận lời mời kết bạn
   const handleViewProfile = (item) => {
     alert("View profile of: " + item.name);
   };
 
+  // Thu hồi lời mời kết bạn (có thể hiện modal xác nhận)
   const handleRecallRequest = (item) => {
-    alert("Recall request from: " + item.name);
+    const newListRequest = listRequest.filter(
+      (request) => request.id !== item.id
+    );
+    setListRequest(newListRequest);
+    alert("Recall request to: " + item.name);
   };
 
   const renderItem = ({ item }) => (
@@ -119,7 +149,7 @@ const RequestSend = () => {
   return (
     <View style={{ paddingHorizontal: 15, marginTop: 10 }}>
       <FlatList
-        data={friendRequest}
+        data={listRequest}
         renderItem={renderItem}
         keyExtractor={(item) => item.id.toString()}
       />
@@ -137,14 +167,6 @@ const FriendRequest = () => {
 
   const handleOpenSettingRequest = () => {
     alert("Open setting request");
-  };
-
-  const handleAcceptRequest = (item) => {
-    alert("Accept request from: " + item.name);
-  };
-
-  const handleDeclineRequest = (item) => {
-    alert("Decline request from: " + item.name);
   };
 
   return (
@@ -211,7 +233,7 @@ const FriendRequest = () => {
 
         <TabView value={index} onChange={setIndex} animationType="spring">
           <TabView.Item>
-            <RequestAdd />
+            <RequestRecieve />
           </TabView.Item>
           <TabView.Item>
             <RequestSend />
