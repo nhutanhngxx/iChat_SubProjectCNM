@@ -20,8 +20,8 @@ const messageSchema = new mongoose.Schema(
     timestamp: { type: Date, default: Date.now },
     status: {
       type: String,
-      enum: ["sent", "received", "Viewed"],
-      default: "sent",
+      enum: ["send", "received", "viewed"],
+      default: "send",
     },
     chat_type: { type: String, enum: ["private", "group"], required: true },
     // Mảng chứa các reaction, cho phép null hoặc rỗng
