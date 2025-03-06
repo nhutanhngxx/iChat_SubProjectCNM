@@ -9,7 +9,7 @@ import {
 } from "@ant-design/icons";
 
 const ConversationDetails = ({ isVisible, selectedChat }) => {
-  if (!isVisible) return null; // Ẩn component nếu isVisible = false
+  if (!isVisible) return null; // Ẩn component nếu isVisible = fals
 
   return (
     <div className="conversation-details" style={{ padding: "20px" }}>

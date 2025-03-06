@@ -18,7 +18,7 @@ const HelloWindow = () => {
       {/* Hình ảnh */}
       <div className="image-container">
         <img
-          src="https://s3-alpha-sig.figma.com/img/8eef/22c2/3b82d8322b217f52c129ddc1530d8787?Expires=1740960000&Key-Pair-Id=APKAQ4GOSFWCW27IBOMQ&Signature=MLBEm7WFKMlitZURkMjMX1NnRcQP9SbwzXbLpPGefS2-0Qtqwwndyzn1YxAo-ybzDC9uoPXBaKCoi1-FhiDcL3UeSFaAPqIBcUY777t2KiljYaQHQcXnHI7TOgx1lmMwRUv8dyNyzzu7qU2ypLRPBYGC6bMt9ChQqx-aYTOwIp2p2QrEm2NlejF-McZwpLlgQ7o96RjE2yxKkIHfwTIKNu4rY-6RR8mjnFDJ4bDBZfQeJtqroeQ4Dq5WuT3bVxcA-tm9N1H4iVR6whfxIjodi5xP7U-ArdQ6qUIqhTO1GNpMfEcQr7TqOMh6xp2lhOj~QXbEGCJipevho0Wa49h3Fg__"
+          src="https://i.ibb.co/8LVyWRw3/logo-Ichat-removebg-preview-1.png"
           alt="Welcome Illustration"
           className="hello-image"
         />

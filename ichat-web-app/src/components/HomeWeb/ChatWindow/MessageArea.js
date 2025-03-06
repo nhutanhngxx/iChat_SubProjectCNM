@@ -12,6 +12,8 @@ import Message from "./Message";
 import MessageInput from "./MessageInput";
 import "./MessageArea.css";
 import ConversationDetails from "./ConversationDetails";
+import SearchRight from "./SearchRight";
+import { set } from "lodash";
 
 const { Header, Content } = Layout;
 
@@ -47,8 +49,17 @@ const mockMessagesByUser = {
 const MessageArea = ({ selectedChat }) => {
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState("");
+  // Hiển thị thông tin hội thoại
   const [showConversation, setShowConversation] = useState(false);
-
+  const [showSearchRight, setShowSearchRight] = useState(false);
+  const handleShowSearchRight = () => {
+    setShowSearchRight(!showSearchRight);
+    setShowConversation(false);
+  };
+  const handleShowConversation = () => {
+    setShowConversation(!showConversation);
+    setShowSearchRight(false);
+  };
   useEffect(() => {
     if (selectedChat) {
       // Fetch messages based on selected chat
@@ -144,10 +155,13 @@ const MessageArea = ({ selectedChat }) => {
           <div className="action-buttons-message-area">
             <UsergroupAddOutlined className="header-icon-message-area" />
             <VideoCameraOutlined className="header-icon-message" />
-            <SearchOutlined className="header-icon" />
+            <SearchOutlined
+              className="header-icon"
+              onClick={handleShowSearchRight}
+            />
             <ProfileOutlined
               className="header-icon"
-              onClick={() => setShowConversation(!showConversation)}
+              onClick={handleShowConversation}
             />
           </div>
         </Header>
@@ -177,6 +191,12 @@ const MessageArea = ({ selectedChat }) => {
             isVisible={showConversation}
             selectedChat={selectedChat}
           />
+        </Layout>
+      )}
+      {/* Hiển thị tìm kiếm bên thông tin hội thoại */}
+      {showSearchRight && (
+        <Layout className="layout-search-right">
+          <SearchRight setShowSearchRight={setShowSearchRight} />
         </Layout>
       )}
     </div>

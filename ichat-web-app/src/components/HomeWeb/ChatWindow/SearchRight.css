@@ -1,0 +1,115 @@
+.conntainer-seachright {
+  min-width: 346px;
+  max-width: 346px;
+  width: 346px;
+  background-color: aqua;
+  height: 100%;
+}
+.search-right-header-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 80px;
+  background-color: rgb(255, 255, 255);
+  border-bottom: 1px solid rgb(199, 199, 199);
+}
+.search-right-header-title p {
+  margin-left: 20px;
+  margin-bottom: 5px;
+  font-size: 18px;
+  cursor: pointer;
+}
+.search-right-header-title p:hover {
+  color: rgb(94, 216, 253);
+}
+.search-right-header {
+  background: rgb(255, 255, 255);
+  height: 50px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.search-right-header div {
+  border: 1px solid rgb(199, 199, 199);
+  padding: 5px;
+  background-color: rgb(255, 255, 255);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 90%;
+  border-radius: 10px;
+}
+.search-right-header div .icon-ciSeach {
+  font-size: 25px;
+}
+.search-right-header div input {
+  border: none;
+  outline: none;
+  width: 100%;
+}
+.search-right-header div button {
+  background-color: rgb(255, 255, 255);
+  border: none;
+  outline: none;
+  cursor: pointer;
+}
+/* Lọc */
+.search-right-header-fillter {
+  display: flex;
+  background-color: rgb(255, 255, 255);
+  height: 50px;
+  align-items: center;
+  justify-content: space-around;
+  gap: 10px;
+  padding-right: 5%;
+}
+.search-right-header-fillter p {
+  text-align: center;
+  font-size: 16px;
+  margin: auto;
+}
+.search-right-header-fillter button {
+  background-color: rgb(238, 235, 235);
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 5px;
+  cursor: pointer;
+  border: 1px solid rgb(199, 199, 199);
+  border-radius: 5px;
+  width: 35%;
+}
+.search-right-header-fillter button:hover {
+  background-color: rgb(212, 212, 212);
+}
+/* Modal mini người gửi */
+.mini-modal-sender {
+  position: absolute;
+  background-color: rgb(238, 235, 235);
+  top: 170px;
+  right: 140px;
+  gap: 10px;
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+}
+.mini-modal-sender img {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+}
+.mini-modal-sender-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.mini-modal-sender-list-item {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  cursor: pointer;
+}
+.mini-modal-sender-list-item:hover {
+  background-color: rgb(212, 212, 212);
+}

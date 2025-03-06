@@ -25,6 +25,9 @@ import {
 } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import "./MessageInput.css";
+import EmojiPicker from "emoji-picker-react";
+import Picker from "emoji-picker-react";
+import { set } from "lodash";
 
 // Dữ liệu mẫu cho danh sách bạn bè
 const mockContacts = [
@@ -58,6 +61,29 @@ const MessageInput = ({
   const [selectedContacts, setSelectedContacts] = useState([]); // State cho danh sách bạn bè được chọn
   const [activeCategory, setActiveCategory] = useState("Khách hàng"); // State cho tab hiện tại
 
+  // Emoji picker
+  const [chosenEmoji, setChosenEmoji] = useState(null);
+  const [showPicker, setShowPicker] = useState(false);
+  const [showPickerRight, setShowPickerRight] = useState(false);
+  // const [inputMessage, setInputMessage] = useState("");
+  // Mở picker ở trên hoặc bên phải
+  const handleShowPickerTop = () => {
+    setShowPicker((prev) => !prev);
+    setShowPickerRight(false);
+  };
+  const handleShowPickerRight = () => {
+    setShowPickerRight((prev) => !prev);
+    setShowPicker(false);
+  };
+  const onEmojiClick = (event) => {
+    const emoji = event.emoji; // Lấy emoji từ thuộc tính `emoji` của event
+    if (emoji) {
+      setInputMessage((prevMessage) => prevMessage + emoji); // Thêm emoji vào tin nhắn
+    } else {
+      console.error("Emoji is undefined or invalid:", event); // Log lỗi nếu emoji không hợp lệ
+    }
+  };
+  console.log("InputMessage: " + inputMessage);
   // Hàm xử lý khi chọn file ảnh (mở hộp thoại tải ảnh trực tiếp)
   const handleImageUpload = (event) => {
     const file = event.target.files[0];
@@ -103,6 +129,8 @@ const MessageInput = ({
       setSelectedFile(null); // Reset file sau khi gửi
       setInputMessage(""); // Reset tin nhắn văn bản
     }
+    showPicker && setShowPicker(false); // Đóng picker nếu đang mở
+    showPickerRight && setShowPickerRight(false); // Đóng picker nếu đang mở
   };
 
   // Hàm xử lý khi chọn bạn bè
@@ -209,7 +237,21 @@ const MessageInput = ({
     <div className="message-input-container">
       {/* Thanh công cụ trên */}
       <div className="message-toolbar">
-        <SmileOutlined className="toolbar-icon" />
+        <div style={{ bottom: "102px", position: "absolute", left: "0px" }}>
+          {showPicker && (
+            <Picker
+              // onEmojiClick={(event, emojiObject) =>
+              //   onEmojiClick(event, emojiObject)
+              // } // Truyền cả event và emojiObject vào hàm
+              onEmojiClick={onEmojiClick} // Truyền hàm onEmojiClick đúng cách
+            />
+          )}
+        </div>
+        <SmileOutlined
+          className="toolbar-icon"
+          // onClick={() => setShowPicker((prev) => !prev)}
+          onClick={handleShowPickerTop}
+        />
         <label htmlFor="image-upload" className="toolbar-icon">
           <input
             type="file"
@@ -251,7 +293,7 @@ const MessageInput = ({
         <div className="message-input-box">
           <TextareaAutosize
             placeholder="Nhập @, tin nhắn tới "
-            value={inputMessage}
+            value={inputMessage || ""}
             onChange={(e) => setInputMessage(e.target.value)}
             onKeyPress={(e) => {
               if (e.key === "Enter") {
@@ -276,7 +318,21 @@ const MessageInput = ({
         </div>
         {/* Nút emoji & like */}
         <div className="message-actions">
-          <SmileOutlined className="action-icon" />
+          <SmileOutlined
+            className="action-icon"
+            // onClick={() => setShowPickerRight((prev) => !prev)}
+            onClick={handleShowPickerRight}
+          />
+          <div style={{ bottom: "37px", position: "absolute", right: "45px" }}>
+            {showPickerRight && (
+              <Picker
+                // onEmojiClick={(event, emojiObject) =>
+                //   onEmojiClick(event, emojiObject)
+                // } // Truyền cả event và emojiObject vào hàm
+                onEmojiClick={onEmojiClick} // Truyền hàm onEmojiClick đúng cách
+              />
+            )}
+          </div>
           {inputMessage || selectedImage || selectedFile ? (
             <div
               className="send-icon"
