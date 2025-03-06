@@ -25,7 +25,7 @@ const chatList = [
   },
 ];
 
-const Khac = () => {
+const Other = () => {
   return (
     <View style={{}}>
       <Text>Những tin nhắn Khác</Text>
@@ -33,4 +33,4 @@ const Khac = () => {
   );
 };
 
-export default Khac;
+export default Other;

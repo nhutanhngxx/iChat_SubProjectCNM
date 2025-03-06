@@ -23,7 +23,7 @@ import axios from "axios";
 const Chatting = ({ route }) => {
   const navigation = useNavigation();
   const { user } = useContext(UserContext);
-  const { chat } = route.params || {}; // Lấy thông tin từ màn hình MessageTab/UuTien
+  const { chat } = route.params || {}; // Lấy thông tin từ màn hình MessageTab/Priority
   const flatListRef = useRef(null);
   const [inputMessage, setInputMessage] = useState("");
   const [messages, setMessages] = useState([]);

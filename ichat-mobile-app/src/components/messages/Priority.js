@@ -24,7 +24,7 @@ const getTimeAgo = (timestamp) => {
   return dayjs(timestamp).fromNow(); // Hiển thị "X phút trước"
 };
 
-const UuTien = () => {
+const Priority = () => {
   const navigation = useNavigation();
   const { user } = useContext(UserContext);
   const [chatList, setChatList] = useState([]);
@@ -216,4 +216,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default UuTien;
+export default Priority;

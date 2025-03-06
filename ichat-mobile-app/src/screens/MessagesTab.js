@@ -4,8 +4,8 @@ import { Tab } from "@rneui/themed";
 import { TabView } from "@rneui/base";
 
 import HeaderMessages from "../components/header/HeaderMessagesTab";
-import UutienMessages from "../components/messages/UuTien";
-import KhacMessages from "../components/messages/Khac";
+import PriorityMessages from "../components/messages/Priority";
+import OtherMessages from "../components/messages/Other";
 
 import { UserContext } from "../context/UserContext";
 
@@ -51,7 +51,7 @@ const MessagesTab = () => {
             alignItems: "center",
           }}
         >
-          <UutienMessages />
+          <PriorityMessages />
         </TabView.Item>
         <TabView.Item
           style={{
@@ -61,7 +61,7 @@ const MessagesTab = () => {
             alignItems: "center",
           }}
         >
-          <KhacMessages />
+          <OtherMessages />
         </TabView.Item>
       </TabView>
     </View>
