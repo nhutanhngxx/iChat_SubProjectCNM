@@ -86,7 +86,7 @@ router.get("/messages/:userId/:groupId", async (req, res) => {
     const { userId, groupId } = req.params;
 
     // Kiểm tra group có tồn tại không
-    const groupChat = await GroupChat.findOne({ chat_id: receiver_id });
+    const groupChat = await GroupChat.findOne({ _id: groupId });
     if (!groupChat) {
       return res.status(404).json({ error: "Group chat not found" });
     }
