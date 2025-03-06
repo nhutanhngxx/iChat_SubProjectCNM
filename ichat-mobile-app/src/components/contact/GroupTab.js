@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -10,28 +10,33 @@ import {
 import { Dimensions } from "react-native";
 import ModalCreateGroup from "./ModalCreateGroup";
 import { useNavigation } from "@react-navigation/native";
-
-const groupList = [
-  {
-    id: "1",
-    name: "iChat_CNM",
-    lastMessage: "[Hình ảnh]",
-    time: "1 phút trước",
-    avatar: require("../../assets/images/avatars/avatar1.png"),
-  },
-  {
-    id: "2",
-    name: "DHKTPM17C",
-    lastMessage: "Xin chào!",
-    time: "5 phút trước",
-    avatar: require("../../assets/images/avatars/avatar2.png"),
-  },
-];
+import axios from "axios";
+import { UserContext } from "@/src/context/UserContext";
 
 const GroupTab = () => {
   const navigation = useNavigation();
   const { width } = Dimensions.get("window");
   const [isShowModal, setIsShowModal] = useState(false);
+  const [groupList, setGroupList] = useState([]);
+  const { user } = useContext(UserContext);
+
+  useEffect(() => {
+    const fetchGroupList = () => {
+      axios
+        .get(`http://192.168.1.6:5001/groups/${user.id}`)
+        .then((response) => {
+          setGroupList(response.data);
+        })
+        .catch((error) => {
+          console.error("Error fetching groups:", error);
+        });
+    };
+
+    fetchGroupList();
+
+    const interval = setInterval(fetchGroupList, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleOpenModal = () => {
     setIsShowModal(true);
@@ -42,9 +47,6 @@ const GroupTab = () => {
   };
 
   const handleOpenChatting = (chat) => {
-    console.log("Received chat:", chat);
-    console.log("Type of chat:", typeof chat);
-
     navigation.navigate("Chatting", { chat });
   };
 
@@ -52,13 +54,14 @@ const GroupTab = () => {
     <TouchableOpacity
       style={styles.itemContainer}
       onPress={() => handleOpenChatting(item)}
+      key={item.id}
     >
       <View style={styles.item_leftSide}>
         <Image source={item.avatar} style={{ width: 50, height: 50 }} />
         <Text style={{ fontWeight: "500", fontSize: 16 }}>{item.name}</Text>
       </View>
       <View style={{ display: "flex", flexDirection: "row", gap: 20 }}>
-        <Text style={{ fontSize: 12 }}>{item.time}</Text>
+        {/* <Text style={{ fontSize: 12 }}>{item.created_at}</Text> */}
       </View>
     </TouchableOpacity>
   );
@@ -103,7 +106,7 @@ const GroupTab = () => {
       <View style={{ width: width - 40 }}>
         <FlatList
           data={groupList}
-          keyExtractor={(item) => item.id.toString()}
+          keyExtractor={(item) => item.id}
           renderItem={renderItem}
         />
       </View>
