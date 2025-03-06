@@ -61,6 +61,7 @@ const ChatStack = () => {
 const ContactStack = () => {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="Chatting" component={Chatting} />
       <Stack.Screen name="ContactTab" component={ContactTab} />
       <Stack.Screen name="AddFriend" component={AddFriend} />
       <Stack.Screen name="FriendRequest" component={FriendRequest} />

@@ -92,11 +92,19 @@ const RequestRecieve = () => {
   );
   return (
     <View style={{ paddingHorizontal: 15, marginTop: 10 }}>
-      <FlatList
-        data={listRequest}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id.toString()}
-      />
+      {listRequest.length === 0 ? (
+        <View>
+          <Text style={{ textAlign: "center", fontSize: 16 }}>
+            Không có lời mời kết bạn nào
+          </Text>
+        </View>
+      ) : (
+        <FlatList
+          data={listRequest}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id.toString()}
+        />
+      )}
     </View>
   );
 };
@@ -149,11 +157,19 @@ const RequestSend = () => {
   );
   return (
     <View style={{ paddingHorizontal: 15, marginTop: 10 }}>
-      <FlatList
-        data={listRequest}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id.toString()}
-      />
+      {listRequest.length === 0 ? (
+        <View>
+          <Text style={{ textAlign: "center", fontSize: 16 }}>
+            Không có lời mời kết bạn nào
+          </Text>
+        </View>
+      ) : (
+        <FlatList
+          data={listRequest}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id.toString()}
+        />
+      )}
     </View>
   );
 };
