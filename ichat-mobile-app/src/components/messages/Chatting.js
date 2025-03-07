@@ -121,31 +121,6 @@ const Chatting = ({ route }) => {
     setModalVisible(false); // Ẩn modal sau khi chọn reply
   };
 
-  // Fetch để load tất cả tin nhắn 1-1
-  const fetchMessages = async () => {
-    try {
-      const response = await axios.get(
-        `http://172.20.36.53:5001/messages/${user.id}/${chat.id}`
-      );
-      if (response.data.status === "ok") {
-        setMessages(response.data.data);
-        console.log("User:" + user.id);
-        console.log("Tin nhắn nhóm: " + response.data);
-      }
-    } catch (error) {
-      console.error("Lỗi khi lấy tin nhắn:", error);
-    }
-  };
-
-  // Sau mỗi 1s sẽ load lại API một lần => làm mới tin nhắn
-  useEffect(() => {
-    if (chat?.id && user?.id) {
-      fetchMessages();
-      const interval = setInterval(fetchMessages, 1000);
-      return () => clearInterval(interval);
-    }
-  }, [user, chat]);
-
   // Tắt Tabbar ngay sau khi vào màn hình Chatting
   useEffect(() => {
     console.log("Chat: ", chat);
