@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import {
   View,
@@ -12,11 +12,54 @@ import {
 } from "react-native";
 import { Tab, TabView } from "@rneui/themed";
 import axios from "axios";
+import { UserContext } from "@/src/context/UserContext";
 
 const SearchScreen = () => {
   const route = useRoute();
   const navigation = useNavigation();
   const searchInputRef = useRef(null);
+  const { user } = useContext(UserContext);
+
+  const handleOpenChatting = async (selectedMessage) => {
+    console.log(selectedMessage);
+
+    // Xác định ID của người đang chat với user
+    const isSender = selectedMessage.sender_id === user.id;
+    const chatPartnerId = isSender
+      ? selectedMessage.receiver_id
+      : selectedMessage.sender_id;
+
+    try {
+      // Gọi API lấy danh sách users
+      const response = await axios.get("http://172.20.10.5:5001/users");
+
+      if (response.data.status === "ok") {
+        // Tìm người dùng trong danh sách theo chatPartnerId
+        const chatPartner = response.data.users.find(
+          (user) => user.id === chatPartnerId
+        );
+
+        // Lấy tên và avatar của người đang chat cùng
+        const chatPartnerName = chatPartner
+          ? chatPartner.full_name
+          : "Người ẩn danh";
+        const chatPartnerAvatar =
+          chatPartner?.avatar_path ||
+          "https://i.ibb.co/9k8sPRMx/best-seller.png"; // Avatar mặc định nếu không có
+
+        const chat = {
+          messages: [], // Có thể gọi API để lấy tin nhắn nếu cần
+          id: chatPartnerId,
+          name: chatPartnerName,
+          avatar: chatPartnerAvatar,
+        };
+
+        navigation.navigate("Chatting", { chat });
+      }
+    } catch (error) {
+      console.error("Lỗi khi lấy danh sách người dùng:", error);
+    }
+  };
 
   useEffect(() => {
     if (route.params?.autoFocus) {
@@ -60,8 +103,8 @@ const SearchScreen = () => {
     setIsLoading(true);
     try {
       const [usersResponse, messagesResponse] = await Promise.all([
-        axios.get(`http://192.168.1.50:5001/users?search=${searchText}`),
-        axios.get(`http://192.168.1.50:5001/messages?search=${searchText}`),
+        axios.get(`http://172.20.10.5:5001/users?search=${searchText}`),
+        axios.get(`http://172.20.10.5:5001/messages?search=${searchText}`),
       ]);
 
       setSearchUsers(
@@ -84,7 +127,7 @@ const SearchScreen = () => {
   const fetchUsers = async () => {
     try {
       console.log("Fetching users...");
-      const response = await axios.get("http://192.168.1.50:5001/users");
+      const response = await axios.get("http://172.20.10.5:5001/users");
 
       if (response.data.status === "ok" && Array.isArray(response.data.users)) {
         setUsers(response.data.users); // Cập nhật state users
@@ -198,9 +241,8 @@ const SearchScreen = () => {
               item.content ? (
                 // Tin nhắn
                 <TouchableOpacity
-                  onPress={() =>
-                    navigation.navigate("Chatting", { chatId: item.chatId })
-                  }
+                  key={item.id}
+                  onPress={() => handleOpenChatting(item)}
                   style={{
                     paddingVertical: 5,
                     paddingHorizontal: 15,
@@ -276,9 +318,7 @@ const SearchScreen = () => {
               data={searchMessages}
               renderItem={({ item }) => (
                 <TouchableOpacity
-                  onPress={() =>
-                    navigation.navigate("Chatting", { chatId: item.chatId })
-                  }
+                  onPress={() => handleOpenChatting(item)}
                   style={{
                     paddingVertical: 5,
                     paddingHorizontal: 15,

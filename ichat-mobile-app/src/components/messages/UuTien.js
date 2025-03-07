@@ -33,7 +33,7 @@ const UuTien = () => {
   const fetchUsers = async () => {
     try {
       console.log("Fetching users...");
-      const response = await axios.get("http://192.168.1.50:5001/users");
+      const response = await axios.get("http://172.20.10.5:5001/users");
 
       if (response.data.status === "ok" && Array.isArray(response.data.users)) {
         setAllUser(response.data.users);
@@ -57,7 +57,7 @@ const UuTien = () => {
     console.log("Loading all messages...");
     try {
       const response = await axios.get(
-        `http://192.168.1.50:5001/messages/${user.id}`
+        `http://172.20.10.5:5001/messages/${user.id}`
       );
 
       if (response.data.status === "ok" && Array.isArray(response.data.data)) {
@@ -85,6 +85,8 @@ const UuTien = () => {
         msg.sender_id === user.id ? msg.receiver_id : msg.sender_id;
       const chatUser = allUser.find((u) => u._id === chatUserId);
       const fullName = chatUser ? chatUser.full_name : "Người dùng ẩn danh";
+      const avatarPath =
+        chatUser?.avatar_path || "https://i.ibb.co/9k8sPRMx/best-seller.png"; // Avatar mặc định nếu không có
 
       const lastMessageTime = new Date(msg.timestamp).getTime();
       const timeDiff = getTimeAgo(lastMessageTime);
@@ -99,7 +101,7 @@ const UuTien = () => {
           lastMessage: msg.type === "image" ? "[Hình ảnh]" : msg.content,
           lastMessageTime: lastMessageTime,
           time: timeDiff,
-          avatar: require("../../assets/images/avatars/avatar1.png"),
+          avatar: { uri: avatarPath },
         });
       }
     });
@@ -127,15 +129,12 @@ const UuTien = () => {
   }, [user, allUser]);
 
   const handleOpenChatting = (chat) => {
-    console.log("Received chat:", chat);
-    console.log("Type of chat:", typeof chat);
-
     navigation.navigate("Chatting", { chat });
+    console.log(chat);
   };
 
   const renderItem = ({ item }) => {
     if (!item) return null;
-
     return (
       <TouchableOpacity
         style={styles.container}

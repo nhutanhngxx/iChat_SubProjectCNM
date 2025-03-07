@@ -24,11 +24,15 @@ const Option = ({ route }) => {
   const { user } = useContext(UserContext);
   const { id, name, avatar } = route.params || {};
 
+  useEffect(() => {
+    console.log("avatar: ", avatar);
+  }, []);
+
   // Xóa tất cả tin nhắn giữa 2 người
   const deleteChatHistory = async () => {
     try {
       const response = await axios.delete(
-        `http://192.168.1.50:5001/messages/${user.id}/${id}`
+        `http://172.20.10.5:5001/messages/${user.id}/${id}`
       );
 
       if (response.data.status === "ok") {
@@ -44,6 +48,7 @@ const Option = ({ route }) => {
       <HeaderOption />
       <View style={styles.profileContainer}>
         <Image source={avatar} style={styles.avatar} />
+
         <Text style={styles.name}>{name}</Text>
       </View>
 
