@@ -31,7 +31,7 @@ const SearchScreen = () => {
 
     try {
       // Gọi API lấy danh sách users
-      const response = await axios.get("http://172.20.10.5:5001/users");
+      const response = await axios.get("http://172.20.36.53:5001/users");
 
       if (response.data.status === "ok") {
         // Tìm người dùng trong danh sách theo chatPartnerId
@@ -53,7 +53,7 @@ const SearchScreen = () => {
           name: chatPartnerName,
           avatar: chatPartnerAvatar,
         };
-
+        console.log("chatPartnerAvatar: ", chatPartnerAvatar);
         navigation.navigate("Chatting", { chat });
       }
     } catch (error) {
@@ -103,8 +103,8 @@ const SearchScreen = () => {
     setIsLoading(true);
     try {
       const [usersResponse, messagesResponse] = await Promise.all([
-        axios.get(`http://172.20.10.5:5001/users?search=${searchText}`),
-        axios.get(`http://172.20.10.5:5001/messages?search=${searchText}`),
+        axios.get(`http://172.20.36.53:5001/users?search=${searchText}`),
+        axios.get(`http://172.20.36.53:5001/messages?search=${searchText}`),
       ]);
 
       setSearchUsers(
@@ -127,7 +127,7 @@ const SearchScreen = () => {
   const fetchUsers = async () => {
     try {
       console.log("Fetching users...");
-      const response = await axios.get("http://172.20.10.5:5001/users");
+      const response = await axios.get("http://172.20.36.53:5001/users");
 
       if (response.data.status === "ok" && Array.isArray(response.data.users)) {
         setUsers(response.data.users); // Cập nhật state users

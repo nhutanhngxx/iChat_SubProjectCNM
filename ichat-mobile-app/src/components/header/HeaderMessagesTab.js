@@ -13,10 +13,12 @@ import goBackIcon from "../../assets/icons/go-back.png";
 import createGroupIcon from "../../assets/icons/add-group.png";
 import loginDeviceIcon from "../../assets/icons/login-device.png";
 import addFriendIcon from "../../assets/icons/add-friend.png";
+import moreIcon from "../../assets/icons/more.png";
 
 const HeaderMessages = () => {
   const navigation = useNavigation();
   const [modalVisible, setModalVisible] = useState(false);
+  const [modalCard, setModalCard] = useState(false);
 
   // const [hasPermission, setHasPermission] = useState(null);
   // useEffect(() => {
@@ -78,9 +80,12 @@ const HeaderMessages = () => {
             style={{ width: 22, height: 22 }}
           />
         </TouchableOpacity>
+        <TouchableOpacity onPress={() => setModalCard(true)}>
+          <Image source={moreIcon} style={{ width: 22, height: 22 }} />
+        </TouchableOpacity>
       </View>
 
-      {/* Modal */}
+      {/* Modal Add friend */}
       <Modal
         // animationType="fade"
         transparent={true}
@@ -115,6 +120,82 @@ const HeaderMessages = () => {
               onPress={() => {
                 setModalVisible(false);
                 navigation.navigate("AddFriend");
+              }}
+            >
+              <Image source={addFriendIcon} style={{ width: 25, height: 25 }} />
+              <Text style={{ fontSize: 16 }}>Thêm bạn bè</Text>
+            </TouchableOpacity>
+
+            {/* <TouchableOpacity
+              style={{
+                padding: 10,
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 5,
+              }}
+              onPress={() => handleOpenModal()}
+            >
+              <Image
+                source={createGroupIcon}
+                style={{ width: 25, height: 25 }}
+              />
+              <Text style={{ fontSize: 16 }}>Tạo nhóm mới</Text>
+            </TouchableOpacity> */}
+
+            <TouchableOpacity
+              style={{
+                padding: 10,
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 5,
+              }}
+              onPress={() => {
+                setModalVisible(false);
+              }}
+            >
+              <Image
+                source={loginDeviceIcon}
+                style={{ width: 25, height: 25 }}
+              />
+              <Text style={{ fontSize: 16 }}>Quản lý đăng nhập</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* Modal Card */}
+      <Modal
+        transparent={true}
+        visible={modalCard}
+        onRequestClose={() => setModalCard(false)}
+      >
+        <TouchableOpacity
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0,0,0,0.5)",
+            alignItems: "flex-end",
+            paddingTop: 100,
+          }}
+          onPress={() => setModalCard(false)}
+        >
+          <View
+            style={{
+              width: 200,
+              backgroundColor: "white",
+              padding: 10,
+              borderRadius: 10,
+              marginRight: 10,
+            }}
+          >
+            <TouchableOpacity
+              style={{
+                padding: 10,
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 5,
+              }}
+              onPress={() => {
+                setModalVisible(false);
               }}
             >
               <Image source={addFriendIcon} style={{ width: 25, height: 25 }} />

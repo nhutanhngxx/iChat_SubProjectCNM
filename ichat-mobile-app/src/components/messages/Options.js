@@ -32,7 +32,7 @@ const Option = ({ route }) => {
   const deleteChatHistory = async () => {
     try {
       const response = await axios.delete(
-        `http://172.20.10.5:5001/messages/${user.id}/${id}`
+        `http://172.20.36.53:5001/messages/${user.id}/${id}`
       );
 
       if (response.data.status === "ok") {
@@ -47,7 +47,10 @@ const Option = ({ route }) => {
     <View style={styles.container}>
       <HeaderOption />
       <View style={styles.profileContainer}>
-        <Image source={avatar} style={styles.avatar} />
+        <Image
+          source={typeof avatar === "string" ? { uri: avatar } : avatar}
+          style={styles.avatar}
+        />
 
         <Text style={styles.name}>{name}</Text>
       </View>

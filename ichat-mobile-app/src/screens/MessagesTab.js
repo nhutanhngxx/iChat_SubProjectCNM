@@ -4,8 +4,8 @@ import { Tab } from "@rneui/themed";
 import { TabView } from "@rneui/base";
 
 import HeaderMessages from "../components/header/HeaderMessagesTab";
-import UutienMessages from "../components/messages/UuTien";
-import KhacMessages from "../components/messages/Khac";
+import UutienMessages from "../components/messages/Priority";
+import KhacMessages from "../components/messages/Other";
 
 import { UserContext } from "../context/UserContext";
 

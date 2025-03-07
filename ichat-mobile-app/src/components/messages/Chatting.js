@@ -50,7 +50,7 @@ const Chatting = ({ route }) => {
 
     try {
       const response = await axios.delete(
-        `http://172.20.10.5:5001/${selectedMessage._id}`
+        `http://172.20.36.53:5001/${selectedMessage._id}`
       );
 
       console.log("Response từ server:", response.data);
@@ -79,7 +79,7 @@ const Chatting = ({ route }) => {
   const fetchMessages = async () => {
     try {
       const response = await axios.get(
-        `http://172.20.10.5:5001/messages/${user.id}/${chat.id}`
+        `http://172.20.36.53:5001/messages/${user.id}/${chat.id}`
       );
       if (response.data.status === "ok") {
         setMessages(response.data.data);
@@ -102,7 +102,6 @@ const Chatting = ({ route }) => {
   useEffect(() => {
     console.log("Chat: ", chat);
     navigation.getParent()?.setOptions({ tabBarStyle: { display: "none" } });
-
     return () => {
       navigation.getParent()?.setOptions({
         tabBarStyle: {
@@ -130,12 +129,12 @@ const Chatting = ({ route }) => {
           receiver_id: chat.id,
           content: inputMessage,
           type: "text",
-          chat_type: "private",
+          chat_type: chat?.chatType === "group" ? "group" : "private",
           reply_to: replyMessage ? replyMessage._id : null,
         };
 
         const response = await axios.post(
-          "http://172.20.10.5:5001/messages/reply",
+          "http://172.20.36.53:5001/messages/reply",
           newMessage
         );
 

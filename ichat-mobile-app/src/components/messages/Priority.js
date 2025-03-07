@@ -33,7 +33,7 @@ const UuTien = () => {
   const fetchUsers = async () => {
     try {
       console.log("Fetching users...");
-      const response = await axios.get("http://172.20.10.5:5001/users");
+      const response = await axios.get("http://172.20.36.53:5001/users");
 
       if (response.data.status === "ok" && Array.isArray(response.data.users)) {
         setAllUser(response.data.users);
@@ -57,7 +57,7 @@ const UuTien = () => {
     console.log("Loading all messages...");
     try {
       const response = await axios.get(
-        `http://172.20.10.5:5001/messages/${user.id}`
+        `http://172.20.36.53:5001/messages/${user.id}`
       );
 
       if (response.data.status === "ok" && Array.isArray(response.data.data)) {
@@ -130,7 +130,7 @@ const UuTien = () => {
 
   const handleOpenChatting = (chat) => {
     navigation.navigate("Chatting", { chat });
-    console.log(chat);
+    console.log("Opening chat: ", chat);
   };
 
   const renderItem = ({ item }) => {

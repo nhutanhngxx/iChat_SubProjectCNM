@@ -1,29 +1,76 @@
 const express = require("express");
 const router = express.Router();
-const Messages = require("../Schema/Messages");
-const MessageCard = require("../Schema/MessageCard");
+const Messages = require("../models/Messages");
+const MessageCard = require("../models/MessageCard");
+const GroupMembers = require("../models/GroupMember");
 
 // Gửi tin nhắn
+// router.post("/send-message", async (req, res) => {
+//   try {
+//     const newMessage = new Messages(req.body);
+//     await newMessage.save();
+
+//     // Tự động tạo MessageCard với trạng thái unread
+//     const messageCard = new MessageCard({
+//       receiver_id: newMessage.receiver_id,
+//       message_id: newMessage._id,
+//       status: "unread",
+//       card_color: "#FF0000", // Màu đỏ cho tin nhắn chưa đọc
+//       title: "New Message",
+//     });
+//     await messageCard.save();
+
+//     res
+//       .status(201)
+//       .json({ message: "Message sent successfully", data: newMessage });
+//   } catch (error) {
+//     res.status(400).json({ error: error.message });
+//   }
+// });
+
 router.post("/send-message", async (req, res) => {
   try {
-    const newMessage = new Messages(req.body);
-    await newMessage.save();
+    const { sender_id, content, type, chat_type, group_id } = req.body;
 
-    // Tự động tạo MessageCard với trạng thái unread
-    const messageCard = new MessageCard({
-      receiver_id: newMessage.receiver_id,
-      message_id: newMessage._id,
-      status: "unread",
-      card_color: "#FF0000", // Màu đỏ cho tin nhắn chưa đọc
-      title: "New Message",
-    });
-    await messageCard.save();
+    if (!sender_id || !content || !chat_type) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
 
-    res
-      .status(201)
-      .json({ message: "Message sent successfully", data: newMessage });
+    // TIN NHẮN GROUP
+    // Nếu là tin nhắn trong group, gửi đến tất cả thành viên
+    if (chat_type === "group" && group_id) {
+      const members = await GroupMembers.find({ group_id }).select("user_id");
+
+      if (!members.length) {
+        return res.status(400).json({ error: "No members in this group" });
+      }
+
+      // Lưu tin nhắn cho tất cả thành viên trong nhóm
+      const messagesToInsert = members.map((member) => ({
+        sender_id,
+        receiver_id: member.user_id, // Người nhận là từng thành viên
+        group_id,
+        content,
+        type,
+        chat_type: "group",
+      }));
+
+      await Messages.insertMany(messagesToInsert);
+      return res
+        .status(201)
+        .json({ message: "Message sent to group successfully" });
+    } else {
+      // TIN NHẮN CÁ NHÂN 1-1
+      // Gửi tin nhắn bình thường
+      const newMessage = new Messages(req.body);
+      await newMessage.save();
+      return res
+        .status(201)
+        .json({ message: "Message sent successfully", data: newMessage });
+    }
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    console.error("Error sending message:", error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 

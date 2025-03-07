@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const User = require("../Schema/UserDetails");
+const User = require("../models/UserDetails");
 require("dotenv").config(); // Đọc JWT_SECRET từ .env
 
 // Đăng ký tài khoản
