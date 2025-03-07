@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import {
   Text,
   View,
@@ -14,18 +14,44 @@ import {
 } from "react-native";
 
 import { useNavigation } from "@react-navigation/native";
+import { UserContext } from "@/src/context/UserContext";
+import axios from "axios";
 
 import HeaderOption from "../header/HeaderOption";
 
 const Option = ({ route }) => {
   const navigation = useNavigation();
-  const { name, avatar } = route.params || {};
+  const { user } = useContext(UserContext);
+  const { id, name, avatar } = route.params || {};
+
+  useEffect(() => {
+    console.log("avatar: ", avatar);
+  }, []);
+
+  // Xóa tất cả tin nhắn giữa 2 người
+  const deleteChatHistory = async () => {
+    try {
+      const response = await axios.delete(
+        `http://172.20.36.53:5001/messages/${user.id}/${id}`
+      );
+
+      if (response.data.status === "ok") {
+        navigation.navigate("MessagesStack");
+      }
+    } catch (error) {
+      console.error("Lỗi khi xóa lịch sử trò chuyện:", error);
+    }
+  };
 
   return (
     <View style={styles.container}>
       <HeaderOption />
       <View style={styles.profileContainer}>
-        <Image source={avatar} style={styles.avatar} />
+        <Image
+          source={typeof avatar === "string" ? { uri: avatar } : avatar}
+          style={styles.avatar}
+        />
+
         <Text style={styles.name}>{name}</Text>
       </View>
 
@@ -67,7 +93,7 @@ const Option = ({ route }) => {
       <ScrollView
         style={{ flex: 1, paddingLeft: 20 }}
         contentContainerStyle={{ gap: 15, paddingBottom: 20 }}
-        showsVerticalScrollIndicator={false} // Ẩn thanh cuộn
+        showsVerticalScrollIndicator={false}
       >
         <View
           style={{
@@ -153,7 +179,10 @@ const Option = ({ route }) => {
             <Text style={styles.title}>Xóa khỏi danh sách bạn bè</Text>
           </TouchableOpacity>
           {/* 7 */}
-          <TouchableOpacity style={styles.component}>
+          <TouchableOpacity
+            style={styles.component}
+            onPress={deleteChatHistory}
+          >
             <Image
               source={require("../../assets/icons/delete.png")}
               style={styles.icon}

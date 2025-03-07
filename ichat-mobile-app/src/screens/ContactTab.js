@@ -9,6 +9,7 @@ import { TabView } from "@rneui/base";
 
 const ContactTab = () => {
   const [index, setIndex] = useState(0);
+
   return (
     <SafeAreaView style={styles.container}>
       <HeaderContactTab />
@@ -24,14 +25,14 @@ const ContactTab = () => {
         dense
       >
         <Tab.Item
-          title={"Friend"}
+          title={"Bạn bè"}
           titleStyle={{
             color: index === 0 ? "#6166EE" : "gray",
             fontWeight: index === 0 ? "bold" : null,
           }}
         ></Tab.Item>
         <Tab.Item
-          title={"Group"}
+          title={"Nhóm"}
           titleStyle={{
             color: index === 1 ? "#6166EE" : "gray",
             fontWeight: index === 1 ? "bold" : null,

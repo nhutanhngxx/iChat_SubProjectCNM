@@ -1,3 +1,5 @@
+import { useNavigation } from "@react-navigation/native";
+import { Avatar } from "@rneui/themed";
 import React from "react";
 import {
   View,
@@ -33,14 +35,30 @@ const friendList = [
   },
 ];
 
-const addRequest = 20;
+const addRequest = 3;
 
 const FriendTab = () => {
+  const navigation = useNavigation();
   const { width } = Dimensions.get("window");
+
+  //   const handleOpenChatting = (chat) => {
+  //     navigation.navigate("Contact", { chat });
+  //   };
+
+  const handleOpenChatting = (chat) => {
+    console.log("Received chat:", chat);
+    console.log("Type of chat:", typeof chat);
+
+    navigation.navigate("Chatting", { chat });
+  };
+
   const renderItem = ({ item }) => (
-    <View style={styles.itemContainer}>
+    <TouchableOpacity
+      style={styles.itemContainer}
+      onPress={() => handleOpenChatting(item)}
+    >
       <View style={styles.item_leftSide}>
-        <Image source={item.avatar} style={{ width: 50, height: 50 }} />
+        <Avatar size={50} rounded source={item.avatar} />
         <Text style={{ fontWeight: "500", fontSize: 16 }}>{item.name}</Text>
       </View>
       <View style={{ display: "flex", flexDirection: "row", gap: 20 }}>
@@ -53,14 +71,14 @@ const FriendTab = () => {
           style={{ width: 25, height: 25, marginTop: 2 }}
         />
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
   return (
     <View style={styles.container}>
       <TouchableOpacity
         style={styles.addRequest}
-        onPress={() => alert("Xem danh sách lời mời kết bạn")}
+        onPress={() => navigation.navigate("FriendRequest")}
       >
         <Image
           source={require("../../assets/icons/request.png")}
@@ -68,7 +86,7 @@ const FriendTab = () => {
         />
         <Text>
           Yêu cầu kết bạn
-          <Text style={{ fontWeight: "bold" }}>({addRequest})</Text>
+          <Text style={{ fontWeight: "bold" }}> ({addRequest})</Text>
         </Text>
       </TouchableOpacity>
 

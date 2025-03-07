@@ -1,1 +1,3 @@
-const SearchHistory = require('../Schema/SearchHistory');
+
+const SearchHistory = require("../models/SearchHistory");
+

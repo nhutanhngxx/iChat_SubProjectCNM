@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Text, View, Image, TouchableOpacity } from "react-native";
+import { Text, View, Image, TouchableOpacity, StyleSheet } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 
 import HeaderViewProfile from "../header/HeaderViewProfile";
@@ -18,7 +18,10 @@ const ViewProfile = ({ route }) => {
         }}
       ></View>
       <View style={{ alignItems: "center", gap: 10, top: -50 }}>
-        <Image source={avatar} />
+        <Image
+          source={typeof avatar === "string" ? { uri: avatar } : avatar}
+          style={styles.avatar}
+        />
         <Text style={{ fontSize: 25, fontWeight: "bold" }}>{name}</Text>
       </View>
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
@@ -39,5 +42,9 @@ const ViewProfile = ({ route }) => {
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  avatar: { width: 100, height: 100, borderRadius: 50 },
+});
 
 export default ViewProfile;

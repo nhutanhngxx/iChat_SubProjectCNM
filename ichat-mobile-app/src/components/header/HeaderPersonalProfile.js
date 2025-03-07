@@ -21,7 +21,7 @@ const HeaderMessages = () => {
     await AsyncStorage.removeItem("token");
     await AsyncStorage.removeItem("user");
     setUser(null);
-    navigation.navigate("Launcher");
+    // navigation.navigate("Launcher");
   };
 
   return (

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useContext } from "react";
 import {
   Text,
   TextInput,
@@ -11,6 +11,7 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import RadioGroup from "react-native-radio-buttons-group";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import { UserContext } from "../../../src/context/UserContext";
 
 import { Modal } from "react-native";
 
@@ -19,30 +20,25 @@ import editIcon from "../../assets/icons/edit.png";
 
 const ChangeInformation = () => {
   const navigation = useNavigation();
+  const { user } = useContext(UserContext);
 
   // useState ngày sinh
-  const [dob, setDob] = useState(new Date("2003-03-17")); // lấy data tù thông tin user đăng nhập
+  const [dob, setDob] = useState(user?.dob ? new Date(user.dob) : new Date()); // lấy data tù thông tin user đăng nhập
   const [showPicker, setShowPicker] = useState(false);
 
   // useState tên tài khoản
-  const [fullName, setFullName] = useState("Nguyễn Nhựt Anh"); // fullname sẽ được lấy từ thông tin user đăng nhập
+  const [fullName, setFullName] = useState(user?.full_name || "");
   const fullNameInputRef = useRef(null);
 
   // useState giới tính
-  const [selectedId, setSelectedId] = useState("1"); // state sẽ thay đổi dựa vào data
+  const [selectedId, setSelectedId] = useState(
+    user?.gender === "Male" ? "1" : user?.gender === "Female" ? "2" : "3"
+  );
+
   const radioButtons = [
-    {
-      id: "1",
-      label: "Nam",
-      value: "Male",
-      color: "#3083F9",
-    },
-    {
-      id: "2",
-      label: "Nữ",
-      value: "Female",
-      color: "#3083F9",
-    },
+    { id: "1", label: "Nam", value: "Male", color: "#3083F9" },
+    { id: "2", label: "Nữ", value: "Female", color: "#3083F9" },
+    { id: "3", label: "Khác", value: "Other", color: "#3083F9" },
   ];
 
   return (
