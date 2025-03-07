@@ -28,7 +28,7 @@ const Option = ({ route }) => {
   const deleteChatHistory = async () => {
     try {
       const response = await axios.delete(
-        `http://192.168.1.6:5001/messages/${user.id}/${id}`
+        `http://172.18.224.1:5001/messages/${user.id}/${id}`
       );
 
       if (response.data.status === "ok") {

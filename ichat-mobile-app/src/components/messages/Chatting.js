@@ -23,13 +23,15 @@ import axios from "axios";
 const Chatting = ({ route }) => {
   const navigation = useNavigation();
   const { user } = useContext(UserContext);
-  const { chat } = route.params || {}; // Lấy thông tin từ màn hình MessageTab/Priority
+  const { chat } = route.params || {};
   const flatListRef = useRef(null);
   const [inputMessage, setInputMessage] = useState("");
   const [messages, setMessages] = useState([]);
   const [replyMessage, setReplyMessage] = useState(null);
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
+
+  console.log("Chatting with:", chat);
 
   // Hiển thị modal khi ấn giữ tin nhắn
   const handleLongPress = (message) => {
@@ -50,7 +52,7 @@ const Chatting = ({ route }) => {
 
     try {
       const response = await axios.delete(
-        `http://192.168.1.6:5001/${selectedMessage._id}`
+        `http://172.18.224.1:5001/${selectedMessage._id}`
       );
 
       console.log("Response từ server:", response.data);
@@ -68,6 +70,50 @@ const Chatting = ({ route }) => {
     }
   };
 
+  if (chat?.chatType === "group") {
+    useEffect(() => {
+      if (chat?.id && user?.id) {
+        const fetchMessages = async () => {
+          try {
+            const response = await axios.get(
+              `http://172.18.224.1:5001/messages/${chat.id}`
+            );
+            if (response.data.status === "ok") {
+              setMessages(response.data.data);
+              console.log("User:" + user.id);
+              console.log("Tin nhắn nhóm: " + response.data);
+            }
+          } catch (error) {
+            console.error("Lỗi khi lấy tin nhắn:", error);
+          }
+        };
+        const interval = setInterval(fetchMessages, 1000);
+        return () => clearInterval(interval);
+      }
+    }, [user, chat]);
+  } else {
+    useEffect(() => {
+      if (chat?.id && user?.id) {
+        const fetchMessages = async () => {
+          try {
+            const response = await axios.get(
+              `http://172.18.224.1:5001/messages/${user.id}/${chat.id}`
+            );
+            if (response.data.status === "ok") {
+              setMessages(response.data.data);
+              console.log("User:" + user.id);
+              console.log("Tin nhắn nhóm: " + response.data);
+            }
+          } catch (error) {
+            console.error("Lỗi khi lấy tin nhắn:", error);
+          }
+        };
+        const interval = setInterval(fetchMessages, 1000);
+        return () => clearInterval(interval);
+      }
+    }, [user, chat]);
+  }
+
   // Click vào để reply
   const handleReply = (message) => {
     console.log("Reply :", message);
@@ -79,10 +125,12 @@ const Chatting = ({ route }) => {
   const fetchMessages = async () => {
     try {
       const response = await axios.get(
-        `http://192.168.1.6:5001/messages/${user.id}/${chat.id}`
+        `http://172.18.224.1:5001/messages/${user.id}/${chat.id}`
       );
       if (response.data.status === "ok") {
         setMessages(response.data.data);
+        console.log("User:" + user.id);
+        console.log("Tin nhắn nhóm: " + response.data);
       }
     } catch (error) {
       console.error("Lỗi khi lấy tin nhắn:", error);
@@ -100,7 +148,7 @@ const Chatting = ({ route }) => {
 
   // Tắt Tabbar ngay sau khi vào màn hình Chatting
   useEffect(() => {
-    console.log(chat);
+    // console.log(chat);
     navigation.getParent()?.setOptions({ tabBarStyle: { display: "none" } });
 
     return () => {
@@ -135,7 +183,7 @@ const Chatting = ({ route }) => {
         };
 
         const response = await axios.post(
-          "http://192.168.1.6:5001/send-message",
+          "http://172.18.224.1:5001/send-message",
           newMessage
         );
 

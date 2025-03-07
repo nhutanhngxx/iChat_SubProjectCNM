@@ -12,6 +12,19 @@ import ModalCreateGroup from "./ModalCreateGroup";
 import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
 import { UserContext } from "@/src/context/UserContext";
+import { Avatar } from "@rneui/themed";
+
+// Tính thời gian
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+import "dayjs/locale/vi"; // Tiếng việt nè
+
+dayjs.extend(relativeTime);
+dayjs.locale("vi");
+
+const getTimeAgo = (timestamp) => {
+  return dayjs(timestamp).fromNow(); // Hiển thị "X phút trước"
+};
 
 const GroupTab = () => {
   const navigation = useNavigation();
@@ -20,12 +33,25 @@ const GroupTab = () => {
   const [groupList, setGroupList] = useState([]);
   const { user } = useContext(UserContext);
 
+  const formatGroupList = (groups) => {
+    if (!Array.isArray(groups)) return [];
+    return groups.map((group) => ({
+      id: group._id,
+      name: group.name,
+      avatar: group.avatar,
+      lastMessage: group?.lastMessage || "Chưa có tin nhắn",
+      messages: [],
+      created_at: getTimeAgo(group.created_at),
+      chatType: "group",
+    }));
+  };
+
   useEffect(() => {
     const fetchGroupList = () => {
       axios
-        .get(`http://192.168.1.6:5001/groups/${user.id}`)
+        .get(`http://172.18.224.1:5001/groups/${user.id}`)
         .then((response) => {
-          setGroupList(response.data);
+          setGroupList(formatGroupList(response.data));
         })
         .catch((error) => {
           console.error("Error fetching groups:", error);
@@ -57,11 +83,11 @@ const GroupTab = () => {
       key={item.id}
     >
       <View style={styles.item_leftSide}>
-        <Image source={item.avatar} style={{ width: 50, height: 50 }} />
+        <Avatar size={50} rounded source={item.avatar} />
         <Text style={{ fontWeight: "500", fontSize: 16 }}>{item.name}</Text>
       </View>
       <View style={{ display: "flex", flexDirection: "row", gap: 20 }}>
-        {/* <Text style={{ fontSize: 12 }}>{item.created_at}</Text> */}
+        <Text style={{ fontSize: 12 }}>{item.created_at}</Text>
       </View>
     </TouchableOpacity>
   );
@@ -106,7 +132,9 @@ const GroupTab = () => {
       <View style={{ width: width - 40 }}>
         <FlatList
           data={groupList}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item, index) =>
+            item.id?.toString() || index.toString()
+          }
           renderItem={renderItem}
         />
       </View>

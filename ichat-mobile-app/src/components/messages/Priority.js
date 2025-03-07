@@ -33,7 +33,7 @@ const Priority = () => {
   const fetchUsers = async () => {
     try {
       console.log("Fetching users...");
-      const response = await axios.get("http://192.168.1.6:5001/users");
+      const response = await axios.get("http://172.18.224.1:5001/users");
       console.log("User data from API:", response.data);
       setAllUser(response.data);
     } catch (error) {
@@ -48,10 +48,10 @@ const Priority = () => {
   }, [user, allUser]);
 
   const fetchChatList = async () => {
-    console.log("Loading all messages...");
+    // console.log("Loading all messages...");
     try {
       const response = await axios.get(
-        `http://192.168.1.6:5001/messages/${user.id}`
+        `http://172.18.224.1:5001/messages/${user.id}`
       );
 
       if (response.data.status === "ok" && Array.isArray(response.data.data)) {
@@ -112,7 +112,7 @@ const Priority = () => {
 
     // Thiết lập interval để fetch tin nhắn mới mỗi 5 giây
     const interval = setInterval(() => {
-      console.log("Fetching chat list at:", new Date().toLocaleTimeString());
+      // console.log("Fetching chat list at:", new Date().toLocaleTimeString());
       fetchChatList();
     }, 1000);
 
@@ -162,7 +162,7 @@ const Priority = () => {
           data={chatList}
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => {
-            console.log("Rendering item:", item);
+            // console.log("Rendering item:", item);
             return renderItem({ item });
           }}
           showsVerticalScrollIndicator={true}
