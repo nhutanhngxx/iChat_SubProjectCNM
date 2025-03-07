@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -8,30 +8,61 @@ import {
   StyleSheet,
 } from "react-native";
 import { Dimensions } from "react-native";
-import ModalCreateGroup from "../ModalCreateGroup";
+import ModalCreateGroup from "./ModalCreateGroup";
+import { useNavigation } from "@react-navigation/native";
+import axios from "axios";
+import { UserContext } from "@/src/context/UserContext";
+import { Avatar } from "@rneui/themed";
 
-const groupList = [
-  {
-    id: "1",
-    name: "iChat_CNM",
-    lastMessage: "[Hình ảnh]",
-    time: "1 phút trước",
-    avatar: require("../../assets/images/avatars/avatar1.png"),
-  },
-  {
-    id: "2",
-    name: "DHKTPM17C",
-    lastMessage: "Xin chào!",
-    time: "5 phút trước",
-    avatar: require("../../assets/images/avatars/avatar2.png"),
-  },
-];
+// Tính thời gian
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+import "dayjs/locale/vi"; // Tiếng việt nè
 
-const numberGroup = groupList.length;
+dayjs.extend(relativeTime);
+dayjs.locale("vi");
+
+const getTimeAgo = (timestamp) => {
+  return dayjs(timestamp).fromNow(); // Hiển thị "X phút trước"
+};
 
 const GroupTab = () => {
+  const navigation = useNavigation();
   const { width } = Dimensions.get("window");
   const [isShowModal, setIsShowModal] = useState(false);
+  const [groupList, setGroupList] = useState([]);
+  const { user } = useContext(UserContext);
+
+  const formatGroupList = (groups) => {
+    if (!Array.isArray(groups)) return [];
+    return groups.map((group) => ({
+      id: group._id,
+      name: group.name,
+      avatar: group.avatar,
+      lastMessage: group?.lastMessage || "Chưa có tin nhắn",
+      messages: [],
+      created_at: getTimeAgo(group.created_at),
+      chatType: "group",
+    }));
+  };
+
+  useEffect(() => {
+    const fetchGroupList = () => {
+      axios
+        .get(`http://172.20.36.53:5001/groups/${user.id}`)
+        .then((response) => {
+          setGroupList(formatGroupList(response.data));
+        })
+        .catch((error) => {
+          console.error("Error fetching groups:", error);
+        });
+    };
+
+    fetchGroupList();
+
+    const interval = setInterval(fetchGroupList, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleOpenModal = () => {
     setIsShowModal(true);
@@ -41,16 +72,24 @@ const GroupTab = () => {
     setIsShowModal(false);
   };
 
+  const handleOpenChatting = (chat) => {
+    navigation.navigate("Chatting", { chat });
+  };
+
   const renderItem = ({ item }) => (
-    <View style={styles.itemContainer}>
+    <TouchableOpacity
+      style={styles.itemContainer}
+      onPress={() => handleOpenChatting(item)}
+      key={item.id}
+    >
       <View style={styles.item_leftSide}>
-        <Image source={item.avatar} style={{ width: 50, height: 50 }} />
+        <Avatar size={50} rounded source={item.avatar} />
         <Text style={{ fontWeight: "500", fontSize: 16 }}>{item.name}</Text>
       </View>
       <View style={{ display: "flex", flexDirection: "row", gap: 20 }}>
-        <Text style={{ fontSize: 12 }}>{item.time}</Text>
+        <Text style={{ fontSize: 12 }}>{item.created_at}</Text>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
   return (
@@ -72,7 +111,7 @@ const GroupTab = () => {
       <View style={styles.header}>
         <Text style={{ fontSize: 13 }}>
           Nhóm đã tham gia{" "}
-          <Text style={{ fontWeight: "bold" }}>({numberGroup})</Text>
+          <Text style={{ fontWeight: "bold" }}>({groupList.length})</Text>
         </Text>
 
         <TouchableOpacity
@@ -93,7 +132,9 @@ const GroupTab = () => {
       <View style={{ width: width - 40 }}>
         <FlatList
           data={groupList}
-          keyExtractor={(item) => item.id.toString()}
+          keyExtractor={(item, index) =>
+            item.id?.toString() || index.toString()
+          }
           renderItem={renderItem}
         />
       </View>

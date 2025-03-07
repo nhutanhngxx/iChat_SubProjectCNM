@@ -1,7 +1,9 @@
 const express = require("express");
+const mongoose = require("mongoose");
 const router = express.Router();
 const Messages = require("../models/Messages");
 const MessageCard = require("../models/MessageCard");
+const GroupChat = require("../models/GroupChat");
 const GroupMembers = require("../models/GroupMember");
 
 // Gửi tin nhắn
@@ -73,6 +75,87 @@ router.post("/send-message", async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
+
+// Gửi tin nhắn nhóm
+router.post("/send-group-message", async (req, res) => {
+  try {
+    const { sender_id, receiver_id, content, type } = req.body;
+    // Kiểm tra group có tồn tại không
+    const groupChat = await GroupChat.findOne({ chat_id: receiver_id });
+    if (!groupChat) {
+      return res.status(404).json({ error: "Group chat not found" });
+    }
+
+    // Tạo tin nhắn mới
+    const newMessage = new Messages({
+      sender_id,
+      receiver_id,
+      content,
+      type,
+      chat_type: "group",
+      status: "send",
+    });
+    await newMessage.save();
+
+    const groupMembers = await GroupMembers.find({
+      group_id: receiver_id,
+    }).select("user_id");
+
+    // Tạo MessageCard cho từng thành viên, trừ người gửi
+    const messageCards = groupMembers
+      .filter((member) => member.user_id.toString() !== sender_id.toString())
+      .map((member) => ({
+        receiver_id: member.user_id,
+        message_id: newMessage._id,
+        status: "unread",
+        card_color: "#FF0000",
+        title: `New message in group ${groupChat.name}`,
+      }));
+
+    await MessageCard.insertMany(messageCards);
+
+    res.status(201).json({
+      message: "Group message sent successfully",
+      data: {
+        message: newMessage,
+        group: groupChat.name,
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ status: "error", error: err.message });
+  }
+});
+
+// // Lấy danh sách tin nhắn nhóm
+// router.get("/messages/:userId/:groupId", async (req, res) => {
+//   try {
+//     const { userId, groupId } = req.params;
+
+//     // Kiểm tra group có tồn tại không
+//     const groupChat = await GroupChat.findOne({ _id: groupId });
+//     if (!groupChat) {
+//       return res.status(404).json({ error: "Group chat not found" });
+//     }
+
+//     // Lấy tất cả tin nhắn của nhóm
+//     const messages = await Messages.find({
+//       receiver_id: groupId,
+//       chat_type: "group",
+//     })
+//       .sort({ timestamp: 1 })
+//       .populate("sender_id", "full_name avatar_path")
+//       .exec();
+
+//     res.json({
+//       data: {
+//         group: groupChat,
+//         messages: messages,
+//       },
+//     });
+//   } catch (error) {
+//     res.status(500).json({ stauts: "error", message: error.message });
+//   }
+// });
 
 // Lấy danh sách các tin nhắn liên quan đến người dùng
 router.get("/messages/:userId", async (req, res) => {
@@ -249,8 +332,6 @@ router.patch("/:messageId/pin", async (req, res) => {
 });
 
 // Danh sách tin nhắn đã ghim
-const mongoose = require("mongoose");
-
 router.get("/messages/pinned/:chatId", async (req, res) => {
   try {
     const { chatId } = req.params;

@@ -24,7 +24,7 @@ const getTimeAgo = (timestamp) => {
   return dayjs(timestamp).fromNow(); // Hiển thị "x phút trước"
 };
 
-const UuTien = () => {
+const Priority = () => {
   const navigation = useNavigation();
   const { user } = useContext(UserContext);
   const [chatList, setChatList] = useState([]);
@@ -54,7 +54,7 @@ const UuTien = () => {
   }, [user, allUser]);
 
   const fetchChatList = async () => {
-    console.log("Loading all messages...");
+    // console.log("Loading all messages...");
     try {
       const response = await axios.get(
         `http://172.20.36.53:5001/messages/${user.id}`
@@ -120,7 +120,7 @@ const UuTien = () => {
 
     // Thiết lập interval để fetch tin nhắn mới mỗi 5 giây
     const interval = setInterval(() => {
-      console.log("Fetching chat list at:", new Date().toLocaleTimeString());
+      // console.log("Fetching chat list at:", new Date().toLocaleTimeString());
       fetchChatList();
     }, 1000);
 
@@ -167,6 +167,7 @@ const UuTien = () => {
           data={chatList}
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => {
+            // console.log("Rendering item:", item);
             return renderItem({ item });
           }}
           showsVerticalScrollIndicator={true}
@@ -220,4 +221,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default UuTien;
+export default Priority;
