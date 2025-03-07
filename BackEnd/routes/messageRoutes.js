@@ -1,10 +1,10 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const router = express.Router();
-const Messages = require("../Schema/Messages");
-const MessageCard = require("../Schema/MessageCard");
-const GroupChat = require("../Schema/GroupChat");
-const GroupMembers = require("../Schema/GroupMember");
+const Messages = require("../models/Messages");
+const MessageCard = require("../models/MessageCard");
+const GroupChat = require("../models/GroupChat");
+const GroupMembers = require("../models/GroupMember");
 
 // Gửi tin nhắn
 router.post("/send-message", async (req, res) => {
@@ -100,7 +100,7 @@ router.get("/messages/:userId/:groupId", async (req, res) => {
       .populate("sender_id", "full_name avatar_path")
       .exec();
 
-    res.status(201).json({
+    res.json({
       data: {
         group: groupChat,
         messages: messages,
