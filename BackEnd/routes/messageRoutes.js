@@ -80,36 +80,36 @@ router.post("/send-group-message", async (req, res) => {
   }
 });
 
-// Lấy danh sách tin nhắn nhóm
-router.get("/messages/:userId/:groupId", async (req, res) => {
-  try {
-    const { userId, groupId } = req.params;
+// // Lấy danh sách tin nhắn nhóm
+// router.get("/messages/:userId/:groupId", async (req, res) => {
+//   try {
+//     const { userId, groupId } = req.params;
 
-    // Kiểm tra group có tồn tại không
-    const groupChat = await GroupChat.findOne({ _id: groupId });
-    if (!groupChat) {
-      return res.status(404).json({ error: "Group chat not found" });
-    }
+//     // Kiểm tra group có tồn tại không
+//     const groupChat = await GroupChat.findOne({ _id: groupId });
+//     if (!groupChat) {
+//       return res.status(404).json({ error: "Group chat not found" });
+//     }
 
-    // Lấy tất cả tin nhắn của nhóm
-    const messages = await Messages.find({
-      receiver_id: groupId,
-      chat_type: "group",
-    })
-      .sort({ timestamp: 1 })
-      .populate("sender_id", "full_name avatar_path")
-      .exec();
+//     // Lấy tất cả tin nhắn của nhóm
+//     const messages = await Messages.find({
+//       receiver_id: groupId,
+//       chat_type: "group",
+//     })
+//       .sort({ timestamp: 1 })
+//       .populate("sender_id", "full_name avatar_path")
+//       .exec();
 
-    res.json({
-      data: {
-        group: groupChat,
-        messages: messages,
-      },
-    });
-  } catch (error) {
-    res.status(500).json({ stauts: "error", message: error.message });
-  }
-});
+//     res.json({
+//       data: {
+//         group: groupChat,
+//         messages: messages,
+//       },
+//     });
+//   } catch (error) {
+//     res.status(500).json({ stauts: "error", message: error.message });
+//   }
+// });
 
 // Lấy danh sách các tin nhắn liên quan đến người dùng
 router.get("/messages/:userId", async (req, res) => {

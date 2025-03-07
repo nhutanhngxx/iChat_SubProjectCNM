@@ -20,7 +20,7 @@ const messageSchema = new mongoose.Schema(
     timestamp: { type: Date, default: Date.now },
     status: {
       type: String,
-      enum: ["sent", "received", "viewed"],
+      enum: ["sent", "received", "Viewed"],
       default: "sent",
     },
     chat_type: { type: String, enum: ["private", "group"], required: true },
@@ -48,9 +48,9 @@ const messageSchema = new mongoose.Schema(
     },
   },
   {
-    collection: "Messages",
+    collection: "Message",
     autoCreate: true,
   }
 );
-const Message = mongoose.model("Messages", messageSchema);
+const Message = mongoose.model("Message", messageSchema);
 module.exports = Message;
