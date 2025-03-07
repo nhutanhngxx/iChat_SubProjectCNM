@@ -1,11 +1,18 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { Text, View, Image, TouchableOpacity, StyleSheet } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import { UserContext } from "../../../src/context/UserContext";
 
 import avatar from "../../assets/images/avatars/avatar1.png";
 
 const ProfileInformation = () => {
   const navigation = useNavigation();
+  const { user } = useContext(UserContext);
+
+  useEffect(() => {
+    console.log("User từ Context:", user);
+  }, [user]);
+
   useEffect(() => {
     navigation.getParent()?.setOptions({ tabBarStyle: { display: "none" } });
 
@@ -25,12 +32,11 @@ const ProfileInformation = () => {
       <View
         style={{
           backgroundColor: "#fff",
-          paddingRight: 10,
-          paddingTop: 5,
           flexDirection: "row",
           alignItems: "center",
           gap: 10,
           height: 50,
+          paddingHorizontal: 5,
         }}
       >
         <TouchableOpacity onPress={() => navigation.goBack()}>
@@ -55,9 +61,14 @@ const ProfileInformation = () => {
           paddingTop: 30,
         }}
       >
-        <Image source={avatar} style={{ width: 80, height: 80 }} />
+        <Image
+          source={user.avatar_path ? { uri: user.avatar_path } : avatar}
+          style={{ width: 80, height: 80, borderRadius: 40 }}
+          onError={(e) => console.log("Lỗi khi tải ảnh:", e.nativeEvent.error)}
+        />
+
         <Text style={{ fontSize: 25, fontWeight: "bold" }}>
-          Nguyễn Nhựt Anh
+          {user.full_name}
         </Text>
       </View>
 
@@ -68,15 +79,26 @@ const ProfileInformation = () => {
         </Text>
         <View style={styles.container}>
           <Text style={styles.title}>Giới tính</Text>
-          <Text style={styles.value}>Nam</Text>
+          <Text style={styles.value}>
+            {user.gender
+              ? user.gender === "Male"
+                ? "Nam"
+                : user.gender === "Female"
+                ? "Nữ"
+                : user.gender
+              : "Chưa cập nhật"}
+          </Text>
         </View>
+
         <View style={styles.container}>
           <Text style={styles.title}>Ngày sinh</Text>
-          <Text style={styles.value}>17/03/2003</Text>
+          <Text style={styles.value}>
+            {user.dobFormatted || "Chưa cập nhật"}
+          </Text>
         </View>
         <View style={styles.container}>
           <Text style={styles.title}>Số điện thoại</Text>
-          <Text style={styles.value}>+84 93 934 24 95</Text>
+          <Text style={styles.value}>{user.phone}</Text>
         </View>
         {/* Button chức năng */}
         <View
@@ -96,7 +118,7 @@ const ProfileInformation = () => {
           >
             <Text
               style={{
-                fontSize: 18,
+                fontSize: 16,
                 fontWeight: "bold",
                 color: "#3237DA",
                 textAlign: "center",
@@ -113,7 +135,7 @@ const ProfileInformation = () => {
             }}
           >
             <Text
-              style={{ fontSize: 18, fontWeight: "bold", color: "#FF0000" }}
+              style={{ fontSize: 16, fontWeight: "bold", color: "#FF0000" }}
             >
               Xóa tài khoản
             </Text>
@@ -136,10 +158,10 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 16,
-    opacity: 0.5,
     width: 150,
   },
   value: {
     fontSize: 16,
+    opacity: 0.5,
   },
 });

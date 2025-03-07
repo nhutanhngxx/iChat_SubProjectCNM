@@ -1,14 +1,18 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useContext, useEffect } from "react";
 import { View, StyleSheet } from "react-native";
 import { Tab } from "@rneui/themed";
 import { TabView } from "@rneui/base";
 
 import HeaderMessages from "../components/header/HeaderMessagesTab";
-import UutienMessages from "../components/messages/UuTien";
-import KhacMessages from "../components/messages/Khac";
+import PriorityMessages from "../components/messages/Priority";
+import OtherMessages from "../components/messages/Other";
 
-const MessagesTab = ({ setUser }) => {
+import { UserContext } from "../context/UserContext";
+
+const MessagesTab = () => {
   const [index, setIndex] = useState(0);
+  const { user } = useContext(UserContext);
+
   return (
     <View style={styles.container}>
       <HeaderMessages />
@@ -39,11 +43,25 @@ const MessagesTab = ({ setUser }) => {
         />
       </Tab>
       <TabView value={index} onChange={setIndex} animationType="spring">
-        <TabView.Item>
-          <UutienMessages />
+        <TabView.Item
+          style={{
+            width: "100%",
+            flex: 1,
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <PriorityMessages />
         </TabView.Item>
-        <TabView.Item>
-          <KhacMessages />
+        <TabView.Item
+          style={{
+            width: "100%",
+            flex: 1,
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <OtherMessages />
         </TabView.Item>
       </TabView>
     </View>
