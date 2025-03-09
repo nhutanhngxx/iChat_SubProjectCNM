@@ -443,4 +443,48 @@ router.get("/friend-suggestions/:user_id", async (req, res) => {
   }
 });
 
+// Đếm số lượng bạn chung giữa 2 user
+router.get("/mutual-friends/:user1_id/:user2_id", async (req, res) => {
+  const { user1_id, user2_id } = req.params;
+
+  try {
+    // Lấy danh sách bạn bè của user1
+    const friendships1 = await Friendship.find({
+      $or: [
+        { sender_id: user1_id, status: "accepted" },
+        { receiver_id: user1_id, status: "accepted" },
+      ],
+    });
+
+    const friendIds1 = friendships1.map((f) =>
+      f.sender_id.toString() === user1_id ? f.receiver_id : f.sender_id
+    );
+
+    // Lấy danh sách bạn bè của user2
+    const friendships2 = await Friendship.find({
+      $or: [
+        { sender_id: user2_id, status: "accepted" },
+        { receiver_id: user2_id, status: "accepted" },
+      ],
+    });
+
+    const friendIds2 = friendships2.map((f) =>
+      f.sender_id.toString() === user2_id ? f.receiver_id : f.sender_id
+    );
+
+    // Tìm bạn chung giữa user1 và user2
+    const mutualFriends = friendIds1.filter((id) =>
+      friendIds2.includes(id.toString())
+    );
+
+    res.json({
+      status: "ok",
+      mutualFriendsCount: mutualFriends.length,
+      mutualFriends,
+    });
+  } catch (error) {
+    res.status(500).json({ status: "error", message: error.message });
+  }
+});
+
 module.exports = router;
