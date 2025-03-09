@@ -29,11 +29,12 @@ const Priority = () => {
   const { user } = useContext(UserContext);
   const [chatList, setChatList] = useState([]);
   const [allUser, setAllUser] = useState([]);
+  const API_iChat = `http://${window.location.hostname}:5001`;
 
   const fetchUsers = async () => {
     try {
       console.log("Fetching users...");
-      const response = await axios.get("http://172.20.36.53:5001/users");
+      const response = await axios.get(`${API_iChat}/users`);
 
       if (response.data.status === "ok" && Array.isArray(response.data.users)) {
         setAllUser(response.data.users);
@@ -56,7 +57,7 @@ const Priority = () => {
   const fetchChatList = async () => {
     try {
       const response = await axios.get(
-        `http://172.20.36.53:5001/messages/${user.id}`
+        `http://172.20.33.148:5001/messages/${user.id}`
       );
 
       if (response.data.status === "ok" && Array.isArray(response.data.data)) {

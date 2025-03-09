@@ -52,7 +52,7 @@ const Chatting = ({ route }) => {
 
     try {
       const response = await axios.delete(
-        `http://172.20.36.53:5001/${selectedMessage._id}`
+        `http://172.20.33.148:5001/${selectedMessage._id}`
       );
 
       console.log("Response từ server:", response.data);
@@ -76,7 +76,7 @@ const Chatting = ({ route }) => {
         const fetchMessages = async () => {
           try {
             const response = await axios.get(
-              `http://172.20.36.53:5001/messages/${chat.id}`
+              `http://172.20.33.148:5001/messages/${chat.id}`
             );
             if (response.data.status === "ok") {
               setMessages(response.data.data);
@@ -97,7 +97,7 @@ const Chatting = ({ route }) => {
         const fetchMessages = async () => {
           try {
             const response = await axios.get(
-              `http://172.20.36.53:5001/messages/${user.id}/${chat.id}`
+              `http://172.20.33.148:5001/messages/${user.id}/${chat.id}`
             );
             if (response.data.status === "ok") {
               setMessages(response.data.data);
@@ -157,7 +157,7 @@ const Chatting = ({ route }) => {
         };
 
         const response = await axios.post(
-          "http://172.20.36.53:5001/messages/reply",
+          "http://172.20.33.148:5001/messages/reply",
           newMessage
         );
 

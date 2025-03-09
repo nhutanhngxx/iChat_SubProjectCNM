@@ -49,7 +49,7 @@ const GroupTab = () => {
   useEffect(() => {
     const fetchGroupList = () => {
       axios
-        .get(`http://172.20.36.53:5001/groups/${user.id}`)
+        .get(`http://172.20.33.148:5001/groups/${user.id}`)
         .then((response) => {
           setGroupList(formatGroupList(response.data));
         })
