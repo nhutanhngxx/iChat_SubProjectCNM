@@ -1,12 +1,12 @@
 const mongoose = require("mongoose");
-const friendshipSchema = new mongoose.Schema(
+const friendShipSchema = new mongoose.Schema(
   {
-    user_id_1: {
+    sender_id: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "UserInfo",
       required: true,
     },
-    user_id_2: {
+    receiver_id: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "UserInfo",
       required: true,
@@ -23,5 +23,5 @@ const friendshipSchema = new mongoose.Schema(
     autoCreate: true,
   }
 );
-const Friendships = mongoose.model("Friendship", friendshipSchema);
-module.exports = Friendships;
+const friendShip = mongoose.model("Friendship", friendShipSchema);
+module.exports = friendShip;
