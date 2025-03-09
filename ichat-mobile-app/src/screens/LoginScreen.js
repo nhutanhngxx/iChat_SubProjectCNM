@@ -17,16 +17,17 @@ const LoginScreen = ({ navigation }) => {
   const { setUser } = useContext(UserContext);
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
+  const API_iChat = `http://${window.location.hostname}:5001`;
 
   const handleLogin = async () => {
     try {
-      const response = await axios.post("http://192.168.1.6:5001/login", {
+      const response = await axios.post(`${API_iChat}/login`, {
         phone,
         password,
       });
-      const { token, user } = response.data;
+      const { accessToken, user } = response.data;
       // Lưu token vào AsyncStorage để sử dụng ở các Screen kháccc
-      await AsyncStorage.setItem("token", token);
+      await AsyncStorage.setItem("token", accessToken);
       await AsyncStorage.setItem("user", JSON.stringify(user));
       setUser(user);
       console.log("Users: ", user);

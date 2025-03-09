@@ -1,0 +1,187 @@
+/* Sidebar Styles */
+.chat-sidebar {
+  box-sizing: border-box;
+  width: 364px !important;
+  min-width: 364px;
+  max-width: 364px;
+  border-right: 1px solid #c6ddf5;
+  height: 100vh;
+  background-color: #fff; /* Ensure white background as seen in image */
+}
+
+/* Header Tabs */
+.chat-header-user-list {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 15px;
+  align-items: center; /* Vertically align tabs and icons */
+}
+
+.chat-header-user-list span {
+  font-size: 14px;
+  cursor: pointer;
+  padding: 5px 10px;
+}
+
+.chat-header-user-list .active {
+  font-weight: bold;
+  border-bottom: 2px solid #1890ff; /* Blue border to match active tab in image */
+  color: #1890ff; /* Blue text for active tab */
+}
+
+.more-icon {
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.user-icon:hover,
+.group-icon:hover {
+  color: #007bff; /* Hover effect for icons */
+}
+
+.chat-list {
+  padding: 15px 0;
+  height: calc(100vh - 82px); /* Adjust height to account for header */
+  overflow-y: auto;
+}
+
+.chat-item {
+  position: relative;
+  padding: 12px !important;
+  cursor: pointer;
+  transition: background 0.3s;
+  display: flex;
+  align-items: center;
+  background-color: #fff; /* White background for chat items */
+}
+
+.chat-item:hover {
+  background: #e9ecef; /* Light gray hover effect as specified */
+}
+
+/* Avatar và trạng thái online */
+.avatar-container {
+  position: relative;
+  display: inline-block;
+}
+
+.online-status {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  width: 12px;
+  height: 12px;
+  background-color: #28c76f; /* Green online status dot */
+  border: 2px solid #fff;
+  border-radius: 50%;
+}
+
+/* Phần nội dung chat */
+.chat-info {
+  flex: 1;
+  padding: 2px;
+  margin-left: 12px;
+  width: calc(
+    100% - 60px
+  ); /* Adjust width considering avatar size and margin */
+  overflow: hidden;
+}
+
+/* Tên người chat */
+.chat-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333; /* Darker text color for readability */
+}
+
+/* Thời gian tin nhắn cuối */
+.chat-time {
+  font-size: 12px;
+  color: #999; /* Gray color for timestamps */
+}
+
+/* Tin nhắn cuối cùng */
+.last-message {
+  font-size: 14px;
+  color: #666; /* Gray color for last message */
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 150px;
+}
+
+/* Biểu tượng loại tin nhắn (video, audio, thông báo) */
+.last-message svg {
+  font-size: 12px;
+  color: #888; /* Gray color for message type icons */
+}
+
+/* Badge hiển thị số tin nhắn chưa đọc */
+.ant-badge-count {
+  background-color: #ff4d4f; /* Red background for unread badge */
+  font-size: 12px;
+  color: #fff; /* White text for contrast */
+}
+
+.custom-tab-pane {
+  padding: 0px;
+}
+
+/* Additional styles for filter and category elements */
+.classify {
+  font-size: 14px;
+  color: #333;
+  cursor: pointer;
+}
+
+.filter-popover {
+  width: 200px; /* Fixed width for filter popover */
+}
+
+.category-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 8px;
+}
+
+.manage-categories {
+  margin-top: 10px;
+}
+
+/* Danh sách */
+.chat-list {
+  height: calc(100vh - 160px);
+  overflow-y: auto;
+  padding: 0;
+}
+
+/* Mỗi item trong danh sách */
+.ant-list-item {
+  padding: 12px !important;
+  border-radius: 8px;
+  transition: all 0.3s;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.delete-button {
+  margin-right: 20px;
+  opacity: 0;
+}
+
+.list-item:hover {
+  background: #ccc;
+}
+
+.list-item:hover .delete-button {
+  opacity: 1;
+}
+
+.list-item:hover .delete-button:hover {
+  color: royalblue;
+}

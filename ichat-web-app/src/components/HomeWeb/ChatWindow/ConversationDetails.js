@@ -1,13 +1,18 @@
-import React from 'react';
-import { Avatar } from 'antd';
-import './ConversationDetails.css';
-import { EditOutlined } from '@ant-design/icons';
+import React from "react";
+import { Avatar, Button } from "antd";
+import "./ConversationDetails.css";
+import {
+  EditOutlined,
+  BellOutlined,
+  PushpinOutlined,
+  UsergroupAddOutlined,
+} from "@ant-design/icons";
 
 const ConversationDetails = ({ isVisible, selectedChat }) => {
-  if (!isVisible) return null; // Ẩn component nếu isVisible = false
+  if (!isVisible) return null; // Ẩn component nếu isVisible = fals
 
   return (
-    <div className="conversation-details">
+    <div className="conversation-details" style={{ padding: "20px" }}>
       <div className="header">
         <h2>Thông tin hội thoại</h2>
         <div className="avatar">
@@ -16,25 +21,32 @@ const ConversationDetails = ({ isVisible, selectedChat }) => {
             src={`https://i.pravatar.cc/300?img=${selectedChat.id}`}
           />
         </div>
-        <h3>{selectedChat.name} <EditOutlined /></h3>
-        
+        <h3>
+          {selectedChat.name} <EditOutlined />
+        </h3>
       </div>
       <div className="action-buttons">
-        <button>Tắt thông báo</button>
-        <button>Ghim hộp thoại</button>
-        <button>Tạo nhóm trò chuyện</button>
+        <Button icon={<BellOutlined />} className="action-button">
+          <span>
+            Tắt <br /> thông báo
+          </span>
+        </Button>
+        <Button icon={<PushpinOutlined />} className="action-button">
+          <span>
+            Ghim <br /> hộp thoại
+          </span>
+        </Button>
+        <Button icon={<UsergroupAddOutlined />} className="action-button">
+          <span>
+            Tạo nhóm <br /> trò chuyện
+          </span>
+        </Button>
       </div>
       <div className="conversation-options">
-        <h3>Đánh dấu nhắc nhở</h3>
+        <h3>Hình ảnh</h3>
         <div className="select-wrapper">
           <select>
-            <option>2 giờ chiều</option>
-          </select>
-        </div>
-        <h3>Âm thanh</h3>
-        <div className="select-wrapper">
-          <select>
-            <option>Xem tất</option>
+            <option></option>
           </select>
         </div>
       </div>
@@ -43,7 +55,7 @@ const ConversationDetails = ({ isVisible, selectedChat }) => {
           <h3>File</h3>
           <div className="select-wrapper">
             <select>
-              <option>Xem tất</option>
+              <option></option>
             </select>
           </div>
         </div>
@@ -51,13 +63,13 @@ const ConversationDetails = ({ isVisible, selectedChat }) => {
           <h3>Link</h3>
           <div className="select-wrapper">
             <select>
-              <option>Xem tất</option>
+              <option></option>
             </select>
           </div>
         </div>
       </div>
       <div className="footer">
-        <button>Thoát nhóm ngay</button>
+        <button>Xóa lịch sử trò chuyện</button>
       </div>
     </div>
   );

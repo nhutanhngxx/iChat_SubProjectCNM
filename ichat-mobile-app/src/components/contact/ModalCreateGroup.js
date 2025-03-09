@@ -139,10 +139,6 @@ const ModalCreateGroup = ({ isVisible, onClose }) => {
     <Modal animationType="slide" transparent={true} visible={isVisible}>
       <View style={styles.container}>
         <View style={styles.modalView}>
-          {/* <Appbar.Header>
-            <Appbar.BackAction onPress={onClose} />
-            <Appbar.Content title="Tạo nhóm mới" />
-          </Appbar.Header> */}
           <SafeAreaView
             style={{
               flexDirection: "row",
@@ -157,7 +153,7 @@ const ModalCreateGroup = ({ isVisible, onClose }) => {
               />
             </TouchableOpacity>
             <TouchableOpacity onPress={onClose}>
-              <Text style={{ fontWeight: "bold", fontSize: "20" }}>
+              <Text style={{ fontWeight: "bold", fontSize: 20 }}>
                 Tạo nhóm mới
               </Text>
             </TouchableOpacity>
@@ -239,15 +235,6 @@ const ModalCreateGroup = ({ isVisible, onClose }) => {
               />
             </View>
             <View style={{ paddingBottom: 20 }}>
-              {/* <Button
-                mode="contained"
-                disabled={isDisabled}
-                buttonColor="#1E6DF7"
-                style={styles.addButton}
-                onPress={handleCreateGroup}
-              >
-                {">"}
-              </Button> */}
               <TouchableOpacity
                 disabled={isDisabled}
                 onPress={handleCreateGroup}

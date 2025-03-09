@@ -21,23 +21,30 @@ dayjs.extend(relativeTime);
 dayjs.locale("vi");
 
 const getTimeAgo = (timestamp) => {
-  return dayjs(timestamp).fromNow(); // Hiển thị "X phút trước"
+  return dayjs(timestamp).fromNow(); // Hiển thị "x phút trước"
 };
 
-const UuTien = () => {
+const Priority = () => {
   const navigation = useNavigation();
   const { user } = useContext(UserContext);
   const [chatList, setChatList] = useState([]);
   const [allUser, setAllUser] = useState([]);
+  const API_iChat = `http://${window.location.hostname}:5001`;
 
   const fetchUsers = async () => {
     try {
       console.log("Fetching users...");
-      const response = await axios.get("http://192.168.1.6:5001/users");
-      console.log("User data from API:", response.data);
-      setAllUser(response.data);
+      const response = await axios.get(`${API_iChat}/users`);
+
+      if (response.data.status === "ok" && Array.isArray(response.data.users)) {
+        setAllUser(response.data.users);
+      } else {
+        console.error("Lỗi: API trả về dữ liệu không hợp lệ", response.data);
+        setAllUser([]); // Gán rỗng nếu API lỗi
+      }
     } catch (error) {
       console.error("Error fetching users:", error);
+      setAllUser([]); // Gán rỗng nếu lỗi
     }
   };
 
@@ -48,11 +55,8 @@ const UuTien = () => {
   }, [user, allUser]);
 
   const fetchChatList = async () => {
-    console.log("Loading all messages...");
     try {
-      const response = await axios.get(
-        `http://192.168.1.6:5001/messages/${user.id}`
-      );
+      const response = await axios.get(`${API_iChat}/messages/${user.id}`);
 
       if (response.data.status === "ok" && Array.isArray(response.data.data)) {
         setChatList(formatChatList(response.data.data, allUser));
@@ -79,7 +83,8 @@ const UuTien = () => {
         msg.sender_id === user.id ? msg.receiver_id : msg.sender_id;
       const chatUser = allUser.find((u) => u._id === chatUserId);
       const fullName = chatUser ? chatUser.full_name : "Người dùng ẩn danh";
-
+      const avatarPath =
+        chatUser?.avatar_path || "https://i.ibb.co/9k8sPRMx/best-seller.png";
       const lastMessageTime = new Date(msg.timestamp).getTime();
       const timeDiff = getTimeAgo(lastMessageTime);
 
@@ -93,7 +98,7 @@ const UuTien = () => {
           lastMessage: msg.type === "image" ? "[Hình ảnh]" : msg.content,
           lastMessageTime: lastMessageTime,
           time: timeDiff,
-          avatar: require("../../assets/images/avatars/avatar1.png"),
+          avatar: { uri: avatarPath },
         });
       }
     });
@@ -112,7 +117,7 @@ const UuTien = () => {
 
     // Thiết lập interval để fetch tin nhắn mới mỗi 5 giây
     const interval = setInterval(() => {
-      console.log("Fetching chat list at:", new Date().toLocaleTimeString());
+      // console.log("Fetching chat list at:", new Date().toLocaleTimeString());
       fetchChatList();
     }, 1000);
 
@@ -121,15 +126,12 @@ const UuTien = () => {
   }, [user, allUser]);
 
   const handleOpenChatting = (chat) => {
-    console.log("Received chat:", chat);
-    console.log("Type of chat:", typeof chat);
-
     navigation.navigate("Chatting", { chat });
+    console.log("Opening chat: ", chat);
   };
 
   const renderItem = ({ item }) => {
     if (!item) return null;
-
     return (
       <TouchableOpacity
         style={styles.container}
@@ -162,7 +164,7 @@ const UuTien = () => {
           data={chatList}
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => {
-            console.log("Rendering item:", item);
+            // console.log("Rendering item:", item);
             return renderItem({ item });
           }}
           showsVerticalScrollIndicator={true}
@@ -216,4 +218,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default UuTien;
+export default Priority;

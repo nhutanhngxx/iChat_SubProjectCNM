@@ -1,27 +1,147 @@
-.message {
-    display: flex;
-    align-items: center;
-    margin-bottom: 8px;
-  }
-  
-  .message.received {
-    flex-direction: row;
-  }
-  
-  .message.sent {
-    flex-direction: row-reverse;
-  }
-  
-  .avatar-message {
-    margin-right: 8px;
-  }
-  
-  .message-content {
-    background-color: #f0f0f0;
-    padding: 10px;
-    border-radius: 10px;
-    max-width: 60%;
-  }
-  
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
 
-  
+.message {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+  width: fit-content; /* Đảm bảo container chỉ rộng vừa đủ nội dung */
+  min-width: 200px;
+  margin-left: 0; /* Cho tin nhắn gửi đẩy sang phải */
+  margin-right: 0; /* Cho tin nhắn nhận đẩy sang trái */
+}
+
+.message.received {
+  flex-direction: row;
+}
+
+.message.sent {
+  flex-direction: row-reverse;
+  margin-left: auto;
+}
+
+.avatar-message {
+  margin-right: 8px;
+}
+
+.message-content {
+  background-color: #ffffff;
+  padding: 10px;
+  border-radius: 10px;
+  width: fit-content;
+  max-width: 70%; /* Giới hạn tối đa để tránh tràn màn hình */
+  word-wrap: break-word; /* Cho phép ngắt từ nếu nội dung rất dài */
+}
+
+.timestamp {
+  display: block; /* Đảm bảo timestamp nằm dưới text, không chiếm không gian ngang quá mức */
+  font-size: 12px;
+  color: #999;
+  margin-top: 4px; /* Khoảng cách giữa text và timestamp */
+}
+
+/* Style cho ảnh hiển thị */
+.message-image-container {
+  position: relative;
+  width: 300px;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+.message-image {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  border-radius: 12px;
+  border: 1px solid #e0e0e0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.image-hd {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background-color: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.image-timestamp {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  background-color: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.message-actions-preview {
+  margin-top: 8px;
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+/* Style cho file hiển thị */
+.message-file-container {
+  display: flex;
+  flex-direction: column;
+  background-color: #e6f7ff; /* Màu nền xanh nhạt như trong hình */
+  padding: 10px;
+  border-radius: 12px; /* Viền bo tròn giống hình */
+  border: 1px solid #91d5ff; /* Viền nhẹ xanh */
+  max-width: 300px; /* Kích thước tối đa như trong hình */
+  margin: 0 auto;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.file-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.file-icon {
+  font-size: 24px;
+  color: #52c41a; /* Màu xanh lá cho biểu tượng file Excel */
+}
+
+.file-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.file-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis; /* Cắt bớt nếu tên file quá dài */
+  max-width: 200px;
+}
+
+.file-size {
+  font-size: 12px;
+  color: #666;
+}
+
+.file-cloud {
+  font-size: 12px;
+  color: #666;
+  margin-top: 4px;
+}
+
+.file-timestamp {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #999;
+  text-align: right;
+}

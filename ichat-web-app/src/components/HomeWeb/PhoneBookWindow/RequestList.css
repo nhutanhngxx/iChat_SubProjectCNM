@@ -50,8 +50,15 @@
 .request-info {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 5px;
   width: 100%;
+}
+.info-user {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  width: 100%;
+  cursor: pointer;
 }
 .request-info .icons {
   color: #aca9a9;
@@ -62,11 +69,13 @@
 .request-info .icons .icon {
   width: 20px;
   height: 20px;
+  cursor: pointer;
 }
 .avatar {
-  width: 60px;
-  height: 60px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
+  object-fit: cover;
 }
 
 .info {
@@ -94,8 +103,8 @@
   width: 100%;
   background: rgba(172, 169, 169, 0.6); /* 60% màu, 40% trong suốt */
   border-radius: 10px;
-  padding: 20px 10px;
-  margin-top: 5px;
+  padding: 10px 10px;
+  margin-top: 10px;
   gap: 10px;
   /* height: 50px; */
 }
@@ -132,6 +141,7 @@
   cursor: pointer;
   font-size: 14px;
   text-align: center;
+  margin-top: 10px;
 }
 
 .btn.accept {
@@ -150,11 +160,19 @@
 
 .btn.cancel {
   background: rgba(172, 169, 169, 0.6); /* 60% màu, 40% trong suốt */
-
   color: #000000;
   width: 80%;
   padding: 10px;
   font-weight: 600;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.btn.cancel p {
+  text-align: center;
+  margin: 0px;
+  margin-left: 5px;
 }
 
 .btn.add-friend {

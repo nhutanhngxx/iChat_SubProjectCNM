@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import {
   View,
@@ -8,13 +8,59 @@ import {
   TouchableOpacity,
   Image,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { Tab, TabView } from "@rneui/themed";
+import axios from "axios";
+import { UserContext } from "@/src/context/UserContext";
 
 const SearchScreen = () => {
   const route = useRoute();
   const navigation = useNavigation();
   const searchInputRef = useRef(null);
+  const { user } = useContext(UserContext);
+  const API_iChat = `http://${window.location.hostname}:5001`;
+
+  const handleOpenChatting = async (selectedMessage) => {
+    console.log(selectedMessage);
+
+    // Xác định ID của người đang chat với user
+    const isSender = selectedMessage.sender_id === user.id;
+    const chatPartnerId = isSender
+      ? selectedMessage.receiver_id
+      : selectedMessage.sender_id;
+
+    try {
+      // Gọi API lấy danh sách users
+      const response = await axios.get(`${API_iChat}/users`);
+
+      if (response.data.status === "ok") {
+        // Tìm người dùng trong danh sách theo chatPartnerId
+        const chatPartner = response.data.users.find(
+          (user) => user.id === chatPartnerId
+        );
+
+        // Lấy tên và avatar của người đang chat cùng
+        const chatPartnerName = chatPartner
+          ? chatPartner.full_name
+          : "Người ẩn danh";
+        const chatPartnerAvatar =
+          chatPartner?.avatar_path ||
+          "https://i.ibb.co/9k8sPRMx/best-seller.png"; // Avatar mặc định nếu không có
+
+        const chat = {
+          messages: [], // Có thể gọi API để lấy tin nhắn nếu cần
+          id: chatPartnerId,
+          name: chatPartnerName,
+          avatar: chatPartnerAvatar,
+        };
+        console.log("chatPartnerAvatar: ", chatPartnerAvatar);
+        navigation.navigate("Chatting", { chat });
+      }
+    } catch (error) {
+      console.error("Lỗi khi lấy danh sách người dùng:", error);
+    }
+  };
 
   useEffect(() => {
     if (route.params?.autoFocus) {
@@ -25,89 +71,81 @@ const SearchScreen = () => {
   const [searchText, setSearchText] = useState("");
   const [index, setIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
-  const [searchResult, setSearchResult] = useState(null);
+  const [searchUsers, setSearchUsers] = useState([]);
+  const [searchMessages, setSearchMessages] = useState([]);
+  const [users, setUsers] = useState([]);
 
-  // Dữ liệu tìm kiếm giả lập
-  const history = ["Hà Nội", "React Native", "Chat App"];
-  const contacts = ["Nguyễn Nhựt Anh", "Trần Minh Quân", "Lê Phương Thảo"];
-  const allMessages = [
-    { id: "1", sender: "Alice", content: "Hello, how are you?", chatId: "101" },
-    { id: "2", sender: "Bob", content: "Let's meet tomorrow!", chatId: "102" },
-    {
-      id: "3",
-      sender: "Alice",
-      content: "Check out this new project!",
-      chatId: "101",
-    },
-    { id: "4", sender: "Charlie", content: "Hey, what's up?", chatId: "103" },
-  ];
+  // Xử lý tìm kiếm tự động khi searchText thay đổi
+  useEffect(() => {
+    if (searchText.trim().length > 0) {
+      handleSearch();
+    } else {
+      setSearchUsers([]);
+      setSearchMessages([]);
+    }
+  }, [searchText]);
 
-  // Kết quả tìm kiếm trả về của Tin nhắn => click vào sẽ vào cuộc trò chuyện
-  const messages = [{ id: "1", type: "message", content: searchText }];
-  // Kết quả tìm kiếm trả về của Tài khoản (Hiển thị avt, tên, call => click vào sẽ vào cuộc trò chuyện)
-  const users = [
-    //     { id: "3", type: "user", name: searchText + " Nguyễn Nhựt Anh" },
-  ];
-  // Xử lý tìm kiếm
-  const handleSearch = async () => {
-    if (!searchText.match(/^\d{9,11}$/)) {
-      Alert.alert("Lỗi", "Vui lòng nhập số điện thoại hợp lệ.");
+  useEffect(() => {
+    if (searchText.trim().length === 0) {
+      setSearchUsers([]);
+      setSearchMessages([]);
       return;
     }
 
+    const delaySearch = setTimeout(() => {
+      handleSearch();
+    }, 500); // Chờ 500ms sau khi người dùng ngừng nhập
+
+    return () => clearTimeout(delaySearch); // Xóa timeout nếu user tiếp tục nhập
+  }, [searchText]);
+
+  // Hàm gọi API tìm kiếm
+  const handleSearch = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(
-        `https://ichat/search-user?phone=${searchText}` // truyền sdt vào api để tìm contact chính xác nhất
-      );
-      const data = await response.json();
+      const [usersResponse, messagesResponse] = await Promise.all([
+        axios.get(`${API_iChat}/users?search=${searchText}`),
+        axios.get(`${API_iChat}/messages?search=${searchText}`),
+      ]);
 
-      if (data.success) {
-        setSearchResult({
-          id: data.user.id,
-          name: data.user.name,
-          avatar: data.user.avatar,
-          isFriend: data.user.isFriend,
-        });
-      } else {
-        setSearchResult(null);
-        Alert.alert("Không tìm thấy", "Số điện thoại không tồn tại.");
-      }
+      setSearchUsers(
+        usersResponse.data.status === "ok" ? usersResponse.data.users : []
+      );
+
+      setSearchMessages(
+        messagesResponse.data.status === "ok" ? messagesResponse.data.data : [] // Kiểm tra đúng key response
+      );
     } catch (error) {
+      console.error("Lỗi khi tìm kiếm:", error);
       Alert.alert("Lỗi", "Không thể kết nối đến server.");
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Xử lý tìm kiếm tin nhất trong tất cả tin nhắn ở database
-  const filteredMessages = allMessages.filter((msg) =>
-    msg.content.toLowerCase().includes(searchText.toLowerCase())
-  );
+  // Data này là tất cả user dùng để tìm kiếm tin nhắn từ tất cả user trong database
+  // Sau này sẽ giới hạn lại tìm kiếm tin nhắn từ bạn bè
+  const fetchUsers = async () => {
+    try {
+      console.log("Fetching users...");
+      const response = await axios.get(`${API_iChat}/users`);
 
-  // Xử lý gửi lời mời kết bạn
-  const sendFriendRequest = async () => {
-    Alert.alert("Thành công", "Đã gửi lời mời kết bạn!");
-    // try {
-    //   const response = await fetch(
-    //     `https://ichat/send-friend-request?to=${searchResult.id}`,
-    //     { method: "POST" }
-    //   );
-    //   const data = await response.json();
-
-    //   if (data.success) {
-    //     Alert.alert("Thành công", "Đã gửi lời mời kết bạn!");
-    //     setSearchResult({ ...searchResult, isFriend: true });
-    //   } else {
-    //     Alert.alert("Lỗi", "Không thể gửi lời mời kết bạn.");
-    //   }
-    // } catch (error) {
-    //   Alert.alert("Lỗi", "Không thể kết nối đến server.");
-    // }
+      if (response.data.status === "ok" && Array.isArray(response.data.users)) {
+        setUsers(response.data.users); // Cập nhật state users
+      } else {
+        console.error("Lỗi: API trả về dữ liệu không hợp lệ", response.data);
+        setUsers([]); // Gán rỗng nếu API lỗi
+      }
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      setUsers([]); // Gán rỗng nếu lỗi
+    }
   };
 
-  // Kết hợp tin nhắn và tài khoản
-  const allResults = [...messages, ...users];
+  // Gọi fetchUsers khi component được mount
+  useEffect(() => {
+    fetchUsers();
+  }, []);
 
   return (
     <View style={{ flex: 1, backgroundColor: "white" }}>
@@ -120,7 +158,6 @@ const SearchScreen = () => {
           height: 50,
           backgroundColor: "#0AA2F8",
           paddingHorizontal: 10,
-          // paddingVertical: 5,
         }}
       >
         <TouchableOpacity onPress={() => navigation.goBack()}>
@@ -147,7 +184,6 @@ const SearchScreen = () => {
               fontSize: 14,
               paddingHorizontal: 10,
               height: 35,
-              justifyContent: "center",
             }}
             placeholder="Tìm kiếm"
             value={searchText}
@@ -162,182 +198,231 @@ const SearchScreen = () => {
             </TouchableOpacity>
           )}
         </View>
-
-        <Image
-          source={require("../../assets/icons/qr.png")}
-          style={{ width: 20, height: 20, tintColor: "white", marginLeft: 10 }}
-        />
       </View>
 
-      {/* Nếu chưa nhập, hiển thị lịch sử & danh bạ */}
-      {searchText === "" ? (
-        <FlatList
-          data={[
-            { title: "Lịch sử đã tìm kiếm" },
-            ...history,
-            { title: "Các liên hệ đã tìm kiếm" },
-            ...contacts,
-          ]}
-          renderItem={({ item }) =>
-            item.title ? (
-              <Text
-                style={{
-                  marginVertical: 10,
-                  fontWeight: "bold",
-                  paddingHorizontal: 10,
-                }}
-              >
-                {item.title}
-              </Text>
-            ) : (
-              <TouchableOpacity
-                onPress={() => setSearchText(item)}
-                style={{ paddingVertical: 5, paddingHorizontal: 15 }}
-              >
-                <Text style={{ fontSize: 16 }}>{item}</Text>
-              </TouchableOpacity>
-            )
-          }
-          keyExtractor={(item, index) => index.toString()}
+      {/* Hiển thị loading khi đang tìm kiếm */}
+      {isLoading && (
+        <ActivityIndicator
+          size="large"
+          color="#0AA2F8"
+          style={{ marginTop: 10 }}
         />
-      ) : (
-        <>
-          {/* Tabs kết quả tìm kiếm */}
-          <Tab
-            value={index}
-            onChange={setIndex}
-            indicatorStyle={{
-              backgroundColor: "skyblue",
-              width: "15%",
-              marginHorizontal: "9%",
-            }}
-            variant="default"
-            dense
-          >
-            <Tab.Item
-              title="Tất cả"
-              titleStyle={{ fontSize: 16, fontWeight: "500" }}
-            />
-            <Tab.Item
-              title="Tin nhắn"
-              titleStyle={{ fontSize: 16, fontWeight: "500" }}
-            />
-            <Tab.Item
-              title="Tài khoản"
-              titleStyle={{ fontSize: 16, fontWeight: "500" }}
-            />
-          </Tab>
+      )}
 
-          <TabView value={index} onChange={setIndex} animationType="spring">
-            {/* Tab "Tất cả" */}
-            <TabView.Item style={{ width: "100%", padding: 10 }}>
-              <FlatList
-                data={filteredMessages}
-                renderItem={({ item }) => (
-                  <TouchableOpacity
-                    onPress={() =>
-                      navigation.navigate("ChatScreen", { chatId: item.chatId })
-                    }
-                    style={{
-                      paddingVertical: 10,
-                      paddingHorizontal: 15,
-                      borderBottomWidth: 1,
-                      borderBottomColor: "#ddd",
+      {/* Tabs kết quả tìm kiếm */}
+      <Tab
+        value={index}
+        onChange={setIndex}
+        indicatorStyle={{
+          backgroundColor: "skyblue",
+          width: "15%",
+          marginHorizontal: "9%",
+        }}
+      >
+        <Tab.Item
+          title="Tất cả"
+          titleStyle={{ fontSize: 16, fontWeight: "500" }}
+        />
+        <Tab.Item
+          title="Tin nhắn"
+          titleStyle={{ fontSize: 16, fontWeight: "500" }}
+        />
+        <Tab.Item
+          title="Tài khoản"
+          titleStyle={{ fontSize: 16, fontWeight: "500" }}
+        />
+      </Tab>
+
+      <TabView value={index} onChange={setIndex} animationType="spring">
+        {/* Tab "Tất cả" */}
+        <TabView.Item style={{ width: "100%", padding: 10 }}>
+          <FlatList
+            data={[...searchMessages, ...searchUsers]}
+            renderItem={({ item }) =>
+              item.content ? (
+                // Tin nhắn
+                <TouchableOpacity
+                  key={item.id}
+                  onPress={() => handleOpenChatting(item)}
+                  style={{
+                    paddingVertical: 5,
+                    paddingHorizontal: 15,
+                    borderBottomWidth: 1,
+                    borderBottomColor: "#ddd",
+                    // backgroundColor: "green",
+                    gap: 5,
+                    flexDirection: "row",
+                    alignItems: "center",
+                  }}
+                >
+                  <Image
+                    source={{
+                      uri: item.avatar_path || "https://picsum.photos/200",
                     }}
-                  >
-                    <Text
-                      style={{
-                        fontWeight: "bold",
-                        fontSize: 18,
-                        marginBottom: 5,
-                      }}
-                    >
-                      {item.sender}
+                    style={{
+                      width: 50,
+                      height: 50,
+                      borderRadius: 25,
+                      marginRight: 10,
+                    }}
+                  />
+                  <View style={{ gap: 5 }}>
+                    <Text style={{ fontWeight: "bold", fontSize: 16 }}>
+                      {users.find((user) => user.id === item.sender_id)
+                        ?.full_name || "Unknown"}
                     </Text>
                     <Text>{item.content}</Text>
-                  </TouchableOpacity>
-                )}
-                keyExtractor={(item) => item.id}
-              />
-            </TabView.Item>
-
-            {/* Tab "Tin nhắn" */}
-            <TabView.Item style={{ width: "100%", padding: 10 }}>
-              {searchText !== "" && filteredMessages.length > 0 ? (
-                <FlatList
-                  data={filteredMessages}
-                  renderItem={({ item }) => (
-                    <TouchableOpacity
-                      onPress={() =>
-                        navigation.navigate("ChatScreen", {
-                          chatId: item.chatId,
-                        })
-                      }
-                      style={{
-                        paddingVertical: 10,
-                        paddingHorizontal: 15,
-                        borderBottomWidth: 1,
-                        borderBottomColor: "#ddd",
-                      }}
-                    >
-                      <Text
-                        style={{
-                          fontWeight: "bold",
-                          fontSize: 18,
-                          marginBottom: 5,
-                        }}
-                      >
-                        {item.sender}
-                      </Text>
-                      <Text>{item.content}</Text>
-                    </TouchableOpacity>
-                  )}
-                  keyExtractor={(item) => item.id}
-                />
+                  </View>
+                </TouchableOpacity>
               ) : (
-                <Text
+                // Tài khoản
+                <View
                   style={{
-                    fontSize: 16,
-                    color: "gray",
-                    textAlign: "center",
-                    marginTop: 20,
+                    paddingVertical: 5,
+                    paddingHorizontal: 15,
+                    borderBottomWidth: 1,
+                    borderBottomColor: "#ddd",
+                    gap: 5,
+                    flexDirection: "row",
+                    alignItems: "center",
                   }}
                 >
-                  Không tìm thấy kết quả phù hợp
-                </Text>
-              )}
-            </TabView.Item>
+                  <Image
+                    source={{
+                      uri: item.avatar_path || "https://picsum.photos/200",
+                    }}
+                    style={{
+                      width: 50,
+                      height: 50,
+                      borderRadius: 25,
+                      marginRight: 10,
+                    }}
+                  />
+                  <View>
+                    <Text style={{ fontSize: 16, fontWeight: "bold" }}>
+                      {item.full_name}
+                    </Text>
+                  </View>
+                </View>
+              )
+            }
+            keyExtractor={(item, index) =>
+              item.id?.toString() || index.toString()
+            }
+          />
+        </TabView.Item>
 
-            {/* Trả về kết quả cho tab "Tài khoản" */}
-            <TabView.Item style={{ width: "100%", padding: 10 }}>
-              {users && users.length > 0 ? (
-                <FlatList
-                  data={users}
-                  renderItem={({ item }) => (
-                    <View style={{ padding: 10 }}>
-                      <Text style={{ fontSize: 16, color: "green" }}>
-                        {item.name}
-                      </Text>
-                    </View>
-                  )}
-                  keyExtractor={(item) => item.id}
-                />
-              ) : (
-                <Text
+        {/* Tab "Tin nhắn" */}
+        <TabView.Item style={{ width: "100%", padding: 10 }}>
+          {searchMessages.length > 0 ? (
+            <FlatList
+              data={searchMessages}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  onPress={() => handleOpenChatting(item)}
                   style={{
-                    fontSize: 16,
-                    color: "gray",
-                    textAlign: "center",
-                    marginTop: 20,
+                    paddingVertical: 5,
+                    paddingHorizontal: 15,
+                    borderBottomWidth: 1,
+                    borderBottomColor: "#ddd",
+                    gap: 5,
+                    flexDirection: "row",
+                    alignItems: "center",
                   }}
                 >
-                  Không tìm thấy kết quả phù hợp
-                </Text>
+                  <Image
+                    source={{
+                      uri: item.avatar_path || "https://picsum.photos/200",
+                    }}
+                    style={{
+                      width: 50,
+                      height: 50,
+                      borderRadius: 25,
+                      marginRight: 10,
+                    }}
+                  />
+                  <View style={{ gap: 5 }}>
+                    <Text style={{ fontWeight: "bold", fontSize: 16 }}>
+                      {users.find((user) => user.id === item.sender_id)
+                        ?.full_name || "Unknown"}
+                    </Text>
+                    <Text>{item.content}</Text>
+                  </View>
+                </TouchableOpacity>
               )}
-            </TabView.Item>
-          </TabView>
-        </>
-      )}
+              keyExtractor={(item, index) =>
+                item.id?.toString() || index.toString()
+              }
+            />
+          ) : (
+            <Text
+              style={{
+                fontSize: 16,
+                color: "gray",
+                textAlign: "center",
+                marginTop: 20,
+              }}
+            >
+              Không tìm thấy tin nhắn phù hợp
+            </Text>
+          )}
+        </TabView.Item>
+
+        {/* Tab "Tài khoản" */}
+        <TabView.Item style={{ width: "100%", padding: 10 }}>
+          {searchUsers.length > 0 ? (
+            <FlatList
+              data={searchUsers}
+              renderItem={({ item }) => (
+                <View
+                  style={{
+                    paddingVertical: 5,
+                    paddingHorizontal: 15,
+                    borderBottomWidth: 1,
+                    borderBottomColor: "#ddd",
+                    gap: 5,
+                    flexDirection: "row",
+                    alignItems: "center",
+                  }}
+                >
+                  <Image
+                    source={{
+                      uri: item.avatar_path || "https://picsum.photos/200",
+                    }}
+                    style={{
+                      width: 50,
+                      height: 50,
+                      borderRadius: 25,
+                      marginRight: 10,
+                      alignItems: "center",
+                    }}
+                  />
+                  <View>
+                    <Text style={{ fontSize: 16, fontWeight: "bold" }}>
+                      {item.full_name}
+                    </Text>
+                    {/* <Text style={{ color: "gray" }}>{item.phone}</Text> */}
+                  </View>
+                </View>
+              )}
+              keyExtractor={(item, index) =>
+                item.id?.toString() || index.toString()
+              }
+            />
+          ) : (
+            <Text
+              style={{
+                fontSize: 16,
+                color: "gray",
+                textAlign: "center",
+                marginTop: 20,
+              }}
+            >
+              Không tìm thấy tài khoản phù hợp
+            </Text>
+          )}
+        </TabView.Item>
+      </TabView>
     </View>
   );
 };

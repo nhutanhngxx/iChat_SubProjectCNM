@@ -1,0 +1,154 @@
+.security-settings-container {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+  overflow-y: scroll;
+  scrollbar-width: none;
+}
+
+.main-content,
+.change-password-content,
+.blockList-contents,
+.quick-message-content {
+  transition: transform 0.5s ease-in-out;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.main-content.shift-left {
+  transform: translateX(-100%);
+}
+
+.change-password-content,
+.blockList-contents,
+.quick-message-content {
+  position: absolute;
+  top: 0;
+  right: -100%;
+  width: 100%;
+  background-color: #fff;
+  padding: 20px;
+}
+
+.change-password-content.slide-in {
+  transform: translateX(-100%);
+}
+
+.button-changePass {
+  background: rgba(0, 0, 0, 0.1);
+  border: none;
+  width: 100%;
+  padding: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 16px;
+  border-radius: 5px;
+  margin-bottom: 20px;
+}
+
+.button-changePass div {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.button-security {
+  display: flex;
+  justify-content: space-between; /* Giữ nguyên */
+  align-items: center; /* Căn giữa icon và text theo chiều dọc */
+  font-weight: 500;
+  margin: 16px 10px;
+  background: #ffffff;
+  width: 90%;
+  border: none;
+  cursor: pointer;
+  gap: 10px;
+  padding: 10px 16px; /* Đảm bảo có khoảng cách trên dưới */
+  height: 50px; /* Đặt chiều cao để dễ căn giữa */
+}
+
+.button-security p:last-child {
+  color: #007bff;
+}
+
+.change-password-content form {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.change-password-content form label {
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+
+.change-password-content form input {
+  padding: 10px;
+  margin-bottom: 20px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.change-password-content form button {
+  padding: 10px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.change-password-content form button:hover {
+  background-color: #0056b3;
+}
+
+.change-password-content button {
+  padding: 10px;
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 20px;
+}
+
+.change-password-content button:hover {
+  background-color: #5a6268;
+}
+.header-changPassWord {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.header-changPassWord div {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: large;
+}
+.header-changPassWord .icon-backleft {
+  cursor: pointer;
+  font-size: 20px;
+  display: flex;
+
+  margin-bottom: 5px;
+}
+.box-blockList {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid #dbdbdb;
+  min-height: 100px;
+  max-width: 66%;
+  border-radius: 10px;
+}
+.box-blockList p {
+  width: 100%;
+  text-align: center;
+}

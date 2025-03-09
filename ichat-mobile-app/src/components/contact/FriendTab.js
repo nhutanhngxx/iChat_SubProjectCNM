@@ -1,4 +1,5 @@
 import { useNavigation } from "@react-navigation/native";
+import { Avatar } from "@rneui/themed";
 import React from "react";
 import {
   View,
@@ -34,11 +35,15 @@ const friendList = [
   },
 ];
 
-const addRequest = 20;
+const addRequest = 3;
 
 const FriendTab = () => {
   const navigation = useNavigation();
   const { width } = Dimensions.get("window");
+
+  //   const handleOpenChatting = (chat) => {
+  //     navigation.navigate("Contact", { chat });
+  //   };
 
   const handleOpenChatting = (chat) => {
     console.log("Received chat:", chat);
@@ -53,22 +58,18 @@ const FriendTab = () => {
       onPress={() => handleOpenChatting(item)}
     >
       <View style={styles.item_leftSide}>
-        <Image source={item.avatar} style={{ width: 50, height: 50 }} />
+        <Avatar size={50} rounded source={item.avatar} />
         <Text style={{ fontWeight: "500", fontSize: 16 }}>{item.name}</Text>
       </View>
       <View style={{ display: "flex", flexDirection: "row", gap: 20 }}>
-        <TouchableOpacity>
-          <Image
-            source={require("../../assets/icons/phone-call.png")}
-            style={{ width: 20, height: 20, marginTop: 2 }}
-          />
-        </TouchableOpacity>
-        <TouchableOpacity>
-          <Image
-            source={require("../../assets/icons/video.png")}
-            style={{ width: 25, height: 25, marginTop: 2 }}
-          />
-        </TouchableOpacity>
+        <Image
+          source={require("../../assets/icons/phone-call.png")}
+          style={{ width: 20, height: 20, marginTop: 2 }}
+        />
+        <Image
+          source={require("../../assets/icons/video.png")}
+          style={{ width: 25, height: 25, marginTop: 2 }}
+        />
       </View>
     </TouchableOpacity>
   );

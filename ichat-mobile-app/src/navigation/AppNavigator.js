@@ -64,6 +64,8 @@ const ContactStack = () => {
       <Stack.Screen name="ContactTab" component={ContactTab} />
       <Stack.Screen name="AddFriend" component={AddFriend} />
       <Stack.Screen name="FriendRequest" component={FriendRequest} />
+      <Stack.Screen name="Chatting" component={Chatting} />
+      <Stack.Screen name="Option" component={Option} />
     </Stack.Navigator>
   );
 };

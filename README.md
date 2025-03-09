@@ -28,35 +28,36 @@ iChat là một ứng dụng nhắn tin tức thời hỗ trợ trên cả hai n
 - **Web:** Triển khai trên Vercel / Netlify
 - **Mobile:** Xuất bản trên Expo.dev
 - **Backend:** Triển khai trên Render / Heroku
-- **Database:** MongoDB Atlas / Firebase Firestore
+- **Database:** MongoDB Atlas
 
 ## 🚀 Chức năng chính
 - 📝 Đăng ký, đăng nhập và xác thực người dùng
-- 💬 Nhắn tin cá nhân và nhóm
+- 💬 Nhắn tin Cá nhân và Nhóm
 - 📤 Gửi hình ảnh, emoji, file đính kèm
 - 🛠 Cá nhân hóa hồ sơ người dùng
 - 🔔 Thông báo tin nhắn mới theo thời gian thực
-- 🔍 Tìm kiếm bạn bè, nhóm chat
+- 🔍 Tìm kiếm bạn bè, tài khoản, nhóm chat
 
 ## 📌 Cài đặt và chạy ứng dụng
 ### 1️⃣ Clone dự án
 ```
-git clone https://github.com/your-repo/ichat.git
+git clone https://github.com/nhutanhngxx/iChat_SubProjectCNM.git
 cd ichat
 ```
 ### 2️⃣ Cài đặt dependencies
-#### Với Web
+#### Với Web app
 ```cd ichat-web-app
 npm install
 npm start
 ```
-### Với Mobile
+### Với Mobile app
 ```cd ichat-mobile-app
 npm install
-expo start
+npm start
 ```
 ### 3️⃣ Khởi chạy Backend
-```null
+```cd ichat-server
+npm start
 ```
 
 ## 🏗️ Thành viên nhóm

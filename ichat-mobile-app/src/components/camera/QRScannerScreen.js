@@ -1,50 +1,70 @@
-import React, { useState, useEffect } from "react";
-import { View, Text } from "react-native";
-// import { BarCodeScanner } from "expo-barcode-scanner";
+import React, { useState, useEffect, useRef } from "react";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { Camera } from "expo-camera";
 
-const QRScanner = ({ navigation }) => {
+const QRScannerScreen = () => {
   const [hasPermission, setHasPermission] = useState(null);
-  const [scanned, setScanned] = useState(false);
-  //   useEffect(() => {
-  //     (async () => {
-  //       const { status } = await BarCodeScanner.requestPermissionsAsync();
-  //       setHasPermission(status === "granted");
-  //     })();
-  //   }, []);
-  //   const handleBarCodeScanned = ({ type, data }) => {
-  //     setScanned(true);
-  //     alert(`Mã QR đã quét: ${data}`);
-  //     navigation.goBack(); // Đóng màn hình sau khi quét
-  //   };
-  //   if (hasPermission === null) {
-  //     return <Text>Đang yêu cầu quyền truy cập camera...</Text>;
-  //   }
-  //   if (hasPermission === false) {
-  //     return <Text>Không có quyền truy cập camera</Text>;
-  //   }
-  useEffect(() => {
-    navigation.getParent()?.setOptions({ tabBarStyle: { display: "none" } });
+  const [cameraType, setCameraType] = useState(null);
+  const cameraRef = useRef(null);
 
-    return () => {
-      navigation.getParent()?.setOptions({
-        tabBarStyle: {
-          backgroundColor: "white",
-          height: 60,
-          paddingBottom: 10,
-          paddingTop: 10,
-        },
-      });
-    };
+  useEffect(() => {
+    (async () => {
+      console.log("Camera object: ", Camera); // Kiểm tra import
+      console.log("Camera Constants: ", Camera?.Constants); // Kiểm tra lỗi undefined
+
+      const { status } = await Camera.requestCameraPermissionsAsync();
+      setHasPermission(status === "granted");
+
+      // Kiểm tra Camera.Constants trước khi sử dụng
+      if (Camera?.Constants?.Type) {
+        setCameraType(Camera.Constants.Type.back);
+      } else {
+        console.error("Camera.Constants is undefined!");
+      }
+    })();
   }, []);
+
+  if (hasPermission === null) {
+    return (
+      <View style={styles.container}>
+        <Text>Đang kiểm tra quyền truy cập...</Text>
+      </View>
+    );
+  }
+  if (hasPermission === false) {
+    return (
+      <View style={styles.container}>
+        <Text>Ứng dụng cần quyền truy cập camera.</Text>
+      </View>
+    );
+  }
+
   return (
-    //     <BarCodeScanner
-    //       onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
-    //       style={{ flex: 1 }}
-    //     />
-    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-      <Text>Camera</Text>
+    <View style={styles.container}>
+      {cameraType ? (
+        <Camera ref={cameraRef} style={styles.camera} type={cameraType} />
+      ) : (
+        <Text>Camera không khả dụng.</Text>
+      )}
+      <TouchableOpacity style={styles.scanAgainButton}>
+        <Text style={styles.scanAgainText}>Quét lại</Text>
+      </TouchableOpacity>
     </View>
   );
 };
 
-export default QRScanner;
+const styles = StyleSheet.create({
+  container: { flex: 1, justifyContent: "center", alignItems: "center" },
+  camera: { flex: 1, width: "100%" },
+  scanAgainButton: {
+    position: "absolute",
+    bottom: 50,
+    alignSelf: "center",
+    backgroundColor: "#6166EE",
+    padding: 10,
+    borderRadius: 10,
+  },
+  scanAgainText: { color: "white", fontSize: 16 },
+});
+
+export default QRScannerScreen;

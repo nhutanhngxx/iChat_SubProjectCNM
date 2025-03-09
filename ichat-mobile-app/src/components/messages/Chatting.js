@@ -23,13 +23,17 @@ import axios from "axios";
 const Chatting = ({ route }) => {
   const navigation = useNavigation();
   const { user } = useContext(UserContext);
-  const { chat } = route.params || {}; // Lấy thông tin từ màn hình MessageTab/UuTien
+  const { chat } = route.params || {};
   const flatListRef = useRef(null);
   const [inputMessage, setInputMessage] = useState("");
   const [messages, setMessages] = useState([]);
   const [replyMessage, setReplyMessage] = useState(null);
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
+
+  const API_iChat = `http://${window.location.hostname}:5001`;
+
+  console.log("Chatting with:", chat);
 
   // Hiển thị modal khi ấn giữ tin nhắn
   const handleLongPress = (message) => {
@@ -50,7 +54,7 @@ const Chatting = ({ route }) => {
 
     try {
       const response = await axios.delete(
-        `http://192.168.1.6:5001/${selectedMessage._id}`
+        `${API_iChat}/${selectedMessage._id}`
       );
 
       console.log("Response từ server:", response.data);
@@ -68,6 +72,50 @@ const Chatting = ({ route }) => {
     }
   };
 
+  if (chat?.chatType === "group") {
+    useEffect(() => {
+      if (chat?.id && user?.id) {
+        const fetchMessages = async () => {
+          try {
+            const response = await axios.get(
+              `${API_iChat}/messages/${chat.id}`
+            );
+            if (response.data.status === "ok") {
+              setMessages(response.data.data);
+              console.log("User:" + user.id);
+              console.log("Tin nhắn nhóm: " + response.data);
+            }
+          } catch (error) {
+            console.error("Lỗi khi lấy tin nhắn:", error);
+          }
+        };
+        const interval = setInterval(fetchMessages, 1000);
+        return () => clearInterval(interval);
+      }
+    }, [user, chat]);
+  } else {
+    useEffect(() => {
+      if (chat?.id && user?.id) {
+        const fetchMessages = async () => {
+          try {
+            const response = await axios.get(
+              `${API_iChat}/messages/${user.id}/${chat.id}`
+            );
+            if (response.data.status === "ok") {
+              setMessages(response.data.data);
+              console.log("User:" + user.id);
+              console.log("Tin nhắn nhóm: " + response.data);
+            }
+          } catch (error) {
+            console.error("Lỗi khi lấy tin nhắn:", error);
+          }
+        };
+        const interval = setInterval(fetchMessages, 1000);
+        return () => clearInterval(interval);
+      }
+    }, [user, chat]);
+  }
+
   // Click vào để reply
   const handleReply = (message) => {
     console.log("Reply :", message);
@@ -75,34 +123,10 @@ const Chatting = ({ route }) => {
     setModalVisible(false); // Ẩn modal sau khi chọn reply
   };
 
-  // Fetch để load tất cả tin nhắn 1-1
-  const fetchMessages = async () => {
-    try {
-      const response = await axios.get(
-        `http://192.168.1.6:5001/messages/${user.id}/${chat.id}`
-      );
-      if (response.data.status === "ok") {
-        setMessages(response.data.data);
-      }
-    } catch (error) {
-      console.error("Lỗi khi lấy tin nhắn:", error);
-    }
-  };
-
-  // Sau mỗi 1s sẽ load lại API một lần => làm mới tin nhắn
-  useEffect(() => {
-    if (chat?.id && user?.id) {
-      fetchMessages();
-      const interval = setInterval(fetchMessages, 1000);
-      return () => clearInterval(interval);
-    }
-  }, [user, chat]);
-
   // Tắt Tabbar ngay sau khi vào màn hình Chatting
   useEffect(() => {
-    console.log(chat);
+    console.log("Chat: ", chat);
     navigation.getParent()?.setOptions({ tabBarStyle: { display: "none" } });
-
     return () => {
       navigation.getParent()?.setOptions({
         tabBarStyle: {
@@ -130,12 +154,12 @@ const Chatting = ({ route }) => {
           receiver_id: chat.id,
           content: inputMessage,
           type: "text",
-          chat_type: "private",
+          chat_type: chat?.chatType === "group" ? "group" : "private",
           reply_to: replyMessage ? replyMessage._id : null,
         };
 
         const response = await axios.post(
-          "http://192.168.1.6:5001/send-message",
+          `${API_iChat}/messages/reply`,
           newMessage
         );
 

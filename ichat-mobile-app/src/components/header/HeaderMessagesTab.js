@@ -80,7 +80,7 @@ const HeaderMessages = () => {
         </TouchableOpacity>
       </View>
 
-      {/* Modal */}
+      {/* Modal Add friend */}
       <Modal
         // animationType="fade"
         transparent={true}
