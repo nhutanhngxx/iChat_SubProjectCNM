@@ -56,9 +56,7 @@ const Priority = () => {
 
   const fetchChatList = async () => {
     try {
-      const response = await axios.get(
-        `http://172.20.33.148:5001/messages/${user.id}`
-      );
+      const response = await axios.get(`${API_iChat}/messages/${user.id}`);
 
       if (response.data.status === "ok" && Array.isArray(response.data.data)) {
         setChatList(formatChatList(response.data.data, allUser));

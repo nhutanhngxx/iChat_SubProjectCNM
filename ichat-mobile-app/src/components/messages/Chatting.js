@@ -31,6 +31,8 @@ const Chatting = ({ route }) => {
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
 
+  const API_iChat = `http://${window.location.hostname}:5001`;
+
   console.log("Chatting with:", chat);
 
   // Hiển thị modal khi ấn giữ tin nhắn
@@ -52,7 +54,7 @@ const Chatting = ({ route }) => {
 
     try {
       const response = await axios.delete(
-        `http://172.20.33.148:5001/${selectedMessage._id}`
+        `${API_iChat}/${selectedMessage._id}`
       );
 
       console.log("Response từ server:", response.data);
@@ -76,7 +78,7 @@ const Chatting = ({ route }) => {
         const fetchMessages = async () => {
           try {
             const response = await axios.get(
-              `http://172.20.33.148:5001/messages/${chat.id}`
+              `${API_iChat}/messages/${chat.id}`
             );
             if (response.data.status === "ok") {
               setMessages(response.data.data);
@@ -97,7 +99,7 @@ const Chatting = ({ route }) => {
         const fetchMessages = async () => {
           try {
             const response = await axios.get(
-              `http://172.20.33.148:5001/messages/${user.id}/${chat.id}`
+              `${API_iChat}/messages/${user.id}/${chat.id}`
             );
             if (response.data.status === "ok") {
               setMessages(response.data.data);
@@ -157,7 +159,7 @@ const Chatting = ({ route }) => {
         };
 
         const response = await axios.post(
-          "http://172.20.33.148:5001/messages/reply",
+          `${API_iChat}/messages/reply`,
           newMessage
         );
 

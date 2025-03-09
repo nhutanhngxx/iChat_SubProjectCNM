@@ -19,6 +19,7 @@ const SearchScreen = () => {
   const navigation = useNavigation();
   const searchInputRef = useRef(null);
   const { user } = useContext(UserContext);
+  const API_iChat = `http://${window.location.hostname}:5001`;
 
   const handleOpenChatting = async (selectedMessage) => {
     console.log(selectedMessage);
@@ -31,7 +32,7 @@ const SearchScreen = () => {
 
     try {
       // Gọi API lấy danh sách users
-      const response = await axios.get("http://172.20.33.148:5001/users");
+      const response = await axios.get(`${API_iChat}/users`);
 
       if (response.data.status === "ok") {
         // Tìm người dùng trong danh sách theo chatPartnerId
@@ -103,8 +104,8 @@ const SearchScreen = () => {
     setIsLoading(true);
     try {
       const [usersResponse, messagesResponse] = await Promise.all([
-        axios.get(`http://172.20.33.148:5001/users?search=${searchText}`),
-        axios.get(`http://172.20.33.148:5001/messages?search=${searchText}`),
+        axios.get(`${API_iChat}/users?search=${searchText}`),
+        axios.get(`${API_iChat}/messages?search=${searchText}`),
       ]);
 
       setSearchUsers(
@@ -127,7 +128,7 @@ const SearchScreen = () => {
   const fetchUsers = async () => {
     try {
       console.log("Fetching users...");
-      const response = await axios.get("http://172.20.33.148:5001/users");
+      const response = await axios.get(`${API_iChat}/users`);
 
       if (response.data.status === "ok" && Array.isArray(response.data.users)) {
         setUsers(response.data.users); // Cập nhật state users

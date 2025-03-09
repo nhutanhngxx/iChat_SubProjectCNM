@@ -23,6 +23,7 @@ const Option = ({ route }) => {
   const navigation = useNavigation();
   const { user } = useContext(UserContext);
   const { id, name, avatar } = route.params || {};
+  const API_iChat = `http://${window.location.hostname}:5001`;
 
   useEffect(() => {
     console.log("avatar: ", avatar);
@@ -32,7 +33,7 @@ const Option = ({ route }) => {
   const deleteChatHistory = async () => {
     try {
       const response = await axios.delete(
-        `http://172.20.33.148:5001/messages/${user.id}/${id}`
+        `${API_iChat}/messages/${user.id}/${id}`
       );
 
       if (response.data.status === "ok") {

@@ -46,10 +46,12 @@ const GroupTab = () => {
     }));
   };
 
+  const API_iChat = `http://${window.location.hostname}:5001`;
+
   useEffect(() => {
     const fetchGroupList = () => {
       axios
-        .get(`http://172.20.33.148:5001/groups/${user.id}`)
+        .get(`${API_iChat}/groups/${user.id}`)
         .then((response) => {
           setGroupList(formatGroupList(response.data));
         })
