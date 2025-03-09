@@ -19,6 +19,7 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { UserContext } from "@/src/context/UserContext";
 import axios from "axios";
+import messageService from "../../services/messageService";
 
 const Chatting = ({ route }) => {
   const navigation = useNavigation();
@@ -74,24 +75,33 @@ const Chatting = ({ route }) => {
 
   if (chat?.chatType === "group") {
     useEffect(() => {
-      if (chat?.id && user?.id) {
-        const fetchMessages = async () => {
-          try {
-            const response = await axios.get(
-              `${API_iChat}/messages/${chat.id}`
-            );
-            if (response.data.status === "ok") {
-              setMessages(response.data.data);
-              console.log("User:" + user.id);
-              console.log("Tin nhắn nhóm: " + response.data);
-            }
-          } catch (error) {
-            console.error("Lỗi khi lấy tin nhắn:", error);
-          }
-        };
-        const interval = setInterval(fetchMessages, 1000);
-        return () => clearInterval(interval);
-      }
+      // if (chat?.id && user?.id) {
+      //   const fetchMessages = async () => {
+      //     try {
+      //       const response = await axios.get(
+      //         `${API_iChat}/messages/${chat.id}`
+      //       );
+      //       if (response.data.status === "ok") {
+      //         setMessages(response.data.data);
+      //         console.log("User:" + user.id);
+      //         console.log("Tin nhắn nhóm: " + response.data);
+      //       }
+      //     } catch (error) {
+      //       console.error("Lỗi khi lấy tin nhắn:", error);
+      //     }
+      //   };
+
+      const fetchMessages = async () => {
+        const messages = await messageService.getMessagesByGroupId(user, chat);
+        setMessages(messages);
+        // console.log("Messages: ", messages);
+      };
+
+      fetchMessages();
+
+      const interval = setInterval(fetchMessages, 1000);
+      return () => clearInterval(interval);
+      // }
     }, [user, chat]);
   } else {
     useEffect(() => {

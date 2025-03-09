@@ -12,8 +12,6 @@ const getTimeAgo = (timestamp) => {
   return dayjs(timestamp).fromNow(); // Hiển thị "X phút trước"
 };
 
-console.log(api);
-
 const formatGroupList = (groups) => {
   if (!Array.isArray(groups)) return [];
   return groups.map((group) => ({
