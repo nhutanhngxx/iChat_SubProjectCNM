@@ -6,6 +6,7 @@ import { useState } from "react";
 import { concat, set } from "lodash";
 import { PiGreaterThan } from "react-icons/pi";
 import { IoMdClose } from "react-icons/io";
+import { FaRegCalendarAlt } from "react-icons/fa";
 
 const SearchRight = ({ setShowSearchRight }) => {
   const [showSenderFilter, setShowSenderFilter] = useState(false);
@@ -134,7 +135,7 @@ const SearchRight = ({ setShowSearchRight }) => {
           </div>
         )}
         <button onClick={() => handleShowDateFilter()}>
-          <FaUser />
+          <FaRegCalendarAlt />
           <span>Ngày gửi</span>
           <span>▼</span>
         </button>
