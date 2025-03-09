@@ -11,7 +11,7 @@ import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { UserContext } from "@/src/context/UserContext";
 import axios from "axios";
-import groupService from "../../services/groupServie";
+import groupService from "../../services/groupService";
 
 // Tính thời gian
 import dayjs from "dayjs";
@@ -29,6 +29,7 @@ const Priority = () => {
   const navigation = useNavigation();
   const { user } = useContext(UserContext);
   const [chatList, setChatList] = useState([]);
+  const [groupList, setGroupList] = useState([]);
   const [allUser, setAllUser] = useState([]);
   const API_iChat = `http://${window.location.hostname}:5001`;
 
@@ -50,6 +51,22 @@ const Priority = () => {
   };
 
   useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  // Lấy danh sách group chat của người dùng
+  useEffect(() => {
+    if (!user?.id) return;
+    const fetchGroupList = async () => {
+      const groups = await groupService.getAllGroupsByUserId(user.id);
+      setGroupList(groups);
+    };
+    fetchGroupList();
+    const interval = setInterval(fetchGroupList, 1000);
+    return () => clearInterval(interval);
+  }, [user?.id]);
+
+  useEffect(() => {
     if (allUser.length === 0 || !user?.id) return;
     console.log("Fetching chat list for user ID:", user.id);
     fetchChatList();
@@ -69,10 +86,6 @@ const Priority = () => {
     }
   };
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
   // Lọc lại dữ liệu tin nhắn theo từng người dùng
   const formatChatList = (messages, allUser) => {
     if (!Array.isArray(messages)) return [];
@@ -80,28 +93,30 @@ const Priority = () => {
     const chatMap = new Map();
 
     messages.forEach((msg) => {
-      const chatUserId =
-        msg.sender_id === user.id ? msg.receiver_id : msg.sender_id;
-      const chatUser = allUser.find((u) => u._id === chatUserId);
-      const fullName = chatUser ? chatUser.full_name : "Người dùng ẩn danh";
-      const avatarPath =
-        chatUser?.avatar_path || "https://i.ibb.co/9k8sPRMx/best-seller.png";
-      const lastMessageTime = new Date(msg.timestamp).getTime();
-      const timeDiff = getTimeAgo(lastMessageTime);
+      if (msg.chat_type === "private") {
+        const chatUserId =
+          msg.sender_id === user.id ? msg.receiver_id : msg.sender_id;
+        const chatUser = allUser.find((u) => u._id === chatUserId);
+        const fullName = chatUser ? chatUser.full_name : "Người dùng ẩn danh";
+        const avatarPath =
+          chatUser?.avatar_path || "https://i.ibb.co/9k8sPRMx/best-seller.png";
+        const lastMessageTime = new Date(msg.timestamp).getTime();
+        const timeDiff = getTimeAgo(lastMessageTime);
 
-      if (
-        !chatMap.has(chatUserId) ||
-        lastMessageTime > chatMap.get(chatUserId).lastMessageTime
-      ) {
-        chatMap.set(chatUserId, {
-          id: chatUserId,
-          name: fullName,
-          lastMessage: msg.type === "image" ? "[Hình ảnh]" : msg.content,
-          lastMessageTime: lastMessageTime,
-          time: timeDiff,
-          avatar: { uri: avatarPath },
-        });
-      }
+        if (
+          !chatMap.has(chatUserId) ||
+          lastMessageTime > chatMap.get(chatUserId).lastMessageTime
+        ) {
+          chatMap.set(chatUserId, {
+            id: chatUserId,
+            name: fullName,
+            lastMessage: msg.type === "image" ? "[Hình ảnh]" : msg.content,
+            lastMessageTime: lastMessageTime,
+            time: timeDiff,
+            avatar: { uri: avatarPath },
+          });
+        }
+      } else return;
     });
 
     // return Array.from(chatMap.values());
@@ -162,7 +177,7 @@ const Priority = () => {
         </View>
       ) : (
         <FlatList
-          data={chatList}
+          data={chatList.concat(groupList)}
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => {
             // console.log("Rendering item:", item);

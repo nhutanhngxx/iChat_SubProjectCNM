@@ -34,7 +34,7 @@ const Chatting = ({ route }) => {
 
   const API_iChat = `http://${window.location.hostname}:5001`;
 
-  console.log("Chatting with:", chat);
+  // console.log("Chatting with:", chat);
 
   // Hiển thị modal khi ấn giữ tin nhắn
   const handleLongPress = (message) => {

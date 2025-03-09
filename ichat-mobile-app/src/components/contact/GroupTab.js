@@ -12,7 +12,7 @@ import ModalCreateGroup from "./ModalCreateGroup";
 import { useNavigation } from "@react-navigation/native";
 import { UserContext } from "@/src/context/UserContext";
 import { Avatar } from "@rneui/themed";
-import groupService from "../../services/groupServie";
+import groupService from "../../services/groupService";
 
 const GroupTab = () => {
   const navigation = useNavigation();

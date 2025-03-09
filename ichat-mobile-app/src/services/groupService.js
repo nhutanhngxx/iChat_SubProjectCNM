@@ -19,7 +19,7 @@ const formatGroupList = (groups) => {
     name: group.name,
     avatar: group.avatar,
     lastMessage: group?.lastMessage || "Chưa có tin nhắn",
-    messages: [],
+    lastMessageTime: getTimeAgo(group.lastMessageTime),
     created_at: getTimeAgo(group.created_at),
     chatType: "group",
   }));
