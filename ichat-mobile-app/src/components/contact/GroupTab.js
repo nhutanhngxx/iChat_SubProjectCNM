@@ -10,21 +10,9 @@ import {
 import { Dimensions } from "react-native";
 import ModalCreateGroup from "./ModalCreateGroup";
 import { useNavigation } from "@react-navigation/native";
-import axios from "axios";
 import { UserContext } from "@/src/context/UserContext";
 import { Avatar } from "@rneui/themed";
-
-// Tính thời gian
-import dayjs from "dayjs";
-import relativeTime from "dayjs/plugin/relativeTime";
-import "dayjs/locale/vi"; // Tiếng việt nè
-
-dayjs.extend(relativeTime);
-dayjs.locale("vi");
-
-const getTimeAgo = (timestamp) => {
-  return dayjs(timestamp).fromNow(); // Hiển thị "X phút trước"
-};
+import groupService from "../../services/groupServie";
 
 const GroupTab = () => {
   const navigation = useNavigation();
@@ -33,38 +21,18 @@ const GroupTab = () => {
   const [groupList, setGroupList] = useState([]);
   const { user } = useContext(UserContext);
 
-  const formatGroupList = (groups) => {
-    if (!Array.isArray(groups)) return [];
-    return groups.map((group) => ({
-      id: group._id,
-      name: group.name,
-      avatar: group.avatar,
-      lastMessage: group?.lastMessage || "Chưa có tin nhắn",
-      messages: [],
-      created_at: getTimeAgo(group.created_at),
-      chatType: "group",
-    }));
-  };
-
-  const API_iChat = `http://${window.location.hostname}:5001`;
-
   useEffect(() => {
-    const fetchGroupList = () => {
-      axios
-        .get(`${API_iChat}/groups/${user.id}`)
-        .then((response) => {
-          setGroupList(formatGroupList(response.data));
-        })
-        .catch((error) => {
-          console.error("Error fetching groups:", error);
-        });
+    if (!user?.id) return;
+
+    const fetchGroupList = async () => {
+      const groups = await groupService.getAllGroupsByUserId(user.id);
+      setGroupList(groups);
+      console.log("GroupList: ", groupList);
     };
-
     fetchGroupList();
-
-    const interval = setInterval(fetchGroupList, 5000);
+    const interval = setInterval(fetchGroupList, 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [user?.id]);
 
   const handleOpenModal = () => {
     setIsShowModal(true);
