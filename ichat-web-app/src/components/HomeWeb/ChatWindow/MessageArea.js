@@ -14,7 +14,6 @@ import "./MessageArea.css";
 import ConversationDetails from "./ConversationDetails";
 import SearchRight from "./SearchRight";
 import { set } from "lodash";
-
 const { Header, Content } = Layout;
 
 // Mock messages for different users
@@ -60,6 +59,27 @@ const MessageArea = ({ selectedChat }) => {
     setShowConversation(!showConversation);
     setShowSearchRight(false);
   };
+  // State quản lý mở rộng/thu nhỏ hội thoại
+  const [isExpanded, setIsExpanded] = useState(false);
+  // để đóng picker của MessageInput khi mở picker từ MessageArea
+  const [showPickerFromMessArea, setshowPickerFromMessArea] = useState(true);
+  const [activeTabFromMessageArea, setActiveTabFromMessageArea] =
+    useState("info");
+  const handleExpandContract = () => {
+    setIsExpanded(!isExpanded); // Mở rộng
+    setshowPickerFromMessArea(!showPickerFromMessArea); // Đóng picker
+    setActiveTabFromMessageArea("info"); // Chuyển về tab thông tin
+  };
+
+  // Mở hộp thoại thông tin hội thoại có biểu tượng
+  const handleShowConversationSymbol = () => {
+    setShowConversation(true);
+    setShowSearchRight(false);
+    setshowPickerFromMessArea(false);
+    handleExpandContract();
+  };
+  console.log(handleExpandContract);
+
   useEffect(() => {
     if (selectedChat) {
       // Fetch messages based on selected chat
@@ -183,6 +203,9 @@ const MessageArea = ({ selectedChat }) => {
           handleSendMessage={handleSendMessage}
           onImageUpload={handleImageUpload} // Truyền callback để xử lý ảnh
           onFileUpload={handleFileUpload} // Truyền callback để xử lý file
+          handleShowConversationSymbol={handleShowConversationSymbol} // Truyền hàm xử lý hiển thị thông tin hội thoại
+          showPickerFromMessArea={showPickerFromMessArea}
+          isExpanded={isExpanded} // Truyền state isExpanded
         />
       </Layout>
       {showConversation && (
@@ -190,6 +213,9 @@ const MessageArea = ({ selectedChat }) => {
           <ConversationDetails
             isVisible={showConversation}
             selectedChat={selectedChat}
+            isExpanded={isExpanded} // Truyền state isExpanded
+            handleExpandContract={handleExpandContract} // Thêm dòng này
+            activeTabFromMessageArea={activeTabFromMessageArea} // Truyền activeTabFromMessageArea
           />
         </Layout>
       )}

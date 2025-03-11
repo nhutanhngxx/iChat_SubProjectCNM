@@ -1,6 +1,6 @@
 import React from "react";
 import { useEffect, useRef, useState } from "react";
-import { Avatar, Button } from "antd";
+import { Avatar } from "antd";
 import "./ConversationDetails.css";
 import { FaCaretDown } from "react-icons/fa";
 import { FaCaretRight } from "react-icons/fa";
@@ -14,11 +14,23 @@ import {
   PushpinOutlined,
   UsergroupAddOutlined,
 } from "@ant-design/icons";
-import { set } from "lodash";
+import { GrContract } from "react-icons/gr";
+import MessageArea from "./MessageArea";
 
-const ConversationDetails = ({ isVisible, selectedChat }) => {
+const ConversationDetails = ({
+  isVisible,
+  selectedChat,
+  handleExpandContract,
+  isExpanded,
+  activeTabFromMessageArea,
+}) => {
   //Gọi hook cấp cao nhất để lấy giá trị của input
   const inputRef = useRef(null);
+  // Tabs
+  const [activeTab, setActiveTab] = useState("info");
+  useEffect(() => {
+    if (!isExpanded) setActiveTab(activeTabFromMessageArea);
+  });
 
   const [nickname, setNickname] = useState(selectedChat.name || "");
   // Chọn toàn bộ văn bản khi input được render để chỉnh sửa
@@ -68,6 +80,11 @@ const ConversationDetails = ({ isVisible, selectedChat }) => {
     },
     { id: 8, type: "video", url: "https://www.w3schools.com/html/mov_bbb.mp4" },
   ];
+  // Expand Contract
+  const handleExpandContractWrapper = () => {
+    console.log("handleExpandContract called");
+    handleExpandContract(); // Gọi hàm từ props
+  };
 
   //Dư liệu file giả
   const fileList = [
@@ -104,219 +121,254 @@ const ConversationDetails = ({ isVisible, selectedChat }) => {
   return (
     <div className="conversation-details">
       <div className="header">
-        <h2>Thông tin hội thoại</h2>
+        {isExpanded ? (
+          <div className="header" style={{ display: "flex", width: "100%" }}>
+            <h2
+              className={activeTab === "info" ? "active-tab" : ""}
+              onClick={() => setActiveTab("info")}
+            >
+              Thông tin
+            </h2>
+            <h2
+              className={activeTab === "icons" ? "active-tab" : ""}
+              onClick={() => setActiveTab("icons")}
+            >
+              Biểu tượng
+            </h2>
+            <GrContract
+              className="icon-close"
+              onClick={handleExpandContractWrapper}
+            />
+          </div>
+        ) : (
+          <h2 style={{ backgroundColor: "white", width: "100%" }}>
+            Thông tin hộp thoại
+          </h2>
+        )}
       </div>
       <div className="content-conversation-details">
-        <div className="chat-info-header">
-          <div className="avatar">
-            <Avatar
-              size={60}
-              src={`https://i.pravatar.cc/300?img=${selectedChat.id}`}
-            />
-          </div>
-          <h3>
-            {selectedChat.name}{" "}
-            <EditOutlined
-              className="icon-edit"
-              onClick={handleShowModalSetNickName}
-            />
-          </h3>
-        </div>
-        {/* modal đặt biệt danh */}
-        {showModalSetNickName && (
-          <div className="modal-overlay">
-            <div className="modal-set-nickname">
-              <div className="modal-set-nickname-header">
-                <h3>Đặt tên gợi nhớ</h3>
-              </div>
-              <div className="modal-set-nickname-body">
-                <img
+        {activeTab === "info" && (
+          <div>
+            <div className="chat-info-header">
+              <div className="avatar">
+                <Avatar
+                  size={60}
                   src={`https://i.pravatar.cc/300?img=${selectedChat.id}`}
-                  alt=""
-                />
-                <p>
-                  Hãy đặt tên cho <strong>{selectedChat.name} </strong>
-                  một tên dễ nhớ.
-                </p>
-                <p>Tên gợi nhớ chỉ hiển thị với bạn.</p>
-                <input
-                  ref={inputRef}
-                  type="text"
-                  placeholder="Nhập tên gợi nhớ"
-                  // value={selectedChat.name}
-                  value={nickname}
-                  onChange={(e) => setNickname(e.target.value)} // Cho phép sửa giá trị
-
-                  // có thể thay đổi giá trị của selectedChat.name
                 />
               </div>
-              <div className="modal-set-nickname-footer">
-                <button onClick={() => setShowModalSetNickName(false)}>
-                  Hủy
+              <h3>
+                {selectedChat.name}{" "}
+                <EditOutlined
+                  className="icon-edit"
+                  onClick={handleShowModalSetNickName}
+                />
+              </h3>
+            </div>
+
+            <div className="action-buttons">
+              <div className="notification-layout">
+                <button className="action-button">
+                  <BellOutlined className="icon-notification" />
                 </button>
-                <button>Xác nhận</button>
+                <span>
+                  Tắt <br /> thông báo
+                </span>
+              </div>
+              <div>
+                <button className="action-button">
+                  <PushpinOutlined />
+                </button>
+                <span>
+                  Ghim <br /> hộp thoại
+                </span>
+              </div>
+              <div>
+                <button className="action-button">
+                  <UsergroupAddOutlined />
+                </button>
+                <span>
+                  Tạo nhóm <br /> trò chuyện
+                </span>
               </div>
             </div>
-          </div>
-        )}
-
-        <div className="action-buttons">
-          <div className="notification-layout">
-            <button className="action-button">
-              <BellOutlined className="icon-notification" />
-            </button>
-            <span>
-              Tắt <br /> thông báo
-            </span>
-          </div>
-          <div>
-            <button className="action-button">
-              <PushpinOutlined />
-            </button>
-            <span>
-              Ghim <br /> hộp thoại
-            </span>
-          </div>
-          <div>
-            <button className="action-button">
-              <UsergroupAddOutlined />
-            </button>
-            <span>
-              Tạo nhóm <br /> trò chuyện
-            </span>
-          </div>
-        </div>
-        <div className="conversation-options">
-          <div
-            className="select-wrapper"
-            onClick={() => setIsOpenMedia(!isOpenMedia)}
-          >
-            <h3>Hình ảnh/Video</h3>
-            {isOpenMedia ? (
-              <FaCaretDown className="anticon" />
-            ) : (
-              <FaCaretRight className="anticon" />
-            )}
-          </div>
-          {isOpenMedia && (
-            <div className="modal-media-gallery">
-              <div className="media-gallery">
-                {visibleMedia.map((item) =>
-                  item.type === "image" ? (
-                    <img
-                      key={item.id}
-                      src={item.url}
-                      alt="media"
-                      className="media-item"
-                    />
-                  ) : (
-                    <video key={item.id} controls className="media-item">
-                      <source src={item.url} type="video/mp4" />
-                      Trình duyệt không hỗ trợ video.
-                    </video>
-                  )
+            <div className="conversation-options">
+              <div
+                className="select-wrapper"
+                onClick={() => setIsOpenMedia(!isOpenMedia)}
+              >
+                <h3>Hình ảnh/Video</h3>
+                {isOpenMedia ? (
+                  <FaCaretDown className="anticon" />
+                ) : (
+                  <FaCaretRight className="anticon" />
                 )}
               </div>
+              {isOpenMedia && (
+                <div className="modal-media-gallery">
+                  <div className="media-gallery">
+                    {visibleMedia.map((item) =>
+                      item.type === "image" ? (
+                        <img
+                          key={item.id}
+                          src={item.url}
+                          alt="media"
+                          className="media-item"
+                        />
+                      ) : (
+                        <video key={item.id} controls className="media-item">
+                          <source src={item.url} type="video/mp4" />
+                          Trình duyệt không hỗ trợ video.
+                        </video>
+                      )
+                    )}
+                  </div>
 
-              <button className="show-all-btn" onClick={() => setShowAll(true)}>
-                Xem tất cả
-              </button>
+                  <button
+                    className="show-all-btn"
+                    onClick={() => setShowAll(true)}
+                  >
+                    Xem tất cả
+                  </button>
+                </div>
+              )}
             </div>
-          )}
-        </div>
-        <div className="file-section">
-          <div
-            className="select-wrapper"
-            onClick={() => setIsOpenFile(!isOpenFile)}
-          >
-            <h3>File</h3>
-            {isOpenFile ? (
-              <FaCaretDown className="anticon" />
-            ) : (
-              <FaCaretRight className="anticon" />
-            )}
-          </div>
-          {isOpenFile && (
-            <div className="modal-file-list">
-              <div className="file-list-wrapper">
-                {fileList.map((file) => (
-                  <div className="file-item" key={file.id}>
-                    <div className="file-info-wrapper">
-                      {/* <BiSolidFilePdf
+            <div className="file-section">
+              <div
+                className="select-wrapper"
+                onClick={() => setIsOpenFile(!isOpenFile)}
+              >
+                <h3>File</h3>
+                {isOpenFile ? (
+                  <FaCaretDown className="anticon" />
+                ) : (
+                  <FaCaretRight className="anticon" />
+                )}
+              </div>
+              {isOpenFile && (
+                <div className="modal-file-list">
+                  <div className="file-list-wrapper">
+                    {fileList.map((file) => (
+                      <div className="file-item" key={file.id}>
+                        <div className="file-info-wrapper">
+                          {/* <BiSolidFilePdf
                         className="type-icon"
                         style={{ color: "red" }}
                       /> */}
-                      {file.type === "pdf" ? (
-                        <BiSolidFilePdf
-                          className="type-icon"
-                          style={{ color: "red" }}
-                        />
-                      ) : file.type === "rar" ? (
-                        <AiFillFileZip
-                          className="type-icon"
-                          style={{ color: "violet" }}
-                        />
-                      ) : (
-                        <FaFileWord
-                          className="type-icon"
-                          style={{ color: "blue" }}
-                        />
-                      )}
-                      <div className="file-info">
-                        <h4>{file.name}</h4>
-                        <p>{file.size}</p>
+                          {file.type === "pdf" ? (
+                            <BiSolidFilePdf
+                              className="type-icon"
+                              style={{ color: "red" }}
+                            />
+                          ) : file.type === "rar" ? (
+                            <AiFillFileZip
+                              className="type-icon"
+                              style={{ color: "violet" }}
+                            />
+                          ) : (
+                            <FaFileWord
+                              className="type-icon"
+                              style={{ color: "blue" }}
+                            />
+                          )}
+                          <div className="file-info">
+                            <h4>{file.name}</h4>
+                            <p>{file.size}</p>
+                          </div>
+                        </div>
+                        <div className="file-date-wrapper">
+                          <p>{file.date}</p>
+                        </div>
                       </div>
-                    </div>
-                    <div className="file-date-wrapper">
-                      <p>{file.date}</p>
-                    </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-              <div style={{ padding: "0 20px" }}>
-                <button className="icon-showallFile">Xem tất cả</button>
-              </div>
-            </div>
-          )}
-        </div>
-        <div className="modal-link-section">
-          <div
-            className="select-wrapper"
-            onClick={() => setIsOpenLink(!isOpenLink)}
-          >
-            <h3>Link</h3>
-            {isOpenLink ? (
-              <FaCaretDown className="anticon" />
-            ) : (
-              <FaCaretRight className="anticon" />
-            )}
-          </div>
-          {isOpenLink && (
-            <div className="modal-link-list">
-              <div className="link-list-wrapper">
-                <div className="link-item">
-                  <div className="link-info-wrapper">
-                    <CiLink className="type-icon-link" />
-                    <div className="link-info">
-                      <p>Google</p>
-                      <h4>https://www.google.com</h4>
-                    </div>
-                  </div>
-                  <div className="date-getlink">
-                    <p>20/2/2025</p>
+                  <div style={{ padding: "0 20px" }}>
+                    <button className="icon-showallFile">Xem tất cả</button>
                   </div>
                 </div>
-              </div>
-              <div style={{ padding: "0 20px" }}>
-                <button className="icon-showallLink">Xem tất cả</button>
-              </div>
+              )}
             </div>
-          )}
-        </div>
-        <div className="footer">
-          <button>Xóa lịch sử trò chuyện</button>
-        </div>
+            <div className="modal-link-section">
+              <div
+                className="select-wrapper"
+                onClick={() => setIsOpenLink(!isOpenLink)}
+              >
+                <h3>Link</h3>
+                {isOpenLink ? (
+                  <FaCaretDown className="anticon" />
+                ) : (
+                  <FaCaretRight className="anticon" />
+                )}
+              </div>
+              {isOpenLink && (
+                <div className="modal-link-list">
+                  <div className="link-list-wrapper">
+                    <div className="link-item">
+                      <div className="link-info-wrapper">
+                        <CiLink className="type-icon-link" />
+                        <div className="link-info">
+                          <p>Google</p>
+                          <h4>https://www.google.com</h4>
+                        </div>
+                      </div>
+                      <div className="date-getlink">
+                        <p>20/2/2025</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ padding: "0 20px" }}>
+                    <button className="icon-showallLink">Xem tất cả</button>
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="footer">
+              <button>Xóa lịch sử trò chuyện</button>
+            </div>
+          </div>
+        )}
+        {activeTab === "icons" && (
+          <div className="chat-icons">
+            <p>Danh sách biểu tượng...</p>
+          </div>
+        )}
       </div>
+      {showModalSetNickName && (
+        <div className="modal-overlay">
+          <div className="modal-set-nickname">
+            <div className="modal-set-nickname-header">
+              <h3>Đặt tên gợi nhớ</h3>
+            </div>
+            <div className="modal-set-nickname-body">
+              <img
+                src={`https://i.pravatar.cc/300?img=${selectedChat.id}`}
+                alt=""
+              />
+              <p>
+                Hãy đặt tên cho <strong>{selectedChat.name} </strong>
+                một tên dễ nhớ.
+              </p>
+              <p>Tên gợi nhớ chỉ hiển thị với bạn.</p>
+              <input
+                ref={inputRef}
+                type="text"
+                placeholder="Nhập tên gợi nhớ"
+                // value={selectedChat.name}
+                value={nickname}
+                onChange={(e) => setNickname(e.target.value)} // Cho phép sửa giá trị
+
+                // có thể thay đổi giá trị của selectedChat.name
+              />
+            </div>
+            <div className="modal-set-nickname-footer">
+              <button onClick={() => setShowModalSetNickName(false)}>
+                Hủy
+              </button>
+              <button>Xác nhận</button>
+            </div>
+          </div>
+        </div>
+      )}
+      <MessageArea handleExpandContract={handleExpandContract} />
     </div>
   );
 };
