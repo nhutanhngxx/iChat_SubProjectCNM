@@ -2,13 +2,49 @@ const express = require("express");
 const router = express.Router();
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const User = require("../models/UserDetails");
-const Friendship = require("../models/Friendship");
 require("dotenv").config();
 const cookieParser = require("cookie-parser");
 router.use(cookieParser());
+const twilio = require("twilio");
+const OTP = require("../models/OTP");
+
+// Socket.io => Real-time
+const http = require("http");
+const { Server } = require("socket.io");
+const cors = require("cors");
+
+const User = require("../models/UserDetails");
+const Friendship = require("../models/Friendship");
+const Messages = require("../models/Messages");
 
 // Đăng ký tài khoản
+const client = require("twilio")(
+  process.env.TWILIO_ACCOUNT_SID,
+  process.env.TWILIO_AUTH_TOKEN
+);
+
+// Gửi OTP
+router.post("/send-otp", async (req, res) => {
+  const { phone } = req.body;
+  try {
+    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    await OTP.create({ phone, otp: otpCode, createdAt: new Date() })
+      .then(() => console.log("OTP saved"))
+      .catch((err) => console.error("Error saving OTP:", err));
+
+    await client.messages.create({
+      body: `Mã OTP của bạn là: ${otpCode}`,
+      from: "+18507493035",
+      to: phone,
+    });
+
+    res.json({ status: "ok", message: "OTP sent successfully" });
+  } catch (error) {
+    res.status(500).json({ status: "error", message: error.message });
+  }
+});
+
+// Đăng ký với OTP
 router.post("/register", async (req, res) => {
   const {
     full_name,
@@ -19,9 +55,19 @@ router.post("/register", async (req, res) => {
     avatar_path,
     cover_path,
     status,
+    otp,
   } = req.body;
 
   try {
+    // Kiểm tra OTP
+    const validOtp = await OTP.findOne({ phone, otp });
+    if (!validOtp)
+      return res.status(400).json({ status: "error", message: "Invalid OTP" });
+
+    // Xóa OTP sau khi xác minh
+    await OTP.deleteOne({ phone });
+
+    // Kiểm tra tài khoản đã tồn tại
     const oldUser = await User.findOne({ phone });
     if (oldUser)
       return res
@@ -484,6 +530,41 @@ router.get("/mutual-friends/:user1_id/:user2_id", async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ status: "error", message: error.message });
+  }
+});
+
+// Cập nhật tất cả tin nhắn "sent" và "received" thành "viewed" khi user mở cuộc trò chuyện
+router.put("/messages/viewed", async (req, res) => {
+  try {
+    const { receiverId, senderId } = req.body;
+
+    if (!receiverId || !senderId) {
+      return res.status(400).json({ error: "Thiếu receiverId hoặc senderId" });
+    }
+
+    console.log("Dữ liệu nhận được:", { receiverId, senderId });
+
+    // Cập nhật tất cả tin nhắn chưa đọc giữa hai người
+    const result = await Messages.updateMany(
+      {
+        sender_id: senderId,
+        receiver_id: receiverId,
+        status: { $in: ["sent", "received"] },
+      },
+      { $set: { status: "viewed" } }
+    );
+
+    console.log("Kết quả cập nhật:", result);
+
+    return res.status(200).json({
+      message:
+        result.modifiedCount > 0
+          ? "Tất cả tin nhắn chưa đọc đã được đánh dấu là đã xem"
+          : "Không có tin nhắn nào cần cập nhật",
+    });
+  } catch (error) {
+    console.error("Lỗi khi cập nhật trạng thái tin nhắn:", error);
+    res.status(500).json({ error: "Lỗi khi cập nhật trạng thái tin nhắn" });
   }
 });
 

@@ -25,7 +25,7 @@ const messageSchema = new mongoose.Schema(
     timestamp: { type: Date, default: Date.now },
     status: {
       type: String,
-      enum: ["sent", "received", "Viewed"],
+      enum: ["sent", "received", "viewed"],
       default: "sent",
     },
     chat_type: { type: String, enum: ["private", "group"], required: true },

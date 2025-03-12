@@ -52,7 +52,7 @@ const GroupTab = () => {
       key={item.id}
     >
       <View style={styles.item_leftSide}>
-        <Avatar size={50} rounded source={{ uri: item.avatar }} />
+        <Avatar size={50} rounded source={item.avatar} />
         <Text style={{ fontWeight: "500", fontSize: 16 }}>{item.name}</Text>
       </View>
       <View style={{ display: "flex", flexDirection: "row", gap: 20 }}>

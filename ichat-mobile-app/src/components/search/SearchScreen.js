@@ -143,6 +143,21 @@ const SearchScreen = () => {
     fetchUsers();
   }, []);
 
+  // Ẩn tabBar sau khi vào Screen Search
+  useEffect(() => {
+    navigation.getParent()?.setOptions({ tabBarStyle: { display: "none" } });
+    return () => {
+      navigation.getParent()?.setOptions({
+        tabBarStyle: {
+          backgroundColor: "white",
+          height: 60,
+          paddingBottom: 10,
+          paddingTop: 10,
+        },
+      });
+    };
+  }, []);
+
   return (
     <View style={{ flex: 1, backgroundColor: "white" }}>
       {/* Thanh tìm kiếm */}

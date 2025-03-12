@@ -13,16 +13,10 @@ const getTimeAgo = (timestamp) => {
   return dayjs(timestamp).fromNow(); // Hiển thị "X phút trước"
 };
 
-// const fetchMessages = async (chatId) => {
-//   const messages = await messageService.getMessagesByGroupId(chatId);
-//   return messages;
-// };
-
 const formatGroupList = async (groups) => {
   if (!Array.isArray(groups)) {
     return [];
   }
-
   // Gọi fetchMessages() song song để lấy tin nhắn
   await Promise.all(
     groups.map(async (group) => {
@@ -38,7 +32,9 @@ const formatGroupList = async (groups) => {
     return {
       id: group._id,
       name: group.name,
-      avatar: group.avatar,
+      avatar: {
+        uri: group.avatar || "https://i.ibb.co/9k8sPRMx/best-seller.png",
+      },
       lastMessage:
         group?.lastMessage.type === "image"
           ? "[Hình ảnh]"
