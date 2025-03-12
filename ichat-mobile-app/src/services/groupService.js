@@ -1,4 +1,5 @@
 import api from "./api";
+import messageService from "./messageService";
 
 // Tính thời gian
 import dayjs from "dayjs";
@@ -12,17 +13,41 @@ const getTimeAgo = (timestamp) => {
   return dayjs(timestamp).fromNow(); // Hiển thị "X phút trước"
 };
 
-const formatGroupList = (groups) => {
-  if (!Array.isArray(groups)) return [];
-  return groups.map((group) => ({
-    id: group._id,
-    name: group.name,
-    avatar: group.avatar,
-    lastMessage: group?.lastMessage || "Chưa có tin nhắn",
-    lastMessageTime: getTimeAgo(group.lastMessageTime),
-    created_at: getTimeAgo(group.created_at),
-    chatType: "group",
-  }));
+// const fetchMessages = async (chatId) => {
+//   const messages = await messageService.getMessagesByGroupId(chatId);
+//   return messages;
+// };
+
+const formatGroupList = async (groups) => {
+  if (!Array.isArray(groups)) {
+    return [];
+  }
+
+  // Gọi fetchMessages() song song để lấy tin nhắn
+  await Promise.all(
+    groups.map(async (group) => {
+      const messages = await messageService.getMessagesByGroupId(group._id);
+      if (messages && messages.length > 0) {
+        group.lastMessage = messages[messages.length - 1];
+      }
+    })
+  );
+
+  return groups.map((group) => {
+    const lastMessageTime = new Date(group.lastMessage.timestamp).getTime();
+    return {
+      id: group._id,
+      name: group.name,
+      avatar: group.avatar,
+      lastMessage:
+        group?.lastMessage.type === "image"
+          ? "[Hình ảnh]"
+          : group.lastMessage.content,
+      lastMessageTime: lastMessageTime,
+      time: getTimeAgo(lastMessageTime),
+      chatType: "group",
+    };
+  });
 };
 
 const groupService = {

@@ -35,7 +35,6 @@ const Priority = () => {
 
   const fetchUsers = async () => {
     try {
-      console.log("Fetching users...");
       const response = await axios.get(`${API_iChat}/users`);
 
       if (response.data.status === "ok" && Array.isArray(response.data.users)) {
@@ -68,7 +67,6 @@ const Priority = () => {
 
   useEffect(() => {
     if (allUser.length === 0 || !user?.id) return;
-    console.log("Fetching chat list for user ID:", user.id);
     fetchChatList();
   }, [user, allUser]);
 
@@ -133,7 +131,6 @@ const Priority = () => {
 
     // Thiết lập interval để fetch tin nhắn mới mỗi 5 giây
     const interval = setInterval(() => {
-      // console.log("Fetching chat list at:", new Date().toLocaleTimeString());
       fetchChatList();
     }, 1000);
 
@@ -143,11 +140,11 @@ const Priority = () => {
 
   const handleOpenChatting = (chat) => {
     navigation.navigate("Chatting", { chat });
-    console.log("Opening chat: ", chat);
   };
 
   const renderItem = ({ item }) => {
     if (!item) return null;
+
     return (
       <TouchableOpacity
         style={styles.container}
@@ -180,7 +177,6 @@ const Priority = () => {
           data={chatList.concat(groupList)}
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => {
-            // console.log("Rendering item:", item);
             return renderItem({ item });
           }}
           showsVerticalScrollIndicator={true}

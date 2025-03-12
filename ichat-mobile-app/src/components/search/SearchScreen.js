@@ -22,8 +22,6 @@ const SearchScreen = () => {
   const API_iChat = `http://${window.location.hostname}:5001`;
 
   const handleOpenChatting = async (selectedMessage) => {
-    console.log(selectedMessage);
-
     // Xác định ID của người đang chat với user
     const isSender = selectedMessage.sender_id === user.id;
     const chatPartnerId = isSender
@@ -54,7 +52,6 @@ const SearchScreen = () => {
           name: chatPartnerName,
           avatar: chatPartnerAvatar,
         };
-        console.log("chatPartnerAvatar: ", chatPartnerAvatar);
         navigation.navigate("Chatting", { chat });
       }
     } catch (error) {
@@ -127,7 +124,6 @@ const SearchScreen = () => {
   // Sau này sẽ giới hạn lại tìm kiếm tin nhắn từ bạn bè
   const fetchUsers = async () => {
     try {
-      console.log("Fetching users...");
       const response = await axios.get(`${API_iChat}/users`);
 
       if (response.data.status === "ok" && Array.isArray(response.data.users)) {

@@ -27,7 +27,6 @@ const GroupTab = () => {
     const fetchGroupList = async () => {
       const groups = await groupService.getAllGroupsByUserId(user.id);
       setGroupList(groups);
-      // console.log("GroupList: ", groupList);
     };
     fetchGroupList();
     const interval = setInterval(fetchGroupList, 1000);
