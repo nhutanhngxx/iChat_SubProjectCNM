@@ -85,7 +85,6 @@ const ModalCreateGroup = ({ isVisible, onClose }) => {
         "Danh sách thành viên: " +
         groupList.map((item) => item.id).join(", ")
     );
-    console.log("Group List: ", groupList);
     // Reset state
     setGroupList([]);
     setIsChecked({});

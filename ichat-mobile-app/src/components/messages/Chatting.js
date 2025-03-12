@@ -19,6 +19,7 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { UserContext } from "@/src/context/UserContext";
 import axios from "axios";
+import messageService from "../../services/messageService";
 
 const Chatting = ({ route }) => {
   const navigation = useNavigation();
@@ -32,8 +33,6 @@ const Chatting = ({ route }) => {
   const [modalVisible, setModalVisible] = useState(false);
 
   const API_iChat = `http://${window.location.hostname}:5001`;
-
-  console.log("Chatting with:", chat);
 
   // Hiển thị modal khi ấn giữ tin nhắn
   const handleLongPress = (message) => {
@@ -49,7 +48,6 @@ const Chatting = ({ route }) => {
 
   // Thu hồi tin nhắn
   const handleRecallMessage = async () => {
-    console.log("Mess deleting: ", selectedMessage);
     if (!selectedMessage) return;
 
     try {
@@ -57,13 +55,10 @@ const Chatting = ({ route }) => {
         `${API_iChat}/${selectedMessage._id}`
       );
 
-      console.log("Response từ server:", response.data);
-
       if (response.data.status === "ok") {
         setMessages((prevMessages) =>
           prevMessages.filter((msg) => msg._id !== selectedMessage._id)
         );
-        console.log("Tin nhắn đã được loại bỏ khỏi danh sách trên UI.");
       }
 
       setModalVisible(false);
@@ -74,24 +69,16 @@ const Chatting = ({ route }) => {
 
   if (chat?.chatType === "group") {
     useEffect(() => {
-      if (chat?.id && user?.id) {
-        const fetchMessages = async () => {
-          try {
-            const response = await axios.get(
-              `${API_iChat}/messages/${chat.id}`
-            );
-            if (response.data.status === "ok") {
-              setMessages(response.data.data);
-              console.log("User:" + user.id);
-              console.log("Tin nhắn nhóm: " + response.data);
-            }
-          } catch (error) {
-            console.error("Lỗi khi lấy tin nhắn:", error);
-          }
-        };
-        const interval = setInterval(fetchMessages, 1000);
-        return () => clearInterval(interval);
-      }
+      const fetchMessages = async () => {
+        const messages = await messageService.getMessagesByGroupId(chat.id);
+        setMessages(messages);
+      };
+
+      fetchMessages();
+
+      const interval = setInterval(fetchMessages, 1000);
+      return () => clearInterval(interval);
+      // }
     }, [user, chat]);
   } else {
     useEffect(() => {
@@ -103,8 +90,6 @@ const Chatting = ({ route }) => {
             );
             if (response.data.status === "ok") {
               setMessages(response.data.data);
-              console.log("User:" + user.id);
-              console.log("Tin nhắn nhóm: " + response.data);
             }
           } catch (error) {
             console.error("Lỗi khi lấy tin nhắn:", error);
@@ -118,14 +103,12 @@ const Chatting = ({ route }) => {
 
   // Click vào để reply
   const handleReply = (message) => {
-    console.log("Reply :", message);
     setReplyMessage(message);
     setModalVisible(false); // Ẩn modal sau khi chọn reply
   };
 
   // Tắt Tabbar ngay sau khi vào màn hình Chatting
   useEffect(() => {
-    console.log("Chat: ", chat);
     navigation.getParent()?.setOptions({ tabBarStyle: { display: "none" } });
     return () => {
       navigation.getParent()?.setOptions({

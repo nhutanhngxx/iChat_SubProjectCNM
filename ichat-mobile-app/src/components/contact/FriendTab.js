@@ -46,9 +46,6 @@ const FriendTab = () => {
   //   };
 
   const handleOpenChatting = (chat) => {
-    console.log("Received chat:", chat);
-    console.log("Type of chat:", typeof chat);
-
     navigation.navigate("Chatting", { chat });
   };
 
