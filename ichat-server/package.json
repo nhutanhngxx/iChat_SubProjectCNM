@@ -18,6 +18,7 @@
     "jsonwebtoken": "^9.0.2",
     "moment-timezone": "^0.5.47",
     "mongoose": "^8.7.3",
-    "nodemon": "^3.1.7"
+    "nodemon": "^3.1.7",
+    "twilio": "^5.5.0"
   }
 }

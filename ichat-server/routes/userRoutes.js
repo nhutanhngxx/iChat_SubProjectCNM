@@ -46,6 +46,31 @@ router.post("/register", async (req, res) => {
   }
 });
 
+// Đăng ký tài khoản
+const client = require("twilio")(
+  process.env.TWILIO_ACCOUNT_SID,
+  process.env.TWILIO_AUTH_TOKEN
+);
+
+// Gửi OTP
+router.post("/send-otp", async (req, res) => {
+  const { phone } = req.body;
+  try {
+    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    // await OTP.create({ phone, otp: otpCode, createdAt: new Date() });
+
+    await client.messages.create({
+      body: `Mã OTP của bạn là: ${otpCode}`,
+      from: "+18507493035",
+      to: phone,
+    });
+
+    res.json({ status: "ok", message: "OTP sent successfully" });
+  } catch (error) {
+    res.status(500).json({ status: "error", message: error.message });
+  }
+});
+
 // Hàm tạo Access Token
 const generateAccessToken = (user) => {
   return jwt.sign({ phone: user.phone }, process.env.JWT_SECRET, {
