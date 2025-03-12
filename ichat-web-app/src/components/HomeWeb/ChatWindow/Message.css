@@ -46,7 +46,7 @@
 /* Style cho ảnh hiển thị */
 .message-image-container {
   position: relative;
-  width: 300px;
+  width: 220px;
   max-width: 100%;
   margin: 0 auto;
 }

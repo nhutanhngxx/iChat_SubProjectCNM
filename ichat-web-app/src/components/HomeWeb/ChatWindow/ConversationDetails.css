@@ -15,6 +15,7 @@
   overflow-y: scroll; /* Cho phép cuộn dọc */
   padding-bottom: 100px;
   margin-top: 0px;
+  background-color: #ffffff;
 }
 .header,
 .chat-info-header {
@@ -119,6 +120,7 @@
   margin-top: 0px;
   background-color: #ffffff;
   margin-bottom: 20px;
+  box-shadow: 1px 1px 5px 1px #ddd;
 }
 
 .conversation-options h3 {
@@ -160,9 +162,14 @@ video {
   background-color: #ffffff;
   color: #333;
   margin-bottom: 30px;
+  box-shadow: 1px 1px 5px 1px #ddd;
 }
 .file-section .select-wrapper {
   background-color: #ffffff;
+}
+
+.file-section .select-wrapper h3 {
+  margin-top: 10px;
 }
 .modal-file-list {
   height: fit-content;
@@ -239,9 +246,13 @@ select {
 .modal-link-section {
   background-color: #ffffff;
   margin-bottom: 30px;
+  box-shadow: 1px 1px 5px 1px #ddd;
 }
 .modal-link-section .select-wrapper {
   background-color: #ffffff;
+}
+.modal-link-section .select-wrapper h3 {
+  margin-top: 10px;
 }
 .modal-link-section .link-list-wrapper .link-item {
   display: flex;
@@ -412,4 +423,39 @@ select {
 }
 .icon-close:hover {
   color: #1890ff;
+}
+
+/* Picker for ConversationDetail */
+.chat-icons {
+  height: 100%;
+  background-color: #19dcff;
+  overflow: hidden;
+}
+.picker-container-ConversationDetails {
+  height: 100%;
+  overflow: hidden;
+  padding-bottom: 30px;
+}
+.picker-container-ConversationDetails .tabs-conversationDetails {
+  display: flex;
+  justify-content: space-around;
+  cursor: pointer;
+}
+.picker-container-ConversationDetails .tabs-conversationDetails button {
+  width: 50%;
+  text-align: center;
+  padding: 10px 0;
+  background-color: #ffffff;
+  border: none;
+  cursor: pointer;
+}
+.picker-container-ConversationDetails .tabs-conversationDetails .active {
+  border-bottom: 2px solid #1890ff;
+  font-weight: bold;
+  color: #1890ff;
+}
+.picker-container-ConversationDetails .picker-content-conversationDetails {
+  width: 100%;
+  height: 100%;
+  background-color: #ffffff;
 }

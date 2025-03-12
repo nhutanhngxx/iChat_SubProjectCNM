@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import TextareaAutosize from "@mui/material/TextareaAutosize";
 import {
   SmileOutlined,
@@ -25,11 +25,10 @@ import {
 } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import "./MessageInput.css";
-import EmojiPicker from "emoji-picker-react";
 import Picker from "emoji-picker-react";
-import { set } from "lodash";
 import GifPicker from "./GifPicker";
 import { RiExpandDiagonalLine } from "react-icons/ri";
+import ConversationDetails from "./ConversationDetails";
 
 // Dữ liệu mẫu cho danh sách bạn bè
 const mockContacts = [
@@ -58,6 +57,7 @@ const MessageInput = ({
   handleShowConversationSymbol,
   showPickerFromMessArea,
   isExpanded,
+  showConversation,
 }) => {
   const [selectedImage, setSelectedImage] = useState(null); // State để lưu ảnh đã chọn
   const [selectedFile, setSelectedFile] = useState(null); // State để lưu file đã chọn
@@ -67,7 +67,6 @@ const MessageInput = ({
   const [activeCategory, setActiveCategory] = useState("Khách hàng"); // State cho tab hiện tại
 
   // Emoji picker
-  const [chosenEmoji, setChosenEmoji] = useState(null);
   const [showPicker, setShowPicker] = useState(false);
   const [showPickerRight, setShowPickerRight] = useState(false);
   const [selectedGif, setSelectedGif] = useState(null);
@@ -80,7 +79,22 @@ const MessageInput = ({
     setShowPickerRight(false);
   };
   //Chạy lại khi mở picker trong tt hộp thoại từ messArea để đóng picker
+  const renderCount = useRef(0); // Biến cờ để kiểm tra lần chạy đầu tiên
   useEffect(() => {
+    renderCount.current += 1;
+    console.log("Render count:", renderCount.current);
+
+    if (renderCount.current === 1) {
+      setShowPicker(false);
+      console.log("Lần 1: setShowPicker(false)");
+      return;
+    }
+
+    if (renderCount.current === 2) {
+      console.log("Lần 2: Không làm gì cả");
+      return;
+    }
+    // Chỉ chạy khi renderCount > 2
     setShowPicker(showPickerFromMessArea);
     console.log("showPickerFromMessArea: " + showPickerFromMessArea);
   }, [showPickerFromMessArea]);
@@ -246,7 +260,7 @@ const MessageInput = ({
       </div>
     </div>
   );
-  // Hàm mở conversation khi nhấp vào biểu tượng expand-conversation
+  //
 
   return (
     <div className="message-input-container">
@@ -283,7 +297,10 @@ const MessageInput = ({
                     style={{ width: "310px" }}
                   />
                 ) : (
-                  <GifPicker onSelect={setSelectedGif} />
+                  <GifPicker
+                    onSelect={setSelectedGif}
+                    onImageUpload={onImageUpload}
+                  />
                 )}
               </div>
             </div>
@@ -356,7 +373,7 @@ const MessageInput = ({
             style={{
               bottom: "37px",
               position: "absolute",
-              right: "-265px",
+              right: showConversation ? "-265px" : "50px",
               zIndex: "1000",
             }}
           >
@@ -384,7 +401,10 @@ const MessageInput = ({
                       style={{ width: "310px" }}
                     />
                   ) : (
-                    <GifPicker onSelect={setSelectedGif} />
+                    <GifPicker
+                      onSelect={setSelectedGif}
+                      onImageUpload={onImageUpload}
+                    />
                   )}
                 </div>
               </div>

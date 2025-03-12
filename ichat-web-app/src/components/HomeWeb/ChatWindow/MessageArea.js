@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Layout, Avatar, Input, Button, Badge } from "antd";
 import {
   VideoCameraOutlined,
@@ -51,6 +51,9 @@ const MessageArea = ({ selectedChat }) => {
   // Hiển thị thông tin hội thoại
   const [showConversation, setShowConversation] = useState(false);
   const [showSearchRight, setShowSearchRight] = useState(false);
+  // Tự động cuộn xuống cuối khi có tin nhắn mới
+  const messageEndRef = useRef(null);
+
   const handleShowSearchRight = () => {
     setShowSearchRight(!showSearchRight);
     setShowConversation(false);
@@ -150,7 +153,12 @@ const MessageArea = ({ selectedChat }) => {
       setMessages([...messages, newMessage]);
     }
   };
-
+  // Tự động cuộn xuống cuối khi có tin nhắn mới
+  useEffect(() => {
+    if (messageEndRef.current) {
+      messageEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages]);
   if (!selectedChat) return null;
 
   return (
@@ -195,6 +203,8 @@ const MessageArea = ({ selectedChat }) => {
                 selectedChat={selectedChat}
               />
             ))}
+            {/* Phần tử ẩn để cuộn xuống */}
+            <div ref={messageEndRef} />
           </div>
         </Content>
         <MessageInput
@@ -206,6 +216,7 @@ const MessageArea = ({ selectedChat }) => {
           handleShowConversationSymbol={handleShowConversationSymbol} // Truyền hàm xử lý hiển thị thông tin hội thoại
           showPickerFromMessArea={showPickerFromMessArea}
           isExpanded={isExpanded} // Truyền state isExpanded
+          showConversation={showConversation} // Truyền showConversation
         />
       </Layout>
       {showConversation && (
@@ -216,6 +227,9 @@ const MessageArea = ({ selectedChat }) => {
             isExpanded={isExpanded} // Truyền state isExpanded
             handleExpandContract={handleExpandContract} // Thêm dòng này
             activeTabFromMessageArea={activeTabFromMessageArea} // Truyền activeTabFromMessageArea
+            onImageUpload={handleImageUpload} // Truyền callback để xử lý ảnh
+            setInputMessage={setInputMessage}
+            handleSendMessage={handleSendMessage} // Truyền hàm xử lý gửi tin nhắn
           />
         </Layout>
       )}

@@ -16,6 +16,8 @@ import {
 } from "@ant-design/icons";
 import { GrContract } from "react-icons/gr";
 import MessageArea from "./MessageArea";
+import GifPicker from "./GifPicker";
+import Picker from "emoji-picker-react";
 
 const ConversationDetails = ({
   isVisible,
@@ -23,6 +25,9 @@ const ConversationDetails = ({
   handleExpandContract,
   isExpanded,
   activeTabFromMessageArea,
+  handleSendMessage, // Thêm prop mới
+  onImageUpload, // Thêm prop mới
+  setInputMessage,
 }) => {
   //Gọi hook cấp cao nhất để lấy giá trị của input
   const inputRef = useRef(null);
@@ -85,6 +90,10 @@ const ConversationDetails = ({
     console.log("handleExpandContract called");
     handleExpandContract(); // Gọi hàm từ props
   };
+  // Gif và emoji
+  const [selectedEmoji, setSelectedEmoji] = useState(null);
+  const [selectedGif, setSelectedGif] = useState(null);
+  const [activeTabForEmojiGif, setActiveTabForEmojiGif] = useState("emoji");
 
   //Dư liệu file giả
   const fileList = [
@@ -115,7 +124,15 @@ const ConversationDetails = ({
   ];
 
   const visibleMedia = showAll ? fakeMedia : fakeMedia.slice(0, 8);
-
+  //  Click emoji set vào input
+  const onEmojiClick = (event) => {
+    const emoji = event.emoji; // Lấy emoji từ thuộc tính `emoji` của event
+    if (emoji) {
+      setInputMessage((prevMessage) => prevMessage + emoji); // Thêm emoji vào tin nhắn
+    } else {
+      console.error("Emoji is undefined or invalid:", event); // Log lỗi nếu emoji không hợp lệ
+    }
+  };
   if (!isVisible) return null; // Ẩn component nếu isVisible = fals và Chỉ return sau khi đã gọi hết các Hook
 
   return (
@@ -328,7 +345,38 @@ const ConversationDetails = ({
         )}
         {activeTab === "icons" && (
           <div className="chat-icons">
-            <p>Danh sách biểu tượng...</p>
+            <div className="picker-container-ConversationDetails">
+              <div className="tabs-conversationDetails">
+                <button
+                  className={activeTabForEmojiGif === "emoji" ? "active" : ""}
+                  onClick={() => setActiveTabForEmojiGif("emoji")}
+                >
+                  Emoji
+                </button>
+                <button
+                  className={activeTabForEmojiGif === "gif" ? "active" : ""}
+                  onClick={() => setActiveTabForEmojiGif("gif")}
+                >
+                  GIF
+                </button>
+              </div>
+              <div className="picker-content-conversationDetails">
+                {activeTabForEmojiGif === "emoji" ? (
+                  <Picker
+                    // onEmojiClick={onEmojiClick}
+                    onEmojiClick={onEmojiClick}
+                    className="emoji-picker-"
+                    style={{ width: "100%", height: "100%" }}
+                  />
+                ) : (
+                  <GifPicker
+                    onSelect={(gifUrl) => setSelectedGif(gifUrl)}
+                    onImageUpload={onImageUpload}
+                    style={{ width: "100%" }}
+                  />
+                )}
+              </div>
+            </div>
           </div>
         )}
       </div>
