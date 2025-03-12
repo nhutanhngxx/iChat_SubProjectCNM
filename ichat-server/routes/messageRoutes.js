@@ -1,4 +1,3 @@
-
 const express = require("express");
 const mongoose = require("mongoose");
 const router = express.Router();
@@ -405,5 +404,35 @@ router.get("/messages", async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
+
+// Lấy tất cả MessageCard mà người dùng đã tạo
+router.get("/message-cards/:userId", async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const messageCards = await MessageCard.find({ own_id: userId }).sort({
+      createdAt: -1,
+    });
+
+    res.json({ status: "ok", data: messageCards });
+  } catch (error) {
+    console.error("Error fetching message cards:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+router.post("/messages/message-cards", async (req, res) => {
+  try {
+    const { own_id, title, card_color } = req.body;
+    const newMessageCard = new MessageCard({ own_id, title, card_color });
+
+    await newMessageCard.save();
+    res.status(201).json({ status: "ok", data: newMessageCard });
+  } catch (error) {
+    res.status(500).json({ status: "error", message: error.message });
+  }
+});
+
+module.exports = router;
 
 module.exports = router;

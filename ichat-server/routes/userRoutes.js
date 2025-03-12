@@ -4,7 +4,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/UserDetails");
 const Friendship = require("../models/Friendship");
-require("dotenv").config(); // Đọc JWT_SECRET từ .env
+require("dotenv").config();
 const cookieParser = require("cookie-parser");
 router.use(cookieParser());
 

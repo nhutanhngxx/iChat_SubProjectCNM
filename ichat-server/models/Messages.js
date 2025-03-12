@@ -11,6 +11,11 @@ const messageSchema = new mongoose.Schema(
       ref: "UserInfo",
       required: true,
     },
+    card_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "MessageCard",
+      default: null,
+    },
     content: { type: String, required: true },
     type: {
       type: String,
