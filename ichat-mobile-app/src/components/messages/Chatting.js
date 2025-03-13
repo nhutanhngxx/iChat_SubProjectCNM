@@ -46,24 +46,30 @@ const Chatting = ({ route }) => {
     setModalVisible(false);
   };
 
-  // Thu hồi tin nhắn
+  // Thu hồi tin nhắn (Xóa nội dung tin nhắn đã gửi)
   const handleRecallMessage = async () => {
     if (!selectedMessage) return;
 
     try {
-      const response = await axios.delete(
-        `${API_iChat}/${selectedMessage._id}`
+      const response = await axios.put(
+        `${API_iChat}/recall/${selectedMessage._id}`
       );
 
-      if (response.data.status === "ok") {
+      if (response.data?.status === "ok") {
         setMessages((prevMessages) =>
-          prevMessages.filter((msg) => msg._id !== selectedMessage._id)
+          prevMessages.map((msg) =>
+            msg._id === selectedMessage._id
+              ? { ...msg, content: "Tin nhắn đã được thu hồi" }
+              : msg
+          )
         );
+      } else {
+        console.error("Thu hồi tin nhắn thất bại:", response.data);
       }
-
-      setModalVisible(false);
     } catch (error) {
       console.error("Lỗi khi thu hồi tin nhắn:", error);
+    } finally {
+      setModalVisible(false);
     }
   };
 
@@ -73,9 +79,7 @@ const Chatting = ({ route }) => {
         const messages = await messageService.getMessagesByGroupId(chat.id);
         setMessages(messages);
       };
-
       fetchMessages();
-
       const interval = setInterval(fetchMessages, 1000);
       return () => clearInterval(interval);
       // }
@@ -95,7 +99,7 @@ const Chatting = ({ route }) => {
             console.error("Lỗi khi lấy tin nhắn:", error);
           }
         };
-        const interval = setInterval(fetchMessages, 1000);
+        const interval = setInterval(fetchMessages, 100);
         return () => clearInterval(interval);
       }
     }, [user, chat]);
@@ -123,11 +127,11 @@ const Chatting = ({ route }) => {
   }, []);
 
   // Cuộn xuống cuối khi có tin nhắn mới ngay lập tức
-  useEffect(() => {
-    if (flatListRef.current && messages.length > 0) {
-      flatListRef.current.scrollToEnd({ animated: false });
-    }
-  }, [messages]);
+  // useEffect(() => {
+  //   if (flatListRef.current && messages.length > 0) {
+  //     flatListRef.current.scrollToEnd({ animated: false });
+  //   }
+  // }, [messages]);
 
   const sendMessage = async () => {
     if (inputMessage.trim()) {
@@ -224,12 +228,12 @@ const Chatting = ({ route }) => {
           renderItem={({ item, index }) => {
             const isLastMessage = index === messages.length - 1;
             const isMyMessage = item.sender_id === user.id;
+            const isRecalled = item.content === "Tin nhắn đã được thu hồi";
             const repliedMessage = item.reply_to
               ? messages.find((msg) => msg._id === item.reply_to)
               : null;
             return (
               <TouchableOpacity
-                // Ấn giữ để hiển thị modal tùy chỉnh tin nhắn
                 onLongPress={() => handleLongPress(item)}
                 style={[
                   styles.message,
@@ -254,7 +258,14 @@ const Chatting = ({ route }) => {
                     </Text>
                   </View>
                 )}
-                <Text style={styles.messageText}>{item.content}</Text>
+                <Text
+                  style={[
+                    styles.messageText,
+                    isRecalled && styles.recalledText,
+                  ]}
+                >
+                  {item.content}
+                </Text>
                 {/* Hiển thị thời gian hh:mm gửi tin nhắn */}
                 {isLastMessage && (
                   <Text style={styles.timestamp}>
@@ -281,7 +292,7 @@ const Chatting = ({ route }) => {
           onContentSizeChange={() =>
             flatListRef.current?.scrollToEnd({ animated: true })
           } // Cuộn khi nội dung thay đổi
-          onLayout={() => flatListRef.current?.scrollToEnd({ animated: true })} // Cuộn tin nhắn mới nhất
+          // onLayout={() => flatListRef.current?.scrollToEnd({ animated: true })} // Cuộn tin nhắn mới nhất
         />
 
         {/* Modal Thao Tác Tin Nhắn */}
@@ -491,7 +502,7 @@ const Chatting = ({ route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "rgba(217, 217, 217, 0.5)",
+    backgroundColor: "#E4E8F3",
   },
   chatHeader: {
     flexDirection: "row",
@@ -666,6 +677,16 @@ const styles = StyleSheet.create({
   iconEmoji: {
     width: 40,
     height: 40,
+  },
+  recalledMessage: {
+    backgroundColor: "#f0f0f0", // Màu xám nhạt
+    borderStyle: "dashed",
+    borderWidth: 1,
+    borderColor: "#ccc",
+  },
+  recalledText: {
+    fontStyle: "italic",
+    color: "#888", // Màu xám nhạt cho nội dung tin nhắn thu hồi
   },
 });
 

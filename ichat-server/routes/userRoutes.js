@@ -542,7 +542,7 @@ router.put("/messages/viewed", async (req, res) => {
       return res.status(400).json({ error: "Thiếu receiverId hoặc senderId" });
     }
 
-    console.log("Dữ liệu nhận được:", { receiverId, senderId });
+    // console.log("Dữ liệu nhận được:", { receiverId, senderId });
 
     // Cập nhật tất cả tin nhắn chưa đọc giữa hai người
     const result = await Messages.updateMany(
@@ -554,7 +554,7 @@ router.put("/messages/viewed", async (req, res) => {
       { $set: { status: "viewed" } }
     );
 
-    console.log("Kết quả cập nhật:", result);
+    // console.log("Kết quả cập nhật:", result);
 
     return res.status(200).json({
       message:

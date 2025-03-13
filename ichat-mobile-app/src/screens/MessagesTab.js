@@ -9,10 +9,13 @@ import {
   Animated,
   FlatList,
   TextInput,
+  TouchableWithoutFeedback,
+  Keyboard,
 } from "react-native";
 import { Tab } from "@rneui/themed";
 import { TabView } from "@rneui/base";
 import { Checkbox } from "react-native-paper";
+import axios from "axios";
 
 import HeaderMessages from "../components/header/HeaderMessagesTab";
 import PriorityMessages from "../components/messages/Priority";
@@ -39,23 +42,45 @@ const MessagesTab = () => {
   const [messageCards, setMessageCards] = useState([]);
   const [isChecked, setIsChecked] = useState({});
   const [isSelectedCard, setIsSelectedCard] = useState([]);
+  // Chọn màu cho tag mới
+  const [tagName, setTagName] = useState("");
+  const [selectedColor, setSelectedColor] = useState("gray");
+  const colors = ["red", "blue", "green", "orange", "purple"];
+  const [showColorPicker, setShowColorPicker] = useState(false);
   const translateY = new Animated.Value(300);
 
+  // Thêm tag
+  const createMessageCard = async (own_id, title, card_color) => {
+    try {
+      const response = await axios.post(`${API_iChat}/messages/message-cards`, {
+        own_id,
+        title,
+        card_color,
+      });
+
+      if (response.data.status === "ok") {
+        console.log("Tạo MessageCard thành công:", response.data.data);
+        setModalAddTag(false);
+        return response.data.data;
+      }
+    } catch (error) {
+      console.error("Lỗi khi tạo MessageCard:", error.message);
+    }
+  };
+
   const handleToggleCard = (card) => {
-    const isExist = isSelectedCard.some((item) => item.id === card.id);
-    if (isExist) {
-      // Nếu có thì xóa ra khỏi list isSelectedCard
-      const newSelectedCard = isSelectedCard.filter(
-        (item) => item.id !== card.id
-      );
-      setIsSelectedCard(newSelectedCard);
-      setIsChecked({ ...isChecked, [card.id]: false });
-    }
-    // Nếu chưa có thì thêm vào list isSelectedCard
-    else {
-      setIsSelectedCard([...isSelectedCard, card]);
-      setIsChecked({ ...isChecked, [card.id]: true });
-    }
+    setIsChecked((prevChecked) => ({
+      ...prevChecked,
+      [card._id]: !prevChecked[card._id], // Chỉ thay đổi trạng thái của card được chọn
+    }));
+
+    setIsSelectedCard((prevSelected) => {
+      if (prevSelected.some((item) => item._id === card._id)) {
+        return prevSelected.filter((item) => item._id !== card._id);
+      } else {
+        return [...prevSelected, card];
+      }
+    });
   };
 
   // Hiển thị modal thẻ với animation
@@ -220,18 +245,11 @@ const MessagesTab = () => {
               }}
               onPress={() => {
                 setModalSort(false);
+                showTagsModal();
               }}
             >
               <Image source={tagIcon} style={{ width: 25, height: 25 }} />
-              <Text
-                style={{ fontSize: 16 }}
-                onPress={() => {
-                  setModalSort(false);
-                  showTagsModal();
-                }}
-              >
-                Thẻ phân loại
-              </Text>
+              <Text style={{ fontSize: 16 }}>Thẻ phân loại</Text>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
@@ -288,7 +306,7 @@ const MessagesTab = () => {
                     <Text style={{ fontSize: 16 }}>{item.title}</Text>
                   </View>
                   <Checkbox
-                    status={isChecked[item.id] ? "checked" : "unchecked"}
+                    status={isChecked[item._id] ? "checked" : "unchecked"}
                     color="#1E6DF7"
                     onPress={() => handleToggleCard(item)}
                   />
@@ -352,10 +370,43 @@ const MessagesTab = () => {
                 }}
               >
                 <TextInput
+                  value={tagName}
+                  onChangeText={setTagName}
                   placeholder="Nhập tên thẻ phân loại"
                   style={{ height: 40, flex: 1, paddingVertical: 5 }}
                 />
-                <Image source={tagIcon} style={{ width: 30, height: 30 }} />
+                <TouchableOpacity
+                  onPress={() => setShowColorPicker(!showColorPicker)}
+                >
+                  <Image
+                    source={tagIcon}
+                    style={{
+                      width: 30,
+                      height: 30,
+                      tintColor: selectedColor,
+                    }}
+                  />
+                </TouchableOpacity>
+                {showColorPicker && (
+                  <View style={{ flexDirection: "row" }}>
+                    {colors.map((color) => (
+                      <TouchableOpacity
+                        key={color}
+                        onPress={() => {
+                          setSelectedColor(color);
+                          setShowColorPicker(false);
+                        }}
+                        style={{
+                          width: 30,
+                          height: 30,
+                          backgroundColor: color,
+                          borderRadius: 15,
+                          marginHorizontal: 5,
+                        }}
+                      />
+                    ))}
+                  </View>
+                )}
               </View>
             </View>
 
@@ -375,7 +426,12 @@ const MessagesTab = () => {
                   paddingVertical: 10,
                   borderRadius: 5,
                 }}
-                onPress={() => setModalAddTag(false)}
+                onPress={() => {
+                  setModalAddTag(false);
+                  setTimeout(() => {
+                    setModalTags(true);
+                  }, 500);
+                }}
               >
                 <Text
                   style={{ color: "white", fontWeight: "600", fontSize: 16 }}
@@ -384,6 +440,9 @@ const MessagesTab = () => {
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
+                onPress={() =>
+                  createMessageCard(user.id, tagName, selectedColor)
+                }
                 style={{
                   backgroundColor: "gray",
                   paddingHorizontal: 20,

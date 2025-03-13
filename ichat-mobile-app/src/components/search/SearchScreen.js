@@ -287,7 +287,8 @@ const SearchScreen = () => {
                 </TouchableOpacity>
               ) : (
                 // Tài khoản
-                <View
+                <TouchableOpacity
+                  onPress={() => handleOpenChatting(item)}
                   style={{
                     paddingVertical: 5,
                     paddingHorizontal: 15,
@@ -314,7 +315,7 @@ const SearchScreen = () => {
                       {item.full_name}
                     </Text>
                   </View>
-                </View>
+                </TouchableOpacity>
               )
             }
             keyExtractor={(item, index) =>
@@ -385,7 +386,7 @@ const SearchScreen = () => {
             <FlatList
               data={searchUsers}
               renderItem={({ item }) => (
-                <View
+                <TouchableOpacity
                   style={{
                     paddingVertical: 5,
                     paddingHorizontal: 15,
@@ -395,6 +396,7 @@ const SearchScreen = () => {
                     flexDirection: "row",
                     alignItems: "center",
                   }}
+                  // onPress={() => handleOpenChatting(item)}
                 >
                   <Image
                     source={{
@@ -414,7 +416,7 @@ const SearchScreen = () => {
                     </Text>
                     {/* <Text style={{ color: "gray" }}>{item.phone}</Text> */}
                   </View>
-                </View>
+                </TouchableOpacity>
               )}
               keyExtractor={(item, index) =>
                 item.id?.toString() || index.toString()
