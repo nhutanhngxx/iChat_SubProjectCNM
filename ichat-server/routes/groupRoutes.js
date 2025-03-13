@@ -26,9 +26,8 @@ router.get("/groups", async (req, res) => {
     }
 
     const groups = await GroupChats.find({
-      content: { $regex: search, $options: "i" }, // Tìm kiếm không phân biệt hoa thường
-      content: { $ne: "Tin nhắn đã được thu hồi" }, // Bỏ qua tin nhắn đã thu hồi
-    }).sort({ createdAt: -1 });
+      name: { $regex: search, $options: "i" }, // Tìm kiếm không phân biệt hoa thường
+    }).sort({ created_at: -1 });
 
     res.json({ status: "ok", contacts: null, data: groups });
   } catch (error) {
