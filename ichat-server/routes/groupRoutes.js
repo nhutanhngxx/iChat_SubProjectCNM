@@ -16,4 +16,25 @@ router.get("/groups/:userId", async (req, res) => {
   }
 });
 
+// Tìm kiếm nhóm
+router.get("/groups", async (req, res) => {
+  try {
+    const { search } = req.query;
+
+    if (!search) {
+      return res.status(400).json({ error: "Search query is required" });
+    }
+
+    const groups = await GroupChats.find({
+      content: { $regex: search, $options: "i" }, // Tìm kiếm không phân biệt hoa thường
+      content: { $ne: "Tin nhắn đã được thu hồi" }, // Bỏ qua tin nhắn đã thu hồi
+    }).sort({ createdAt: -1 });
+
+    res.json({ status: "ok", contacts: null, data: groups });
+  } catch (error) {
+    console.error("Error searching messages:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
 module.exports = router;

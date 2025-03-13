@@ -42,6 +42,7 @@ const SearchScreen = () => {
         const chatPartnerName = chatPartner
           ? chatPartner.full_name
           : "Người ẩn danh";
+
         const chatPartnerAvatar =
           chatPartner?.avatar_path ||
           "https://i.ibb.co/9k8sPRMx/best-seller.png"; // Avatar mặc định nếu không có
@@ -51,6 +52,7 @@ const SearchScreen = () => {
           id: chatPartnerId,
           name: chatPartnerName,
           avatar: chatPartnerAvatar,
+          chatType: chatPartner?.full_name ? "private" : "group",
         };
         navigation.navigate("Chatting", { chat });
       }
@@ -70,6 +72,7 @@ const SearchScreen = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [searchUsers, setSearchUsers] = useState([]);
   const [searchMessages, setSearchMessages] = useState([]);
+  const [searchGroups, setSearchGroups] = useState([]);
   const [users, setUsers] = useState([]);
 
   // Xử lý tìm kiếm tự động khi searchText thay đổi
@@ -100,10 +103,12 @@ const SearchScreen = () => {
   const handleSearch = async () => {
     setIsLoading(true);
     try {
-      const [usersResponse, messagesResponse] = await Promise.all([
-        axios.get(`${API_iChat}/users?search=${searchText}`),
-        axios.get(`${API_iChat}/messages?search=${searchText}`),
-      ]);
+      const [usersResponse, messagesResponse, groupsResponse] =
+        await Promise.all([
+          axios.get(`${API_iChat}/users?search=${searchText}`),
+          axios.get(`${API_iChat}/messages?search=${searchText}`),
+          axios.get(`${API_iChat}/groups?search=${searchText}`),
+        ]);
 
       setSearchUsers(
         usersResponse.data.status === "ok" ? usersResponse.data.users : []
@@ -111,6 +116,10 @@ const SearchScreen = () => {
 
       setSearchMessages(
         messagesResponse.data.status === "ok" ? messagesResponse.data.data : [] // Kiểm tra đúng key response
+      );
+
+      setSearchGroups(
+        groupsResponse.data.status === "ok" ? groupsResponse.data.data : []
       );
     } catch (error) {
       console.error("Lỗi khi tìm kiếm:", error);
@@ -248,7 +257,7 @@ const SearchScreen = () => {
         {/* Tab "Tất cả" */}
         <TabView.Item style={{ width: "100%", padding: 10 }}>
           <FlatList
-            data={[...searchMessages, ...searchUsers]}
+            data={[...searchMessages, ...searchUsers, ...searchGroups]}
             renderItem={({ item }) =>
               item.content ? (
                 // Tin nhắn
