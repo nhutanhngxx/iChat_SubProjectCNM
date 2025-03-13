@@ -1,4 +1,3 @@
-
 const express = require("express");
 const mongoose = require("mongoose");
 const router = express.Router();
@@ -30,7 +29,6 @@ const GroupMembers = require("../models/GroupMember");
 //     res.status(400).json({ error: error.message });
 //   }
 // });
-
 router.post("/send-message", async (req, res) => {
   try {
     const { sender_id, content, type, chat_type, group_id } = req.body;
@@ -127,7 +125,7 @@ router.post("/send-group-message", async (req, res) => {
   }
 });
 
-// // Lấy danh sách tin nhắn nhóm
+// Lấy danh sách tin nhắn nhóm
 // router.get("/messages/:userId/:groupId", async (req, res) => {
 //   try {
 //     const { userId, groupId } = req.params;
@@ -209,23 +207,22 @@ router.delete("/messages/:userId/:receiverId", async (req, res) => {
   }
 });
 
-// Xóa tin nhắn theo ID của tin nhắn
-router.delete("/:messageId", async (req, res) => {
+// Thu hồi tin nhắn
+router.put("/recall/:messageId", async (req, res) => {
   try {
     const { messageId } = req.params;
 
-    // Kiểm tra tin nhắn có tồn tại không
     const message = await Messages.findById(messageId);
     if (!message) {
       return res.status(404).json({ error: "Message not found" });
     }
 
-    // Xóa tin nhắn
-    await Messages.findByIdAndDelete(messageId);
+    message.content = "Tin nhắn đã được thu hồi";
+    await message.save();
 
-    res.json({ status: "ok", message: "Message deleted successfully" });
+    res.json({ status: "ok", message: "Message recalled successfully" });
   } catch (error) {
-    console.error("Error deleting message:", error);
+    console.error("Error recalling message:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
@@ -387,6 +384,7 @@ router.post("/messages/reply", async (req, res) => {
 });
 
 // API tìm kiếm tin nhắn theo nội dung
+const Users = require("../models/UserDetails");
 router.get("/messages", async (req, res) => {
   try {
     const { search } = req.query;
@@ -395,14 +393,53 @@ router.get("/messages", async (req, res) => {
       return res.status(400).json({ error: "Search query is required" });
     }
 
+    const users = await Users.find({
+      phone: { $regex: `^${search}$`, $options: "i" }, // Tìm chính xác số điện thoại
+    });
+
+    if (users.length > 0) {
+      // Nếu tìm thấy user theo số điện thoại, chỉ trả về thông tin người dùng
+      return res.json({ status: "ok", contacts: users, data: [] });
+    }
+
     const messages = await Messages.find({
       content: { $regex: search, $options: "i" }, // Tìm kiếm không phân biệt hoa thường
+      content: { $ne: "Tin nhắn đã được thu hồi" }, // Bỏ qua tin nhắn đã thu hồi
     }).sort({ createdAt: -1 });
 
-    res.json({ status: "ok", data: messages });
+    res.json({ status: "ok", contacts: null, data: messages });
   } catch (error) {
     console.error("Error searching messages:", error);
     res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+// Lấy tất cả MessageCard mà người dùng đã tạo
+router.get("/message-cards/:userId", async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const messageCards = await MessageCard.find({ own_id: userId }).sort({
+      createdAt: -1,
+    });
+
+    res.json({ status: "ok", data: messageCards });
+  } catch (error) {
+    console.error("Error fetching message cards:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+// Tạo MessageCard
+router.post("/messages/message-cards", async (req, res) => {
+  try {
+    const { own_id, title, card_color } = req.body;
+    const newMessageCard = new MessageCard({ own_id, title, card_color });
+
+    await newMessageCard.save();
+    res.status(201).json({ status: "ok", data: newMessageCard });
+  } catch (error) {
+    res.status(500).json({ status: "error", message: error.message });
   }
 });
 

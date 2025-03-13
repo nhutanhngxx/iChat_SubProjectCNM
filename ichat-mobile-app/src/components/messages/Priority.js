@@ -12,6 +12,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { UserContext } from "@/src/context/UserContext";
 import axios from "axios";
 import groupService from "../../services/groupService";
+import { io } from "socket.io-client";
 
 // Tính thời gian
 import dayjs from "dayjs";
@@ -87,9 +88,7 @@ const Priority = () => {
   // Lọc lại dữ liệu tin nhắn theo từng người dùng
   const formatChatList = (messages, allUser) => {
     if (!Array.isArray(messages)) return [];
-
     const chatMap = new Map();
-
     messages.forEach((msg) => {
       if (msg.chat_type === "private") {
         const chatUserId =
@@ -100,7 +99,6 @@ const Priority = () => {
           chatUser?.avatar_path || "https://i.ibb.co/9k8sPRMx/best-seller.png";
         const lastMessageTime = new Date(msg.timestamp).getTime();
         const timeDiff = getTimeAgo(lastMessageTime);
-
         if (
           !chatMap.has(chatUserId) ||
           lastMessageTime > chatMap.get(chatUserId).lastMessageTime
@@ -138,13 +136,27 @@ const Priority = () => {
     return () => clearInterval(interval);
   }, [user, allUser]);
 
+  // Cập nhật tin nhắn thành "viewed" khi mở cuộc trò chuyện
+  const markMessagesAsViewed = async (senderId) => {
+    try {
+      const response = await axios.put(`${API_iChat}/messages/viewed`, {
+        receiverId: user.id,
+        senderId,
+      });
+
+      console.log(response.data.message);
+    } catch (error) {
+      console.error("Lỗi cập nhật trạng thái tin nhắn:", error);
+    }
+  };
+
   const handleOpenChatting = (chat) => {
+    markMessagesAsViewed(chat.id);
     navigation.navigate("Chatting", { chat });
   };
 
   const renderItem = ({ item }) => {
     if (!item) return null;
-
     return (
       <TouchableOpacity
         style={styles.container}

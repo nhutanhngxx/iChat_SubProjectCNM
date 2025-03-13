@@ -11,6 +11,11 @@ const messageSchema = new mongoose.Schema(
       ref: "UserInfo",
       required: true,
     },
+    card_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "MessageCard",
+      default: null,
+    },
     content: { type: String, required: true },
     type: {
       type: String,
@@ -20,7 +25,7 @@ const messageSchema = new mongoose.Schema(
     timestamp: { type: Date, default: Date.now },
     status: {
       type: String,
-      enum: ["sent", "received", "Viewed"],
+      enum: ["sent", "received", "viewed"],
       default: "sent",
     },
     chat_type: { type: String, enum: ["private", "group"], required: true },
