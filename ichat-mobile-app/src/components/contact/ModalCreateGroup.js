@@ -10,7 +10,7 @@ import {
   FlatList,
   SafeAreaView,
 } from "react-native";
-import { Appbar, Button, Checkbox } from "react-native-paper";
+import { Checkbox } from "react-native-paper";
 
 const friendList = [
   {
