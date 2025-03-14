@@ -35,7 +35,7 @@ const RegisterScreen = ({ navigation }) => {
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <ImageBackground
-        source={require("../assets/images/background.png")}
+        source={require("../../assets/images/background.png")}
         style={styles.background}
       >
         <View style={styles.container}>
@@ -112,7 +112,7 @@ const RegisterScreen = ({ navigation }) => {
               onPress={handleLoginWithFacebook}
             >
               <Image
-                source={require("../assets/icons/facebook.png")}
+                source={require("../../assets/icons/facebook.png")}
                 style={{ width: 20, height: 20 }}
               />
               <Text style={styles.textButtonLogin}>Facebook</Text>
@@ -123,7 +123,7 @@ const RegisterScreen = ({ navigation }) => {
               onPress={handleLoginWithGoogle}
             >
               <Image
-                source={require("../assets/icons/google.png")}
+                source={require("../../assets/icons/google.png")}
                 style={{ width: 20, height: 20 }}
               />
               <Text style={styles.textButtonLogin}>Google</Text>

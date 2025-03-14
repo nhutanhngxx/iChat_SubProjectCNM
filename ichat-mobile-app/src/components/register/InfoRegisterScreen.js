@@ -9,9 +9,9 @@ import {
   Alert,
 } from "react-native";
 import axios from "axios";
-import CustomButton from "../components/common/CustomButton";
+import CustomButton from "../common/CustomButton";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { UserContext } from "../context/UserContext";
+import { UserContext } from "../../context/UserContext";
 
 const InfoRegisterScreen = ({ navigation }) => {
   const { setUser } = useContext(UserContext);
@@ -40,7 +40,7 @@ const InfoRegisterScreen = ({ navigation }) => {
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <ImageBackground
-        source={require("../assets/images/background.png")}
+        source={require("../../assets/images/background.png")}
         style={styles.background}
       >
         <View style={styles.container}>

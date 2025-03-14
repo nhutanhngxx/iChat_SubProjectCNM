@@ -40,7 +40,7 @@ const EnterOTPScreen = ({ navigation }) => {
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <ImageBackground
-        source={require("../assets/images/background.png")}
+        source={require("../../assets/images/background.png")}
         style={styles.background}
       >
         <View style={styles.container}>
