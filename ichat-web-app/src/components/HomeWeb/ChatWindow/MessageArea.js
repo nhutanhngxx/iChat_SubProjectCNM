@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { Layout, Avatar, Input, Button, Badge } from "antd";
+import { Layout, Avatar, Dropdown, Menu, Button, Modal } from "antd";
 import {
   VideoCameraOutlined,
   UsergroupAddOutlined,
   SearchOutlined,
   ProfileOutlined,
-  InboxOutlined,
   EditOutlined,
+  TagOutlined,
+  SettingOutlined,
+  MenuOutlined,
+  PlusOutlined,
 } from "@ant-design/icons";
 import Message from "./Message";
 import MessageInput from "./MessageInput";
@@ -42,6 +45,102 @@ const mockMessagesByUser = {
       type: "received",
     },
   ],
+};
+
+const CategoryMenu = () => {
+  const [visible, setVisible] = useState(false);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+
+  const categories = [
+    { name: "Khách hàng", color: "#e74c3c" },
+    { name: "Gia đình", color: "#e84393" },
+    { name: "Công việc", color: "#f39c12" },
+    { name: "Bạn bè", color: "#f1c40f" },
+    { name: "Trả lời sau", color: "#2ecc71" },
+    { name: "Đồng nghiệp", color: "#3498db" },
+  ];
+
+  const handleManageCategories = () => {
+    setVisible(false);
+    setIsModalVisible(true);
+  };
+
+  const menu = (
+    <Menu className="category-menu">
+      {categories.map((category, index) => (
+        <Menu.Item key={index} className="category-item">
+          <div className="category-content">
+            <div
+              className="category-dot"
+              style={{ backgroundColor: category.color }}
+            ></div>
+            <span>{category.name}</span>
+          </div>
+        </Menu.Item>
+      ))}
+      <Menu.Divider />
+      <Menu.Item
+        key="manage"
+        className="manage-item"
+        onClick={handleManageCategories}
+      >
+        <div className="manage-content">
+          <SettingOutlined />
+          <span>Quản lý thể phân loại</span>
+        </div>
+      </Menu.Item>
+    </Menu>
+  );
+
+  return (
+    <div className="category-dropdown-container">
+      <Dropdown
+        overlay={menu}
+        visible={visible}
+        onVisibleChange={setVisible}
+        trigger={["click"]}
+        placement="bottomLeft"
+      >
+        <Button className="category-button">
+          <TagOutlined />
+        </Button>
+      </Dropdown>
+
+      <Modal
+        title="Quản lý thể phân loại"
+        open={isModalVisible}
+        onCancel={() => setIsModalVisible(false)}
+        footer={null}
+        width={500}
+        className="category-management-modal"
+      >
+        <div className="category-management-content">
+          <h4>Danh sách thể phân loại</h4>
+          <div className="category-list">
+            {categories.map((category, index) => (
+              <div key={index} className="category-list-item">
+                <div className="category-drag-handle">
+                  <MenuOutlined />
+                </div>
+                <div
+                  className="category-tag"
+                  style={{ backgroundColor: category.color }}
+                ></div>
+                <div className="category-name">{category.name}</div>
+              </div>
+            ))}
+          </div>
+          <Button
+            type="text"
+            className="add-category-button"
+            icon={<PlusOutlined />}
+          >
+            Thêm phân loại
+          </Button>
+        </div>
+      </Modal>
+    </div>
+  );
 };
 
 const MessageArea = ({ selectedChat }) => {
@@ -138,7 +237,7 @@ const MessageArea = ({ selectedChat }) => {
               <h3 className="user-name-message">
                 {selectedChat.name} <EditOutlined />
               </h3>
-              <InboxOutlined />
+              <CategoryMenu />
             </div>
           </div>
           <div className="action-buttons-message-area">

@@ -1,6 +1,5 @@
 /* Sidebar Styles */
 .chat-sidebar {
-  box-sizing: border-box;
   width: 364px !important;
   min-width: 364px;
   max-width: 364px;
@@ -10,21 +9,21 @@
 
 /* Tiêu đề "Tìm gần đây" */
 .chat-sidebar .title-chat-sidebar {
-  font-weight: 600;
+  font-weight: 500;
   padding: 10px 20px;
   font-size: 14px;
 }
 
 .title-tabpane {
-  font-weight: 600;
-  padding: 0 20px;
+  font-weight: 500;
+  padding: 10px 20px 0;
   font-size: 14px;
 }
 
 /* Danh sách */
 .chat-list {
   height: calc(100vh - 160px);
-  overflow-y: auto;
+  overflow-y: visible;
   padding: 0;
 }
 
@@ -64,7 +63,6 @@
 
 .message-header {
   font-size: 16px;
-  font-weight: bold;
   color: #333;
   margin-bottom: 10px;
 }
@@ -99,7 +97,6 @@
 
 .message-name {
   font-size: 14px;
-  font-weight: bold;
   color: #333;
 }
 
@@ -122,7 +119,6 @@
 
 .filter-item {
   margin-right: 10px;
-  font-weight: bold;
 }
 
 .file-list {
@@ -150,7 +146,6 @@
 }
 
 .file-name {
-  font-weight: bold;
   color: #333;
 }
 
@@ -159,4 +154,32 @@
 .file-date {
   font-size: 12px;
   color: #666;
+}
+
+/* Tên người chat */
+.chat-name {
+  font-size: 16px;
+  font-weight: 400;
+  color: #333; /* Darker text color for readability */
+}
+
+/* Thời gian tin nhắn cuối */
+.chat-time {
+  font-size: 12px;
+  color: #999; /* Gray color for timestamps */
+}
+
+/* Tin nhắn cuối cùng */
+.chat-message {
+  font-size: 14px;
+  font-weight: normal;
+  color: #000; /* Gray color for last message */
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.ant-tabs-tab {
+  padding: 4px 0 2px 0 !important;
 }
