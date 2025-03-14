@@ -2,8 +2,9 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import React from "react";
 import LauncherScreen from "../screens/LauncherScreen";
 import LoginScreen from "../screens/LoginScreen";
-import RegisterScreen from "../screens/RegisterScreen";
-import EnterOTPScreen from "../screens/EnterOTPScreen";
+import RegisterScreen from "../components/register/RegisterScreen";
+import EnterOTPScreen from "../components/register/EnterOTPScreen";
+import InfoRegisterScreen from "../components/register/InfoRegisterScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -35,6 +36,12 @@ const AuthNavigator = ({ setUser }) => {
       <Stack.Screen
         name="EnterOTP"
         children={(props) => <EnterOTPScreen {...props} setUser={setUser} />}
+      />
+      <Stack.Screen
+        name="InfoRegister"
+        children={(props) => (
+          <InfoRegisterScreen {...props} setUser={setUser} />
+        )}
       />
     </Stack.Navigator>
   );

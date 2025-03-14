@@ -10,7 +10,7 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { Checkbox } from "react-native-paper";
-import CustomButton from "../components/common/CustomButton";
+import CustomButton from "../common/CustomButton";
 
 const RegisterScreen = ({ navigation }) => {
   const handleContinueRegister = () => {

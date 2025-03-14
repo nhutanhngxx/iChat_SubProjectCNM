@@ -7,7 +7,7 @@ import {
   SafeAreaView,
   TextInput,
 } from "react-native";
-import CustomButton from "../components/common/CustomButton";
+import CustomButton from "../common/CustomButton";
 
 const EnterOTPScreen = ({ navigation }) => {
   const OTP = "123455";
