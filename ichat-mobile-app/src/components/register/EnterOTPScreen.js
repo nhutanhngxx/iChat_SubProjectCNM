@@ -31,7 +31,7 @@ const EnterOTPScreen = ({ navigation }) => {
 
   const handleVerify = () => {
     otp.join("") === OTP ? setIsOTPValid(true) : setIsOTPValid(false);
-    navigation.navigate("InfoRegister");
+    navigation.navigate("PasswordRegister");
   };
 
   const handleLogin = () => {

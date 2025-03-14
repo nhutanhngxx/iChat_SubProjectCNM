@@ -66,7 +66,7 @@ const RegisterScreen = ({ navigation }) => {
                     onPress={() => setChecked(!isChecked)}
                     title="Tôi đồng ý với các điều khoản của iChat"
                     containerStyle={{ backgroundColor: "transparent" }}
-                    textStyle={{ fontSize: 12 }}
+                    textStyle={{ fontSize: 13 }}
                   />
                   {/* <Text style={{ fontSize: 13 }}>
                     Tôi đồng ý với các điều khoản của{" "}
@@ -79,7 +79,7 @@ const RegisterScreen = ({ navigation }) => {
                     onPress={() => setCheckedSocial(!isCheckedSocial)}
                     containerStyle={{ backgroundColor: "transparent" }}
                     title="Tôi đồng ý với điều khoản Mạng xã hội của iChat"
-                    textStyle={{ fontSize: 12 }}
+                    textStyle={{ fontSize: 13, flexWrap: "wrap" }}
                   />
                   {/* <Text style={{ fontSize: 13 }}>
                     Tôi đồng ý với điều khoản Mạng xã hội của{" "}

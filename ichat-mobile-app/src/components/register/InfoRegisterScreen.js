@@ -77,7 +77,7 @@ const InfoRegisterScreen = ({ navigation }) => {
               </View>
 
               {/* Sô điện thoại đã đăng ký */}
-              <View style={styles.item}>
+              {/* <View style={styles.item}>
                 <Text
                   style={{
                     fontSize: 16,
@@ -94,7 +94,7 @@ const InfoRegisterScreen = ({ navigation }) => {
                   value={phone}
                   editable={false}
                 />
-              </View>
+              </View> */}
 
               {/* Họ tên */}
               <View style={styles.item}>
