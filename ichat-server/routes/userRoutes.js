@@ -18,17 +18,7 @@ const Messages = require("../models/Messages");
 
 // Đăng ký với OTP
 router.post("/register", async (req, res) => {
-  const {
-    full_name,
-    gender,
-    dob,
-    phone,
-    password,
-    avatar_path,
-    cover_path,
-    status,
-    otp,
-  } = req.body;
+  const { phone, password, full_name, dob, gender } = req.body;
 
   try {
     // Kiểm tra OTP
