@@ -1,50 +1,55 @@
-# Welcome to your Expo app 👋
+# iChat Mobile
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+iChat Mobile là một ứng dụng di động được thiết kế để giao tiếp liền mạch và an toàn. Nó hỗ trợ nhắn tin thời gian thực, các cuộc gọi thoại và video và nhiều tính năng khác để tăng cường tương tác người dùng.
 
-## Get started
+## Features
 
-1. Install dependencies
+- **Tin nhắn thời gian thực:** Gửi và nhận tin nhắn ngay lập tức. <br>
+- **Các cuộc gọi bằng giọng nói và video:** Cuộc gọi bằng giọng nói và video chất lượng cao. <br>
+- **Trò chuyện nhóm:** Tạo và quản lý các cuộc hội thoại nhóm. <br>
+- **Chia sẻ phương tiện:** Chia sẻ ảnh, video và các tệp khác. <br>
+- **Mã hóa từ đầu đến cuối:** Đảm bảo quyền riêng tư và bảo mật của giao tiếp của bạn. <br>
+- **Thông báo đẩy:** Luôn cập nhật với thông báo tức thời. <br>
+- **Hồ sơ người dùng:** Tùy chỉnh hồ sơ của bạn với Avatars và tin nhắn trạng thái. <br>
 
-   ```bash
-   npm install
-   ```
+## Installation
 
-2. Start the app
+### Prerequisites
 
-   ```bash
-    npx expo start
-   ```
+- Node.js >= 14.x
+- npm >= 6.x
+- React Native CLI
+- Android Studio / Xcode (for Android / iOS development)
 
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+### Clone the Repository
 
 ```bash
-npm run reset-project
+git clone https://github.com/nhutanhngxx/iChat_SubProjectCNM.git
+cd ichat-mobile-app
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+### Install Dependencies
 
-## Learn more
+```bash
+npm install
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+## Contributing
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+Chúng tôi hoan nghênh những đóng góp cho iChat Mobile! Nếu bạn có bất kỳ ý tưởng, đề xuất hoặc báo cáo lỗi nào, vui lòng gửi vấn đề hoặc yêu cầu về cho chúng tôi.
 
-## Join the community
+### Steps to Contribute
 
-Join our community of developers creating universal apps.
+1. Fork the repository.  <br>
+2. Create your feature branch: `git checkout -b mobile-your-feature-name`. <br>
+3. Commit your changes: `git commit -m 'Add some feature'`. <br>
+4. Push to the branch: `git push origin feature/your-feature-name`. <br>
+5. Open a pull request. <br>
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## License
+
+Dự án này được cấp phép theo giấy phép MIT.
+
+## Contact
+
+Đối với bất kỳ câu hỏi hoặc đề xuất nào, xin vui lòng liên hệ với chúng tôi tại support.ichat@gmail.com.
