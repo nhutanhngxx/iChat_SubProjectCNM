@@ -22,7 +22,7 @@ import CustomButton from "../common/CustomButton";
 import editIcon from "../../assets/icons/edit.png";
 import { RadioGroup } from "react-native-radio-buttons-group";
 
-const InfoRegisterScreen = ({ navigation }) => {
+const PasswordRegisterScreen = ({ navigation }) => {
   const API_iChat = `http://${window.location.hostname}:5001`;
   const [phone, setPhone] = useState("");
   const [fullName, setFullName] = useState("");
@@ -287,4 +287,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default InfoRegisterScreen;
+export default PasswordRegisterScreen;

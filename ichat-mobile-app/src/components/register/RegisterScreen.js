@@ -9,7 +9,7 @@ import {
   TextInput,
   TouchableOpacity,
 } from "react-native";
-import { Checkbox } from "react-native-paper";
+import { CheckBox } from "@rneui/themed";
 import CustomButton from "../common/CustomButton";
 
 const RegisterScreen = ({ navigation }) => {
@@ -61,26 +61,30 @@ const RegisterScreen = ({ navigation }) => {
               {/* Checkbox terms */}
               <View style={{ marginBottom: 20 }}>
                 <View style={{ flexDirection: "row", alignItems: "center" }}>
-                  <Checkbox
-                    status={isChecked ? "checked" : "unchecked"}
+                  <CheckBox
+                    checked={isChecked}
                     onPress={() => setChecked(!isChecked)}
-                    color="#48A2FC"
+                    title="Tôi đồng ý với các điều khoản của iChat"
+                    containerStyle={{ backgroundColor: "transparent" }}
+                    textStyle={{ fontSize: 12 }}
                   />
-                  <Text style={{ fontSize: 13 }}>
+                  {/* <Text style={{ fontSize: 13 }}>
                     Tôi đồng ý với các điều khoản của{" "}
                     <Text style={{ fontWeight: "bold" }}>iChat</Text>
-                  </Text>
+                  </Text> */}
                 </View>
                 <View style={{ flexDirection: "row", alignItems: "center" }}>
-                  <Checkbox
-                    status={isCheckedSocial ? "checked" : "unchecked"}
+                  <CheckBox
+                    checked={isCheckedSocial}
                     onPress={() => setCheckedSocial(!isCheckedSocial)}
-                    color="#48A2FC"
+                    containerStyle={{ backgroundColor: "transparent" }}
+                    title="Tôi đồng ý với điều khoản Mạng xã hội của iChat"
+                    textStyle={{ fontSize: 12 }}
                   />
-                  <Text style={{ fontSize: 13 }}>
+                  {/* <Text style={{ fontSize: 13 }}>
                     Tôi đồng ý với điều khoản Mạng xã hội của{" "}
                     <Text style={{ fontWeight: "bold" }}>iChat</Text>
-                  </Text>
+                  </Text> */}
                 </View>
               </View>
 
@@ -185,7 +189,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: 20,
     marginBottom: 20,
-    backgroundColor: "#D9D9D9",
+    backgroundColor: "white",
   },
   countryCode: {
     marginRight: 8,
@@ -204,7 +208,7 @@ const styles = StyleSheet.create({
     width: "100%",
     height: 50,
     borderRadius: 10,
-    backgroundColor: "#D9D9D9",
+    backgroundColor: "white",
   },
   forgotPassword: {
     fontWeight: "bold",

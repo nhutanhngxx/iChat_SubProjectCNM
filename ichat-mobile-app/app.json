@@ -1,5 +1,17 @@
 {
-  "plugins": [
-    "expo-barcode-scanner"
-  ]
+  "expo": {
+    "scheme": "iChatApp",
+    "name": "iChat",
+    "slug": "iChat-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "platforms": ["ios", "android"],
+    "newArchEnabled": true,
+    "ios": {
+      "bundleIdentifier": "com.nhutanhngxx.iChat"
+    },
+    "android": {
+      "package": "com.nhutanhngxx.iChat"
+    }
+  }
 }
