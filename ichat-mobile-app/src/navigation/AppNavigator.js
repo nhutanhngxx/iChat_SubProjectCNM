@@ -6,7 +6,8 @@ import {
 } from "@react-navigation/stack";
 
 import React from "react";
-import { View, Image } from "react-native";
+import { View, Image, TouchableOpacity } from "react-native";
+import { StatusBar } from "react-native";
 import MessageTab from "../screens/MessagesTab";
 import ContactTab from "../screens/ContactTab";
 import TimelineTab from "../screens/TimelineTab";
@@ -23,23 +24,40 @@ import FriendRequest from "../components/contact/FriendRequest";
 import ProfileInformation from "../components/profile/ProfileInformation";
 import ChangeInformation from "../components/profile/ChangeInformation";
 import QRScanner from "../components/camera/QRScannerScreen";
+import HeaderMessageTab from "../components/header/HeaderMessagesTab";
 
 const BottomTab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
 const ChatStack = () => {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="MessagesStack" component={MessageTab} />
+    <Stack.Navigator>
+      <Stack.Screen
+        name="MessagesStack"
+        component={MessageTab}
+        options={{
+          header: () => <HeaderMessageTab />,
+        }}
+      />
+
       <Stack.Screen
         name="Chatting"
         component={Chatting}
         options={{
           animation: "none",
+          headerShown: false,
         }}
       />
-      <Stack.Screen name="Option" component={Option} />
-      <Stack.Screen name="MediaStorage" component={MediaStorage} />
+      <Stack.Screen
+        name="Option"
+        component={Option}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="MediaStorage"
+        component={MediaStorage}
+        options={{ headerShown: false }}
+      />
       <Stack.Screen
         name="ViewProfile"
         component={ViewProfile}
@@ -50,10 +68,18 @@ const ChatStack = () => {
       <Stack.Screen
         name="SearchScreen"
         component={SearchScreen}
-        options={{ animation: "fade" }}
+        options={{ animation: "fade", headerShown: false }}
       />
-      <Stack.Screen name="QRScanner" component={QRScanner} />
-      <Stack.Screen name="AddFriend" component={AddFriend} />
+      <Stack.Screen
+        name="QRScanner"
+        component={QRScanner}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="AddFriend"
+        component={AddFriend}
+        options={{ headerShown: false }}
+      />
     </Stack.Navigator>
   );
 };

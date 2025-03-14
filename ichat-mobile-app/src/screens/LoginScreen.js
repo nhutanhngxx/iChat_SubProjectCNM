@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   ImageBackground,
-  SafeAreaView,
   TextInput,
   Alert,
 } from "react-native";
@@ -38,7 +37,7 @@ const LoginScreen = ({ navigation }) => {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
+    <View style={{ flex: 1 }}>
       <ImageBackground
         source={require("../assets/images/background.png")}
         style={styles.background}
@@ -88,7 +87,7 @@ const LoginScreen = ({ navigation }) => {
           </Text>
         </View>
       </ImageBackground>
-    </SafeAreaView>
+    </View>
   );
 };
 

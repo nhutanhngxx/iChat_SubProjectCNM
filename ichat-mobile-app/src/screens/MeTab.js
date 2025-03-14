@@ -27,7 +27,10 @@ const MeTab = () => {
 
       {/* Tài khoản */}
       <View style={{ alignItems: "center", gap: 10, top: -50 }}>
-        <Image source={require("../assets/images/avatars/avatar1.png")} />
+        <Image
+          source={{ uri: user.avatar_path }}
+          style={{ width: 180, height: 180, borderRadius: 20 }}
+        />
         <Text style={{ fontSize: 25, fontWeight: "bold" }}>
           {user.full_name}
         </Text>

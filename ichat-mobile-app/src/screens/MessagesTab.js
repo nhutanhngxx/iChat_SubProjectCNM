@@ -11,6 +11,7 @@ import {
   TextInput,
   TouchableWithoutFeedback,
   Keyboard,
+  SafeAreaView,
 } from "react-native";
 import { Tab } from "@rneui/themed";
 import { TabView } from "@rneui/base";
@@ -128,7 +129,7 @@ const MessagesTab = () => {
 
   return (
     <View style={styles.container}>
-      <HeaderMessages />
+      {/* <HeaderMessages /> */}
       <View style={{ flexDirection: "row", alignItems: "center" }}>
         <View style={{ width: "50%" }}>
           <Tab

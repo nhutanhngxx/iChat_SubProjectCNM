@@ -393,21 +393,32 @@ router.get("/messages", async (req, res) => {
       return res.status(400).json({ error: "Search query is required" });
     }
 
-    const users = await Users.find({
-      phone: { $regex: `^${search}$`, $options: "i" }, // Tìm chính xác số điện thoại
-    });
+    // Kiểm tra nếu search chỉ chứa số (có thể kèm dấu +)
+    const isPhoneNumber = /^\+?\d+$/.test(search);
 
-    if (users.length > 0) {
-      // Nếu tìm thấy user theo số điện thoại, chỉ trả về thông tin người dùng
-      return res.json({ status: "ok", contacts: users, data: [] });
+    if (isPhoneNumber) {
+      const users = await Users.find({
+        phone: { $regex: `^${search}$`, $options: "i" }, // Tìm chính xác số điện thoại
+      });
+
+      if (users.length > 0) {
+        return res.json({ status: "ok", contacts: users, data: [] });
+      }
     }
 
+    // Nếu không phải số điện thoại, tìm kiếm theo tên người dùng hoặc tin nhắn
+    const users = await Users.find({
+      fullName: { $regex: search, $options: "i" }, // Tìm theo tên không phân biệt hoa thường
+    });
+
     const messages = await Messages.find({
-      content: { $regex: search, $options: "i" }, // Tìm kiếm không phân biệt hoa thường
-      content: { $ne: "Tin nhắn đã được thu hồi" }, // Bỏ qua tin nhắn đã thu hồi
+      $and: [
+        { content: { $regex: search, $options: "i" } }, // Tìm kiếm từ khóa
+        { content: { $ne: "Tin nhắn đã được thu hồi" } }, // Loại bỏ tin nhắn thu hồi
+      ],
     }).sort({ createdAt: -1 });
 
-    res.json({ status: "ok", contacts: null, data: messages });
+    res.json({ status: "ok", contacts: users, data: messages });
   } catch (error) {
     console.error("Error searching messages:", error);
     res.status(500).json({ error: "Internal Server Error" });

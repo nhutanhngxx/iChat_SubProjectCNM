@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { Tab, TabView } from "@rneui/themed";
 import axios from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { UserContext } from "@/src/context/UserContext";
 
 const SearchScreen = () => {
@@ -67,10 +68,65 @@ const SearchScreen = () => {
 
   const [searchText, setSearchText] = useState("");
   const [index, setIndex] = useState(0);
+
+  // Lưu trữ lịch sử Tìm kiếm
+  const [indexSearch, setIndexSearch] = useState(0);
+  const [historySearch, setHistorySearch] = useState([]);
+
   const [isLoading, setIsLoading] = useState(false);
   const [searchUsers, setSearchUsers] = useState([]);
   const [searchMessages, setSearchMessages] = useState([]);
   const [users, setUsers] = useState([]);
+
+  useEffect(() => {
+    loadSearchHistory();
+  }, []);
+
+  // Hàm lưu lịch sử tìm kiếm
+  const saveSearchHistory = async (text) => {
+    if (!text.trim()) return;
+    try {
+      const existingHistory = await AsyncStorage.getItem("searchHistory");
+      let newHistory = existingHistory ? JSON.parse(existingHistory) : [];
+      if (!newHistory.includes(text)) {
+        newHistory.unshift(text);
+        if (newHistory.length > 10) newHistory.pop(); // Giới hạn lại lưu trữ
+      }
+      await AsyncStorage.setItem("searchHistory", JSON.stringify(newHistory));
+      setHistorySearch(newHistory);
+    } catch (error) {
+      console.error("Lỗi lưu lịch sử tìm kiếm", error);
+    }
+  };
+
+  // Hàm tải lịch sử tìm kiếm từ AsyncStorage
+  const loadSearchHistory = async () => {
+    try {
+      const savedHistory = await AsyncStorage.getItem("searchHistory");
+      if (savedHistory) {
+        setHistorySearch(JSON.parse(savedHistory));
+      }
+    } catch (error) {
+      console.error("Lỗi tải lịch sử tìm kiếm", error);
+    }
+  };
+
+  // Hàm xóa lịch sử tìm kiếm
+  const clearSearchHistory = async () => {
+    try {
+      await AsyncStorage.removeItem("searchHistory");
+      setHistorySearch([]);
+    } catch (error) {
+      console.error("Lỗi xóa lịch sử tìm kiếm", error);
+    }
+  };
+
+  // Xóa 1 item khỏi lịch sử tìm kiếm
+  const removeSearchItem = (index) => {
+    setHistorySearch((prevHistory) =>
+      prevHistory.filter((_, i) => i !== index)
+    );
+  };
 
   // Xử lý tìm kiếm tự động khi searchText thay đổi
   useEffect(() => {
@@ -199,6 +255,10 @@ const SearchScreen = () => {
             placeholder="Tìm kiếm"
             value={searchText}
             onChangeText={setSearchText}
+            onSubmitEditing={() => {
+              saveSearchHistory(searchText);
+              setSearchText("");
+            }}
           />
           {searchText.length > 0 && (
             <TouchableOpacity onPress={() => setSearchText("")}>
@@ -221,34 +281,106 @@ const SearchScreen = () => {
       )}
 
       {/* Tabs kết quả tìm kiếm */}
-      <Tab
-        value={index}
-        onChange={setIndex}
-        indicatorStyle={{
-          backgroundColor: "skyblue",
-          width: "15%",
-          marginHorizontal: "9%",
-        }}
-      >
-        <Tab.Item
-          title="Tất cả"
-          titleStyle={{ fontSize: 16, fontWeight: "500" }}
-        />
-        <Tab.Item
-          title="Tin nhắn"
-          titleStyle={{ fontSize: 16, fontWeight: "500" }}
-        />
-        <Tab.Item
-          title="Tài khoản"
-          titleStyle={{ fontSize: 16, fontWeight: "500" }}
-        />
-      </Tab>
+      {searchText && (
+        <Tab
+          value={index}
+          onChange={setIndex}
+          indicatorStyle={{
+            backgroundColor: "skyblue",
+            width: "15%",
+            marginHorizontal: "9%",
+          }}
+        >
+          <Tab.Item
+            title="Tất cả"
+            titleStyle={{ fontSize: 16, fontWeight: "500" }}
+          />
+          <Tab.Item
+            title="Tin nhắn"
+            titleStyle={{ fontSize: 16, fontWeight: "500" }}
+          />
+          <Tab.Item
+            title="Tài khoản"
+            titleStyle={{ fontSize: 16, fontWeight: "500" }}
+          />
+        </Tab>
+      )}
+
+      {!searchText && (
+        <View style={{ padding: 10 }}>
+          <Text style={{ fontSize: 18, fontWeight: "bold", marginBottom: 10 }}>
+            Lịch sử tìm kiếm
+          </Text>
+
+          {historySearch.length > 0 ? (
+            <>
+              <FlatList
+                data={historySearch}
+                keyExtractor={(item, indexSearch) => indexSearch.toString()}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    onPress={() => setSearchText(item)}
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      paddingVertical: 10,
+                      paddingHorizontal: 5,
+                    }}
+                  >
+                    {/* Tên lịch sử tìm kiếm */}
+                    <TouchableOpacity onPress={() => setSearchText(item)}>
+                      <Text style={{ fontSize: 16 }}>{item}</Text>
+                    </TouchableOpacity>
+
+                    {/* Nút xóa */}
+                    <TouchableOpacity
+                      onPress={() => removeSearchItem(index)}
+                      style={{
+                        // backgroundColor: "red",
+                        paddingVertical: 5,
+                        paddingHorizontal: 8,
+                        borderRadius: 5,
+                      }}
+                    >
+                      <Text style={{ color: "red", fontWeight: "bold" }}>
+                        Xóa
+                      </Text>
+                    </TouchableOpacity>
+                  </TouchableOpacity>
+                )}
+              />
+
+              {/* Nút xóa lịch sử tìm kiếm */}
+              <TouchableOpacity
+                onPress={clearSearchHistory}
+                style={{
+                  marginTop: 10,
+                  // backgroundColor: "red",
+                  padding: 10,
+                  borderRadius: 5,
+                  alignItems: "center",
+                }}
+              >
+                <Text style={{ color: "red", fontWeight: "bold" }}>
+                  Xóa tất cả lịch sử tìm kiếm
+                </Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <Text style={{ fontSize: 16, color: "gray", textAlign: "center" }}>
+              Không có tìm kiếm gì gần đây
+            </Text>
+          )}
+        </View>
+      )}
 
       <TabView value={index} onChange={setIndex} animationType="spring">
         {/* Tab "Tất cả" */}
         <TabView.Item style={{ width: "100%", padding: 10 }}>
           <FlatList
-            data={[...searchMessages, ...searchUsers]}
+            data={[...searchUsers, ...searchMessages]}
+            showsVerticalScrollIndicator={false}
             renderItem={({ item }) =>
               item.content ? (
                 // Tin nhắn
@@ -260,7 +392,6 @@ const SearchScreen = () => {
                     paddingHorizontal: 15,
                     borderBottomWidth: 1,
                     borderBottomColor: "#ddd",
-                    // backgroundColor: "green",
                     gap: 5,
                     flexDirection: "row",
                     alignItems: "center",
@@ -329,6 +460,7 @@ const SearchScreen = () => {
           {searchMessages.length > 0 ? (
             <FlatList
               data={searchMessages}
+              showsVerticalScrollIndicator={false}
               renderItem={({ item }) => (
                 <TouchableOpacity
                   onPress={() => handleOpenChatting(item)}
