@@ -1,77 +1,73 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Layout, Modal } from "antd";
 
 import HelloWindow from "./HelloWindow";
 import MessageArea from "./MessageArea";
 import ComponentLeft from "./ComponentLeft";
 import ComponentLeftSearch from "./ComponentLeftSearch";
-
+import { useDispatch, useSelector } from "react-redux";
+import {
+  fetchMessages,
+  fetchChatMessages,
+} from "../../../redux/slices/messagesSlice";
 import "./ChatWindow.css";
 
-const userList = [
-  {
-    id: 1,
-    name: "George Alan",
-    lastMessage: "I'll take it. Can you ship it?",
-    time: "2:30 PM",
-    unread: 0,
-    online: true,
-    type: "text",
-  },
-  {
-    id: 2,
-    name: "Uber Cars",
-    lastMessage: "Allen: Your ride is 2 minutes away...",
-    time: "1:45 PM",
-    unread: 2,
-    online: false,
-    type: "notification",
-  },
-  {
-    id: 3,
-    name: "Safiya Fareena",
-    lastMessage: "Video",
-    time: "Yesterday",
-    unread: 0,
-    online: true,
-    type: "video",
-  },
-  {
-    id: 4,
-    name: "Epic Game",
-    lastMessage: "John Paul: 🌟Robert! Your team scored...",
-    time: "11:30 AM",
-    unread: 3,
-    online: false,
-    type: "game",
-  },
-  {
-    id: 5,
-    name: "Scott Franklin",
-    lastMessage: "Audio",
-    time: "9:15 AM",
-    unread: 1,
-    online: true,
-    type: "audio",
-  },
-];
-
-const ChatWindow = () => {
+const ChatWindow = ({ user }) => {
+  // Load ttin nhan tu Backend
+  const dispatch = useDispatch();
+  const { messages, status, chatMessages, chatStatus } = useSelector(
+    (state) => state.messages
+  );
+  const [userListFromState, setUserListFromState] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
-  const handleSelectUser = (user) => {
-    setSelectedUser(user);
-    setIsSearchOpen(false);
+  const senderId = user.id || "67c0acf193390020eefc9ff2"; // ID mặc định
+  useEffect(() => {
+    dispatch(fetchMessages(senderId)); // Fetch danh sách người nhận
+  }, [dispatch, senderId]);
+
+  useEffect(() => {
+    if (messages && messages.length > 0) {
+      // Chuyển đổi `messages` thành danh sách user phù hợp
+      const formattedUsers = messages.map((msg) => ({
+        id: msg.receiver_id,
+        name: msg.name,
+        lastMessage: msg.lastMessage,
+        timestamp: msg.timestamp,
+        unread: msg.unread || 0,
+        user_status: msg.user_status || "Offline",
+        type: msg.type || "text",
+        avatar_path: msg.avatar_path || "https://default-avatar.com/avatar.jpg",
+      }));
+
+      setUserListFromState(formattedUsers);
+      console.log("formattedUsers", formattedUsers);
+    }
+  }, [messages]);
+  // // Lấy tin nhắn giữa sender và receiver
+  // Khi chọn một user, lọc tin nhắn giữa senderId và receiverId
+  useEffect(() => {
+    if (selectedUser) {
+      dispatch(fetchChatMessages({ senderId, receiverId: selectedUser.id })); // Fetch tin nhắn giữa sender và receiver
+    }
+  }, [dispatch, senderId, selectedUser]);
+  // Hàm callback để cập nhật messages
+  const handleUpdateMessages = (newMessage) => {
+    // Cập nhật messages ở đây (ví dụ: dispatch action hoặc cập nhật state)
+    // dispatch(someActionToUpdateMessages(newMessage));
   };
 
   return (
     <Layout className="chat-window">
-      <ComponentLeft userList={userList} onSelectUser={handleSelectUser} />
+      <ComponentLeft userList={messages || []} onSelectUser={setSelectedUser} />
 
       {/* Hiển thị màn hình chat hoặc màn hình chào */}
       {selectedUser ? (
-        <MessageArea selectedChat={selectedUser} />
+        <MessageArea
+          selectedChat={selectedUser}
+          messages={chatMessages}
+          onUpdateMessages={handleUpdateMessages} // Truyền hàm callback
+        />
       ) : (
         <HelloWindow />
       )}

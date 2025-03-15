@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Menu, Dropdown } from "antd";
 import { UserOutlined } from "@ant-design/icons";
 import "./Dropdown.css";
+import { useDispatch, useSelector } from "react-redux";
 
 import ProfileModal from "./ProfileModal/ProfileModal";
 import SettingsModal from "./SettingsModal/SettingsModal";
@@ -9,7 +10,7 @@ import SettingsModal from "./SettingsModal/SettingsModal";
 const ProfileDropdown = ({ onOpenSettings }) => {
   const [isProfileModalVisible, setProfileModalVisible] = useState(false);
   const [isSettingsModalVisible, setSettingsModalVisible] = useState(false);
-
+  const { user } = useSelector((state) => state.auth);
   const handleOpenProfile = () => {
     setProfileModalVisible(true);
   };
@@ -25,11 +26,12 @@ const ProfileDropdown = ({ onOpenSettings }) => {
   const handleCloseSettings = () => {
     setSettingsModalVisible(false);
   };
+  console.log("user from Dropdown: ", user);
 
   const menu = (
     <Menu className="profile-menu">
       <Menu.Item key="0">
-        <strong>Đinh Nguyên Chung</strong>
+        <strong>{user?.full_name || ""}</strong>
       </Menu.Item>
       <Menu.Divider />
       <Menu.Item key="1" onClick={handleOpenProfile}>
@@ -50,12 +52,13 @@ const ProfileDropdown = ({ onOpenSettings }) => {
     <>
       <Dropdown overlay={menu} trigger={["click"]} placement="bottomRight">
         <div className="avatar-container-sidebar">
-          <img src="https://i.ibb.co/7Njf5HW0/avt.jpg"></img>
+          <img src={user?.avatar_path || ""}></img>
         </div>
       </Dropdown>
       <ProfileModal
         visible={isProfileModalVisible}
         onClose={handleCloseProfile}
+        user={user}
       />
       <SettingsModal
         visible={isSettingsModalVisible}

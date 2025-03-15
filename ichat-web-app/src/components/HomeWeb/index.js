@@ -9,12 +9,17 @@ import CloudWindow from "./CloudWindow/CloudWindow";
 import ScissorWindow from "./ScissorWindow/ScissorWindow";
 import SettingWindow from "./SettingWindow/SettingWindow";
 import SettingsModal from "./DropDownList/SettingsModal/SettingsModal";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  fetchMessages,
+  fetchChatMessages,
+} from "../../redux/slices/messagesSlice";
 const { Content } = Layout;
 
 const App = () => {
   const [activeComponent, setActiveComponent] = useState("chatwindow"); // State để quản lý component hiển thị
   const [isSettingsModalVisible, setSettingsModalVisible] = useState(false); // Quản lý trạng thái modal
-
+  const { user } = useSelector((state) => state.auth); // Lấy user từ Redux
   // Hàm xử lý khi nhấn vào icon trên sidebar
   const handleIconClick = (component) => {
     // setActiveComponent(component);
@@ -27,12 +32,12 @@ const App = () => {
   const handleCloseSettings = () => {
     setSettingsModalVisible(false); // Đóng modal
   };
-
+  console.log("User from Redux and index.js:", user);
   // Render component tương ứng dựa trên state
   const renderComponent = () => {
     switch (activeComponent) {
       case "chatwindow":
-        return <ChatWindow />;
+        return <ChatWindow user={user} />;
       case "book":
         return <PhoneBookWindow />;
       case "check":
@@ -56,10 +61,18 @@ const App = () => {
       {/* Content */}
       <Content className="main-content">{renderComponent()}</Content>
       {/* Modal Setting */}
-      <SettingsModal
+      {/* <SettingsModal
         visible={isSettingsModalVisible}
         onClose={handleCloseSettings}
-      />
+        user={user}
+      /> */}
+      {isSettingsModalVisible && user && (
+        <SettingsModal
+          visible={true}
+          onClose={handleCloseSettings}
+          user={user}
+        />
+      )}
     </Layout>
   );
 };

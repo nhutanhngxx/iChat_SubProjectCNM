@@ -417,7 +417,7 @@ const ComponentLeftSearch = ({ userList, onSelectUser, onClose }) => {
   };
 
   const filteredSearchUser = contacts.filter((user) =>
-    user.name.toLowerCase().includes(searchText.toLowerCase())
+    user.name?.toLowerCase().includes(searchText.toLowerCase())
   );
 
   const filteredSearchMessages = messages.filter((msg) =>

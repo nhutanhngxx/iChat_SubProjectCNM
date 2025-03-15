@@ -4,7 +4,7 @@ import { EditOutlined } from "@ant-design/icons";
 import "./ProfileModal.css";
 import { CiEdit } from "react-icons/ci";
 
-const ProfileModal = ({ visible, onClose }) => {
+const ProfileModal = ({ visible, onClose, user }) => {
   return (
     <Modal
       title={
@@ -31,22 +31,22 @@ const ProfileModal = ({ visible, onClose }) => {
         <div className="profile-details">
           <Avatar
             size={70}
-            src="https://i.ibb.co/7Njf5HW0/avt.jpg"
+            src={user?.avatar_path || ""}
             className="profile-avatar"
           />
-          <span className="profile-name">Đinh Nguyên Chung</span>
+          <span className="profile-name">{user?.full_name}</span>
           <EditOutlined className="edit-icon" />
         </div>
       </div>
       <div className="info-section">
         <p>
-          <strong>Giới tính:</strong> Nam
+          <strong>Giới tính:</strong> {user?.gender === "Male" ? "Nam" : "Nữ"}
         </p>
         <p>
-          <strong>Ngày sinh:</strong> 24 tháng 04, 2003
+          <strong>Ngày sinh:</strong> {user?.dob || "Chưa cập nhật"}
         </p>
         <p>
-          <strong>Điện thoại:</strong> +84 *** *** ****
+          <strong>Điện thoại:</strong> {user?.phone || "Chưa cập nhật"}
         </p>
         <p className="info-note">
           Chỉ bạn bè có lưu số của bạn trong danh bạ máy xem được số này

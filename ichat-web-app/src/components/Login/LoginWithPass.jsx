@@ -8,6 +8,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { loginUser } from "../../redux/slices/authSlice";
 import { useNavigate } from "react-router-dom";
 import "./LoginWithPass.css";
+import { Modal, Spinner } from "react-bootstrap";
 
 export default function LoginWithPass() {
   // Khai báo state cho form đăng nhập
@@ -51,7 +52,29 @@ export default function LoginWithPass() {
   //       navigate("/home");
   //     }
   //   }, [token, navigate]);
+  // Check Input phone
+  // Khai báo state mới để lưu lỗi nhập số điện thoại
+  const [phoneError, setPhoneError] = useState("");
+  const handleChange = (e) => {
+    let value = e.target.value;
 
+    // Chỉ cho phép nhập số
+    if (!/^\d*$/.test(value)) return;
+
+    // Giới hạn tối đa 10 số
+    if (value.length > 10) return;
+
+    setPhone(value);
+
+    // Kiểm tra điều kiện hợp lệ ngay khi nhập
+    if (!/^0\d{0,9}$/.test(value)) {
+      setPhoneError("Số điện thoại phải bắt đầu bằng 0");
+    } else if (value.length < 10) {
+      setPhoneError("Số điện thoại phải có đúng 10 số");
+    } else {
+      setPhoneError(""); // Hợp lệ
+    }
+  };
   console.log("User:", user);
   console.log("Token:", token);
 
@@ -125,11 +148,27 @@ export default function LoginWithPass() {
                 </div>
                 <input
                   type="text"
-                  className="input-field"
+                  className={`input-field ${error ? "error" : ""}`}
                   placeholder="Nhập số điện thoại"
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  // onChange={(e) => setPhone(e.target.value)}
+                  onChange={handleChange}
                 />
+                <style jsx>{`
+                  .input-field {
+                    width: 100%;
+                    padding: 8px;
+                    font-size: 16px;
+                    border: 2px solid ${error ? "red" : "#ccc"};
+                    border-radius: 5px;
+                    outline: none;
+                  }
+                  .error-message {
+                    color: red;
+                    font-size: 14px;
+                    margin-top: 5px;
+                  }
+                `}</style>
               </div>
 
               <div className="input-wrapper">
@@ -152,9 +191,21 @@ export default function LoginWithPass() {
               </p>
             )}
             {loading && (
-              <p className="loading" style={{ marginLeft: "30px" }}>
-                Đang xử lý...
-              </p>
+              // <p className="loading" style={{ marginLeft: "30px" }}>
+              //   Đang xử lý...
+              // </p>
+
+              <div className="loading-overlay">
+                <div className="loading-spinner">
+                  <div className="loader-dots">
+                    <div className="dot"></div>
+                    <div className="dot"></div>
+                    <div className="dot"></div>
+                    <div className="dot"></div>
+                  </div>
+                  <div className="loading-text">Đang xử lý...</div>
+                </div>
+              </div>
             )}
 
             <div className="container-body-button">

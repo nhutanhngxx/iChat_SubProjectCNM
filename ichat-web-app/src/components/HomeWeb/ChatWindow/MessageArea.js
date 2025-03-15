@@ -17,35 +17,37 @@ import { set } from "lodash";
 const { Header, Content } = Layout;
 
 // Mock messages for different users
-const mockMessagesByUser = {
-  1: [
-    {
-      id: 1,
-      text: "Hi, is the watch still up for sale?",
-      sender: "George Alan",
-      timestamp: "2:30 PM",
-      type: "received",
-    },
-    {
-      id: 2,
-      text: "Awesome! Can I see a couple of pictures?",
-      sender: "You",
-      timestamp: "2:31 PM",
-      type: "sent",
-    },
-  ],
-  2: [
-    {
-      id: 3,
-      text: "Your ride is arriving",
-      sender: "Uber Cars",
-      timestamp: "1:45 PM",
-      type: "received",
-    },
-  ],
-};
+// const mockMessagesByUser = {
+//   1: [
+//     {
+//       id: 1,
+//       text: "Hi, is the watch still up for sale?",
+//       sender: "George Alan",
+//       timestamp: "2:30 PM",
+//       type: "received",
+//     },
+//     {
+//       id: 2,
+//       text: "Awesome! Can I see a couple of pictures?",
+//       sender: "You",
+//       timestamp: "2:31 PM",
+//       type: "sent",
+//     },
+//   ],
+//   2: [
+//     {
+//       id: 3,
+//       text: "Your ride is arriving",
+//       sender: "Uber Cars",
+//       timestamp: "1:45 PM",
+//       type: "received",
+//     },
+//   ],
+// };
 
 const MessageArea = ({ selectedChat }) => {
+  // Load tin nhắn từ Bacend
+
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState("");
   // Hiển thị thông tin hội thoại
@@ -83,13 +85,13 @@ const MessageArea = ({ selectedChat }) => {
   };
   console.log(handleExpandContract);
 
-  useEffect(() => {
-    if (selectedChat) {
-      // Fetch messages based on selected chat
-      const userMessages = mockMessagesByUser[selectedChat.id] || [];
-      setMessages(userMessages);
-    }
-  }, [selectedChat]);
+  // useEffect(() => {
+  //   if (selectedChat) {
+  //     // Fetch messages based on selected chat
+  //     const userMessages = mockMessagesByUser[selectedChat.id] || [];
+  //     setMessages(userMessages);
+  //   }
+  // }, [selectedChat]);
 
   // Hàm xử lý gửi tin nhắn
   const handleSendMessage = (text = "") => {
@@ -159,6 +161,7 @@ const MessageArea = ({ selectedChat }) => {
       messageEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages]);
+
   if (!selectedChat) return null;
 
   return (
@@ -169,7 +172,7 @@ const MessageArea = ({ selectedChat }) => {
             <div className="avatar-message">
               <Avatar
                 size={48}
-                src={`https://i.pravatar.cc/300?img=${selectedChat.id}`}
+                src={selectedChat.avatar_path} // Thay đổi avatar
                 className="profile-avatar-message"
               />
             </div>

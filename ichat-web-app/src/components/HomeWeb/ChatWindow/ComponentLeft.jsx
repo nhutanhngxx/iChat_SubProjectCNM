@@ -29,6 +29,9 @@ import ComponentLeftSearch from "./ComponentLeftSearch";
 
 import SearchComponent from "./SearchComponent";
 import MenuMdMoreHoriz from "./MenuMdMoreHoriz";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+import localizedFormat from "dayjs/plugin/localizedFormat";
 
 const { Content } = Layout;
 const { TabPane } = Tabs;
@@ -54,54 +57,6 @@ const categories = [
     label: "Tin nhắn tư nguyện là",
     value: "Tin nhắn tư nguyện là",
     color: "black",
-  },
-];
-
-const userList = [
-  {
-    id: 1,
-    name: "George Alan",
-    lastMessage: "I'll take it. Can you ship it?",
-    time: "2:30 PM",
-    unread: 0,
-    online: true,
-    type: "text",
-  },
-  {
-    id: 2,
-    name: "Uber Cars",
-    lastMessage: "Allen: Your ride is 2 minutes away...",
-    time: "1:45 PM",
-    unread: 2,
-    online: false,
-    type: "notification",
-  },
-  {
-    id: 3,
-    name: "Safiya Fareena",
-    lastMessage: "Video",
-    time: "Yesterday",
-    unread: 0,
-    online: true,
-    type: "video",
-  },
-  {
-    id: 4,
-    name: "Epic Game",
-    lastMessage: "John Paul: 🌟Robert! Your team scored...",
-    time: "11:30 AM",
-    unread: 3,
-    online: false,
-    type: "game",
-  },
-  {
-    id: 5,
-    name: "Scott Franklin",
-    lastMessage: "Audio",
-    time: "9:15 AM",
-    unread: 1,
-    online: true,
-    type: "audio",
   },
 ];
 
@@ -143,15 +98,48 @@ const HeaderTabs = ({
   </div>
 );
 
-// Component ChatItem: Render từng mục trong danh sách chat
+//   // Tính thời gian từ timestamp
+dayjs.extend(relativeTime);
+dayjs.extend(localizedFormat);
+
 // Component ChatItem: Render từng mục trong danh sách chat
 const ChatItem = ({ item, onSelectUser }) => {
   const [isHovered, setIsHovered] = useState(false);
+  const [isClicked, setIsClicked] = useState(false);
 
+  // Tính thời gian từ timestamp
+  const formatTime = (timestamp) => {
+    const now = dayjs();
+    const messageTime = dayjs(timestamp);
+
+    if (messageTime.isSame(now, "day")) {
+      // Nếu trong hôm nay, hiển thị giờ:phút AM/PM
+      return messageTime.format("h:mm A");
+    } else if (messageTime.isSame(now.subtract(1, "day"), "day")) {
+      // Nếu là hôm qua
+      return "Yesterday";
+    } else {
+      // Nếu xa hơn, hiển thị tháng/ngày
+      return messageTime.format("MMM D");
+    }
+    // const localTime = new Date(timestamp).toLocaleString();
+    // return localTime;
+  };
+  const handleOnSelectUser = (user) => {
+    onSelectUser(user);
+    // setIsSearchOpen(false);
+    setIsClicked(true);
+  };
   return (
-    <List.Item className="chat-item" onClick={() => onSelectUser(item)}>
+    <List.Item
+      className="chat-item"
+      onClick={
+        // () => onSelectUser(item)
+        () => handleOnSelectUser(item)
+      }
+    >
       <div className="avatar-container">
-        <Avatar size={48} src={`https://i.pravatar.cc/150?img=${item.id}`} />
+        <Avatar size={48} src={item.avatar_path} />
       </div>
       <div className="chat-info">
         <Row justify="space-between">
@@ -161,15 +149,19 @@ const ChatItem = ({ item, onSelectUser }) => {
           <Col>
             <div
               className="time-and-more-container"
-              onMouseEnter={() => setIsHovered(true)}
-              onMouseLeave={() => setIsHovered(false)}
+              // onMouseEnter={() => setIsHovered(true)}
+              // onMouseLeave={() => setIsHovered(false)}
             >
-              {isHovered ? (
-                <Dropdown overlay={<MenuMdMoreHoriz />} trigger={["click"]}>
+              {isClicked ? (
+                <Dropdown
+                  overlay={<MenuMdMoreHoriz />}
+                  trigger={["click"]}
+                  // onOpenChange={(open) => setIsClicked(open)} // Đóng menu thì hiện lại timestamp
+                >
                   <MdMoreHoriz size={1} color="#333" />
                 </Dropdown>
               ) : (
-                <span className="chat-time">{item.time}</span>
+                <span className="chat-time">{formatTime(item.timestamp)}</span>
               )}
             </div>
           </Col>
@@ -225,15 +217,18 @@ const ComponentLeft = ({ userList, onSelectUser }) => {
 
   // Lọc danh sách chat dựa trên searchText
   const filteredChatList = userList.filter((chat) => {
-    const matchesSearch = chat.name
-      .toLowerCase()
-      .includes(searchText.toLowerCase());
+    // const matchesSearch = chat.name
+    //   .toLowerCase()
+    //   .includes(searchText.toLowerCase());
+    const name = chat.name ? chat.name.toLowerCase() : "";
+    const search = searchText ? searchText.toLowerCase() : "";
+    const mathchesSearch = name.includes(search);
     const matchesStatus =
       statusFilter === "all" ||
       (statusFilter === "unread" && chat.status === "unread");
     const matchesCategory =
       categoryFilters.length === 0 || categoryFilters.includes(chat.category);
-    return matchesSearch && matchesStatus && matchesCategory;
+    return mathchesSearch && matchesStatus && matchesCategory;
   });
 
   // Menu cho Dropdown
@@ -287,6 +282,7 @@ const ComponentLeft = ({ userList, onSelectUser }) => {
             filteredChatList={filteredChatList}
             onSelectUser={onSelectUser}
           />
+          {/* <ChatList filteredChatList={userList} onSelectUser={onSelectUser} /> */}
         </Layout>
       )}
     </div>

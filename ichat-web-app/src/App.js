@@ -29,17 +29,19 @@ import store from "./redux/store";
 import Login from "./components/Login";
 import HomeWeb from "./components/HomeWeb";
 import Test from "./components/HomeWeb/ChatWindow/test";
-
+import { ThemeProvider } from "./components/HomeWeb/DropDownList/SettingsModal/TabSetting/ThemeContext";
 function App() {
   return (
     <Provider store={store}>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Login />} />
-          <Route path="/home" element={<HomeWeb />} />
-          <Route path="/test" element={<Test />} />
-        </Routes>
-      </BrowserRouter>
+      <ThemeProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Login />} />
+            <Route path="/home" element={<HomeWeb />} />
+            <Route path="/test" element={<Test />} />
+          </Routes>
+        </BrowserRouter>
+      </ThemeProvider>
     </Provider>
   );
 }
