@@ -137,7 +137,8 @@
 }
 
 .filter-popover {
-  width: 200px; /* Fixed width for filter popover */
+  width: 240px; /* Fixed width for filter popover */
+  background-color: #fff;
 }
 
 .category-dot {
@@ -286,4 +287,25 @@
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.filterButton {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+  color: #050505;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.moreButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: #65676b;
+  cursor: pointer;
 }

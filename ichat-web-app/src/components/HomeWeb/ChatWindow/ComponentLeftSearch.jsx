@@ -353,75 +353,64 @@ const MessageFilter = () => {
   };
 
   return (
-    <div className="w-[364px] min-w-[364px] max-w-[364px] rounded-lg bg-white">
+    <div className="filter-messages-container">
       {/* Filter section */}
-      <div className="flex items-center justify-center text-sm relative p-2">
-        <span className="text-zinc-600 mr-2">Lọc theo:</span>
+      <div className="filter-messages-section">
+        <span className="filter-label">Lọc theo:</span>
 
         {/* User dropdown */}
-        <div className="relative">
+        <div className="filter-user-dropdown">
           <button onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}>
             {selectedUser ? (
-              <div className="flex items-center mr-3 px-2 py-1 rounded hover:bg-zinc-200 text-blue-500 bg-blue-100">
-                <FaUser className="h-3 w-3 mr-1" />
-                <div className="flex items-center">
-                  <span className="truncate max-w-[64px]">
-                    {selectedUser.name}
-                  </span>
-                  {selectedUser && (
-                    <button
-                      onClick={clearUserFilter}
-                      className="ml-1 text-blue-500"
-                    >
-                      ×
-                    </button>
-                  )}
+              <div className="filter-user-selected">
+                <FaUser className="filter-user-icon" />
+                <div className="filter-user-info">
+                  <span className="filter-user-name">{selectedUser.name}</span>
+                  <button
+                    onClick={clearUserFilter}
+                    className="filter-user-clear"
+                  >
+                    ×
+                  </button>
                 </div>
               </div>
             ) : (
-              <div className="flex items-center mr-3 px-2 py-1 rounded hover:bg-zinc-200 bg-gray-500">
-                <FaUser className="h-3 w-3 mr-1" />
-                <div className="flex items-center">
-                  <span>Người gửi</span>
-                </div>
-                <FaChevronDown className="h-3 w-3 ml-1" />
+              <div className="filter-user-default">
+                <FaUser className="filter-user-icon" />
+                <span>Người gửi</span>
+                <FaChevronDown className="filter-user-chevron" />
               </div>
             )}
           </button>
 
           {isUserDropdownOpen && (
-            <div className="absolute top-full left-0 mt-1 w-[200px] h-[320px] bg-white rounded-lg shadow-lg z-50">
-              <div className="p-1">
-                <div className="relative">
-                  <FaSearch className="absolute left-2 top-1/2 transform -translate-y-1/2 text-zinc-400 h-2.5 w-2.5" />
-                  <input
-                    type="text"
-                    placeholder="Tìm kiếm"
-                    className="w-full bg-zinc-100 rounded-md pl-7 pr-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-zinc-500"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                </div>
+            <div className="filter-user-dropdown-menu">
+              <div className="filter-user-search">
+                <FaSearch className="filter-user-search-icon" />
+                <input
+                  type="text"
+                  placeholder="Tìm kiếm"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
               </div>
-              <div className="max-h-56 overflow-y-auto">
+              <div className="filter-user-list">
                 {filteredUsers.length > 0 ? (
                   filteredUsers.map((user) => (
                     <button
                       key={user.id}
-                      className="w-full px-2 py-1 flex items-center hover:bg-zinc-100 transition-colors"
+                      className="filter-user-item"
                       onClick={() => handleUserSelect(user)}
                     >
-                      <div className="w-6 h-6 rounded-full mr-2 flex-shrink-0">
+                      <div className="filter-user-avatar">
                         <Avatar src={user.avatar} size={24} />
                       </div>
-                      <span className="text-xs truncate text-left">
-                        {user.name}
-                      </span>
+                      <span className="filter-user-item-name">{user.name}</span>
                     </button>
                   ))
                 ) : (
-                  <div className="p-3 text-center text-zinc-400">
-                    <p className="text-xs">Không tìm thấy kết quả</p>
+                  <div className="filter-user-no-results">
+                    <p>Không tìm thấy kết quả</p>
                   </div>
                 )}
               </div>
@@ -430,58 +419,52 @@ const MessageFilter = () => {
         </div>
 
         {/* Date dropdown */}
-        <div className="relative">
+        <div className="filter-date-dropdown">
           <button
-            className=""
             onClick={() => {
               setIsDateDropdownOpen(!isDateDropdownOpen);
               setIsTimeOptionsOpen(false);
             }}
           >
             {dateRange.from ? (
-              <div className="flex items-center px-2 py-1 rounded hover:bg-zinc-200 text-blue-500 bg-blue-100">
-                <FaCalendar className="h-3 w-3 mr-1" />
-                <span className="truncate max-w-[64px]">{`${formatDate(
+              <div className="filter-date-selected">
+                <FaCalendar className="filter-date-icon" />
+                <span className="filter-date-range">{`${formatDate(
                   dateRange.from
                 )} - ${formatDate(dateRange.to)}`}</span>
-                {dateRange.from && (
-                  <button
-                    onClick={clearDateFilter}
-                    className="ml-1 text-zinc-400 text-blue-500"
-                  >
-                    ×
-                  </button>
-                )}
+                <button onClick={clearDateFilter} className="filter-date-clear">
+                  ×
+                </button>
               </div>
             ) : (
-              <div className="flex items-center px-2 py-1 rounded hover:bg-zinc-200 bg-white">
-                <FaCalendar className="h-3 w-3 mr-1" />
+              <div className="filter-date-default">
+                <FaCalendar className="filter-date-icon" />
                 <span>Ngày gửi</span>
-                <FaChevronDown className="h-3 w-3 ml-1" />
+                <FaChevronDown className="filter-date-chevron" />
               </div>
             )}
           </button>
 
           {isDateDropdownOpen && (
-            <div className="absolute top-full right-0 mt-1 w-[286px] bg-white rounded-lg shadow-lg z-50">
+            <div className="filter-date-dropdown-menu">
               {/* Quick time suggestions */}
-              <div className="p-3 border-b border-zinc-200">
+              <div className="filter-date-suggestions">
                 <div
-                  className="flex items-center justify-between cursor-pointer hover:bg-gray-50 p-2 rounded"
+                  className="filter-date-suggestions-header"
                   onClick={() => setIsTimeOptionsOpen(!isTimeOptionsOpen)}
                 >
-                  <h3 className="text-sm font-medium">Gợi ý thời gian</h3>
-                  <FaChevronRight className="h-3 w-3 text-gray-400" />
+                  <h3>Gợi ý thời gian</h3>
+                  <FaChevronRight className="filter-date-suggestions-chevron" />
                 </div>
               </div>
 
               {/* Time options dropdown */}
               {isTimeOptionsOpen && (
-                <div className="absolute left-full top-0 mt-3 ml-1 w-[140px] bg-white rounded-lg shadow-lg z-[9999] py-1">
+                <div className="filter-time-options">
                   {timeOptions.map((option) => (
                     <button
                       key={option.value}
-                      className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50"
+                      className="filter-time-option"
                       onClick={() => {
                         const to = new Date();
                         const from = new Date();
@@ -498,12 +481,10 @@ const MessageFilter = () => {
               )}
 
               {/* Date range picker */}
-              <div className="p-3">
-                <h3 className="text-sm font-medium mb-2">
-                  Chọn khoảng thời gian
-                </h3>
-                <div className="flex gap-2 mb-3">
-                  <div className="flex-1 relative">
+              <div className="filter-date-picker">
+                <h3>Chọn khoảng thời gian</h3>
+                <div className="filter-date-inputs">
+                  <div className="filter-date-input">
                     <DatePicker
                       selected={dateRange.from}
                       onChange={(date) =>
@@ -511,10 +492,9 @@ const MessageFilter = () => {
                       }
                       placeholderText="Từ ngày"
                       dateFormat="dd/MM/yyyy"
-                      className="w-full px-3 py-2 bg-white border border-zinc-200 rounded text-sm hover:bg-gray-50"
                     />
                   </div>
-                  <div className="flex-1 relative">
+                  <div className="filter-date-input">
                     <DatePicker
                       selected={dateRange.to}
                       onChange={(date) =>
@@ -522,7 +502,6 @@ const MessageFilter = () => {
                       }
                       placeholderText="Đến ngày"
                       dateFormat="dd/MM/yyyy"
-                      className="w-full px-3 py-2 bg-white border border-zinc-200 rounded text-sm hover:bg-gray-50"
                       minDate={dateRange.from}
                     />
                   </div>
@@ -530,9 +509,9 @@ const MessageFilter = () => {
               </div>
 
               {/* Action buttons */}
-              <div className="p-3 flex justify-end gap-2 border-t border-zinc-200">
+              <div className="filter-date-actions">
                 <button
-                  className="px-4 py-2 text-sm rounded hover:bg-gray-100"
+                  className="filter-date-cancel"
                   onClick={() => {
                     setIsDateDropdownOpen(false);
                     setIsTimeOptionsOpen(false);
@@ -541,7 +520,7 @@ const MessageFilter = () => {
                   Hủy
                 </button>
                 <button
-                  className="px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+                  className="filter-date-confirm"
                   onClick={() => {
                     setIsDateDropdownOpen(false);
                     setIsTimeOptionsOpen(false);
@@ -598,7 +577,7 @@ const FileFilter = ({
       </Select>
 
       {/* Date dropdown */}
-      <div className="relative">
+      <div className="filter-date-dropdown">
         <button
           onClick={() => {
             setIsDateDropdownOpen(!isDateDropdownOpen);
@@ -606,49 +585,44 @@ const FileFilter = ({
           }}
         >
           {dateRange.from ? (
-            <div className="flex items-center px-2 py-1 rounded hover:bg-zinc-200 text-blue-500 bg-blue-100">
-              <FaCalendar className="h-3 w-3 mr-1" />
-              <span className="truncate max-w-[64px]">{`${formatDate(
+            <div className="filter-date-selected">
+              <FaCalendar className="filter-date-icon" />
+              <span className="filter-date-range">{`${formatDate(
                 dateRange.from
               )} - ${formatDate(dateRange.to)}`}</span>
-              {dateRange.from && (
-                <button
-                  onClick={clearDateFilter}
-                  className="ml-1 text-zinc-400 text-blue-500"
-                >
-                  ×
-                </button>
-              )}
+              <button onClick={clearDateFilter} className="filter-date-clear">
+                ×
+              </button>
             </div>
           ) : (
-            <div className="flex items-center px-2 py-1 rounded hover:bg-zinc-200 bg-white">
-              <FaCalendar className="h-3 w-3 mr-1" />
+            <div className="filter-date-default">
+              <FaCalendar className="filter-date-icon" />
               <span>Ngày gửi</span>
-              <FaChevronDown className="h-3 w-3 ml-1" />
+              <FaChevronDown className="filter-date-chevron" />
             </div>
           )}
         </button>
 
         {isDateDropdownOpen && (
-          <div className="absolute top-full right-0 mt-1 w-[286px] bg-white rounded-lg shadow-lg z-50">
+          <div className="filter-date-dropdown-menu">
             {/* Quick time suggestions */}
-            <div className="p-3 border-b border-zinc-200">
+            <div className="filter-date-suggestions">
               <div
-                className="flex items-center justify-between cursor-pointer hover:bg-gray-50 p-2 rounded"
+                className="filter-date-suggestions-header"
                 onClick={() => setIsTimeOptionsOpen(!isTimeOptionsOpen)}
               >
-                <h3 className="text-sm font-medium">Gợi ý thời gian</h3>
-                <FaChevronRight className="h-3 w-3 text-gray-400" />
+                <h3>Gợi ý thời gian</h3>
+                <FaChevronRight className="filter-date-suggestions-chevron" />
               </div>
             </div>
 
             {/* Time options dropdown */}
             {isTimeOptionsOpen && (
-              <div className="absolute left-full top-0 mt-3 ml-1 w-[140px] bg-white rounded-lg shadow-lg z-[9999] py-1">
+              <div className="filter-time-options">
                 {timeOptions.map((option) => (
                   <button
                     key={option.value}
-                    className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50"
+                    className="filter-time-option"
                     onClick={() => {
                       const to = new Date();
                       const from = new Date();
@@ -665,12 +639,10 @@ const FileFilter = ({
             )}
 
             {/* Date range picker */}
-            <div className="p-3">
-              <h3 className="text-sm font-medium mb-2">
-                Chọn khoảng thời gian
-              </h3>
-              <div className="flex gap-2 mb-3">
-                <div className="flex-1 relative">
+            <div className="filter-date-picker">
+              <h3>Chọn khoảng thời gian</h3>
+              <div className="filter-date-inputs">
+                <div className="filter-date-input">
                   <DatePicker
                     selected={dateRange.from}
                     onChange={(date) =>
@@ -678,10 +650,9 @@ const FileFilter = ({
                     }
                     placeholderText="Từ ngày"
                     dateFormat="dd/MM/yyyy"
-                    className="w-full px-3 py-2 bg-white border border-zinc-200 rounded text-sm hover:bg-gray-50"
                   />
                 </div>
-                <div className="flex-1 relative">
+                <div className="filter-date-input">
                   <DatePicker
                     selected={dateRange.to}
                     onChange={(date) =>
@@ -689,7 +660,6 @@ const FileFilter = ({
                     }
                     placeholderText="Đến ngày"
                     dateFormat="dd/MM/yyyy"
-                    className="w-full px-3 py-2 bg-white border border-zinc-200 rounded text-sm hover:bg-gray-50"
                     minDate={dateRange.from}
                   />
                 </div>
@@ -697,9 +667,9 @@ const FileFilter = ({
             </div>
 
             {/* Action buttons */}
-            <div className="p-3 flex justify-end gap-2 border-t border-zinc-200">
+            <div className="filter-date-actions">
               <button
-                className="px-4 py-2 text-sm rounded hover:bg-gray-100"
+                className="filter-date-cancel"
                 onClick={() => {
                   setIsDateDropdownOpen(false);
                   setIsTimeOptionsOpen(false);
@@ -708,7 +678,7 @@ const FileFilter = ({
                 Hủy
               </button>
               <button
-                className="px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+                className="filter-date-confirm"
                 onClick={() => {
                   setIsDateDropdownOpen(false);
                   setIsTimeOptionsOpen(false);

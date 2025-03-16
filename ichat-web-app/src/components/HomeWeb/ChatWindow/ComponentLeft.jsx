@@ -180,7 +180,6 @@ const ComponentLeft = ({ userList, onSelectUser }) => {
   // Nội dung của Popover
   const filterContent = (
     <div className="filter-popover">
-      <h3>Phân loại</h3>
       <p>Theo trạng thái</p>
       <Radio.Group
         value={statusFilter}
@@ -247,15 +246,31 @@ const ComponentLeft = ({ userList, onSelectUser }) => {
                 </button>
               </div>
               <div className="actions-header">
-                <button>
-                  Phân loại <DownOutlined size={16} />
-                </button>
-                <button>
-                  <MoreOutlined />
-                </button>
+                <Dropdown overlay={filterContent} trigger={["click"]}>
+                  <button className="filterButton">
+                    Phân loại <DownOutlined size={16} />
+                  </button>
+                </Dropdown>
+                <Dropdown
+                  overlay={
+                    <Menu>
+                      <Menu.Item key="1">Đánh dấu đã đọc</Menu.Item>
+                    </Menu>
+                  }
+                  trigger={["click"]}
+                >
+                  <button className="moreButton">
+                    <MoreOutlined size={16} />
+                  </button>
+                </Dropdown>
               </div>
             </div>
-            <div className="list-conversations-container"></div>
+            <div className="list-conversations-container">
+              <ChatList
+                filteredChatList={filteredChatList}
+                onSelectUser={onSelectUser}
+              />
+            </div>
           </div>
         </Layout>
       )}
