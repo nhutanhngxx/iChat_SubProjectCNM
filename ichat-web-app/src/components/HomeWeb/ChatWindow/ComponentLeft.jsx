@@ -146,6 +146,7 @@ const ChatList = ({ filteredChatList, onSelectUser }) => (
 
 // Component chính: ComponentLeft
 const ComponentLeft = ({ userList, onSelectUser }) => {
+  const [activeTab, setActiveTab] = useState("priority");
   const [searchText] = useState("");
   const [showInterface, setShowInterface] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
@@ -224,7 +225,38 @@ const ComponentLeft = ({ userList, onSelectUser }) => {
             filteredChatList={filteredChatList}
             onSelectUser={onSelectUser}
           /> */}
-          <div className=""></div>
+          <div className="conversations-container">
+            <div className="classification-conversation-container">
+              <div className="tabs-header">
+                <button
+                  className={`tab-header ${
+                    activeTab === "priority" ? "active-tab-header" : ""
+                  }`}
+                  onClick={() => setActiveTab("priority")}
+                >
+                  Ưu tiên
+                </button>
+
+                <button
+                  className={`tab-header ${
+                    activeTab === "other" ? "active-tab-header" : ""
+                  }`}
+                  onClick={() => setActiveTab("other")}
+                >
+                  Khác
+                </button>
+              </div>
+              <div className="actions-header">
+                <button>
+                  Phân loại <DownOutlined size={16} />
+                </button>
+                <button>
+                  <MoreOutlined />
+                </button>
+              </div>
+            </div>
+            <div className="list-conversations-container"></div>
+          </div>
         </Layout>
       )}
     </div>
