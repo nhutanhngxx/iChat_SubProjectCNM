@@ -67,6 +67,7 @@ const ChatWindow = ({ user }) => {
           selectedChat={selectedUser}
           messages={chatMessages}
           onUpdateMessages={handleUpdateMessages} // Truyền hàm callback
+          user={user}
         />
       ) : (
         <HelloWindow />

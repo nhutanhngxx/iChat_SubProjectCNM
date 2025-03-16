@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-const API_URL = `http://${window.location.hostname}:5001//`;
+const API_URL = `http://${window.location.hostname}:5001/`;
 // Định nghĩa action async để đăng nhập
 export const loginUser = createAsyncThunk(
   "auth/loginUser",
@@ -28,6 +28,30 @@ export const loginUser = createAsyncThunk(
   }
 );
 
+// Action async để logout (gọi API logout)
+export const logoutUser = createAsyncThunk(
+  "auth/logoutUser",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${API_URL}logout`, {
+        method: "POST",
+        credentials: "include", // Gửi cookie chứa refreshToken nếu có
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Đăng xuất thất bại");
+      }
+
+      return data;
+    } catch (error) {
+      console.error("Lỗi khi đăng xuất:", error.message);
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
 const authSlice = createSlice({
   name: "auth",
   initialState: {
@@ -36,17 +60,24 @@ const authSlice = createSlice({
     loading: false,
     error: null,
   },
-  reducers: {
-    logout: (state) => {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-      state.user = null;
-      state.token = null;
-      state.error = null;
-    },
-  },
+  reducers: {},
   extraReducers: (builder) => {
     builder
+      .addCase(logoutUser.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(logoutUser.fulfilled, (state) => {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        state.user = null;
+        state.token = null;
+        state.loading = false;
+        state.error = null;
+      })
+      .addCase(logoutUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
       .addCase(loginUser.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -63,5 +94,4 @@ const authSlice = createSlice({
   },
 });
 
-export const { logout } = authSlice.actions;
 export default authSlice.reducer;

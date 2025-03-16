@@ -8,6 +8,8 @@ import {
   InboxOutlined,
   EditOutlined,
 } from "@ant-design/icons";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchChatMessages } from "../../../redux/slices/messagesSlice";
 import Message from "./Message";
 import MessageInput from "./MessageInput";
 import "./MessageArea.css";
@@ -15,7 +17,6 @@ import ConversationDetails from "./ConversationDetails";
 import SearchRight from "./SearchRight";
 import { set } from "lodash";
 const { Header, Content } = Layout;
-
 // Mock messages for different users
 // const mockMessagesByUser = {
 //   1: [
@@ -45,8 +46,11 @@ const { Header, Content } = Layout;
 //   ],
 // };
 
-const MessageArea = ({ selectedChat }) => {
+const MessageArea = ({ selectedChat, user }) => {
   // Load tin nhắn từ Bacend
+  // Lấy dữ liệu tin nhắn từ Redux Store
+  const dispatch = useDispatch();
+  const chatMessages = useSelector((state) => state.messages.chatMessages);
 
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState("");
@@ -85,13 +89,18 @@ const MessageArea = ({ selectedChat }) => {
   };
   console.log(handleExpandContract);
 
-  // useEffect(() => {
-  //   if (selectedChat) {
-  //     // Fetch messages based on selected chat
-  //     const userMessages = mockMessagesByUser[selectedChat.id] || [];
-  //     setMessages(userMessages);
-  //   }
-  // }, [selectedChat]);
+  // Gọi API khi component render
+  useEffect(() => {
+    if (user?.id && selectedChat?.receiver_id) {
+      dispatch(
+        fetchChatMessages({
+          senderId: user.id,
+          receiverId: selectedChat.receiver_id,
+        })
+      );
+    }
+  }, [dispatch, user?.id, selectedChat?.receiver_id]);
+  console.log("Chat Messages in MessageArea", chatMessages);
 
   // Hàm xử lý gửi tin nhắn
   const handleSendMessage = (text = "") => {
@@ -161,6 +170,8 @@ const MessageArea = ({ selectedChat }) => {
       messageEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages]);
+  console.log("Selected Chat in MessageArea", selectedChat);
+  console.log("Messages in MessageArea", messages);
 
   if (!selectedChat) return null;
 
@@ -199,11 +210,12 @@ const MessageArea = ({ selectedChat }) => {
 
         <Content className="message-area-content">
           <div className="message-container">
-            {messages.map((message) => (
+            {(chatMessages || []).map((message) => (
               <Message
                 key={message.id}
                 message={message}
                 selectedChat={selectedChat}
+                isSender={message.sender_id === user.id}
               />
             ))}
             {/* Phần tử ẩn để cuộn xuống */}

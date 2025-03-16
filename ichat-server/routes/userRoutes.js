@@ -184,5 +184,15 @@ router.get("/users", async (req, res) => {
     res.status(500).json({ status: "error", message: error.message });
   }
 });
+// Đăng xuất
+router.post("/logout", (req, res) => {
+  res.clearCookie("refreshToken", {
+    httpOnly: true,
+    secure: true,
+    sameSite: "Strict",
+  });
+  res.json({ status: "ok", message: "Logged out successfully" });
+});
+
 
 module.exports = router;

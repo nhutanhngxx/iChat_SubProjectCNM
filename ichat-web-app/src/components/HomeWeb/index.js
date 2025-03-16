@@ -14,6 +14,7 @@ import {
   fetchMessages,
   fetchChatMessages,
 } from "../../redux/slices/messagesSlice";
+import Login from "../Login/index";
 const { Content } = Layout;
 
 const App = () => {
@@ -37,7 +38,7 @@ const App = () => {
   const renderComponent = () => {
     switch (activeComponent) {
       case "chatwindow":
-        return <ChatWindow user={user} />;
+        return user ? <ChatWindow user={user} /> : <Login />;
       case "book":
         return <PhoneBookWindow />;
       case "check":

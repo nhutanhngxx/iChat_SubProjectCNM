@@ -4,14 +4,14 @@ import "./Message.css";
 
 import { LikeOutlined, CheckOutlined } from "@ant-design/icons";
 
-const Message = ({ message, selectedChat }) => {
+const Message = ({ message, selectedChat, isSender }) => {
   return (
-    <div className={`message ${message.type}`}>
-      {message.type === "received" && (
+    <div className={`message ${isSender ? "sent" : "received"}`}>
+      {!isSender && (
         <div className="avatar-message">
           <Avatar
             size={32}
-            src={`https://i.pravatar.cc/300?img=${selectedChat.id}`}
+            src={selectedChat.avatar_path}
             className="profile-avatar-message"
           />
         </div>
@@ -61,8 +61,13 @@ const Message = ({ message, selectedChat }) => {
         </div>
       ) : (
         <div className="message-content">
-          <p>{message.text}</p>
-          <span className="timestamp">{message.timestamp}</span>
+          <p>{message.content}</p>
+          <span className="timestamp">
+            {new Date(message.timestamp).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </span>
         </div>
       )}
     </div>
