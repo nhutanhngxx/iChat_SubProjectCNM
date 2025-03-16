@@ -32,6 +32,8 @@ const Chatting = ({ route }) => {
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
 
+  // console.log("messages: ", messages);
+
   const API_iChat = `http://${window.location.hostname}:5001`;
 
   // Hiển thị modal khi ấn giữ tin nhắn
