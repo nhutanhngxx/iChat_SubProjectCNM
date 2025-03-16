@@ -20,6 +20,7 @@ import { useNavigation } from "@react-navigation/native";
 import { UserContext } from "@/src/context/UserContext";
 import axios from "axios";
 import messageService from "../../services/messageService";
+import groupService from "@/src/services/groupService";
 
 const Chatting = ({ route }) => {
   const navigation = useNavigation();
@@ -31,8 +32,7 @@ const Chatting = ({ route }) => {
   const [replyMessage, setReplyMessage] = useState(null);
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
-
-  // console.log("messages: ", messages);
+  const [groupMembers, setGroupMembers] = useState([]);
 
   const API_iChat = `http://${window.location.hostname}:5001`;
 
@@ -79,7 +79,9 @@ const Chatting = ({ route }) => {
     useEffect(() => {
       const fetchMessages = async () => {
         const messages = await messageService.getMessagesByGroupId(chat.id);
+        const members = await groupService.getGroupMembers(chat.id);
         setMessages(messages);
+        setGroupMembers(members);
       };
       fetchMessages();
       const interval = setInterval(fetchMessages, 1000);
@@ -244,6 +246,10 @@ const Chatting = ({ route }) => {
                     : styles.theirMessage,
                 ]}
               >
+                {/* Tên người gửi */}
+                {!isMyMessage && chat.chatType === "group" && (
+                  <Text style={styles.replySender}>{item.sender_id}:</Text>
+                )}
                 {/* Hiển thị tin nhắn Reply => Hiển thị tin nhắn gốc trước */}
                 {repliedMessage && (
                   <View style={styles.replyContainer}>

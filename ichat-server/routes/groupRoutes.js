@@ -36,4 +36,14 @@ router.get("/groups", async (req, res) => {
   }
 });
 
+// Lấy danh sách thành viên của nhóm
+router.get("/groups/:groupId/members", async (req, res) => {
+  try {
+    const members = await GroupMembers.find({ group_id: req.params.groupId });
+    res.json({ status: "ok", data: members });
+  } catch (err) {
+    res.status(500).json({ message: err });
+  }
+});
+
 module.exports = router;
