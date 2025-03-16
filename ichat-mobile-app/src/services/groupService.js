@@ -1,5 +1,6 @@
 import api from "./api";
 import messageService from "./messageService";
+import userService from "./userService";
 
 // Tính thời gian
 import dayjs from "dayjs";
@@ -60,8 +61,8 @@ const groupService = {
   },
   getGroupMembers: async (groupId) => {
     try {
-      const response = await api.get(`/groups/${groupId}/members`);
-      return response.data.data;
+      const members = await api.get(`/groups/${groupId}/members`);
+      return members.data.data;
     } catch (error) {
       console.log("Group Service Error: ", error);
       return [];

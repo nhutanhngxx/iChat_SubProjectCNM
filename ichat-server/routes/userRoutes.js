@@ -202,6 +202,22 @@ router.post("/userdata", async (req, res) => {
   }
 });
 
+// Lấy thông tin User từ ID
+router.get("/users/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    let user = await User.findById(id);
+    if (!user) {
+      return res
+        .status(404)
+        .json({ status: "error", message: "User not found" });
+    }
+    res.json({ status: "ok", user });
+  } catch (error) {
+    res.status(500).json({ status: "error", message: error.message });
+  }
+});
+
 // Lấy tất cả user từ database (Tìm kiếm nếu tìm thấy)
 router.get("/users", async (req, res) => {
   const { search } = req.query;

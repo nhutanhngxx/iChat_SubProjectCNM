@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useContext, useRef } from "react";
+import React, {
+  useState,
+  useEffect,
+  useContext,
+  useRef,
+  useCallback,
+} from "react";
 import {
   Text,
   View,
@@ -35,6 +41,15 @@ const Chatting = ({ route }) => {
   const [groupMembers, setGroupMembers] = useState([]);
 
   const API_iChat = `http://${window.location.hostname}:5001`;
+
+  // Hàm lấy tên thành viên từ ID để hiển thị trên tin nhắn nhóm
+  const getMemberName = useCallback(
+    (memberId) => {
+      const member = groupMembers.find((m) => m._id === memberId);
+      return member?.full_name || "Unknown";
+    },
+    [groupMembers]
+  );
 
   // Hiển thị modal khi ấn giữ tin nhắn
   const handleLongPress = (message) => {
@@ -248,13 +263,17 @@ const Chatting = ({ route }) => {
               >
                 {/* Tên người gửi */}
                 {!isMyMessage && chat.chatType === "group" && (
-                  <Text style={styles.replySender}>{item.sender_id}:</Text>
+                  <Text style={styles.replySender}>
+                    {getMemberName(item.sender_id)}:
+                  </Text>
                 )}
                 {/* Hiển thị tin nhắn Reply => Hiển thị tin nhắn gốc trước */}
                 {repliedMessage && (
                   <View style={styles.replyContainer}>
                     <Text style={styles.replySender}>
-                      {repliedMessage.sender_id === user.id ? "Bạn" : chat.name}
+                      {repliedMessage.sender_id === user.id
+                        ? "Bạn"
+                        : getMemberName(repliedMessage.sender_id)}
                       :
                     </Text>
                     <Text
