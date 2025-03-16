@@ -152,13 +152,6 @@
   margin-top: 10px;
 }
 
-/* Danh sách */
-.chat-list {
-  height: calc(100vh - 160px);
-  overflow-y: auto;
-  padding: 0;
-}
-
 /* Mỗi item trong danh sách */
 .ant-list-item {
   padding: 12px !important;
@@ -184,4 +177,60 @@
 
 .list-item:hover .delete-button:hover {
   color: royalblue;
+}
+
+.time-and-more-container {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.md-more-horiz-icon {
+  font-size: 18px;
+  color: #333;
+  cursor: pointer;
+  display: none;
+}
+
+.time-and-more-container:hover .md-more-horiz-icon {
+  display: inline-block;
+}
+
+.time-and-more-container:hover .chat-time {
+  display: none;
+}
+
+.chat-tabs-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.tab-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.category-dropdown {
+  color: #595959;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.more-options {
+  color: #595959;
+  font-size: 16px;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.category-dropdown:hover,
+.more-options:hover {
+  color: #1890ff;
 }

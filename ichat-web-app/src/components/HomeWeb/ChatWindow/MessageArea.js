@@ -1,5 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { Layout, Avatar, Dropdown, Menu, Button, Modal } from "antd";
+import {
+  Layout,
+  Avatar,
+  Dropdown,
+  Menu,
+  Button,
+  Modal,
+  Input,
+  Checkbox,
+} from "antd";
 import {
   VideoCameraOutlined,
   UsergroupAddOutlined,
@@ -10,15 +19,28 @@ import {
   SettingOutlined,
   MenuOutlined,
   PlusOutlined,
+  DeleteOutlined,
+  CloseOutlined,
 } from "@ant-design/icons";
 import Message from "./Message";
 import MessageInput from "./MessageInput";
-import "./MessageArea.css";
 import ConversationDetails from "./ConversationDetails";
+import "./MessageArea.css";
 
 const { Header, Content } = Layout;
 
-// Mock messages for different users
+// Constants
+const CATEGORY_COLORS = [
+  "#ef4444",
+  "#ec4899",
+  "#f97316",
+  "#eab308",
+  "#22c55e",
+  "#06b6d4",
+  "#3b82f6",
+  "#a855f7",
+];
+
 const mockMessagesByUser = {
   1: [
     {
@@ -47,18 +69,162 @@ const mockMessagesByUser = {
   ],
 };
 
+// Sub-components
+const AddCategoryModal = ({ setCategories }) => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [categoryName, setCategoryName] = useState("");
+  const [selectedColor, setSelectedColor] = useState(CATEGORY_COLORS[0]);
+
+  const showModal = () => setIsModalOpen(true);
+  const handleCancel = () => setIsModalOpen(false);
+
+  const handleSubmit = () => {
+    if (categoryName.trim()) {
+      setCategories((prev) => [
+        ...prev,
+        { name: categoryName, color: selectedColor },
+      ]);
+      setCategoryName("");
+      setSelectedColor(CATEGORY_COLORS[0]);
+      setIsModalOpen(false);
+    }
+  };
+
+  return (
+    <div>
+      <Button
+        type="text"
+        className="add-category-button"
+        icon={<PlusOutlined />}
+        onClick={showModal}
+      >
+        Thêm phân loại
+      </Button>
+
+      <Modal
+        title="Thêm mới thẻ phân loại"
+        open={isModalOpen}
+        onOk={handleSubmit}
+        onCancel={handleCancel}
+        okText="Thêm phân loại"
+        cancelText="Hủy"
+        okButtonProps={{ disabled: !categoryName.trim() }}
+      >
+        <label>Tên thẻ phân loại</label>
+        <Input
+          placeholder="Nhập tên thẻ phân loại"
+          value={categoryName}
+          onChange={(e) => setCategoryName(e.target.value)}
+          style={{ marginBottom: "10px" }}
+        />
+
+        <label>Thay đổi màu thẻ</label>
+        <div style={{ display: "flex", gap: "8px", marginTop: "8px" }}>
+          {CATEGORY_COLORS.map((color) => (
+            <button
+              key={color}
+              style={{
+                background: color,
+                width: "32px",
+                height: "32px",
+                borderRadius: "50%",
+                border:
+                  selectedColor === color
+                    ? "3px solid black"
+                    : "1px solid gray",
+                cursor: "pointer",
+              }}
+              onClick={() => setSelectedColor(color)}
+            />
+          ))}
+        </div>
+      </Modal>
+    </div>
+  );
+};
+
+const EditCategoryModal = ({ initialName, initialColor, onCancel, onSave }) => {
+  const [categoryName, setCategoryName] = useState(initialName);
+  const [selectedColor, setSelectedColor] = useState(initialColor);
+
+  const handleSubmit = () => {
+    if (categoryName.trim()) {
+      onSave({ name: categoryName, color: selectedColor });
+    }
+  };
+
+  return (
+    <Modal
+      title="Chỉnh sửa thẻ phân loại"
+      open={true}
+      onOk={handleSubmit}
+      onCancel={onCancel}
+      okText="Lưu thay đổi"
+      cancelText="Hủy"
+      okButtonProps={{ disabled: !categoryName.trim() }}
+    >
+      <label>Tên thẻ phân loại</label>
+      <Input
+        placeholder="Nhập tên thẻ phân loại"
+        value={categoryName}
+        onChange={(e) => setCategoryName(e.target.value)}
+        style={{ marginBottom: "10px" }}
+      />
+
+      <label>Thay đổi màu thẻ</label>
+      <div style={{ display: "flex", gap: "8px", marginTop: "8px" }}>
+        {CATEGORY_COLORS.map((color) => (
+          <button
+            key={color}
+            style={{
+              background: color,
+              width: "32px",
+              height: "32px",
+              borderRadius: "50%",
+              border:
+                selectedColor === color ? "3px solid black" : "1px solid gray",
+              cursor: "pointer",
+            }}
+            onClick={() => setSelectedColor(color)}
+          />
+        ))}
+      </div>
+    </Modal>
+  );
+};
+
 const CategoryMenu = () => {
   const [visible, setVisible] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
-
-  const categories = [
+  const [hoveredIndex, setHoveredIndex] = useState(null);
+  const [editingCategory, setEditingCategory] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [categories, setCategories] = useState([
     { name: "Khách hàng", color: "#e74c3c" },
     { name: "Gia đình", color: "#e84393" },
     { name: "Công việc", color: "#f39c12" },
     { name: "Bạn bè", color: "#f1c40f" },
     { name: "Trả lời sau", color: "#2ecc71" },
     { name: "Đồng nghiệp", color: "#3498db" },
-  ];
+  ]);
+
+  const handleSelectCategory = (category) => {
+    setSelectedCategory(category);
+    setVisible(false); // Đóng dropdown sau khi chọn
+  };
+
+  const handleUpdateCategory = (updatedCategory) => {
+    setCategories(
+      categories.map((cat, index) =>
+        index === editingCategory.index ? updatedCategory : cat
+      )
+    );
+    setEditingCategory(null);
+  };
+
+  const handleDelete = (index) => {
+    setCategories(categories.filter((_, i) => i !== index));
+  };
 
   const handleManageCategories = () => {
     setVisible(false);
@@ -68,12 +234,16 @@ const CategoryMenu = () => {
   const menu = (
     <Menu className="category-menu">
       {categories.map((category, index) => (
-        <Menu.Item key={index} className="category-item">
+        <Menu.Item
+          key={index}
+          className="category-item"
+          onClick={() => handleSelectCategory(category)}
+        >
           <div className="category-content">
             <div
               className="category-dot"
               style={{ backgroundColor: category.color }}
-            ></div>
+            />
             <span>{category.name}</span>
           </div>
         </Menu.Item>
@@ -101,9 +271,23 @@ const CategoryMenu = () => {
         trigger={["click"]}
         placement="bottomLeft"
       >
-        <Button className="category-button">
-          <TagOutlined />
-        </Button>
+        <div
+          className="category-icon"
+          style={{
+            // Thêm style động dựa vào category được chọn
+            backgroundColor: selectedCategory?.color || "transparent",
+            borderRadius: "50%",
+            padding: 8,
+            transition: "background-color 0.3s",
+          }}
+        >
+          <TagOutlined
+            style={{
+              color: selectedCategory ? "white" : "inherit",
+              display: "block",
+            }}
+          />
+        </div>
       </Dropdown>
 
       <Modal
@@ -118,45 +302,270 @@ const CategoryMenu = () => {
           <h4>Danh sách thể phân loại</h4>
           <div className="category-list">
             {categories.map((category, index) => (
-              <div key={index} className="category-list-item">
+              <div
+                key={index}
+                className="category-list-item"
+                onMouseEnter={() => setHoveredIndex(index)}
+                onMouseLeave={() => setHoveredIndex(null)}
+              >
                 <div className="category-drag-handle">
                   <MenuOutlined />
                 </div>
                 <div
                   className="category-tag"
                   style={{ backgroundColor: category.color }}
-                ></div>
+                />
                 <div className="category-name">{category.name}</div>
+
+                {hoveredIndex === index && (
+                  <div className="category-actions">
+                    <Button
+                      type="text"
+                      icon={<EditOutlined />}
+                      onClick={() => setEditingCategory({ index, ...category })}
+                    />
+                    <Button
+                      type="text"
+                      icon={<DeleteOutlined />}
+                      onClick={() => handleDelete(index)}
+                      className="delete"
+                    />
+                  </div>
+                )}
               </div>
             ))}
           </div>
-          <Button
-            type="text"
-            className="add-category-button"
-            icon={<PlusOutlined />}
-          >
-            Thêm phân loại
-          </Button>
+          <AddCategoryModal setCategories={setCategories} />
         </div>
+
+        {editingCategory && (
+          <EditCategoryModal
+            initialName={editingCategory.name}
+            initialColor={editingCategory.color}
+            onCancel={() => setEditingCategory(null)}
+            onSave={handleUpdateCategory}
+          />
+        )}
       </Modal>
     </div>
   );
 };
 
+const CreateGroupModal = ({ visible, onCancel, onOk }) => {
+  const [selectedContacts, setSelectedContacts] = useState([]);
+  const [activeCategory, setActiveCategory] = useState("all");
+  const [groupName, setGroupName] = useState("");
+
+  // Danh sách mock data
+  const contacts = [
+    { id: "1", name: "Di 4", image: "https://via.placeholder.com/40" },
+    {
+      id: "2",
+      name: "Benzen English",
+      image: "https://via.placeholder.com/40",
+    },
+    { id: "3", name: "Thanh Cảnh", image: "https://via.placeholder.com/40" },
+    { id: "4", name: "Em Tin", image: "https://via.placeholder.com/40" },
+    {
+      id: "5",
+      name: "Lê Phước Nguyên",
+      image: "https://via.placeholder.com/40",
+    },
+  ];
+
+  const categories = [
+    { id: "all", label: "Tất cả" },
+    { id: "customers", label: "Khách hàng" },
+    { id: "family", label: "Gia đình" },
+    { id: "work", label: "Công việc" },
+    { id: "friends", label: "Bạn bè" },
+  ];
+
+  const toggleContact = (contactId) => {
+    setSelectedContacts((prev) =>
+      prev.includes(contactId)
+        ? prev.filter((id) => id !== contactId)
+        : [...prev, contactId]
+    );
+  };
+
+  const removeContact = (contactId) => {
+    setSelectedContacts(selectedContacts.filter((c) => c !== contactId));
+  };
+
+  return (
+    <Modal
+      title={<span className="text-xl font-semibold">Tạo nhóm</span>}
+      open={visible}
+      onCancel={onCancel}
+      footer={[
+        <Button key="back" onClick={onCancel}>
+          Hủy
+        </Button>,
+        <Button
+          key="submit"
+          type="primary"
+          disabled={!groupName || selectedContacts.length === 0}
+          onClick={onOk}
+        >
+          Tạo nhóm
+        </Button>,
+      ]}
+    >
+      <div className="dialog-content">
+        {/* Phần tên nhóm */}
+        <div className="group-name-input">
+          <Avatar src="https://via.placeholder.com/40" className="camera-icon">
+            G
+          </Avatar>
+          <input
+            type="text"
+            placeholder="Nhập tên nhóm..."
+            onChange={(e) => setGroupName(e.target.value)}
+            value={groupName}
+          />
+        </div>
+
+        {/* Thanh tìm kiếm */}
+        <div className="search-container">
+          <SearchOutlined className="search-icon" style={{ left: 30 }} />
+          <input
+            type="text"
+            placeholder="Nhập tên, số điện thoại..."
+            onFocus={(e) => (e.target.style.borderColor = "#1890ff")}
+            onBlur={(e) => (e.target.style.borderColor = "#ccc")}
+          />
+        </div>
+
+        {/* Danh mục */}
+        <div className="categories">
+          {categories.map((category) => (
+            <button
+              key={category.id}
+              style={{
+                borderRadius: "9999px",
+                padding: "8px 16px",
+                border: "none",
+                cursor: "pointer",
+                whiteSpace: "nowrap",
+                backgroundColor:
+                  activeCategory === category.id ? "#2563eb" : "#f3f4f6",
+                color: activeCategory === category.id ? "white" : "#374151",
+                transition: "background-color 0.2s, color 0.2s",
+              }}
+              onClick={() => setActiveCategory(category.id)}
+            >
+              {category.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="conversation-container">
+          <div className="conversations-list">
+            <div className="contacts">
+              {contacts.map((contact) => (
+                <div
+                  key={contact.id}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "12px",
+                    padding: "8px",
+                    borderRadius: "8px",
+                    cursor: "pointer",
+                    transition: "background-color 0.2s",
+                  }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.backgroundColor = "#f3f4f6")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.backgroundColor = "transparent")
+                  }
+                  onClick={() => toggleContact(contact.id)}
+                >
+                  <Checkbox checked={selectedContacts.includes(contact.id)} />
+                  <Avatar
+                    src={contact.image}
+                    style={{
+                      width: "32px",
+                      height: "32px",
+                      borderRadius: "50%",
+                    }}
+                  >
+                    {contact.name[0]}
+                  </Avatar>
+                  <span style={{ fontWeight: "500" }}>{contact.name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="selected-section">
+            <div className="selected-header">
+              Đã chọn{" "}
+              <span className="selected-count">
+                {selectedContacts.length}/100
+              </span>
+            </div>
+            <div className="selected-contacts">
+              {selectedContacts.map((contactId) => {
+                const contact = contacts.find((c) => c.id === contactId);
+                return (
+                  <div key={contactId} className="selected-contact">
+                    <img
+                      src={contact.image}
+                      alt=""
+                      className="selected-avatar"
+                    />
+                    <span className="selected-name">{contact.name}</span>
+                    <button
+                      className="remove-button"
+                      onClick={() => removeContact(contactId)}
+                    >
+                      <CloseOutlined />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* Counter */}
+        {selectedContacts.length > 0 && (
+          <div
+            style={{
+              position: "absolute",
+              bottom: "5rem",
+              right: "1.5rem",
+              backgroundColor: "#2563eb",
+              color: "white",
+              padding: "8px 16px",
+              borderRadius: "8px",
+              fontWeight: "500",
+            }}
+          >
+            Đã chọn {selectedContacts.length}/100
+          </div>
+        )}
+      </div>
+    </Modal>
+  );
+};
+
+// Main component
 const MessageArea = ({ selectedChat }) => {
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState("");
   const [showConversation, setShowConversation] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
 
   useEffect(() => {
     if (selectedChat) {
-      // Fetch messages based on selected chat
-      const userMessages = mockMessagesByUser[selectedChat.id] || [];
-      setMessages(userMessages);
+      setMessages(mockMessagesByUser[selectedChat.id] || []);
     }
   }, [selectedChat]);
 
-  // Hàm xử lý gửi tin nhắn
   const handleSendMessage = (text = "") => {
     if (
       (text.trim() || messages.some((m) => m.image || m.file)) &&
@@ -169,17 +578,16 @@ const MessageArea = ({ selectedChat }) => {
         timestamp: new Date().toLocaleTimeString([], {
           hour: "2-digit",
           minute: "2-digit",
-        }), // Định dạng thời gian giống "16:34"
+        }),
         type: "sent",
-        image: messages.some((m) => m.image) ? null : undefined, // Reset image nếu có văn bản
-        file: messages.some((m) => m.file) ? null : undefined, // Reset file nếu có văn bản
+        image: messages.some((m) => m.image) ? null : undefined,
+        file: messages.some((m) => m.file) ? null : undefined,
       };
       setMessages([...messages, newMessage]);
       setInputMessage("");
     }
   };
 
-  // Hàm xử lý khi tải ảnh lên từ MessageInput
   const handleImageUpload = (imageUrl) => {
     if (selectedChat) {
       const newMessage = {
@@ -189,15 +597,14 @@ const MessageArea = ({ selectedChat }) => {
         timestamp: new Date().toLocaleTimeString([], {
           hour: "2-digit",
           minute: "2-digit",
-        }), // Định dạng thời gian giống "16:34"
+        }),
         type: "sent",
-        image: imageUrl, // Lưu URL ảnh
+        image: imageUrl,
       };
       setMessages([...messages, newMessage]);
     }
   };
 
-  // Hàm xử lý khi tải file lên từ MessageInput
   const handleFileUpload = (file) => {
     if (selectedChat) {
       const newMessage = {
@@ -207,12 +614,12 @@ const MessageArea = ({ selectedChat }) => {
         timestamp: new Date().toLocaleTimeString([], {
           hour: "2-digit",
           minute: "2-digit",
-        }), // Định dạng thời gian giống "16:34"
+        }),
         type: "sent",
         file: {
           name: file.name,
-          size: (file.size / 1024).toFixed(2) + " KB", // Chuyển kích thước sang KB
-          type: file.type || "application/octet-stream", // Loại file mặc định
+          size: `${(file.size / 1024).toFixed(2)} KB`,
+          type: file.type || "application/octet-stream",
         },
       };
       setMessages([...messages, newMessage]);
@@ -226,13 +633,11 @@ const MessageArea = ({ selectedChat }) => {
       <Layout className="message-area-container">
         <Header className="chat-header-message">
           <div className="user-profile-message">
-            <div className="avatar-message">
-              <Avatar
-                size={48}
-                src={`https://i.pravatar.cc/300?img=${selectedChat.id}`}
-                className="profile-avatar-message"
-              />
-            </div>
+            <Avatar
+              size={48}
+              src={`https://i.pravatar.cc/300?img=${selectedChat.id}`}
+              className="profile-avatar-message"
+            />
             <div className="user-info-message">
               <h3 className="user-name-message">
                 {selectedChat.name} <EditOutlined />
@@ -240,8 +645,20 @@ const MessageArea = ({ selectedChat }) => {
               <CategoryMenu />
             </div>
           </div>
+
           <div className="action-buttons-message-area">
-            <UsergroupAddOutlined className="header-icon-message-area" />
+            <UsergroupAddOutlined
+              className="header-icon-message-area"
+              onClick={() => setModalVisible(true)}
+            />
+            <CreateGroupModal
+              visible={modalVisible}
+              onCancel={() => setModalVisible(false)}
+              onOk={() => {
+                // Xử lý tạo nhóm
+                setModalVisible(false);
+              }}
+            />
             <VideoCameraOutlined className="header-icon-message" />
             <SearchOutlined className="header-icon" />
             <ProfileOutlined
@@ -262,14 +679,16 @@ const MessageArea = ({ selectedChat }) => {
             ))}
           </div>
         </Content>
+
         <MessageInput
           inputMessage={inputMessage}
           setInputMessage={setInputMessage}
           handleSendMessage={handleSendMessage}
-          onImageUpload={handleImageUpload} // Truyền callback để xử lý ảnh
-          onFileUpload={handleFileUpload} // Truyền callback để xử lý file
+          onImageUpload={handleImageUpload}
+          onFileUpload={handleFileUpload}
         />
       </Layout>
+
       {showConversation && (
         <Layout className="conversation-details">
           <ConversationDetails

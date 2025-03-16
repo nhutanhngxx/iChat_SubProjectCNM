@@ -18,6 +18,8 @@ import {
   VideoCameraOutlined,
   PhoneOutlined,
   NotificationOutlined,
+  DownOutlined,
+  MoreOutlined,
 } from "@ant-design/icons";
 import { MdMoreHoriz } from "react-icons/md";
 import "./ComponentLeft.css";
@@ -52,33 +54,37 @@ const HeaderTabs = ({
   onSelectUser,
 }) => (
   <div className="chat-list">
-    <Tabs
-      defaultActiveKey="1"
-      tabBarStyle={{ margin: "0px 0px 4px 0px", padding: "0 8px" }}
-      style={{ fontWeight: "bold" }}
-      className="custom-tabs"
-    >
-      <TabPane tab="Ưu tiên" key="1" className="custom-tab-pane">
-        <ChatList
-          filteredChatList={filteredChatList}
-          onSelectUser={onSelectUser}
-        />
-      </TabPane>
-      <TabPane tab="Khác" key="2" className="custom-tab-pane">
-        Nội dung của tab Khác
-      </TabPane>
-    </Tabs>
+    <div className="chat-tabs-container">
+      <Tabs
+        defaultActiveKey="1"
+        tabBarStyle={{ margin: "0px 0px 4px 0px", padding: "0 8px" }}
+        style={{ fontWeight: "bold" }}
+        className="custom-tabs"
+      >
+        <TabPane tab="Ưu tiên" key="1" className="custom-tab-pane">
+          <ChatList
+            filteredChatList={filteredChatList}
+            onSelectUser={onSelectUser}
+          />
+        </TabPane>
+        <TabPane tab="Khác" key="2" className="custom-tab-pane">
+          Nội dung của tab Khác
+        </TabPane>
+      </Tabs>
+      <div className="tab-actions">
+        <Dropdown trigger={["click"]}>
+          <a className="category-dropdown" onClick={(e) => e.preventDefault()}>
+            Phân loại <DownOutlined />
+          </a>
+        </Dropdown>
 
-    {/* <div className="header-actions">
-      <Popover content={filterContent} title="Phân loại" trigger="click">
-        <span className="classify">
-          Phân loại <DownOutlined className="more-icon" />
-        </span>
-      </Popover>
-      <Dropdown overlay={menu} trigger={["click"]}>
-        <MoreOutlined className="more-icon" />
-      </Dropdown>
-    </div> */}
+        <Dropdown trigger={["click"]}>
+          <a className="more-options" onClick={(e) => e.preventDefault()}>
+            <MoreOutlined />
+          </a>
+        </Dropdown>
+      </div>
+    </div>
   </div>
 );
 
@@ -97,18 +103,11 @@ const ChatItem = ({ item, onSelectUser }) => {
             <span className="chat-name">{item.name}</span>
           </Col>
           <Col>
-            <div
-              className="time-and-more-container"
-              onMouseEnter={() => setIsHovered(true)}
-              onMouseLeave={() => setIsHovered(false)}
-            >
-              {isHovered ? (
-                <Dropdown overlay={<MenuMdMoreHoriz />} trigger={["click"]}>
-                  <MdMoreHoriz size={1} color="#333" />
-                </Dropdown>
-              ) : (
-                <span className="chat-time">{item.time}</span>
-              )}
+            <div className="time-and-more-container">
+              <Dropdown overlay={<MenuMdMoreHoriz />} trigger={["click"]}>
+                <MdMoreHoriz className="md-more-horiz-icon" />
+              </Dropdown>
+              <span className="chat-time">{item.time}</span>
             </div>
           </Col>
         </Row>
@@ -219,12 +218,13 @@ const ComponentLeft = ({ userList, onSelectUser }) => {
       ) : (
         <Layout className="chat-sidebar">
           <SearchBar onFocus={handleFocus} />
-          <HeaderTabs
+          {/* <HeaderTabs
             menu={menu}
             filterContent={filterContent}
             filteredChatList={filteredChatList}
             onSelectUser={onSelectUser}
-          />
+          /> */}
+          <div className=""></div>
         </Layout>
       )}
     </div>
