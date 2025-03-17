@@ -38,6 +38,19 @@ app.get("/", (req, res) => {
   res.send({ status: "Server started" });
 });
 
+// Textflow
+// const textflow = require("textflow.js");
+// textflow.useKey(process.env.TEXTFLOW_API_KEY);
+
+// Gửi tin nhắn SMS
+// const phoneNumber = "+84349424156";
+// const result = await textflow.sendVerificationSMS(phoneNumber);
+// if (result.ok) {
+//   console.log("OTP sent successfully, " + result.data);
+// } else {
+//   console.log("OTP sent failed, ", result.data);
+// }
+
 // Chạy server
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {

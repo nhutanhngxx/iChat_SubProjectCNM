@@ -9,6 +9,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "axios": "^1.8.3",
     "bcrypt": "^5.1.1",
     "bcryptjs": "^2.4.3",
     "cookie-parser": "^1.4.7",
@@ -21,6 +22,7 @@
     "mongoose": "^8.7.3",
     "nodemon": "^3.1.7",
     "socket.io": "^4.8.1",
+    "textflow.js": "^0.1.4",
     "twilio": "^5.5.0"
   }
 }
