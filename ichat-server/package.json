@@ -22,7 +22,6 @@
     "mongoose": "^8.7.3",
     "nodemon": "^3.1.7",
     "socket.io": "^4.8.1",
-    "textflow.js": "^0.1.4",
-    "twilio": "^5.5.0"
+    "textflow.js": "^0.1.4"
   }
 }

@@ -38,13 +38,15 @@ app.get("/", (req, res) => {
   res.send({ status: "Server started" });
 });
 
-// Textflow
+// // Textflow
 // const textflow = require("textflow.js");
 // textflow.useKey(process.env.TEXTFLOW_API_KEY);
 
-// Gửi tin nhắn SMS
+// // Gửi tin nhắn SMS
 // const phoneNumber = "+84349424156";
-// const result = await textflow.sendVerificationSMS(phoneNumber);
+// const result = textflow.sendVerificationSMS(phoneNumber);
+// console.log(result);
+
 // if (result.ok) {
 //   console.log("OTP sent successfully, " + result.data);
 // } else {
