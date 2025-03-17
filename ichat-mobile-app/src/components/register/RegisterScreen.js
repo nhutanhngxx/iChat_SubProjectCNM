@@ -59,7 +59,7 @@ const RegisterScreen = ({ navigation }) => {
               </View>
 
               {/* Checkbox terms */}
-              <View style={{ marginBottom: 20 }}>
+              <View style={{ marginBottom: 20, width: 300 }}>
                 <View style={{ flexDirection: "row", alignItems: "center" }}>
                   <CheckBox
                     checked={isChecked}
