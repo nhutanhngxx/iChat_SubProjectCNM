@@ -5,6 +5,7 @@ const axios = require("axios");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const textflow = require("textflow.js");
+textflow.useKey(process.env.TEXTFLOW_API_KEY);
 
 const User = require("../models/UserDetails");
 const OTP = require("../models/OTP");
@@ -31,7 +32,6 @@ router.post("/send-otp", async (req, res) => {
     }
 
     // Gửi OTP qua SMS
-    textflow.useKey(process.env.TEXTFLOW_API_KEY);
     const verificationOptions = {
       service_name: "iChat",
       seconds: 600,
@@ -45,7 +45,7 @@ router.post("/send-otp", async (req, res) => {
       await OTP.create({
         phone,
         otp: result.data.verification_code,
-        created_at: new Date(),
+        expiresAt: result.data.expires,
       });
 
       res.json({
@@ -71,9 +71,13 @@ router.post("/verify-otp", async (req, res) => {
       return res.status(404).json({ status: "error", message: "Invalid OTP" });
 
     // Verify OTP
-    const isValid = await bcrypt.compare(otp.toString(), otpRecord.otp);
+    const isValid = otp.toString() === otpRecord.otp;
     if (!isValid)
       return res.status(401).json({ status: "error", message: "Invalid OTP" });
+    // let result = await textflow.verifyCode(phone, otp);
+    // if (!result.ok && !result.valid) {
+    //   return res.status(401).json({ status: "error", message: "Invalid OTP" });
+    // }
 
     // Tạo token
     const tempToken = jwt.sign(
@@ -87,7 +91,7 @@ router.post("/verify-otp", async (req, res) => {
     // Xóa OTP sau khi xác minh
     await OTP.deleteOne({ _id: otpRecord._id });
 
-    res.json({ status: "ok", message: "OTP verified successfully" });
+    res.json({ status: "ok", message: "OTP verified", phone, tempToken });
   } catch (error) {
     res.status(500).json({ status: "error", message: error.message });
   }
@@ -97,6 +101,15 @@ router.post("/verify-otp", async (req, res) => {
 router.post("/register", async (req, res) => {
   const { tempToken, phone, password, fullName, dob, gender } = req.body;
 
+  // Kiểm tra token có tồn tại hay không
+  if (!tempToken) {
+    return res.status(400).json({
+      status: "error",
+      message: "Missing verification token. Please verify your phone first.",
+    });
+  }
+
+  // Xác thực token
   let decodedToken;
   try {
     decodedToken = jwt.verify(tempToken, process.env.JWT_SECRET);
@@ -105,11 +118,12 @@ router.post("/register", async (req, res) => {
     return res.status(401).json({ status: "error", message: "Invalid token" });
   }
 
-  // if (!decodedToken.verify || !decodedToken.phone) {
-  //   return res
-  //     .status(401)
-  //     .json({ status: "error", message: "Phone not verified" });
-  // }
+  // Kiểm tra số điện thoại đã xác thực chưa và đã đăng ký chưa
+  if (!decodedToken.verify || decodedToken.phone !== phone) {
+    return res
+      .status(401)
+      .json({ status: "error", message: "Phone not verified" });
+  }
 
   const newUser = await User.create({
     phone,
