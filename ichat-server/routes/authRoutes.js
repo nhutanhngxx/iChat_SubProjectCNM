@@ -32,9 +32,16 @@ router.post("/send-otp", async (req, res) => {
 
     // Gửi OTP qua SMS
     textflow.useKey(process.env.TEXTFLOW_API_KEY);
-    const result = await textflow.sendVerificationSMS(phone);
+    const verificationOptions = {
+      service_name: "iChat",
+      seconds: 600,
+    };
+    const result = await textflow.sendVerificationSMS(
+      phone,
+      verificationOptions
+    );
+
     if (result.ok) {
-      // Tạo mã OTP ngẫu nhiên và lưu vào database
       await OTP.create({
         phone,
         otp: result.data.verification_code,
@@ -48,8 +55,6 @@ router.post("/send-otp", async (req, res) => {
         otp: result.data.verification_code,
         expire: result.data.expires,
       });
-    } else {
-      res.status(500).json({ status: "error", message: result.data });
     }
   } catch (error) {
     res.status(500).json({ status: "error", message: error.message });
