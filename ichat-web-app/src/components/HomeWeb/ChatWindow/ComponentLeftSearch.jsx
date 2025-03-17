@@ -722,12 +722,12 @@ const SearchResults = ({
   dateMenu,
   fileDateMenu,
 }) => (
-  <Content className="chat-list">
-    <Tabs
-      defaultActiveKey="1"
-      tabBarStyle={{ margin: "0px 0px 4px 0px", padding: "0 20px" }}
-    >
-      <TabPane tab={<strong>Tất cả</strong>} key="1">
+  <Tabs
+    defaultActiveKey="1"
+    tabBarStyle={{ margin: "0px 0px 4px 0px", padding: "0 20px" }}
+  >
+    <TabPane tab={<strong>Tất cả</strong>} key="1">
+      <div className="search-results-tabpane">
         <div className="title-tabpane">
           Liên hệ ({filteredSearchUser.length})
         </div>
@@ -738,35 +738,33 @@ const SearchResults = ({
         />
         <MessageList messages={messages} filteredSearchMessages={messages} />
         <FileList filteredFiles={filteredFiles} />
-      </TabPane>
-      <TabPane tab={<strong>Liên hệ</strong>} key="2">
-        <div className="title-tabpane">
-          Cá nhân ({filteredSearchUser.length})
-        </div>
-        <List
-          itemLayout="horizontal"
-          dataSource={filteredSearchUser}
-          renderItem={renderItemSearch}
-        />
-      </TabPane>
-      <TabPane tab={<strong>Tin nhắn</strong>} key="3">
-        <MessageFilter />
-        <MessageList
-          messages={messages}
-          filteredSearchMessages={filteredSearchMessages}
-        />
-      </TabPane>
-      <TabPane tab={<strong>File</strong>} key="4">
-        <FileFilter
-          selectedType={selectedType}
-          setSelectedType={setSelectedType}
-          dateRange={dateRange}
-          setDateRange={setDateRange}
-        />
-        <FileList filteredFiles={filteredFiles} />
-      </TabPane>
-    </Tabs>
-  </Content>
+      </div>
+    </TabPane>
+    <TabPane tab={<strong>Liên hệ</strong>} key="2">
+      <div className="title-tabpane">Cá nhân ({filteredSearchUser.length})</div>
+      <List
+        itemLayout="horizontal"
+        dataSource={filteredSearchUser}
+        renderItem={renderItemSearch}
+      />
+    </TabPane>
+    <TabPane tab={<strong>Tin nhắn</strong>} key="3">
+      <MessageFilter />
+      <MessageList
+        messages={messages}
+        filteredSearchMessages={filteredSearchMessages}
+      />
+    </TabPane>
+    <TabPane tab={<strong>File</strong>} key="4">
+      <FileFilter
+        selectedType={selectedType}
+        setSelectedType={setSelectedType}
+        dateRange={dateRange}
+        setDateRange={setDateRange}
+      />
+      <FileList filteredFiles={filteredFiles} />
+    </TabPane>
+  </Tabs>
 );
 
 // Component chính
@@ -865,13 +863,18 @@ const ComponentLeftSearch = ({ userList, onSelectUser, onClose }) => {
   );
 
   return (
-    <Layout className="chat-sidebar">
+    <div className="chat-sidebar">
       <SearchComponent
         searchText={searchText}
         setSearchText={setSearchText}
         onClose={onClose}
       />
-      {searchText !== "" ? (
+      {searchText === "" ? (
+        <RecentlySearched
+          filteredRecentlyUser={filteredRecentlyUser}
+          handleDelete={handleDelete}
+        />
+      ) : (
         <SearchResults
           filteredSearchUser={filteredSearchUser}
           filteredSearchMessages={filteredSearchMessages}
@@ -887,14 +890,12 @@ const ComponentLeftSearch = ({ userList, onSelectUser, onClose }) => {
           dateMenu={dateMenu}
           fileDateMenu={fileDateMenu}
         />
-      ) : (
-        <RecentlySearched
-          filteredRecentlyUser={filteredRecentlyUser}
-          handleDelete={handleDelete}
-        />
       )}
-    </Layout>
+    </div>
   );
 };
 
+<div>
+  <div></div>
+</div>;
 export default ComponentLeftSearch;
