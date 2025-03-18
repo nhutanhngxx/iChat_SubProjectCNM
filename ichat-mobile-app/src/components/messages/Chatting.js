@@ -194,7 +194,13 @@ const Chatting = ({ route }) => {
               style={{ width: 25, height: 25 }}
             />
           </TouchableOpacity>
-          <Text style={styles.name}>{chat.name}</Text>
+
+          <View style={{ marginLeft: 10, gap: 2 }}>
+            <Text style={styles.name}>{chat.name}</Text>
+            <Text style={{ fontSize: 12, color: "gray" }}>
+              {chat.status === "Online" ? "Đang hoạt động" : "Ngoại tuyến"}
+            </Text>
+          </View>
         </View>
         <View
           style={{
@@ -545,9 +551,8 @@ const styles = StyleSheet.create({
     borderRadius: 25,
   },
   name: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: "bold",
-    marginLeft: 10,
   },
   messagesContainer: {
     flexGrow: 1,

@@ -110,6 +110,7 @@ router.post("/login", async (req, res) => {
         sameSite: "Strict",
         maxAge: 24 * 60 * 60 * 1000, // 1 ngày
       });
+      await User.findByIdAndUpdate(user._id, { status: "Online" });
       return res.send({
         status: "ok",
         accessToken,
@@ -130,6 +131,26 @@ router.post("/login", async (req, res) => {
         .status(400)
         .json({ status: "error", message: "Invalid password" });
     }
+  } catch (error) {
+    res.status(500).json({ status: "error", message: error.message });
+  }
+});
+
+// Đăng xuất
+router.post("/logout", async (req, res) => {
+  try {
+    const { userId } = req.body;
+
+    if (!userId) {
+      return res
+        .status(400)
+        .json({ status: "error", message: "Missing userId" });
+    }
+
+    await User.findByIdAndUpdate(userId, { status: "Offline" });
+
+    res.clearCookie("refreshToken");
+    res.json({ status: "ok", message: "User logged out successfully" });
   } catch (error) {
     res.status(500).json({ status: "error", message: error.message });
   }

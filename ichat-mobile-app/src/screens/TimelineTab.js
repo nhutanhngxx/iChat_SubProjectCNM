@@ -14,6 +14,8 @@ import {
 
 import HeaderTimeline from "../components/header/HeaderTimeline";
 
+import { useNavigation } from "@react-navigation/native";
+
 const getTimeDifference = (timestamp) => {
   const now = Date.now();
   const difference = now - timestamp;
@@ -39,8 +41,8 @@ const posts = [
     timestamp: Date.now() - 10 * 60 * 1000, // 10 phút trước
     content: "Hôm nay trời thật đẹp! ☀️",
     images: [
-      require("../assets/images/avatars/avatar1.png"),
-      require("../assets/images/avatars/avatar1.png"),
+      "https://i.ibb.co/P6p5SCQ/1.png",
+      "https://i.ibb.co/P6p5SCQ/1.png",
     ],
     likes: 120,
     comments: 35,
@@ -53,7 +55,7 @@ const posts = [
     },
     timestamp: Date.now() - 3 * 60 * 60 * 1000,
     content: "Một ngày làm việc hiệu quả! 💼🚀",
-    images: [],
+    images: ["https://i.ibb.co/P6p5SCQ/1.png"],
     likes: 85,
     comments: 12,
   },
@@ -66,9 +68,10 @@ const posts = [
     timestamp: Date.now() - 24 * 60 * 60 * 1000,
     content: "Cùng nhau tận hưởng cuối tuần nào! 🍕🎉",
     images: [
-      require("../assets/images/avatars/avatar3.png"),
-      require("../assets/images/avatars/avatar3.png"),
-      require("../assets/images/avatars/avatar3.png"),
+      "https://i.ibb.co/P6p5SCQ/1.png",
+      "https://i.ibb.co/P6p5SCQ/1.png",
+      "https://i.ibb.co/P6p5SCQ/1.png",
+      "https://i.ibb.co/P6p5SCQ/1.png",
     ],
     likes: 200,
     comments: 50,
@@ -76,6 +79,8 @@ const posts = [
 ];
 
 const TimelineTab = () => {
+  const navigation = useNavigation();
+
   const renderPost = ({ item }) => {
     return (
       <View style={styles.postContainer}>
@@ -103,23 +108,52 @@ const TimelineTab = () => {
           {/* Hiển thị ảnh đăng */}
           {item.images.length > 0 && (
             <View style={{ marginTop: 10 }}>
-              <FlatList
-                data={item.images}
-                horizontal
-                keyExtractor={(image, index) => index.toString()}
-                renderItem={({ item }) => (
+              {item.images.length === 1 ? (
+                <TouchableOpacity
+                  onPress={() =>
+                    navigation.navigate("ViewImagePost", { imageUrl: item })
+                  }
+                >
                   <Image
-                    source={item}
+                    source={
+                      typeof item.images[0] === "string"
+                        ? { uri: item.images[0] }
+                        : item.images[0]
+                    }
                     style={{
-                      width: 100,
-                      height: 100,
-                      marginRight: 10,
+                      width: "100%",
+                      height: 200,
                       borderRadius: 5,
                     }}
                     resizeMode="cover"
                   />
-                )}
-              />
+                </TouchableOpacity>
+              ) : (
+                <FlatList
+                  data={item.images}
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  keyExtractor={(image, index) => index.toString()}
+                  renderItem={({ item }) => (
+                    <TouchableOpacity
+                      onPress={() =>
+                        navigation.navigate("ViewImagePost", { imageUrl: item })
+                      }
+                    >
+                      <Image
+                        source={typeof item === "string" ? { uri: item } : item}
+                        style={{
+                          width: 100,
+                          height: 100,
+                          marginRight: 10,
+                          borderRadius: 5,
+                        }}
+                        resizeMode="cover"
+                      />
+                    </TouchableOpacity>
+                  )}
+                />
+              )}
             </View>
           )}
         </View>

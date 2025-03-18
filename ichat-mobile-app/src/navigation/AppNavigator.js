@@ -17,6 +17,7 @@ import Option from "../components/messages/Options";
 import MediaStorage from "../components/messages/MediaStorage";
 import SearchScreen from "../components/search/SearchScreen";
 import ViewProfile from "../components/profile/ViewProfile";
+import ViewImageChat from "../components/view/ViewImageChat";
 
 import AddFriend from "../components/contact/AddFriend";
 import FriendRequest from "../components/contact/FriendRequest";
@@ -25,6 +26,8 @@ import ProfileInformation from "../components/profile/ProfileInformation";
 import ChangeInformation from "../components/profile/ChangeInformation";
 import QRScanner from "../components/camera/QRScannerScreen";
 import HeaderMessageTab from "../components/header/HeaderMessagesTab";
+
+import ViewImagePost from "../components/view/ViewImagePost";
 
 const BottomTab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -80,6 +83,11 @@ const ChatStack = () => {
         component={AddFriend}
         options={{ headerShown: false }}
       />
+      <Stack.Screen
+        name="ViewImageChat"
+        component={ViewImageChat}
+        options={{ headerShown: false }}
+      />
     </Stack.Navigator>
   );
 };
@@ -92,6 +100,21 @@ const ContactStack = () => {
       <Stack.Screen name="FriendRequest" component={FriendRequest} />
       <Stack.Screen name="Chatting" component={Chatting} />
       <Stack.Screen name="Option" component={Option} />
+    </Stack.Navigator>
+  );
+};
+
+const TimelineStack = () => {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="TimelineTab" component={TimelineTab} />
+      <Stack.Screen
+        name="ViewImagePost"
+        component={ViewImagePost}
+        options={{
+          animation: "none",
+        }}
+      />
     </Stack.Navigator>
   );
 };
@@ -174,7 +197,7 @@ const AppNavigator = ({ setUser }) => {
       />
       <BottomTab.Screen
         name="Timeline"
-        children={(props) => <TimelineTab {...props} setUser={setUser} />}
+        children={(props) => <TimelineStack {...props} setUser={setUser} />}
       />
       <BottomTab.Screen
         name="Me"
