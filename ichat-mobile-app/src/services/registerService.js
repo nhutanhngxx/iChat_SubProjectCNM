@@ -24,6 +24,35 @@ const registerService = {
       };
     }
   },
+  validateOTP: async (phone, otp) => {
+    try {
+      if (!phone || !otp) {
+        return {
+          status: "error",
+          message: "Số điện thoại và mã OTP không được để trống",
+        };
+      }
+
+      console.log(`Verifying OTP: ${otp} for phone: ${phone}`);
+
+      const otpString = String(otp).trim();
+
+      const response = await api.post("/auth/verify-otp", {
+        phone,
+        otp: otpString,
+      });
+
+      console.log("OTP verification response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("OTP verification error details:", error.response?.data);
+      //   Thêm phần xử lý lỗi ở đây
+      return {
+        status: "error",
+        message: error.response?.data?.message || "Không thể xác thực OTP",
+      };
+    }
+  },
 };
 
 export default registerService;

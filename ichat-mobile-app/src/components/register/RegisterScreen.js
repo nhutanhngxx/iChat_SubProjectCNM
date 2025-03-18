@@ -12,7 +12,7 @@ import {
 } from "react-native";
 import { CheckBox } from "@rneui/themed";
 import CustomButton from "../common/CustomButton";
-import registerService from "../../services/registerService";
+import RegisterService from "../../services/registerService";
 
 const RegisterScreen = ({ navigation }) => {
   const [isChecked, setChecked] = useState(false);
@@ -29,10 +29,10 @@ const RegisterScreen = ({ navigation }) => {
       return;
     }
     phone = "+84" + phone;
-    const result = await registerService.sendOTP(phone);
+    const result = await RegisterService.sendOTP(phone);
     console.log(result);
 
-    if (result.status === "ok") navigation.navigate("EnterOTP");
+    if (result.status === "ok") navigation.navigate("EnterOTP", { phone });
   };
 
   const handleLoginWithFacebook = () => {

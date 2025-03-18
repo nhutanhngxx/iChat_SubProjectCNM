@@ -8,13 +8,13 @@ import {
   TextInput,
 } from "react-native";
 import CustomButton from "../common/CustomButton";
+import RegisterService from "../../services/registerService";
 
-const EnterOTPScreen = ({ navigation }) => {
-  const OTP = "123455";
-
+const EnterOTPScreen = ({ navigation, route }) => {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [isOTPValid, setIsOTPValid] = useState(false);
   const inputRefs = useRef([]);
+  const { phone } = route.params;
 
   const handleChange = (text, index) => {
     const newOtp = [...otp];
@@ -29,9 +29,22 @@ const EnterOTPScreen = ({ navigation }) => {
     }
   };
 
-  const handleVerify = () => {
-    otp.join("") === OTP ? setIsOTPValid(true) : setIsOTPValid(false);
-    navigation.navigate("PasswordRegister");
+  const handleVerify = async () => {
+    const otpCode = otp.join("");
+    const result = await RegisterService.validateOTP(phone, otpCode);
+    console.log(result);
+
+    if (result.status === "error") {
+      alert(result.message);
+      return;
+    }
+
+    if (result.status === "ok") {
+      navigation.navigate("PasswordRegister", {
+        phone,
+        tempToken: result.data.tempToken,
+      });
+    }
   };
 
   const handleLogin = () => {

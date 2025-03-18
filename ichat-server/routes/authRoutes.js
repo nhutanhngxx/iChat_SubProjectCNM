@@ -75,7 +75,9 @@ router.post("/verify-otp", async (req, res) => {
     // Verify OTP
     const isValid = otp.toString() === otpRecord.otp;
     if (!isValid)
-      return res.status(401).json({ status: "error", message: "Invalid OTP" });
+      return res
+        .status(401)
+        .json({ status: "error", message: "OTP code is incorrect or expired" });
     // let result = await textflow.verifyCode(phone, otp);
     // if (!result.ok && !result.valid) {
     //   return res.status(401).json({ status: "error", message: "Invalid OTP" });
@@ -93,7 +95,14 @@ router.post("/verify-otp", async (req, res) => {
     // Xóa OTP sau khi xác minh
     await OTP.deleteOne({ _id: otpRecord._id });
 
-    res.json({ status: "ok", message: "OTP verified", phone, tempToken });
+    res.json({
+      status: "ok",
+      data: {
+        message: "OTP verified",
+        phone,
+        tempToken,
+      },
+    });
   } catch (error) {
     res.status(500).json({ status: "error", message: error.message });
   }
