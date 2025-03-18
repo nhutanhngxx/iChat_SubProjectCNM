@@ -53,6 +53,33 @@ const registerService = {
       };
     }
   },
+  register: async (tempToken, phone, password, fullName, dob, gender) => {
+    try {
+      if (!tempToken || !phone || !password || !fullName || !dob || !gender) {
+        return {
+          status: "error",
+          message: "Vui lòng điền đầy đủ thông tin",
+        };
+      }
+      const response = await api.post("/auth/register", {
+        tempToken,
+        phone,
+        password,
+        fullName,
+        dob,
+        gender,
+      });
+      console.log("Register Service Response: ", response.data);
+
+      return response.data;
+    } catch (error) {
+      console.error("Register Service Error: ", error);
+      return {
+        status: "error",
+        message: error.response?.data?.message || "Không thể đăng ký tài khoản",
+      };
+    }
+  },
 };
 
 export default registerService;

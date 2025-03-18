@@ -20,13 +20,13 @@ import {
 import CustomButton from "../common/CustomButton";
 import { Icon, IconButton } from "react-native-paper";
 
-const PasswordRegisterScreen = ({ navigation }) => {
+const PasswordRegisterScreen = ({ navigation, route }) => {
   const [password, setPassword] = useState("");
   const [rePassword, setRePassword] = useState("");
-  // const [isValidate, setIsValidate] = useState(false);
-  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
-  const [isRePasswordVisible, setIsRePasswordVisible] = useState(false);
+  const [isPasswordVisible, setIsPasswordVisible] = useState(true);
+  const [isRePasswordVisible, setIsRePasswordVisible] = useState(true);
   const [error, setError] = useState("");
+  const { phone, tempToken } = route.params;
 
   // Tạo và mật khẩu cho tài khoản; sau đó chuyển sang màn hình nhập thông tin cá nhân
   const handleCreatePassword = () => {
@@ -36,7 +36,6 @@ const PasswordRegisterScreen = ({ navigation }) => {
 
     // Kiểm tra mật khẩu không được để trống
     if (password === "") {
-      // setIsValidate(false);
       Alert.alert("Mật khẩu không được để trống", "Vui lòng nhập mật khẩu");
       setError("Mật khẩu không được để trống");
       return;
@@ -44,7 +43,6 @@ const PasswordRegisterScreen = ({ navigation }) => {
 
     // Kiểm tra mật khẩu có hợp lệ không
     if (!regex.test(password)) {
-      // setIsValidate(false);
       Alert.alert(
         "Mật khẩu không hợp lệ",
         "Mật khẩu phải chứa ít nhất 1 chữ cái và 1 số, độ dài từ 8 ký tự trở lên"
@@ -56,17 +54,15 @@ const PasswordRegisterScreen = ({ navigation }) => {
     }
 
     if (password !== rePassword) {
-      // setIsValidate(false);
       Alert.alert("Mật khẩu không khớp", "Vui lòng nhập lại mật khẩu");
       setError("Mật khẩu không khớp");
       return;
     }
 
-    // setIsValidate(true);
     setError("");
 
     console.log("Create password");
-    navigation.navigate("InfoRegister");
+    navigation.navigate("InfoRegister", { password, phone, tempToken });
 
     return;
   };

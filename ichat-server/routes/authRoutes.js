@@ -20,15 +20,16 @@ router.post("/send-otp", async (req, res) => {
     if (!phone || !regex.test(phone.trim())) {
       return res
         .status(400)
-        .json({ status: "error", message: "Invalid phone number" });
+        .json({ status: "error", message: "Số điện thoại không hợp lệ." });
     }
 
     // Kiểm tra số điện thoại đã tồn tại
     const existingUser = await User.findOne({ phone }).select("phone").lean();
     if (existingUser) {
-      return res
-        .status(400)
-        .json({ status: "error", message: "Phone number already exists" });
+      return res.status(400).json({
+        status: "error",
+        message: "Số điện thoại này đã được đăng ký.",
+      });
     }
 
     // Gửi OTP qua SMS
@@ -70,14 +71,18 @@ router.post("/verify-otp", async (req, res) => {
   try {
     const otpRecord = await OTP.findOne({ phone });
     if (!otpRecord)
-      return res.status(404).json({ status: "error", message: "Invalid OTP" });
+      return res.status(404).json({
+        status: "error",
+        message: "Mã OTP không đúng hoặc đã hết hạn!",
+      });
 
     // Verify OTP
     const isValid = otp.toString() === otpRecord.otp;
     if (!isValid)
-      return res
-        .status(401)
-        .json({ status: "error", message: "OTP code is incorrect or expired" });
+      return res.status(401).json({
+        status: "error",
+        message: "Mã OTP không đúng hoặc đã hết hạn",
+      });
     // let result = await textflow.verifyCode(phone, otp);
     // if (!result.ok && !result.valid) {
     //   return res.status(401).json({ status: "error", message: "Invalid OTP" });
@@ -136,8 +141,14 @@ router.post("/register", async (req, res) => {
       .json({ status: "error", message: "Phone not verified" });
   }
 
+  // Chuyển đổi số điện thoại từ +84xxxxxxxxx -> 0xxxxxxxxx
+  let formattedPhone = phone;
+  if (phone.startsWith("+84")) {
+    formattedPhone = "0" + phone.substring(3);
+  }
+
   const newUser = await User.create({
-    phone,
+    phone: formattedPhone,
     password: await bcrypt.hash(password, 10),
     full_name: fullName,
     dob,
@@ -145,7 +156,7 @@ router.post("/register", async (req, res) => {
   });
   res
     .status(201)
-    .json({ status: "ok", message: "User created", data: newUser });
+    .json({ status: "ok", message: "Tài khoản đã được tạo.", data: newUser });
 });
 
 module.exports = router;

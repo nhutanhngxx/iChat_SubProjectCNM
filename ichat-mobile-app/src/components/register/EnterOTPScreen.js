@@ -6,6 +6,7 @@ import {
   ImageBackground,
   SafeAreaView,
   TextInput,
+  Alert,
 } from "react-native";
 import CustomButton from "../common/CustomButton";
 import RegisterService from "../../services/registerService";
@@ -32,10 +33,9 @@ const EnterOTPScreen = ({ navigation, route }) => {
   const handleVerify = async () => {
     const otpCode = otp.join("");
     const result = await RegisterService.validateOTP(phone, otpCode);
-    console.log(result);
 
     if (result.status === "error") {
-      alert(result.message);
+      Alert.alert("Lỗi", result.message);
       return;
     }
 

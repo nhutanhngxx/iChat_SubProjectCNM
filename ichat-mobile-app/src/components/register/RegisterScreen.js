@@ -33,6 +33,7 @@ const RegisterScreen = ({ navigation }) => {
     console.log(result);
 
     if (result.status === "ok") navigation.navigate("EnterOTP", { phone });
+    else Alert.alert("Thông báo", result.message);
   };
 
   const handleLoginWithFacebook = () => {

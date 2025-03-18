@@ -21,31 +21,37 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import CustomButton from "../common/CustomButton";
 import editIcon from "../../assets/icons/edit.png";
 import { RadioGroup } from "react-native-radio-buttons-group";
+import registerService from "@/src/services/registerService";
 
-const InfoRegisterScreen = ({ navigation }) => {
-  const API_iChat = `http://${window.location.hostname}:5001`;
-  const [phone, setPhone] = useState("");
+const InfoRegisterScreen = ({ navigation, route }) => {
   const [fullName, setFullName] = useState("");
   const [dob, setDob] = useState(new Date());
   const [gender, setGender] = useState("");
-  const [password, setPassword] = useState("");
   const radioButtons = [
     { id: "1", label: "Nam", value: "Male", color: "#3083F9" },
     { id: "2", label: "Nữ", value: "Female", color: "#3083F9" },
     { id: "3", label: "Khác", value: "Other", color: "#3083F9" },
   ];
   const [showPicker, setShowPicker] = useState(false);
+  const { phone, password, tempToken } = route.params;
 
   const handleRegister = async () => {
     try {
-      const response = await axios.post(`${API_iChat}/register`, {
+      const genderValue = radioButtons.find((item) => item.id === gender).value;
+      const response = await registerService.register(
+        tempToken,
         phone,
         password,
-        birthday,
-        gender,
-        password,
-      });
-      console.log(response.data.data);
+        fullName,
+        dob,
+        genderValue
+      );
+      if (response.status === "ok") {
+        Alert.alert("Thành công", response.message);
+        navigation.navigate("Login");
+      } else {
+        Alert.alert("Lỗi", response.message);
+      }
     } catch (error) {
       Alert.alert("Lỗi", error.response?.data?.message || "Có lỗi xảy ra!");
     }
