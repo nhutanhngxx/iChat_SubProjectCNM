@@ -4,7 +4,6 @@ import { Layout, Modal } from "antd";
 import HelloWindow from "./HelloWindow";
 import MessageArea from "./MessageArea";
 import ComponentLeft from "./ComponentLeft";
-import ComponentLeftSearch from "./ComponentLeftSearch";
 import { useDispatch, useSelector } from "react-redux";
 import {
   fetchMessages,
@@ -18,6 +17,8 @@ const ChatWindow = ({ user }) => {
   const { messages, status, chatMessages, chatStatus } = useSelector(
     (state) => state.messages
   );
+  console.log("Messages:", messages);
+
   const [userListFromState, setUserListFromState] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
 

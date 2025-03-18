@@ -272,7 +272,11 @@ const ComponentLeft = ({ userList, onSelectUser }) => {
   return (
     <div>
       {showInterface ? (
-        <ComponentLeftSearch onClose={handleClose} userList={userList} />
+        <ComponentLeftSearch
+          onClose={handleClose}
+          userList={userList}
+          onSelectUser={onSelectUser}
+        />
       ) : (
         <Layout className="chat-sidebar">
           <SearchBar onFocus={handleFocus} />

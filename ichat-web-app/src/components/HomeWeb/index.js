@@ -5,9 +5,9 @@ import HelloWindow from "./ChatWindow/HelloWindow";
 import ChatWindow from "./ChatWindow/ChatWindow";
 import PhoneBookWindow from "./PhoneBookWindow/PhoneBookWindow";
 import TaskWindow from "./TaskWindow/TaskWindow";
-import CloudWindow from "./CloudWindow/CloudWindow";
+
 import ScissorWindow from "./ScissorWindow/ScissorWindow";
-import SettingWindow from "./SettingWindow/SettingWindow";
+
 import SettingsModal from "./DropDownList/SettingsModal/SettingsModal";
 import { useDispatch, useSelector } from "react-redux";
 import {
