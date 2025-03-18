@@ -56,7 +56,7 @@ const GroupTab = () => {
         <Text style={{ fontWeight: "500", fontSize: 16 }}>{item.name}</Text>
       </View>
       <View style={{ display: "flex", flexDirection: "row", gap: 20 }}>
-        <Text style={{ fontSize: 12 }}>{item.created_at}</Text>
+        <Text style={{ fontSize: 12 }}>{item.time}</Text>
       </View>
     </TouchableOpacity>
   );

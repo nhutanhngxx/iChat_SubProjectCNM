@@ -34,6 +34,10 @@ const Priority = () => {
   const [allUser, setAllUser] = useState([]);
   const API_iChat = `http://${window.location.hostname}:5001`;
 
+  // Gộp danh sách chat và group chat và sắp xếp theo thời gian tin nhắn cuối cùng
+  const listChat = chatList.concat(groupList);
+  listChat.sort((a, b) => b.lastMessageTime - a.lastMessageTime);
+
   const fetchUsers = async () => {
     try {
       const response = await axios.get(`${API_iChat}/users`);
@@ -186,7 +190,7 @@ const Priority = () => {
         </View>
       ) : (
         <FlatList
-          data={chatList.concat(groupList)}
+          data={listChat}
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => {
             return renderItem({ item });

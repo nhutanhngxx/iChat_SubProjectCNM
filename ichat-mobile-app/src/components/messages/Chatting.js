@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useContext, useRef } from "react";
+import React, {
+  useState,
+  useEffect,
+  useContext,
+  useRef,
+  useCallback,
+} from "react";
 import {
   Text,
   View,
@@ -20,6 +26,7 @@ import { useNavigation } from "@react-navigation/native";
 import { UserContext } from "@/src/context/UserContext";
 import axios from "axios";
 import messageService from "../../services/messageService";
+import groupService from "@/src/services/groupService";
 
 const Chatting = ({ route }) => {
   const navigation = useNavigation();
@@ -31,8 +38,18 @@ const Chatting = ({ route }) => {
   const [replyMessage, setReplyMessage] = useState(null);
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
+  const [groupMembers, setGroupMembers] = useState([]);
 
   const API_iChat = `http://${window.location.hostname}:5001`;
+
+  // Hàm lấy tên thành viên từ ID để hiển thị trên tin nhắn nhóm
+  const getMemberName = useCallback(
+    (memberId) => {
+      const member = groupMembers.find((m) => m._id === memberId);
+      return member?.full_name || "Unknown";
+    },
+    [groupMembers]
+  );
 
   // Hiển thị modal khi ấn giữ tin nhắn
   const handleLongPress = (message) => {
@@ -77,7 +94,9 @@ const Chatting = ({ route }) => {
     useEffect(() => {
       const fetchMessages = async () => {
         const messages = await messageService.getMessagesByGroupId(chat.id);
+        const members = await groupService.getGroupMembers(chat.id);
         setMessages(messages);
+        setGroupMembers(members);
       };
       fetchMessages();
       const interval = setInterval(fetchMessages, 1000);
@@ -242,11 +261,19 @@ const Chatting = ({ route }) => {
                     : styles.theirMessage,
                 ]}
               >
+                {/* Tên người gửi */}
+                {!isMyMessage && chat.chatType === "group" && (
+                  <Text style={styles.replySender}>
+                    {getMemberName(item.sender_id)}:
+                  </Text>
+                )}
                 {/* Hiển thị tin nhắn Reply => Hiển thị tin nhắn gốc trước */}
                 {repliedMessage && (
                   <View style={styles.replyContainer}>
                     <Text style={styles.replySender}>
-                      {repliedMessage.sender_id === user.id ? "Bạn" : chat.name}
+                      {repliedMessage.sender_id === user.id
+                        ? "Bạn"
+                        : getMemberName(repliedMessage.sender_id)}
                       :
                     </Text>
                     <Text

@@ -5,7 +5,6 @@ const jwt = require("jsonwebtoken");
 require("dotenv").config();
 const cookieParser = require("cookie-parser");
 router.use(cookieParser());
-const twilio = require("twilio");
 const OTP = require("../models/OTP");
 
 // Socket.io => Real-time
@@ -16,33 +15,6 @@ const cors = require("cors");
 const User = require("../models/UserDetails");
 const Friendship = require("../models/Friendship");
 const Messages = require("../models/Messages");
-
-// Đăng ký tài khoản
-const client = require("twilio")(
-  process.env.TWILIO_ACCOUNT_SID,
-  process.env.TWILIO_AUTH_TOKEN
-);
-
-// Gửi OTP
-router.post("/send-otp", async (req, res) => {
-  const { phone } = req.body;
-  try {
-    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
-    await OTP.create({ phone, otp: otpCode, createdAt: new Date() })
-      .then(() => console.log("OTP saved"))
-      .catch((err) => console.error("Error saving OTP:", err));
-
-    await client.messages.create({
-      body: `Mã OTP của bạn là: ${otpCode}`,
-      from: "+18507493035",
-      to: phone,
-    });
-
-    res.json({ status: "ok", message: "OTP sent successfully" });
-  } catch (error) {
-    res.status(500).json({ status: "error", message: error.message });
-  }
-});
 
 // Đăng ký với OTP
 router.post("/register", async (req, res) => {
@@ -227,6 +199,22 @@ router.post("/userdata", async (req, res) => {
     res
       .status(401)
       .json({ status: "error", message: "Invalid or expired token" });
+  }
+});
+
+// Lấy thông tin User từ ID
+router.get("/users/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    let user = await User.findById(id);
+    if (!user) {
+      return res
+        .status(404)
+        .json({ status: "error", message: "User not found" });
+    }
+    res.json({ status: "ok", user });
+  } catch (error) {
+    res.status(500).json({ status: "error", message: error.message });
   }
 });
 
