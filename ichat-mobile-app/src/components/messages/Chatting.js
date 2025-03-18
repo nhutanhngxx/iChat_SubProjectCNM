@@ -263,8 +263,8 @@ const Chatting = ({ route }) => {
               >
                 {/* Tên người gửi */}
                 {!isMyMessage && chat.chatType === "group" && (
-                  <Text style={styles.replySender}>
-                    {getMemberName(item.sender_id)}:
+                  <Text style={styles.senderName}>
+                    {getMemberName(item.sender_id)}
                   </Text>
                 )}
                 {/* Hiển thị tin nhắn Reply => Hiển thị tin nhắn gốc trước */}
@@ -571,6 +571,11 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
     backgroundColor: "#FFFFFF",
   },
+  senderName: {
+    fontWeight: "bold",
+    fontSize: 12,
+    color: "#819bff",
+  },
   replyContainer: {
     backgroundColor: "#f0f0f0",
     padding: 10,
@@ -584,6 +589,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#007AFF",
   },
+
   replyText: {
     fontSize: 14,
     color: "#555",
