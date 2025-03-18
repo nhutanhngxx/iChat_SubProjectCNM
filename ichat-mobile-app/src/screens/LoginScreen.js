@@ -7,6 +7,7 @@ import {
   SafeAreaView,
   TextInput,
   Alert,
+  TouchableOpacity,
 } from "react-native";
 import axios from "axios";
 import CustomButton from "../components/common/CustomButton";
@@ -76,6 +77,21 @@ const LoginScreen = ({ navigation }) => {
               onPress={handleLogin}
               backgroundColor={"#48A2FC"}
             />
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Text
+                style={{ fontSize: 16 }}
+                onPress={() => navigation.navigate("Register")}
+              >
+                Bạn chưa có tài khoản?{" "}
+                <Text style={styles.register}>Đăng ký</Text>
+              </Text>
+            </View>
           </View>
         </View>
 
@@ -134,6 +150,11 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 70,
     color: "#131058",
+    fontWeight: "bold",
+  },
+  register: {
+    color: "#0C098C",
+    fontSize: 16,
     fontWeight: "bold",
   },
   question: {
