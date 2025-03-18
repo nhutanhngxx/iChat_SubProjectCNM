@@ -41,7 +41,8 @@
 
 .chat-list {
   padding: 15px 0;
-  height: calc(100vh - 82px); /* Adjust height to account for header */
+  /* height: calc(100vh - 82px); Adjust height to account for header */
+  height: 100%;
   overflow-y: auto;
 }
 
