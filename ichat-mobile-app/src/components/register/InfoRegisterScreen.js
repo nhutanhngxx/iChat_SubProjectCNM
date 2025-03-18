@@ -46,13 +46,6 @@ const InfoRegisterScreen = ({ navigation }) => {
         password,
       });
       console.log(response.data.data);
-      // const user = {
-      //   phone,
-      //   fullName,
-      //   dob,
-      //   gender,
-      // };
-      // console.log(user);
     } catch (error) {
       Alert.alert("Lỗi", error.response?.data?.message || "Có lỗi xảy ra!");
     }

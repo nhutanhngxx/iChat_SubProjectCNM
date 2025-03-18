@@ -50,10 +50,12 @@ router.post("/send-otp", async (req, res) => {
 
       res.json({
         status: "ok",
-        message: "OTP sent successfully",
-        phone,
-        otp: result.data.verification_code,
-        expire: result.data.expires,
+        data: {
+          message: "OTP sent successfully",
+          phone,
+          otp: result.data.verification_code,
+          expire: result.data.expires,
+        },
       });
     }
   } catch (error) {

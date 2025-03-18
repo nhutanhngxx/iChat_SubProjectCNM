@@ -8,13 +8,31 @@ import {
   Image,
   TextInput,
   TouchableOpacity,
+  Alert,
 } from "react-native";
 import { CheckBox } from "@rneui/themed";
 import CustomButton from "../common/CustomButton";
+import registerService from "../../services/registerService";
 
 const RegisterScreen = ({ navigation }) => {
-  const handleContinueRegister = () => {
-    navigation.navigate("EnterOTP");
+  const [isChecked, setChecked] = useState(false);
+  const [isCheckedSocial, setCheckedSocial] = useState(false);
+  const [phone, setPhone] = useState("");
+
+  const handleContinueRegister = async (phone) => {
+    if (!phone) {
+      Alert.alert("Thông báo", "Vui lòng điền đầy đủ thông tin!");
+      return;
+    }
+    if (!isChecked && !isCheckedSocial) {
+      Alert.alert("Thông báo", "Vui lòng đọc và đồng ý với điều khoản!");
+      return;
+    }
+    phone = "+84" + phone;
+    const result = await registerService.sendOTP(phone);
+    console.log(result);
+
+    if (result.status === "ok") navigation.navigate("EnterOTP");
   };
 
   const handleLoginWithFacebook = () => {
@@ -28,9 +46,6 @@ const RegisterScreen = ({ navigation }) => {
   const handleLogin = () => {
     navigation.navigate("Login");
   };
-
-  const [isChecked, setChecked] = useState(false);
-  const [isCheckedSocial, setCheckedSocial] = useState(false);
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
@@ -54,6 +69,8 @@ const RegisterScreen = ({ navigation }) => {
                     style={styles.input}
                     placeholder="Số điện thoại"
                     keyboardType="phone-pad"
+                    value={phone}
+                    onChangeText={setPhone}
                   />
                 </View>
               </View>
@@ -68,10 +85,6 @@ const RegisterScreen = ({ navigation }) => {
                     containerStyle={{ backgroundColor: "transparent" }}
                     textStyle={{ fontSize: 13 }}
                   />
-                  {/* <Text style={{ fontSize: 13 }}>
-                    Tôi đồng ý với các điều khoản của{" "}
-                    <Text style={{ fontWeight: "bold" }}>iChat</Text>
-                  </Text> */}
                 </View>
                 <View style={{ flexDirection: "row", alignItems: "center" }}>
                   <CheckBox
@@ -81,17 +94,13 @@ const RegisterScreen = ({ navigation }) => {
                     title="Tôi đồng ý với điều khoản Mạng xã hội của iChat"
                     textStyle={{ fontSize: 13, flexWrap: "wrap" }}
                   />
-                  {/* <Text style={{ fontSize: 13 }}>
-                    Tôi đồng ý với điều khoản Mạng xã hội của{" "}
-                    <Text style={{ fontWeight: "bold" }}>iChat</Text>
-                  </Text> */}
                 </View>
               </View>
 
               {/* Button continue */}
               <CustomButton
                 title="Tiếp theo"
-                onPress={() => handleContinueRegister()}
+                onPress={() => handleContinueRegister(phone)}
                 backgroundColor={"#48A2FC"}
               />
             </View>
