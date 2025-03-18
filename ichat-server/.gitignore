@@ -2,9 +2,5 @@
 
 # dependencies
 node_modules/
-<<<<<<< HEAD
 .env
 .env*.local
-=======
-.env
->>>>>>> mobile-group-chat
