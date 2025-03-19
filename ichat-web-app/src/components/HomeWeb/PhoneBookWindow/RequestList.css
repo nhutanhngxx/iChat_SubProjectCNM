@@ -113,10 +113,11 @@
   justify-items: center;
 }
 .request-message {
-  width: 100%;
+  width: 100px;
   border-radius: 10px;
   padding: 10px 0;
   flex: 1;
+  margin-left: 10px;
 }
 .request-message p {
   margin: 0;
@@ -147,15 +148,21 @@
 .btn.accept {
   background: #a8e9fe;
   color: #160bec;
+  width: 50%;
+  display: flex;
+      justify-items: center;
+      align-items: center;
+      gap: 10px;
 }
 
 .btn.reject {
   background: rgba(172, 169, 169, 0.6); /* 60% màu, 40% trong suốt */
-
+  width: 50%;
   color: #000000;
   display: flex;
   justify-content: center;
   align-items: center;
+  gap: 10px;
 }
 
 .btn.cancel {
@@ -168,6 +175,9 @@
   display: flex;
   justify-content: center;
   align-items: center;
+}
+.btn.cancel:active{
+  background: rgba(172, 169, 169, 0.8); /* 80% màu, 20% trong suốt */
 }
 .btn.cancel p {
   text-align: center;
@@ -214,4 +224,7 @@
   font-size: 14px;
   text-align: center;
   font-weight: 600;
+  gap: 5px;
+  display: flex;
+  align-items: center;
 }

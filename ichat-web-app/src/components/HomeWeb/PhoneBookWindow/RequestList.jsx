@@ -240,11 +240,14 @@ const RequestList = () => {
                         className="info-user"
                         onClick={() => handleOpenUserInfo(request, "sent")}
                       >
+                        <div 
+                        style={{ width: "50px"}}>
+                      
                         <img
                           src={request.avatar_path}
                           alt={request.full_name}
                           className="avatar"
-                        />
+                        /></div>
                         <div className="request-message">
                           <strong>{request.full_name}</strong>
                           <p className="message">{request.message}</p>
@@ -326,7 +329,7 @@ const RequestList = () => {
       {modalData && (
         <div className="modal-overlay">
           <div className="modal modal-confirm">
-            <h2>
+            <h2 style={{fontSize: "20px",fontWeight: "600"}}>
               Bạn có chắc chắn muốn
               {modalData.type === "accept" ? " đồng ý" : " từ chối"}?
             </h2>
