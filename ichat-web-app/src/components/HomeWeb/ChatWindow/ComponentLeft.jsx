@@ -18,9 +18,9 @@ import {
   VideoCameraOutlined,
   PhoneOutlined,
   NotificationOutlined,
-  MoreOutlined,
   DownOutlined,
-  PushpinOutlined
+  PushpinOutlined,
+  MoreOutlined,
 } from "@ant-design/icons";
 import { MdMoreHoriz } from "react-icons/md";
 import "./ComponentLeft.css";
@@ -28,13 +28,11 @@ import "./ComponentLeft.css";
 import SearchBar from "../Common/SearchBar";
 import ComponentLeftSearch from "./ComponentLeftSearch";
 
-import SearchComponent from "./SearchComponent";
 import MenuMdMoreHoriz from "./MenuMdMoreHoriz";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import localizedFormat from "dayjs/plugin/localizedFormat";
 
-const { Content } = Layout;
 const { TabPane } = Tabs;
 
 
@@ -53,6 +51,48 @@ const categories = [
     color: "black",
   },
 ];
+
+// Component HeaderTabs: Hiển thị các tab và dropdown menu
+const HeaderTabs = ({
+  menu,
+  filterContent,
+  filteredChatList,
+  onSelectUser,
+}) => (
+  <div className="chat-list">
+    <div className="chat-tabs-container">
+      <Tabs
+        defaultActiveKey="1"
+        tabBarStyle={{ margin: "0px 0px 4px 0px", padding: "0 8px" }}
+        style={{ fontWeight: "bold" }}
+        className="custom-tabs"
+      >
+        <TabPane tab="Ưu tiên" key="1" className="custom-tab-pane">
+          <ChatList
+            filteredChatList={filteredChatList}
+            onSelectUser={onSelectUser}
+          />
+        </TabPane>
+        <TabPane tab="Khác" key="2" className="custom-tab-pane">
+          Nội dung của tab Khác
+        </TabPane>
+      </Tabs>
+      <div className="tab-actions">
+        <Dropdown trigger={["click"]}>
+          <a className="category-dropdown" onClick={(e) => e.preventDefault()}>
+            Phân loại <DownOutlined />
+          </a>
+        </Dropdown>
+
+        <Dropdown trigger={["click"]}>
+          <a className="more-options" onClick={(e) => e.preventDefault()}>
+            <MoreOutlined />
+          </a>
+        </Dropdown>
+      </div>
+    </div>
+  </div>
+);
 
 //   // Tính thời gian từ timestamp
 dayjs.extend(relativeTime);

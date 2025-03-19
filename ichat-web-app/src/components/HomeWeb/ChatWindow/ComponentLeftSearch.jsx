@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+"use client";
+
+import { useState } from "react";
 import {
   Layout,
   List,
@@ -133,32 +135,47 @@ const files = [
     name: "DS_SV",
     type: "excel",
     size: "22.89 KB",
-    sender: "Nguyen Thi Hanh",
     date: "07/01/2025",
+    type: "excel",
   },
   {
     id: 2,
     name: "DJI.MP4",
     type: "video",
     size: "373.43 MB",
-    sender: "Thanh Canh",
+    author: "Thanh Cảnh",
     date: "30/09/2024",
+    type: "video",
   },
   {
     id: 3,
     name: "Pháp luật đại cương.pdf",
-    type: "pdf",
     size: "93.15 MB",
-    sender: "Unknown",
     date: "25/09/2024",
+    type: "pdf",
   },
   {
     id: 4,
     name: "Giáo trình pháp luật.pdf",
     type: "pdf",
     size: "18.53 MB",
-    sender: "Unknown",
     date: "25/09/2024",
+    type: "pdf",
+  },
+  {
+    id: 5,
+    name: "GT Pháp luật đại cương.pdf",
+    size: "4.44 MB",
+    date: "25/09/2024",
+    type: "pdf",
+  },
+  {
+    id: 6,
+    name: "Đặc tả yêu cầu và sơ đồ usecase...",
+    size: "384.2 KB",
+    author: "Vũ Hải Nam",
+    date: "25/08/2024",
+    type: "word",
   },
 ];
 
@@ -166,6 +183,14 @@ const files = [
 const parseDate = (dateStr) => {
   const [day, month, year] = dateStr.split("/");
   return new Date(year, month - 1, day);
+};
+
+// Hàm formatDate an toàn
+const formatDate = (date) => {
+  if (!date || !(date instanceof Date) || isNaN(date.getTime())) return "";
+  return `${date.getDate().toString().padStart(2, "0")}/${(date.getMonth() + 1)
+    .toString()
+    .padStart(2, "0")}/${date.getFullYear()}`;
 };
 
 // Component RecentlySearched
@@ -283,6 +308,7 @@ const renderFileItem = (file) => {
           )}</span>
         </Row>
       </div>
+      <div className="text-xs text-gray-500 whitespace-nowrap">{file.date}</div>
     </List.Item>
   );
 };
@@ -758,10 +784,14 @@ const FileList = ({ filteredFiles }) => (
 // Component chính
 const ComponentLeftSearch = ({ userList, onClose }) => {
   const [searchText, setSearchText] = useState("");
+  const [searchSenderFilteredMessage, setSearchSenderFilteredMessage] =
+    useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [filteredRecentlyUser, setFilteredRecentlyUser] = useState(userList);
+  const [filteredRecentlyUser, setFilteredRecentlyUser] = useState(
+    userList || users
+  );
   const [selectedType, setSelectedType] = useState("all");
-  const [dateRange, setDateRange] = useState([null, null]);
+  const [dateRange, setDateRange] = useState({ from: null, to: null });
 
   // Thêm state cho filter tin nhắn
   const [selectedUser, setSelectedUser] = useState(null);
@@ -796,13 +826,23 @@ const ComponentLeftSearch = ({ userList, onClose }) => {
 
   const filteredFiles = files.filter((file) => {
     if (selectedType !== "all" && file.type !== selectedType) return false;
-    if (dateRange[0] && dateRange[1]) {
+    if (dateRange.from && dateRange.to) {
       const fileDate = parseDate(file.date);
-      const startDate = dateRange[0].toDate();
-      const endDate = dateRange[1].toDate();
-      if (fileDate < startDate || fileDate > endDate) return false;
+      if (!(fileDate instanceof Date) || isNaN(fileDate.getTime()))
+        return false;
+
+      if (
+        !(dateRange.from instanceof Date) ||
+        isNaN(dateRange.from.getTime()) ||
+        !(dateRange.to instanceof Date) ||
+        isNaN(dateRange.to.getTime())
+      ) {
+        return true;
+      }
+
+      if (fileDate < dateRange.from || fileDate > dateRange.to) return false;
     }
-    return true;
+    return file.name.toLowerCase().includes(searchText.toLowerCase());
   });
 
   const userMenu = (
@@ -862,6 +902,7 @@ const ComponentLeftSearch = ({ userList, onClose }) => {
       ) : (
         <SearchResults
           filteredSearchUser={filteredSearchUser}
+          filteredSearchMessages={filteredSearchMessages}
           messages={messages}
           filteredFiles={filteredFiles}
           selectedType={selectedType}
@@ -887,4 +928,7 @@ const ComponentLeftSearch = ({ userList, onClose }) => {
   );
 };
 
+<div>
+  <div></div>
+</div>;
 export default ComponentLeftSearch;

@@ -79,7 +79,7 @@ const ChatWindow = ({ user }) => {
             )
         } <
         /Layout>
-    );
+    )
 };
 
 export default ChatWindow;
