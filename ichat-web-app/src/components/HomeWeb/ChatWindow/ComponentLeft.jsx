@@ -144,9 +144,9 @@ const ChatItem = ({ item, onSelectUser, onPin }) => {
           </Col>
 
           <Col>
-            <div className="time-and-more-container">
-              <Dropdown overlay={<MenuMdMoreHoriz onPin={() => onPin(item.id)} />} trigger={["click"]}>
-                <MdMoreHoriz className="md-more-horiz-icon" />
+            <div className="time-and-more-container" onClick={(e) => e.stopPropagation()} >
+              <Dropdown overlay={<MenuMdMoreHoriz onPin={() => onPin(item.id)} />} trigger={["click"]} >
+                <MdMoreHoriz className="md-more-horiz-icon"   />
               </Dropdown>
               <span className="chat-time">{formatTime(item.time)}</span>
             </div>

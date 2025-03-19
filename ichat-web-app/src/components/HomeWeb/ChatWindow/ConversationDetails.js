@@ -8,6 +8,7 @@ import { BiSolidFilePdf } from "react-icons/bi";
 import { AiFillFileZip } from "react-icons/ai";
 import { FaFileWord } from "react-icons/fa";
 import { CiLink } from "react-icons/ci";
+import { MdOutlineGroup } from "react-icons/md";
 import {
   EditOutlined,
   BellOutlined,
@@ -217,8 +218,9 @@ const ConversationDetails = ({
                 padding: "10px",
                 display: "flex",
                 paddingLeft: "20px",
+                gap: "10px",
             }}>
-
+              <MdOutlineGroup className="icon-group"  style={{fontSize:"20px"}}/>
               <h3 style={{fontWeight:"400", color:"gray"}}> 4 Nhóm chung</h3>
             </div>
             <div className="conversation-options">

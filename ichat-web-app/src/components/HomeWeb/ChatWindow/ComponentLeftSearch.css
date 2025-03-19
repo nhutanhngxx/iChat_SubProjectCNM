@@ -97,9 +97,9 @@
     border-radius: 50%;
 }
 
-.message-content {
+/* .message-content {
     flex: 1;
-}
+} */
 
 .message-header-row {
     display: flex;

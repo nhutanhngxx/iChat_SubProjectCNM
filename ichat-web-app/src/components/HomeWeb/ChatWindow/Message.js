@@ -6,7 +6,9 @@ import { LikeOutlined, CheckOutlined } from "@ant-design/icons";
 
 const Message = ({ message, selectedChat, isSender }) => {
   return (
-    <div className={`message ${isSender ? "sent" : "received"}`}>
+    <div className={`message ${isSender ? "sent" : "received"}`}
+    >
+    
       {!isSender && (
         <div className="avatar-message">
           <Avatar
@@ -60,7 +62,11 @@ const Message = ({ message, selectedChat, isSender }) => {
           </div> */}
         </div>
       ) : (
-        <div className="message-content">
+        <div className="message-content" 
+        style={{
+          backgroundColor: isSender ? "#e6f7ff" : "#fff",
+        }}
+        >
           <p>{message.content}</p>
           <span className="timestamp">
             {new Date(message.timestamp).toLocaleTimeString([], {
