@@ -12,9 +12,16 @@ import {
 
 
 
-const MenuMdMoreHoriz = ({ onPin }) => {
+const MenuMdMoreHoriz = ({ isPinned, onPin, user, handleOnMarkUnread, isUserMuted, handleMuteNotification }) => {
+
+
   const menuItems = [
-    { key: "1", label: "Ghim hội thoại", icon: <PushpinOutlined />, onClick: onPin, },
+    {
+      key: "1",
+      label: isPinned ? "Bỏ ghim hội thoại" : "Ghim hội thoại",
+      icon: <PushpinOutlined />,
+      onClick: onPin,
+    },
     {
       key: "2",
       label: "Phân loại",
@@ -24,16 +31,22 @@ const MenuMdMoreHoriz = ({ onPin }) => {
       //   { key: "2-2", label: "Công việc" },
       // ],
     },
-    { key: "3", label: "Đánh dấu chưa đọc" },
+    {
+      key: "3",
+      label: user.unread ? "Đánh dấu đã đọc" : "Đánh dấu chưa đọc",
+      onClick: () => handleOnMarkUnread(user.id),
+    },
     { key: "4", label: "Thêm vào nhóm", icon: <PlusOutlined /> },
     {
       key: "5",
-      label: "Tắt thông báo",
+      label: isUserMuted(user) ? "Bật thông báo" : "Tắt thông báo",
       icon: <BellOutlined />,
       children: [
-        { key: "5-1", label: "Trong 1 giờ" },
-        { key: "5-2", label: "Trong 8 giờ" },
-        { key: "5-3", label: "Cho đến khi được mở lại" },
+        { key: "5-1", label: "Trong 1 giờ", onClick: () => handleMuteNotification(user.id, 1) },
+        { key: "5-2", label: "Trong 8 giờ", onClick: () => handleMuteNotification(user.id, 8) },
+        { key: "5-3", label: "Cho đến khi được mở lại", onClick: () => handleMuteNotification(user.id, -1) },
+        // Tùy chọn để bật thông báo (hours = 0)
+        { key: "5-4", label: "Bật thông báo", onClick: () => handleMuteNotification(user.id, 0) },
       ],
     },
     { key: "6", label: "Ẩn trò chuyện", icon: <EyeInvisibleOutlined /> },

@@ -40,6 +40,7 @@ const ChatWindow = ({ user }) => {
                 type: msg.type || "text",
                 avatar_path: msg.avatar_path || "https://default-avatar.com/avatar.jpg",
                 priority: "priority",
+                mulUntil: null,
             }));
 
             setUserListFromState(formattedUsers);

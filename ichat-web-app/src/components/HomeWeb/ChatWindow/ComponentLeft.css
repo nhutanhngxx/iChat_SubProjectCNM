@@ -116,7 +116,7 @@
 /* Thời gian tin nhắn cuối */
 
 .chat-time {
-    font-size: 12px;
+    font-size: 14px;
     color: #999;
     /* Gray color for timestamps */
 }
@@ -238,11 +238,11 @@
     display: none;
 }
 
-.time-and-more-container:hover .md-more-horiz-icon {
+.chat-item:hover .md-more-horiz-icon {
     display: inline-block;
 }
 
-.time-and-more-container:hover .chat-time {
+.chat-item:hover .chat-time {
     display: none;
 }
 

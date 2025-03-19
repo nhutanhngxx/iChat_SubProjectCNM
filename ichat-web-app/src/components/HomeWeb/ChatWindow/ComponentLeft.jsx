@@ -21,7 +21,11 @@ import {
   DownOutlined,
   PushpinOutlined,
   MoreOutlined,
+  BellFilled,
+
 } from "@ant-design/icons";
+
+import { FiBellOff } from "react-icons/fi";
 import { MdMoreHoriz } from "react-icons/md";
 import "./ComponentLeft.css";
 
@@ -99,7 +103,7 @@ dayjs.extend(relativeTime);
 dayjs.extend(localizedFormat);
 
 // Component ChatItem: Render từng mục trong danh sách chat
-const ChatItem = ({ item, onSelectUser, onPin }) => {
+const ChatItem = ({ item, onSelectUser, onPin, handleOnMarkUnread, handleMuteNotification }) => {
   const [isClicked, setIsClicked] = useState(false);
 
   // Tính thời gian từ timestamp
@@ -125,6 +129,11 @@ const ChatItem = ({ item, onSelectUser, onPin }) => {
     // setIsSearchOpen(false);
     setIsClicked(true);
   };
+
+  // Hàm kiểm tra trạng thái tắt thông báo của user
+  const isUserMuted = (item) => {
+    return item.muteUntil && (item.muteUntil === Infinity || item.muteUntil > Date.now());
+  };
   return (
     <List.Item
       key={item.id}
@@ -144,11 +153,17 @@ const ChatItem = ({ item, onSelectUser, onPin }) => {
           </Col>
 
           <Col>
+
+
             <div className="time-and-more-container">
-              <Dropdown overlay={<MenuMdMoreHoriz onPin={() => onPin(item.id)} />} trigger={["click"]}>
+              <span className="chat-time">
+                {isUserMuted(item) && <FiBellOff style={{ marginRight: 4 }} />} {/* Sử dụng icon tắt chuông */}
+                {formatTime(item.time)}
+              </span>
+              <Dropdown overlay={<MenuMdMoreHoriz isPinned={item.isPinned} onPin={() => onPin(item.id)} user={item} handleOnMarkUnread={handleOnMarkUnread} isUserMuted={isUserMuted} handleMuteNotification={handleMuteNotification} />} trigger={["click"]}>
                 <MdMoreHoriz className="md-more-horiz-icon" />
               </Dropdown>
-              <span className="chat-time">{formatTime(item.time)}</span>
+
             </div>
           </Col>
         </Row>
@@ -178,11 +193,11 @@ const ChatItem = ({ item, onSelectUser, onPin }) => {
 };
 
 // Component ChatList: Hiển thị danh sách các ChatItem
-const ChatList = ({ filteredChatList, onSelectUser, onPin }) => (
+const ChatList = ({ filteredChatList, onSelectUser, onPin, handleOnMarkUnread, handleMuteNotification }) => (
   <List
     itemLayout="horizontal"
     dataSource={filteredChatList}
-    renderItem={(item) => <ChatItem item={item} onSelectUser={onSelectUser} onPin={onPin} />}
+    renderItem={(item) => <ChatItem item={item} onSelectUser={onSelectUser} onPin={onPin} handleOnMarkUnread={handleOnMarkUnread} handleMuteNotification={handleMuteNotification} />}
   />
 );
 
@@ -207,7 +222,7 @@ const ComponentLeft = ({ userList, setUserList, onSelectUser }) => {
     return matchesStatus && matchesCategory;
   });
 
-  // Sắp xếp hội thoại: ghim lên trên, sau đó theo thời gian
+  // Sắp xếp hội thoại:  lên trên, sau đó theo thời gian
   const sortedConversations = [...filteredChatList].sort((a, b) => {
     if (a.isPinned && !b.isPinned) return -1
     if (!a.isPinned && b.isPinned) return 1
@@ -244,7 +259,29 @@ const ComponentLeft = ({ userList, setUserList, onSelectUser }) => {
     setUserList(updatedList);
   };
 
+  const handleOnMarkUnread = (id) => {
+    const updatedList = userList.map((item) =>
+      item.id === id ? { ...item, unread: item.unread === 0 ? 1 : 0 } : item
+    );
+    setUserList(updatedList);
+  };
 
+  const handleMuteNotification = (id, hours) => {
+    const updatedList = userList.map((item) => {
+      if (item.id === id) {
+        if (hours === 0) {
+          return { ...item, muteUntil: null };
+        } else {
+          const mutedUntil = hours === -1
+            ? Infinity
+            : Date.now() + hours * 60 * 60 * 1000;
+          return { ...item, muteUntil: mutedUntil };
+        }
+      }
+      return item;
+    });
+    setUserList(updatedList);
+  };
 
 
 
@@ -339,12 +376,16 @@ const ComponentLeft = ({ userList, setUserList, onSelectUser }) => {
                   filteredChatList={filteredPriorityList}
                   onSelectUser={onSelectUser}
                   onPin={handlePin}
+                  handleOnMarkUnread={handleOnMarkUnread}
+                  handleMuteNotification={handleMuteNotification}
                 />
               ) : (
                 <ChatList
                   filteredChatList={filteredOtherList}
                   onSelectUser={onSelectUser}
                   onPin={handlePin}
+                  handleOnMarkUnread={handleOnMarkUnread}
+                  handleMuteNotification={handleMuteNotification}
                 />
               )}
             </div>
