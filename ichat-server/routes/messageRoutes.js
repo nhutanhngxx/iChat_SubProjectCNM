@@ -1,4 +1,3 @@
-
 const express = require("express");
 const mongoose = require("mongoose");
 const router = express.Router();
@@ -441,7 +440,10 @@ router.get("/recent-receivers/:senderId", async (req, res) => {
       {
         $lookup: {
           from: "Message", // Lấy tin nhắn chưa đọc
-          let: { receiverId: "$_id", senderId: new mongoose.Types.ObjectId(senderId) },
+          let: {
+            receiverId: "$_id",
+            senderId: new mongoose.Types.ObjectId(senderId),
+          },
           pipeline: [
             {
               $match: {
@@ -463,7 +465,9 @@ router.get("/recent-receivers/:senderId", async (req, res) => {
       },
       {
         $addFields: {
-          unread: { $ifNull: [{ $arrayElemAt: ["$unreadMessages.unread", 0] }, 0] }, // Nếu không có thì mặc định là 0
+          unread: {
+            $ifNull: [{ $arrayElemAt: ["$unreadMessages.unread", 0] }, 0],
+          }, // Nếu không có thì mặc định là 0
         },
       },
       {
@@ -487,6 +491,5 @@ router.get("/recent-receivers/:senderId", async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 });
-
 
 module.exports = router;

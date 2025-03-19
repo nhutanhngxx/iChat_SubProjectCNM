@@ -18,8 +18,8 @@ import {
   VideoCameraOutlined,
   PhoneOutlined,
   NotificationOutlined,
-  MoreOutlined,
   DownOutlined,
+  MoreOutlined,
 } from "@ant-design/icons";
 import { MdMoreHoriz } from "react-icons/md";
 import "./ComponentLeft.css";
@@ -27,23 +27,12 @@ import "./ComponentLeft.css";
 import SearchBar from "../Common/SearchBar";
 import ComponentLeftSearch from "./ComponentLeftSearch";
 
-import SearchComponent from "./SearchComponent";
 import MenuMdMoreHoriz from "./MenuMdMoreHoriz";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import localizedFormat from "dayjs/plugin/localizedFormat";
 
-const { Content } = Layout;
 const { TabPane } = Tabs;
-
-// Dữ liệu mẫu cho danh sách mục
-const listItems = [
-  { id: 1, image: "user1", name: "Triệu Quốc An" },
-  { id: 2, image: "cloud", name: "Nguyễn Thanh Cường" },
-  { id: 3, image: "user2", name: "Lê Phước Nguyên" },
-  { id: 4, image: "user3", name: "Đình Nguyễn Chung" },
-  { id: 5, image: "cloud_plus", name: "Cloud của tôi" },
-];
 
 // Danh sách các danh mục với màu sắc tương ứng
 const categories = [
@@ -68,33 +57,37 @@ const HeaderTabs = ({
   onSelectUser,
 }) => (
   <div className="chat-list">
-    <Tabs
-      defaultActiveKey="1"
-      tabBarStyle={{ margin: "0px 0px 4px 0px", padding: "0 8px" }}
-      style={{ fontWeight: "bold" }}
-      className="custom-tabs"
-    >
-      <TabPane tab="Ưu tiên" key="1" className="custom-tab-pane">
-        <ChatList
-          filteredChatList={filteredChatList}
-          onSelectUser={onSelectUser}
-        />
-      </TabPane>
-      <TabPane tab="Khác" key="2" className="custom-tab-pane">
-        Nội dung của tab Khác
-      </TabPane>
-    </Tabs>
+    <div className="chat-tabs-container">
+      <Tabs
+        defaultActiveKey="1"
+        tabBarStyle={{ margin: "0px 0px 4px 0px", padding: "0 8px" }}
+        style={{ fontWeight: "bold" }}
+        className="custom-tabs"
+      >
+        <TabPane tab="Ưu tiên" key="1" className="custom-tab-pane">
+          <ChatList
+            filteredChatList={filteredChatList}
+            onSelectUser={onSelectUser}
+          />
+        </TabPane>
+        <TabPane tab="Khác" key="2" className="custom-tab-pane">
+          Nội dung của tab Khác
+        </TabPane>
+      </Tabs>
+      <div className="tab-actions">
+        <Dropdown trigger={["click"]}>
+          <a className="category-dropdown" onClick={(e) => e.preventDefault()}>
+            Phân loại <DownOutlined />
+          </a>
+        </Dropdown>
 
-    {/* <div className="header-actions">
-      <Popover content={filterContent} title="Phân loại" trigger="click">
-        <span className="classify">
-          Phân loại <DownOutlined className="more-icon" />
-        </span>
-      </Popover>
-      <Dropdown overlay={menu} trigger={["click"]}>
-        <MoreOutlined className="more-icon" />
-      </Dropdown>
-    </div> */}
+        <Dropdown trigger={["click"]}>
+          <a className="more-options" onClick={(e) => e.preventDefault()}>
+            <MoreOutlined />
+          </a>
+        </Dropdown>
+      </div>
+    </div>
   </div>
 );
 
@@ -201,6 +194,7 @@ const ChatList = ({ filteredChatList, onSelectUser }) => (
 
 // Component chính: ComponentLeft
 const ComponentLeft = ({ userList, onSelectUser }) => {
+  const [activeTab, setActiveTab] = useState("priority");
   const [searchText] = useState("");
   const [showInterface, setShowInterface] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
@@ -237,7 +231,6 @@ const ComponentLeft = ({ userList, onSelectUser }) => {
   // Nội dung của Popover
   const filterContent = (
     <div className="filter-popover">
-      <h3>Phân loại</h3>
       <p>Theo trạng thái</p>
       <Radio.Group
         value={statusFilter}
@@ -276,13 +269,60 @@ const ComponentLeft = ({ userList, onSelectUser }) => {
       ) : (
         <Layout className="chat-sidebar">
           <SearchBar onFocus={handleFocus} />
-          <HeaderTabs
+          {/* <HeaderTabs
             menu={menu}
             filterContent={filterContent}
             filteredChatList={filteredChatList}
             onSelectUser={onSelectUser}
-          />
-          {/* <ChatList filteredChatList={userList} onSelectUser={onSelectUser} /> */}
+          /> */}
+          <div className="conversations-container">
+            <div className="classification-conversation-container">
+              <div className="tabs-header">
+                <button
+                  className={`tab-header ${
+                    activeTab === "priority" ? "active-tab-header" : ""
+                  }`}
+                  onClick={() => setActiveTab("priority")}
+                >
+                  Ưu tiên
+                </button>
+
+                <button
+                  className={`tab-header ${
+                    activeTab === "other" ? "active-tab-header" : ""
+                  }`}
+                  onClick={() => setActiveTab("other")}
+                >
+                  Khác
+                </button>
+              </div>
+              <div className="actions-header">
+                <Dropdown overlay={filterContent} trigger={["click"]}>
+                  <button className="filterButton">
+                    Phân loại <DownOutlined size={16} />
+                  </button>
+                </Dropdown>
+                <Dropdown
+                  overlay={
+                    <Menu>
+                      <Menu.Item key="1">Đánh dấu đã đọc</Menu.Item>
+                    </Menu>
+                  }
+                  trigger={["click"]}
+                >
+                  <button className="moreButton">
+                    <MoreOutlined size={16} />
+                  </button>
+                </Dropdown>
+              </div>
+            </div>
+            <div className="list-conversations-container">
+              <ChatList
+                filteredChatList={filteredChatList}
+                onSelectUser={onSelectUser}
+              />
+            </div>
+          </div>
         </Layout>
       )}
     </div>

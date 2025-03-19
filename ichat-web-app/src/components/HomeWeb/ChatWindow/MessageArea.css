@@ -195,3 +195,745 @@
   min-width: 346px;
   max-width: 346px;
 }
+.category-dropdown-container {
+  background-color: none;
+  border: none;
+}
+
+.category-icon {
+  width: 20px; /* Kích thước to hơn */
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 20px; /* Phóng to icon */
+  border-radius: 50%;
+  transition: transform 0.2s ease-in-out;
+}
+
+.category-icon:hover {
+  transform: scale(1.1); /* Hiệu ứng phóng to khi hover */
+}
+
+.category-icon:active {
+  transform: scale(1); /* Giữ nguyên kích thước khi click */
+}
+
+.category-menu {
+  width: 200px;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.category-item {
+  padding: 8px 12px;
+}
+
+.category-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.category-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.manage-item {
+  padding: 8px 12px;
+}
+
+.manage-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #666;
+}
+
+/* Category Management Modal Styles */
+.category-management-modal .ant-modal-header {
+  border-bottom: 1px solid #f0f0f0;
+  padding: 16px 24px;
+}
+
+.category-management-modal .ant-modal-title {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.category-management-content {
+  padding: 0 0 16px 0;
+}
+
+.category-management-content h4 {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 12px;
+}
+
+.category-list {
+  margin-bottom: 16px;
+}
+
+.category-list-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  background-color: #f5f5f5;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  transition: background-color 0.2s ease;
+}
+
+.category-list-item:hover {
+  background-color: #f0f0f0;
+}
+
+.category-actions {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  gap: 8px;
+}
+
+.action-button.delete {
+  color: #ff4d4f;
+}
+
+.action-button:hover {
+  color: #1890ff;
+}
+.category-drag-handle {
+  color: #999;
+  margin-right: 12px;
+  cursor: move;
+}
+
+.category-tag {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  margin-right: 12px;
+}
+
+.category-name {
+  font-size: 14px;
+  flex-grow: 1;
+}
+
+.add-category-button {
+  color: #1890ff;
+  padding-left: 0;
+  display: flex;
+  align-items: center;
+}
+
+.add-category-button .anticon {
+  margin-right: 8px;
+}
+
+.dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dialog {
+  background: white;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.dialog-header {
+  padding: 16px;
+  border-bottom: 1px solid #e4e6eb;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dialog-header h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+}
+
+.close-button:hover {
+  background-color: #f2f2f2;
+}
+
+/* .dialog-content {
+  padding: 16px;
+  overflow-y: hidden;
+  flex: 1;
+} */
+
+/* .group-name-input {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid #e4e6eb;
+  margin-bottom: 0px;
+} */
+
+.camera-icon {
+  color: #65676b;
+}
+
+.group-name-input input {
+  border: none;
+  outline: none;
+  font-size: 16px;
+  width: 100%;
+}
+
+.search-container {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #65676b;
+}
+
+.search-container input {
+  width: 100%;
+  padding: 8px 12px 8px 40px;
+  border: none;
+  border-radius: 50px;
+  background-color: #f0f2f5;
+  font-size: 15px;
+}
+
+.categories {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #e4e6eb;
+}
+
+.category-button {
+  white-space: nowrap;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 18px;
+  background-color: #e4e6eb;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.category-button.active {
+  background-color: #0084ff;
+  color: white;
+}
+
+.contacts-section h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.contacts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.contact-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.contact-item:hover {
+  background-color: #f0f2f5;
+}
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.selected-contacts {
+  position: sticky;
+  bottom: 0;
+  background-color: white;
+  padding: 16px 0;
+  border-top: 1px solid #e4e6eb;
+}
+
+.selected-count {
+  font-size: 14px;
+  color: #65676b;
+  margin-bottom: 8px;
+}
+
+.selected-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.contact-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px 4px 4px;
+  background-color: #e4e6eb;
+  border-radius: 18px;
+  font-size: 14px;
+}
+
+.chip-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.remove-contact {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: #65676b;
+  display: flex;
+  align-items: center;
+}
+
+.dialog-footer {
+  padding: 16px;
+  border-top: 1px solid #e4e6eb;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.cancel-button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  background-color: #e4e6eb;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.create-button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  background-color: #0084ff;
+  color: white;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.create-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* 
+style Modal Group
+
+*/
+.dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dialog {
+  background: white;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.dialog-header {
+  padding: 16px;
+  border-bottom: 1px solid #e4e6eb;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dialog-header h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+}
+
+.close-button:hover {
+  background-color: #f2f2f2;
+}
+
+.dialog-content {
+  padding: 16px;
+  overflow-y: hidden;
+  flex: 1;
+}
+
+.group-name-input {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid #e4e6eb;
+  margin-bottom: 0px;
+}
+
+.camera-icon {
+  color: #65676b;
+}
+
+.group-name-input input {
+  border: none;
+  outline: none;
+  font-size: 16px;
+  width: 100%;
+}
+
+.search-container {
+  position: relative;
+  margin-bottom: 0px;
+}
+
+.search-container input {
+  width: 100%;
+  padding: 8px 12px 8px 40px;
+  border: none;
+  border-radius: 50px;
+  background-color: #f0f2f5;
+  font-size: 15px;
+}
+
+.categories {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #e4e6eb;
+}
+
+.category-button {
+  white-space: nowrap;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 18px;
+  background-color: #e4e6eb;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.category-button.active {
+  background-color: #0084ff;
+  color: white;
+}
+
+.contacts-section h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.contacts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.contact-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.contact-item:hover {
+  background-color: #f0f2f5;
+}
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.selected-contacts {
+  position: sticky;
+  bottom: 0;
+  background-color: white;
+  padding: 16px 0;
+  border-top: 1px solid #e4e6eb;
+}
+
+.selected-count {
+  font-size: 14px;
+  color: #65676b;
+  margin-bottom: 8px;
+}
+
+.selected-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.contact-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px 4px 4px;
+  background-color: #e4e6eb;
+  border-radius: 18px;
+  font-size: 14px;
+}
+
+.chip-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.remove-contact {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: #65676b;
+  display: flex;
+  align-items: center;
+}
+
+.dialog-footer {
+  padding: 16px;
+  border-top: 1px solid #e4e6eb;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.cancel-button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  background-color: #e4e6eb;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.create-button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  background-color: #0084ff;
+  color: white;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.create-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* css tiepe s theo */
+
+.conversation-container {
+  display: flex;
+  gap: 20px;
+  padding: 16px;
+  min-height: 300px;
+  border-radius: 10px;
+  border: 1px solid darkgray;
+  height: 344px;
+}
+
+.conversations-list {
+  flex: 1;
+  border-right: 1px solid #e4e6eb;
+  padding-right: 20px;
+  overflow-y: auto;
+  height: 294px;
+}
+
+.conversations-list h3 {
+  font-size: 15px;
+  font-weight: 600;
+  color: #050505;
+  margin: 0 0 12px 0;
+}
+
+.contacts {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.contact-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.contact-item:hover {
+  background-color: #f2f2f2;
+}
+
+.contact-checkbox {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.contact-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.contact-name {
+  font-size: 15px;
+  color: #050505;
+}
+
+.selected-section {
+  width: 128px;
+}
+
+.selected-header {
+  font-size: 15px;
+  color: #65676b;
+  margin-bottom: 12px;
+  bottom: 10px;
+}
+
+.selected-count {
+  color: #050505;
+  font-weight: 500;
+}
+
+.selected-contacts {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.selected-contact {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px 4px 4px;
+  background-color: #e7f3ff;
+  border-radius: 18px;
+  width: fit-content;
+}
+
+.selected-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.selected-name {
+  font-size: 14px;
+  color: #0866ff;
+}
+
+.remove-button {
+  background: none;
+  border: none;
+  padding: 2px;
+  cursor: pointer;
+  color: #0866ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.remove-button:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  border-radius: 50%;
+}
+
+:where(.css-dev-only-do-not-override-1htoz2s).ant-modal .ant-modal-content {
+  height: 653px;
+  max-height: 100%;
+}
+:where(.css-dev-only-do-not-override-1htoz2s).ant-modal-root .ant-modal-wrap {
+  overflow: hidden;
+  top: -80px;
+}
+:where(.css-dev-only-do-not-override-1htoz2s).ant-modal .ant-modal-header {
+  padding-bottom: 7px;
+  border-bottom: 1px solid #b6b6b6;
+}

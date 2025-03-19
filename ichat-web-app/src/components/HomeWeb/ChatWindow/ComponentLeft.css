@@ -41,7 +41,8 @@
 
 .chat-list {
   padding: 15px 0;
-  height: calc(100vh - 82px); /* Adjust height to account for header */
+  /* height: calc(100vh - 82px); Adjust height to account for header */
+  height: 100%;
   overflow-y: auto;
 }
 
@@ -137,7 +138,8 @@
 }
 
 .filter-popover {
-  width: 200px; /* Fixed width for filter popover */
+  width: 240px; /* Fixed width for filter popover */
+  background-color: #fff;
 }
 
 .category-dot {
@@ -150,13 +152,6 @@
 
 .manage-categories {
   margin-top: 10px;
-}
-
-/* Danh sách */
-.chat-list {
-  height: calc(100vh - 160px);
-  overflow-y: auto;
-  padding: 0;
 }
 
 /* Mỗi item trong danh sách */
@@ -184,4 +179,134 @@
 
 .list-item:hover .delete-button:hover {
   color: royalblue;
+}
+
+.time-and-more-container {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.md-more-horiz-icon {
+  font-size: 18px;
+  color: #333;
+  cursor: pointer;
+  display: none;
+}
+
+.time-and-more-container:hover .md-more-horiz-icon {
+  display: inline-block;
+}
+
+.time-and-more-container:hover .chat-time {
+  display: none;
+}
+
+.chat-tabs-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.tab-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.category-dropdown {
+  color: #595959;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.more-options {
+  color: #595959;
+  font-size: 16px;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.category-dropdown:hover,
+.more-options:hover {
+  color: #1890ff;
+}
+/* CODE LẠI */
+
+.conversations-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+    Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+}
+
+.classification-conversation-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.tabs-header {
+  display: flex;
+  gap: 16px;
+}
+
+.tab-header {
+  font-size: 14px;
+  font-weight: 500;
+  color: #65676b;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.active-tab-header {
+  color: #1877f2;
+  position: relative;
+}
+
+.active-tab-header::after {
+  content: "";
+  position: absolute;
+  bottom: -13px;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background-color: #1877f2;
+}
+
+.actions-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filterButton {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+  color: #050505;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.moreButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: #65676b;
+  cursor: pointer;
 }

@@ -76,8 +76,10 @@ router.post("/login", async (req, res) => {
       //   expiresIn: "1h",
       // });
       if (!process.env.JWT_SECRET) {
-  return res.status(500).json({ status: "error", message: "JWT_SECRET is missing" });
-}
+        return res
+          .status(500)
+          .json({ status: "error", message: "JWT_SECRET is missing" });
+      }
 
       const accessToken = generateAccessToken(user);
       const refreshToken = generateRefreshToken(user);
@@ -117,26 +119,36 @@ router.post("/refresh-token", (req, res) => {
   const refreshToken = req.cookies.refreshToken;
 
   if (!refreshToken) {
-    return res.status(401).json({ status: "error", message: "No refresh token provided" });
+    return res
+      .status(401)
+      .json({ status: "error", message: "No refresh token provided" });
   }
 
-  jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET, async (err, decoded) => {
-    if (err) {
-      return res.status(403).json({ status: "error", message: "Invalid refresh token" });
-    }
-
-    try {
-      const user = await User.findOne({ phone: decoded.phone });
-      if (!user) {
-        return res.status(404).json({ status: "error", message: "User not found" });
+  jwt.verify(
+    refreshToken,
+    process.env.JWT_REFRESH_SECRET,
+    async (err, decoded) => {
+      if (err) {
+        return res
+          .status(403)
+          .json({ status: "error", message: "Invalid refresh token" });
       }
 
-      const newAccessToken = generateAccessToken(user);
-      res.json({ status: "ok", accessToken: newAccessToken });
-    } catch (error) {
-      res.status(500).json({ status: "error", message: error.message });
+      try {
+        const user = await User.findOne({ phone: decoded.phone });
+        if (!user) {
+          return res
+            .status(404)
+            .json({ status: "error", message: "User not found" });
+        }
+
+        const newAccessToken = generateAccessToken(user);
+        res.json({ status: "ok", accessToken: newAccessToken });
+      } catch (error) {
+        res.status(500).json({ status: "error", message: error.message });
+      }
     }
-  });
+  );
 });
 
 // Lấy thông tin User từ Bearer Token
@@ -144,7 +156,9 @@ router.post("/userdata", async (req, res) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return res.status(401).json({ status: "error", message: "No token provided" });
+    return res
+      .status(401)
+      .json({ status: "error", message: "No token provided" });
   }
 
   const token = authHeader.split(" ")[1];
@@ -154,12 +168,16 @@ router.post("/userdata", async (req, res) => {
     const user = await User.findOne({ phone: decoded.phone });
 
     if (!user) {
-      return res.status(404).json({ status: "error", message: "User not found" });
+      return res
+        .status(404)
+        .json({ status: "error", message: "User not found" });
     }
 
     res.json({ status: "ok", user });
   } catch (error) {
-    res.status(401).json({ status: "error", message: "Invalid or expired token" });
+    res
+      .status(401)
+      .json({ status: "error", message: "Invalid or expired token" });
   }
 });
 
@@ -193,6 +211,5 @@ router.post("/logout", (req, res) => {
   });
   res.json({ status: "ok", message: "Logged out successfully" });
 });
-
 
 module.exports = router;
