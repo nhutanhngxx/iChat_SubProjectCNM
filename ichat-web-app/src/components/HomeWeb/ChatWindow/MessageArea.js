@@ -714,9 +714,15 @@ const MessageArea = ({ selectedChat, user }) => {
     if (messageEndRef.current) {
       messageEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
-  }, [messages]);
+  }, [selectedChat, messages]);
   console.log("Selected Chat in MessageArea", selectedChat);
   console.log("Messages in MessageArea", messages);
+
+  const handleScrollToBottom = () => {
+    if (messageEndRef.current) {
+      messageEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  };
 
   if (!selectedChat) return null;
 
@@ -768,12 +774,17 @@ const MessageArea = ({ selectedChat, user }) => {
         <Content className="message-area-content">
           <div className="message-container">
             {(chatMessages || []).map((message) => (
-              <Message
+              <div>
+                <Message
                 key={message.id}
                 message={message}
                 selectedChat={selectedChat}
                 isSender={message.sender_id === user.id}
+                onClick={handleScrollToBottom} 
+
               />
+              <div ref={messageEndRef} ></div>
+              </div>
             ))}
             {/* Phần tử ẩn để cuộn xuống */}
             <div ref={messageEndRef} />

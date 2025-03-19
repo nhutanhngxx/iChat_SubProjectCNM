@@ -32,7 +32,7 @@
   padding: 10px;
   border-radius: 10px;
   width: fit-content;
-  max-width: 70%; /* Giới hạn tối đa để tránh tràn màn hình */
+  max-width: 88%; /* Giới hạn tối đa để tránh tràn màn hình */
   word-wrap: break-word; /* Cho phép ngắt từ nếu nội dung rất dài */
 }
 

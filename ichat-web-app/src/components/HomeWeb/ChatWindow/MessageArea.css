@@ -111,6 +111,8 @@
   display: flex;
   flex-direction: column;
   position: relative;
+  flex-direction: column-reverse;
+  scroll-behavior: smooth;
 }
 
 .message-container {

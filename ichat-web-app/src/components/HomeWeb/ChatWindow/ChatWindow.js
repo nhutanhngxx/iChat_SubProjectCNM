@@ -61,8 +61,8 @@ const ChatWindow = ({ user }) => {
 
     return ( <
         Layout className = "chat-window" >
-        <
-        ComponentLeft userList = { userListFromState }
+        <ComponentLeft
+         userList = { userListFromState }
         setUserList = { setUserListFromState }
         onSelectUser = { setSelectedUser }
         />
@@ -77,8 +77,8 @@ const ChatWindow = ({ user }) => {
             ) : ( <
                 HelloWindow / >
             )
-        } <
-        /Layout>
+        } 
+        </Layout>
     )
 };
 

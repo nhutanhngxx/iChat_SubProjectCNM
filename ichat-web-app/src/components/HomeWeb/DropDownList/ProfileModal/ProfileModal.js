@@ -43,7 +43,13 @@ const ProfileModal = ({ visible, onClose, user }) => {
           <strong>Giới tính:</strong> {user?.gender === "Male" ? "Nam" : "Nữ"}
         </p>
         <p>
-          <strong>Ngày sinh:</strong> {user?.dob || "Chưa cập nhật"}
+          <strong>Ngày sinh:</strong> {user?.dob 
+            ? new Date(user.dob).toLocaleDateString("vi-VN", {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric"
+              }).replace(/\//g, "-") 
+            : "Chưa cập nhật"}
         </p>
         <p>
           <strong>Điện thoại:</strong> {user?.phone || "Chưa cập nhật"}

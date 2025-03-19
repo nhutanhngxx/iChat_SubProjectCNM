@@ -208,6 +208,19 @@ const ConversationDetails = ({
                 </span>
               </div>
             </div>
+            {/* Nhóm chung */}
+            <div style={{
+               marginTop: "0px",
+               backgroundColor:"#ffffff",
+                marginBottom: "20px",
+                boxShadow: "1px 1px 5px 1px #ddd",
+                padding: "10px",
+                display: "flex",
+                paddingLeft: "20px",
+            }}>
+
+              <h3 style={{fontWeight:"400", color:"gray"}}> 4 Nhóm chung</h3>
+            </div>
             <div className="conversation-options">
               <div
                 className="select-wrapper"

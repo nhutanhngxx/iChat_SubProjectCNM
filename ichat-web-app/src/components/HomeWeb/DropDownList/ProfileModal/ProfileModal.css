@@ -4,6 +4,7 @@
   border-radius: 12px;
   overflow: hidden;
   padding: 20px 0px;
+  top: 35px;
 }
 
 .modal-header {
@@ -50,8 +51,8 @@
 
 .edit-icon {
   position: absolute;
-  top: 70px;
-  right: 95px;
+  top: 80px;
+  right: 90px;
   color: #1890ff;
   cursor: pointer;
   background-color: white;
