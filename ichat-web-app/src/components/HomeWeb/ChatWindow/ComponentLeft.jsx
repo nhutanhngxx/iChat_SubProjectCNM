@@ -20,6 +20,7 @@ import {
   NotificationOutlined,
   MoreOutlined,
   DownOutlined,
+  PushpinOutlined
 } from "@ant-design/icons";
 import { MdMoreHoriz } from "react-icons/md";
 import "./ComponentLeft.css";
@@ -36,14 +37,7 @@ import localizedFormat from "dayjs/plugin/localizedFormat";
 const { Content } = Layout;
 const { TabPane } = Tabs;
 
-// Dữ liệu mẫu cho danh sách mục
-const listItems = [
-  { id: 1, image: "user1", name: "Triệu Quốc An" },
-  { id: 2, image: "cloud", name: "Nguyễn Thanh Cường" },
-  { id: 3, image: "user2", name: "Lê Phước Nguyên" },
-  { id: 4, image: "user3", name: "Đình Nguyễn Chung" },
-  { id: 5, image: "cloud_plus", name: "Cloud của tôi" },
-];
+
 
 // Danh sách các danh mục với màu sắc tương ứng
 const categories = [
@@ -51,7 +45,7 @@ const categories = [
   { label: "Gia đình", value: "Gia đình", color: "pink" },
   { label: "Cộng việc", value: "Cộng việc", color: "orange" },
   { label: "Bạn bè", value: "Bạn bè", color: "yellow" },
-  { label: "Tra lời sau", value: "Tra lời sau", color: "green" },
+  { label: "Trả lời sau", value: "Tra lời sau", color: "green" },
   { label: "Đồng nghiệp", value: "Đồng nghiệp", color: "blue" },
   {
     label: "Tin nhắn tư nguyện là",
@@ -60,51 +54,12 @@ const categories = [
   },
 ];
 
-// Component HeaderTabs: Hiển thị các tab và dropdown menu
-const HeaderTabs = ({
-  menu,
-  filterContent,
-  filteredChatList,
-  onSelectUser,
-}) => (
-  <div className="chat-list">
-    <Tabs
-      defaultActiveKey="1"
-      tabBarStyle={{ margin: "0px 0px 4px 0px", padding: "0 8px" }}
-      style={{ fontWeight: "bold" }}
-      className="custom-tabs"
-    >
-      <TabPane tab="Ưu tiên" key="1" className="custom-tab-pane">
-        <ChatList
-          filteredChatList={filteredChatList}
-          onSelectUser={onSelectUser}
-        />
-      </TabPane>
-      <TabPane tab="Khác" key="2" className="custom-tab-pane">
-        Nội dung của tab Khác
-      </TabPane>
-    </Tabs>
-
-    {/* <div className="header-actions">
-      <Popover content={filterContent} title="Phân loại" trigger="click">
-        <span className="classify">
-          Phân loại <DownOutlined className="more-icon" />
-        </span>
-      </Popover>
-      <Dropdown overlay={menu} trigger={["click"]}>
-        <MoreOutlined className="more-icon" />
-      </Dropdown>
-    </div> */}
-  </div>
-);
-
 //   // Tính thời gian từ timestamp
 dayjs.extend(relativeTime);
 dayjs.extend(localizedFormat);
 
 // Component ChatItem: Render từng mục trong danh sách chat
-const ChatItem = ({ item, onSelectUser }) => {
-  const [isHovered, setIsHovered] = useState(false);
+const ChatItem = ({ item, onSelectUser, onPin }) => {
   const [isClicked, setIsClicked] = useState(false);
 
   // Tính thời gian từ timestamp
@@ -132,6 +87,7 @@ const ChatItem = ({ item, onSelectUser }) => {
   };
   return (
     <List.Item
+      key={item.id}
       className="chat-item"
       onClick={
         // () => onSelectUser(item)
@@ -146,23 +102,13 @@ const ChatItem = ({ item, onSelectUser }) => {
           <Col>
             <span className="chat-name">{item.name}</span>
           </Col>
+
           <Col>
-            <div
-              className="time-and-more-container"
-              // onMouseEnter={() => setIsHovered(true)}
-              // onMouseLeave={() => setIsHovered(false)}
-            >
-              {isClicked ? (
-                <Dropdown
-                  overlay={<MenuMdMoreHoriz />}
-                  trigger={["click"]}
-                  // onOpenChange={(open) => setIsClicked(open)} // Đóng menu thì hiện lại timestamp
-                >
-                  <MdMoreHoriz size={1} color="#333" />
-                </Dropdown>
-              ) : (
-                <span className="chat-time">{formatTime(item.timestamp)}</span>
-              )}
+            <div className="time-and-more-container">
+              <Dropdown overlay={<MenuMdMoreHoriz onPin={() => onPin(item.id)} />} trigger={["click"]}>
+                <MdMoreHoriz className="md-more-horiz-icon" />
+              </Dropdown>
+              <span className="chat-time">{formatTime(item.time)}</span>
             </div>
           </Col>
         </Row>
@@ -183,6 +129,7 @@ const ChatItem = ({ item, onSelectUser }) => {
           </Col>
           <Col>
             <Badge count={item.unread || 0} offset={[0, 0]} />
+            {item.isPinned && <PushpinOutlined style={{ marginLeft: 5 }} />}
           </Col>
         </Row>
       </div>
@@ -191,20 +138,54 @@ const ChatItem = ({ item, onSelectUser }) => {
 };
 
 // Component ChatList: Hiển thị danh sách các ChatItem
-const ChatList = ({ filteredChatList, onSelectUser }) => (
+const ChatList = ({ filteredChatList, onSelectUser, onPin }) => (
   <List
     itemLayout="horizontal"
     dataSource={filteredChatList}
-    renderItem={(item) => <ChatItem item={item} onSelectUser={onSelectUser} />}
+    renderItem={(item) => <ChatItem item={item} onSelectUser={onSelectUser} onPin={onPin} />}
   />
 );
 
 // Component chính: ComponentLeft
-const ComponentLeft = ({ userList, onSelectUser }) => {
+const ComponentLeft = ({ userList, setUserList, onSelectUser }) => {
+  const [activeTab, setActiveTab] = useState("priority");
   const [searchText] = useState("");
   const [showInterface, setShowInterface] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
   const [categoryFilters, setCategoryFilters] = useState([]);
+
+  // Lọc danh sách chat dựa trên searchText
+  const filteredChatList = userList.filter((chat) => {
+    // const name = chat.name ? chat.name.toLowerCase() : "";
+    // const search = searchText ? searchText.toLowerCase() : "";
+    // const mathchesSearch = name.includes(search);
+    const matchesStatus =
+      statusFilter === "all" ||
+      (statusFilter === "unread" && chat.unread !== 0);
+    const matchesCategory =
+      categoryFilters.length === 0 || categoryFilters.includes(chat.category);
+    return matchesStatus && matchesCategory;
+  });
+
+  // Sắp xếp hội thoại: ghim lên trên, sau đó theo thời gian
+  const sortedConversations = [...filteredChatList].sort((a, b) => {
+    if (a.isPinned && !b.isPinned) return -1
+    if (!a.isPinned && b.isPinned) return 1
+    return 0
+  })
+
+  // Lọc danh sách ưu tiên và danh sách khác
+  const filteredPriorityList = sortedConversations
+    .filter((item) => item.priority || item.isPinned);
+  const filteredOtherList = sortedConversations
+    .filter((item) => !item.priority && !item.isPinned);
+
+  const handlePin = (id) => {
+    const updatedList = sortedConversations.map((item) =>
+      item.id === id ? { ...item, isPinned: !item.isPinned } : item
+    );
+    setUserList(updatedList);
+  };
 
   // Hàm xử lý khi nhấn vào SearchBar
   const handleFocus = () => {
@@ -215,29 +196,21 @@ const ComponentLeft = ({ userList, onSelectUser }) => {
     setShowInterface(false);
   };
 
-  // Lọc danh sách chat dựa trên searchText
-  const filteredChatList = userList.filter((chat) => {
-    // const matchesSearch = chat.name
-    //   .toLowerCase()
-    //   .includes(searchText.toLowerCase());
-    const name = chat.name ? chat.name.toLowerCase() : "";
-    const search = searchText ? searchText.toLowerCase() : "";
-    const mathchesSearch = name.includes(search);
-    const matchesStatus =
-      statusFilter === "all" ||
-      (statusFilter === "unread" && chat.status === "unread");
-    const matchesCategory =
-      categoryFilters.length === 0 || categoryFilters.includes(chat.category);
-    return mathchesSearch && matchesStatus && matchesCategory;
-  });
+  const handleMarkAllAsRead = () => {
+    const updatedList = userList.map((item) => ({
+      ...item,
+      unread: 0,
+    }));
+    setUserList(updatedList);
+  };
 
-  // Menu cho Dropdown
-  const menu = <Menu items={[{ key: "1", label: "Đánh dấu đã đọc" }]} />;
 
-  // Nội dung của Popover
+
+
+
+  // Nội dung của Popover Phân loại v
   const filterContent = (
     <div className="filter-popover">
-      <h3>Phân loại</h3>
       <p>Theo trạng thái</p>
       <Radio.Group
         value={statusFilter}
@@ -280,13 +253,62 @@ const ComponentLeft = ({ userList, onSelectUser }) => {
       ) : (
         <Layout className="chat-sidebar">
           <SearchBar onFocus={handleFocus} />
-          <HeaderTabs
-            menu={menu}
-            filterContent={filterContent}
-            filteredChatList={filteredChatList}
-            onSelectUser={onSelectUser}
-          />
           {/* <ChatList filteredChatList={userList} onSelectUser={onSelectUser} /> */}
+          <div className="conversations-container">
+            <div className="classification-conversation-container">
+              <div className="tabs-header">
+                <button
+                  className={`tab-header ${activeTab === "priority" ? "active-tab-header" : ""
+                    }`}
+                  onClick={() => setActiveTab("priority")}
+                >
+                  Ưu tiên
+                </button>
+
+                <button
+                  className={`tab-header ${activeTab === "other" ? "active-tab-header" : ""
+                    }`}
+                  onClick={() => setActiveTab("other")}
+                >
+                  Khác
+                </button>
+              </div>
+              <div className="actions-header">
+                <Dropdown overlay={filterContent} trigger={["click"]}>
+                  <button className="filterButton">
+                    Phân loại <DownOutlined size={16} />
+                  </button>
+                </Dropdown>
+                <Dropdown
+                  overlay={
+                    <Menu>
+                      <Menu.Item key="1" onClick={handleMarkAllAsRead}>Đánh dấu đã đọc</Menu.Item>
+                    </Menu>
+                  }
+                  trigger={["click"]}
+                >
+                  <button className="moreButton">
+                    <MoreOutlined size={16} />
+                  </button>
+                </Dropdown>
+              </div>
+            </div>
+            <div className="list-conversations-container">
+              {activeTab === "priority" ? (
+                <ChatList
+                  filteredChatList={filteredPriorityList}
+                  onSelectUser={onSelectUser}
+                  onPin={handlePin}
+                />
+              ) : (
+                <ChatList
+                  filteredChatList={filteredOtherList}
+                  onSelectUser={onSelectUser}
+                  onPin={handlePin}
+                />
+              )}
+            </div>
+          </div>
         </Layout>
       )}
     </div>

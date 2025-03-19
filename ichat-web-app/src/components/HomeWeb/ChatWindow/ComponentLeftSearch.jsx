@@ -11,6 +11,8 @@ import {
   Menu,
   DatePicker,
   Space,
+  Col,
+  Row,
 } from "antd";
 import {
   CloseOutlined,
@@ -128,7 +130,7 @@ const messages = [
 const files = [
   {
     id: 1,
-    name: "DS_SV_Tham_du_Hoi_thao_chia_se_...",
+    name: "DS_SV",
     type: "excel",
     size: "22.89 KB",
     sender: "Nguyen Thi Hanh",
@@ -136,7 +138,7 @@ const files = [
   },
   {
     id: 2,
-    name: "DJI_2024092921100_0574.D.MP4",
+    name: "DJI.MP4",
     type: "video",
     size: "373.43 MB",
     sender: "Thanh Canh",
@@ -152,7 +154,7 @@ const files = [
   },
   {
     id: 4,
-    name: "Giáo trình pháp luật đại cương –...",
+    name: "Giáo trình pháp luật.pdf",
     type: "pdf",
     size: "18.53 MB",
     sender: "Unknown",
@@ -215,6 +217,28 @@ const renderItemSearch = (item) => (
   </List.Item>
 );
 
+// Hàm rederMessageItem
+const renderMessageItem = (message) => (
+  <List.Item className="list-item">
+    <div className="avatar-container">
+      <Avatar size={48} src={message.avatar} />
+    </div>
+    <div className="chat-info">
+      <Row justify="space-between">
+        <Col>
+          <span className="chat-name">{message.name}</span>
+        </Col>
+        <Col>
+          <span className="chat-time">{message.time}</span>
+        </Col>
+      </Row>
+      <Row>
+        <span className="chat-message">{message.content}</span>
+      </Row>
+    </div>
+  </List.Item>
+);
+
 // Hàm renderFileItem
 const renderFileItem = (file) => {
   let icon;
@@ -238,20 +262,27 @@ const renderFileItem = (file) => {
   }
   return (
     <List.Item className="list-item">
-      <div className="file-icon">{icon}</div>
-      <div className="flex-1 min-w-0">
-        <div className="text-sm font-medium truncate">{file.name}</div>
-        <div className="text-xs text-gray-500 flex items-center gap-2">
-          <span>{file.size}</span>
-          {file.author && (
+      <div className="avatar-container">
+        <div className="file-icon">{icon}</div>
+      </div>
+      <div className="chat-info">
+        <Row justify="space-between" style={{ display: 'flex', alignItems: 'center' }}>
+          <Col flex="auto" style={{ overflow: 'hidden' }}>
+            <span className="chat-name">{file.name}</span>
+          </Col>
+          <Col>
+            <span className="chat-time">{file.date}</span>
+          </Col>
+        </Row>
+        <Row>
+          <span className="chat-message">{file.size}{file.sender && (
             <>
               <span>-</span>
-              <span>{file.author}</span>
+              <span>{file.sender}</span>
             </>
-          )}
-        </div>
+          )}</span>
+        </Row>
       </div>
-      <div className="text-xs text-gray-500 whitespace-nowrap">{file.date}</div>
     </List.Item>
   );
 };
@@ -259,18 +290,21 @@ const renderFileItem = (file) => {
 // Component SearchResults
 const SearchResults = ({
   filteredSearchUser,
-  filteredSearchMessages,
+
   messages,
   filteredFiles,
   selectedType,
   setSelectedType,
   dateRange,
   setDateRange,
-  dropdownOpen,
-  handleDropdownVisibleChange,
-  userMenu,
-  dateMenu,
   fileDateMenu,
+
+  //messagefilter
+  selectedUser,
+  setSelectedUser,
+  messageDateRange,
+  setMessageDateRange,
+  filteredSearchMessages
 }) => (
   <Tabs
     defaultActiveKey="1"
@@ -286,7 +320,7 @@ const SearchResults = ({
           dataSource={filteredSearchUser}
           renderItem={renderItemSearch}
         />
-        <MessageList messages={messages} filteredSearchMessages={messages} />
+        <MessageList filteredSearchMessages={messages} />
         <FileList filteredFiles={filteredFiles} />
       </div>
     </TabPane>
@@ -301,7 +335,6 @@ const SearchResults = ({
     <TabPane tab={<strong>Tin nhắn</strong>} key="3">
       <MessageFilter />
       <MessageList
-        messages={messages}
         filteredSearchMessages={filteredSearchMessages}
       />
     </TabPane>
@@ -362,7 +395,7 @@ const MessageFilter = () => {
 
         {/* User dropdown */}
         <div className="filter-user-dropdown">
-          <button onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}>
+          <button style={{ border: 'none' }} onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}>
             {selectedUser ? (
               <div className="filter-user-selected">
                 <FaUser className="filter-user-icon" />
@@ -422,7 +455,7 @@ const MessageFilter = () => {
 
         {/* Date dropdown */}
         <div className="filter-date-dropdown">
-          <button
+          <button style={{ border: 'none' }}
             onClick={() => {
               setIsDateDropdownOpen(!isDateDropdownOpen);
               setIsTimeOptionsOpen(false);
@@ -538,25 +571,20 @@ const MessageFilter = () => {
 };
 
 // Component MessageList
-const MessageList = ({ messages, filteredSearchMessages }) => (
-  <div className="message-container-component-left-search">
+const MessageList = ({ filteredSearchMessages }) => (
+  <div className="">
     <div className="title-tabpane">
-      Tin nhắn ({filteredSearchMessages.length})
+      Tin nhắn (
+      {filteredSearchMessages.length > 99
+        ? "99+"
+        : filteredSearchMessages.length}
+      )
     </div>
-    <div className="message-list">
-      {messages.map((msg) => (
-        <div key={msg.id} className="message-item">
-          <img src={msg.avatar} alt={msg.name} className="message-avatar" />
-          <div className="message-content">
-            <div className="message-header-row">
-              <span className="message-name">{msg.name}</span>
-              <span className="message-time">{msg.time}</span>
-            </div>
-            <p className="message-text">{msg.content}</p>
-          </div>
-        </div>
-      ))}
-    </div>
+    <List
+      itemLayout="horizontal"
+      dataSource={filteredSearchMessages}
+      renderItem={renderMessageItem}
+    />
   </div>
 );
 
@@ -586,11 +614,11 @@ const FileFilter = ({
 
   return (
     <div className="filter-container">
-      <span className="filter-item">Lọc theo:</span>
+      <span className="filter-label">Lọc theo:</span>
       <Select
         defaultValue="all"
         onChange={(value) => setSelectedType(value)}
-        style={{ width: 120, marginRight: 10 }}
+        style={{ width: 120, marginRight: 10, borderRadius: 4, border: "none" }}
       >
         <Option value="all">Tất cả</Option>
         <Option value="word">Word</Option>
@@ -601,7 +629,7 @@ const FileFilter = ({
 
       {/* Date dropdown */}
       <div className="filter-date-dropdown">
-        <button
+        <button style={{ border: 'none' }}
           onClick={() => {
             setIsDateDropdownOpen(!isDateDropdownOpen);
             setIsTimeOptionsOpen(false);
@@ -717,7 +745,7 @@ const FileFilter = ({
 
 // Component FileList
 const FileList = ({ filteredFiles }) => (
-  <div className="file-list">
+  <div className="">
     <div className="title-tabpane">File ({filteredFiles.length})</div>
     <List
       itemLayout="horizontal"
@@ -735,6 +763,10 @@ const ComponentLeftSearch = ({ userList, onClose }) => {
   const [selectedType, setSelectedType] = useState("all");
   const [dateRange, setDateRange] = useState([null, null]);
 
+  // Thêm state cho filter tin nhắn
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [messageDateRange, setMessageDateRange] = useState({ from: null, to: null });
+
   const handleDropdownVisibleChange = (flag) => setDropdownOpen(flag);
 
   const handleDelete = (receiver_id) => {
@@ -747,9 +779,20 @@ const ComponentLeftSearch = ({ userList, onClose }) => {
     user.name?.toLowerCase().includes(searchText.toLowerCase())
   );
 
-  const filteredSearchMessages = messages.filter((msg) =>
-    msg.name.toLowerCase().includes(searchText.toLowerCase())
-  );
+  // Logic filter tin nhắn
+  const filteredSearchMessages = messages.filter((msg) => {
+    const matchesSearch = msg.name.toLowerCase().includes(searchText.toLowerCase()) ||
+      msg.content.toLowerCase().includes(searchText.toLowerCase());
+    const matchesUser = selectedUser
+      ? msg.name === selectedUser.name
+      : true;
+    let matchesDate = true;
+    if (messageDateRange.from && messageDateRange.to) {
+      const msgDate = parseDate(msg.time); // Giả sử msg.time có định dạng date
+      matchesDate = msgDate >= messageDateRange.from && msgDate <= messageDateRange.to;
+    }
+    return matchesSearch && matchesUser && matchesDate;
+  });
 
   const filteredFiles = files.filter((file) => {
     if (selectedType !== "all" && file.type !== selectedType) return false;
@@ -819,7 +862,6 @@ const ComponentLeftSearch = ({ userList, onClose }) => {
       ) : (
         <SearchResults
           filteredSearchUser={filteredSearchUser}
-          filteredSearchMessages={filteredSearchMessages}
           messages={messages}
           filteredFiles={filteredFiles}
           selectedType={selectedType}
@@ -831,6 +873,14 @@ const ComponentLeftSearch = ({ userList, onClose }) => {
           userMenu={userMenu}
           dateMenu={dateMenu}
           fileDateMenu={fileDateMenu}
+
+          //messagefilter
+          selectedUser={selectedUser}
+          setSelectedUser={setSelectedUser}
+          messageDateRange={messageDateRange}
+          setMessageDateRange={setMessageDateRange}
+          filteredSearchMessages={filteredSearchMessages}
+
         />
       )}
     </div>

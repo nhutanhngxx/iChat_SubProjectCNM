@@ -1,506 +1,528 @@
 /* Sidebar Styles */
+
 .chat-sidebar {
-  width: 364px !important;
-  height: 100vh;
-  border-right: 1px solid #c6ddf5;
+    width: 364px !important;
+    height: 100vh;
+    border-right: 1px solid #c6ddf5;
 }
 
+
 /* Tiêu đề "Tìm gần đây" */
+
 .chat-sidebar .title-chat-sidebar {
-  font-weight: 600;
-  padding: 10px 20px;
-  font-size: 14px;
+    font-weight: 600;
+    padding: 10px 20px;
+    font-size: 14px;
 }
 
 .title-tabpane {
-  font-weight: 500;
-  padding: 10px 20px 0;
-  font-size: 14px;
+    font-weight: 500;
+    padding: 10px 20px 0;
+    font-size: 14px;
 }
+
 
 /* Danh sách */
 
 .search-results-tabpane {
-  max-height: 80vh;
-  overflow-y: auto;
+    max-height: 80vh;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
 .chat-list {
-  height: calc(100vh - 160px);
-  overflow-y: auto;
-  padding: 0;
+    height: calc(100vh - 160px);
+    overflow-y: auto;
+    padding: 0;
 }
 
+
 /* Mỗi item trong danh sách */
+
 .ant-list-item {
-  padding: 12px !important;
-  border-radius: 8px;
-  transition: all 0.3s;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
+    padding: 12px !important;
+    border-radius: 8px;
+    transition: all 0.3s;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
 }
 
 .delete-button {
-  margin-right: 20px;
-  opacity: 0;
+    margin-right: 20px;
+    opacity: 0;
 }
 
 .list-item:hover {
-  background: #ccc;
+    background: #f3f4f6;
 }
 
 .list-item:hover .delete-button {
-  opacity: 1;
+    opacity: 1;
 }
 
 .list-item:hover .delete-button:hover {
-  color: royalblue;
+    color: royalblue;
 }
 
 .message-container-component-left-search {
-  width: 100%;
-  max-width: 400px;
-  margin: 10px auto;
-  font-family: Arial, sans-serif;
+    width: 100%;
+    max-width: 400px;
+    margin: 10px auto;
+    font-family: Arial, sans-serif;
 }
 
 .message-header {
-  font-size: 16px;
-  font-weight: bold;
-  color: #333;
-  margin-bottom: 10px;
+    font-size: 16px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 10px;
 }
 
 .message-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
 }
 
 .message-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
 }
 
 .message-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
 }
 
 .message-content {
-  flex: 1;
+    flex: 1;
 }
 
 .message-header-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .message-name {
-  font-size: 14px;
-  font-weight: bold;
-  color: #333;
+    font-size: 14px;
+    font-weight: bold;
+    color: #333;
 }
 
 .message-time {
-  font-size: 12px;
-  color: #888;
+    font-size: 12px;
+    color: #888;
 }
 
 .message-text {
-  font-size: 14px;
-  color: #555;
-  margin-top: 3px;
+    font-size: 14px;
+    color: #555;
+    margin-top: 3px;
 }
 
 .filter-container {
-  display: flex;
-  align-items: center;
-  padding: 10px 20px;
-}
-
-.filter-item {
-  margin-right: 10px;
-  font-weight: bold;
-}
-
-.file-list {
-  padding: 0 20px;
+    display: flex;
+    align-items: center;
+    padding: 10px 20px;
 }
 
 .file-header {
-  font-weight: bold;
-  margin-bottom: 10px;
+    font-weight: bold;
+    margin-bottom: 10px;
 }
 
 .list-item {
-  display: flex;
-  align-items: center;
-  padding: 8px 0;
+    display: flex;
+    align-items: center;
+    padding: 8px 0;
+}
+
+.chat-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100px;
 }
 
 .file-icon {
-  margin-right: 10px;
+    margin-right: 10px;
 }
 
 .file-info {
-  display: flex;
-  flex-direction: column;
+    display: flex;
+    flex-direction: column;
 }
 
 .file-name {
-  font-weight: bold;
-  color: #333;
+    font-weight: bold;
+    color: #333;
 }
 
 .file-size,
 .file-sender,
 .file-date {
-  font-size: 12px;
-  color: #666;
+    font-size: 12px;
+    color: #666;
 }
+
+
 /* <----- Filter Messages---------> */
 
 .filter-messages-container {
-  width: 364px;
-  min-width: 364px;
-  max-width: 364px;
-  border-radius: 8px;
-  background-color: white;
+    width: 364px;
+    min-width: 364px;
+    max-width: 364px;
+    border-radius: 8px;
+    background-color: white;
 }
 
 .filter-messages-section {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  padding: 8px;
-  position: relative;
+    display: flex;
+    align-items: center;
+    padding: 10px 20px;
+    position: relative;
+    gap: 4px;
 }
 
 .filter-label {
-  color: #4b5563;
-  margin-right: 8px;
+    color: #4b5563;
+    margin-right: 8px;
 }
 
+
 /* User dropdown */
+
 .filter-user-dropdown {
-  position: relative;
+    position: relative;
+    border: none;
 }
 
 .filter-user-selected,
 .filter-user-default {
-  display: flex;
-  align-items: center;
-  padding: 4px 8px;
-  border-radius: 4px;
-  cursor: pointer;
+    display: flex;
+    align-items: center;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
 }
 
 .filter-user-selected {
-  background-color: #dbeafe;
-  color: #3b82f6;
+    background-color: #f3f4f6;
+    color: #3b82f6;
 }
 
 .filter-user-default {
-  background-color: #d2d4d8;
+    background-color: #fff;
+}
+
+.filter-user-default:hover {
+    background-color: #f3f4f6;
 }
 
 .filter-user-icon {
-  height: 12px;
-  width: 12px;
-  margin-right: 4px;
+    height: 12px;
+    width: 12px;
+    margin-right: 4px;
 }
 
 .filter-user-info {
-  display: flex;
-  align-items: center;
+    display: flex;
+    align-items: center;
 }
 
 .filter-user-name {
-  max-width: 64px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+    max-width: 64px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .filter-user-clear {
-  margin-left: 4px;
-  color: #3b82f6;
-  background: none;
-  border: none;
-  cursor: pointer;
+    margin-left: 4px;
+    color: #3b82f6;
+    background: none;
+    border: none;
+    cursor: pointer;
 }
 
 .filter-user-chevron {
-  height: 12px;
-  width: 12px;
-  margin-left: 4px;
+    height: 12px;
+    width: 12px;
+    margin-left: 4px;
 }
+
 
 /* --Filter User Dropdown Menu--- */
 
 .filter-user-dropdown-menu {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  margin-top: 4px;
-  width: 200px;
-  height: 320px;
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  z-index: 50;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: 4px;
+    width: 200px;
+    max-height: 250px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    z-index: 50;
+    overflow: auto;
 }
 
 .filter-user-search {
-  position: relative;
-  padding: 4px;
+    position: relative;
+    padding: 4px;
 }
 
 .filter-user-search-icon {
-  position: absolute;
-  left: 8px;
-  top: 50%;
-  transform: translateY(-50%);
-  height: 10px;
-  width: 10px;
-  color: #9ca3af;
+    position: absolute;
+    left: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 10px;
+    width: 10px;
+    color: #9ca3af;
 }
 
 .filter-user-search input {
-  width: 100%;
-  background-color: #f3f4f6;
-  border-radius: 4px;
-  padding-left: 24px;
-  padding-right: 8px;
-  padding-top: 4px;
-  padding-bottom: 4px;
-  font-size: 12px;
-  border: none;
-  outline: none;
+    width: 100%;
+    background-color: #f3f4f6;
+    border-radius: 4px;
+    padding-left: 24px;
+    padding-right: 8px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    font-size: 12px;
+    border: none;
+    outline: none;
 }
 
 .filter-user-list {
-  max-height: 224px;
-  overflow-y: auto;
+    max-height: 224px;
+    min-width: 50px;
 }
 
 .filter-user-item {
-  width: 100%;
-  padding: 4px 8px;
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-  transition: background-color 0.2s;
+    width: 100%;
+    padding: 4px 8px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    background-color: #fff;
+    border: none;
 }
 
 .filter-user-item:hover {
-  background-color: #f3f4f6;
+    background-color: #f3f4f6;
 }
 
 .filter-user-avatar {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  margin-right: 8px;
-  flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    margin-right: 8px;
+    flex-shrink: 0;
 }
 
 .filter-user-item-name {
-  font-size: 12px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+    font-size: 12px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .filter-user-no-results {
-  padding: 12px;
-  text-align: center;
-  color: #9ca3af;
+    padding: 12px;
+    text-align: center;
+    color: #9ca3af;
 }
 
+
 /* Date dropdown */
+
 .filter-date-dropdown {
-  position: relative;
+    position: relative;
 }
 
 .filter-date-selected,
 .filter-date-default {
-  display: flex;
-  align-items: center;
-  padding: 4px 8px;
-  border-radius: 4px;
-  cursor: pointer;
+    display: flex;
+    align-items: center;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
 }
 
 .filter-date-selected {
-  background-color: #dbeafe;
-  color: #3b82f6;
+    background-color: #f3f4f6;
+    color: #3b82f6;
 }
 
 .filter-date-default {
-  background-color: white;
-  color: #4b5563;
+    background-color: #fff;
+}
+
+.filter-date-default:hover {
+    background-color: #f3f4f6;
 }
 
 .filter-date-icon {
-  height: 12px;
-  width: 12px;
-  margin-right: 4px;
+    height: 12px;
+    width: 12px;
+    margin-right: 4px;
 }
 
 .filter-date-range {
-  max-width: 64px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+    max-width: 64px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .filter-date-clear {
-  margin-left: 4px;
-  color: #3b82f6;
-  background: none;
-  border: none;
-  cursor: pointer;
+    margin-left: 4px;
+    color: #3b82f6;
+    background: none;
+    border: none;
+    cursor: pointer;
 }
 
 .filter-date-chevron {
-  height: 12px;
-  width: 12px;
-  margin-left: 4px;
+    height: 12px;
+    width: 12px;
+    margin-left: 4px;
 }
 
 .filter-date-dropdown-menu {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  margin-top: 4px;
-  width: 286px;
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  z-index: 50;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 4px;
+    width: 286px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    z-index: 50;
 }
 
 .filter-date-suggestions {
-  padding: 12px;
-  border-bottom: 1px solid #e5e7eb;
+    padding: 12px;
+    border-bottom: 1px solid #e5e7eb;
 }
 
 .filter-date-suggestions-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  cursor: pointer;
-  padding: 8px;
-  border-radius: 4px;
-  transition: background-color 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
 }
 
 .filter-date-suggestions-header:hover {
-  background-color: #f9fafb;
+    background-color: #f3f4f6;
 }
 
 .filter-date-suggestions-chevron {
-  height: 12px;
-  width: 12px;
-  color: #9ca3af;
+    height: 12px;
+    width: 12px;
+    color: #9ca3af;
 }
 
 .filter-time-options {
-  position: absolute;
-  left: 100%;
-  top: 0;
-  margin-top: 12px;
-  margin-left: 4px;
-  width: 140px;
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  z-index: 9999;
-  padding: 4px 0;
+    position: absolute;
+    left: 100%;
+    top: 0;
+    margin-top: 12px;
+    margin-left: 4px;
+    width: 140px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    z-index: 9999;
+    padding: 4px 0;
 }
 
 .filter-time-option {
-  width: 100%;
-  text-align: left;
-  padding: 8px 12px;
-  font-size: 14px;
-  cursor: pointer;
-  transition: background-color 0.2s;
+    width: 100%;
+    text-align: left;
+    padding: 8px 12px;
+    font-size: 14px;
+    cursor: pointer;
+    border: none;
+    background-color: white;
 }
 
 .filter-time-option:hover {
-  background-color: #f9fafb;
+    background-color: #f3f4f6;
 }
 
 .filter-date-picker {
-  padding: 12px;
+    padding: 12px;
 }
 
 .filter-date-picker h3 {
-  font-size: 14px;
-  font-weight: 500;
-  margin-bottom: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 8px;
 }
 
 .filter-date-inputs {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 12px;
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
 }
 
 .filter-date-input {
-  flex: 1;
+    flex: 1;
 }
 
 .filter-date-input input {
-  width: 100%;
-  padding: 8px 12px;
-  background-color: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 4px;
-  font-size: 14px;
-  outline: none;
+    width: 100%;
+    padding: 8px 12px;
+    background-color: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    font-size: 14px;
+    outline: none;
 }
 
 .filter-date-actions {
-  padding: 12px;
-  border-top: 1px solid #e5e7eb;
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
+    padding: 12px;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
 }
 
 .filter-date-cancel,
 .filter-date-confirm {
-  padding: 8px 16px;
-  font-size: 14px;
-  border-radius: 4px;
-  cursor: pointer;
+    padding: 8px 16px;
+    font-size: 14px;
+    border-radius: 4px;
+    cursor: pointer;
 }
 
 .filter-date-cancel {
-  background-color: white;
-  border: 1px solid #e5e7eb;
-  color: #4b5563;
+    background-color: white;
+    border: 1px solid #e5e7eb;
+    color: #4b5563;
 }
 
 .filter-date-cancel:hover {
-  background-color: #f9fafb;
+    background-color: #f3f4f6;
 }
 
 .filter-date-confirm {
-  background-color: #3b82f6;
-  color: white;
-  border: none;
+    background-color: #3b82f6;
+    color: white;
+    border: none;
 }
 
 .filter-date-confirm:hover {
-  background-color: #2563eb;
+    background-color: #2563eb;
 }
