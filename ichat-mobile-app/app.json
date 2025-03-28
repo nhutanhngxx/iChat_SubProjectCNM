@@ -1,17 +1,50 @@
 {
   "expo": {
-    "scheme": "iChatApp",
-    "name": "iChat",
-    "slug": "iChat-app",
+    "name": "app-bottom-tab",
+    "slug": "snack-a8e50932-4793-425a-859b-e124996f0590",
     "version": "1.0.0",
     "orientation": "portrait",
-    "platforms": ["ios", "android"],
+    "icon": "./assets/icons/new-logo.png",
+    "userInterfaceStyle": "light",
     "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/icons/new-logo.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
     "ios": {
-      "bundleIdentifier": "com.nhutanhngxx.iChat"
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Ứng dụng cần quyền truy cập camera để quét mã QR."
+      }
     },
     "android": {
-      "package": "com.nhutanhngxx.iChat"
-    }
+      "permissions": [
+        "CAMERA"
+      ],
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icons/new-logo.png",
+        "backgroundColor": "#ffffff"
+      }
+    },
+    "web": {
+      "favicon": "./assets/icons/new-logo.png"
+    },
+    "updates": {
+      "enabled": true,
+      "checkAutomatically": "onError",
+      "fallbackToCacheTimeout": 0
+    },
+    "packagerOpts": {
+      "dev": true,
+      "hostType": "localhost"
+    },
+    "host": "exp.host",
+    "experimental": {
+      "bridgeless": false
+    },
+    "plugins": [
+      "expo-barcode-scanner"
+    ]
   }
 }

@@ -388,36 +388,29 @@ const Users = require("../models/UserDetails");
 router.get("/messages", async (req, res) => {
   try {
     const { search } = req.query;
-
     if (!search) {
       return res.status(400).json({ error: "Search query is required" });
     }
-
     // Kiểm tra nếu search chỉ chứa số (có thể kèm dấu +)
     const isPhoneNumber = /^\+?\d+$/.test(search);
-
     if (isPhoneNumber) {
       const users = await Users.find({
         phone: { $regex: `^${search}$`, $options: "i" }, // Tìm chính xác số điện thoại
       });
-
       if (users.length > 0) {
         return res.json({ status: "ok", contacts: users, data: [] });
       }
     }
-
     // Nếu không phải số điện thoại, tìm kiếm theo tên người dùng hoặc tin nhắn
     const users = await Users.find({
       fullName: { $regex: search, $options: "i" }, // Tìm theo tên không phân biệt hoa thường
     });
-
     const messages = await Messages.find({
       $and: [
         { content: { $regex: search, $options: "i" } }, // Tìm kiếm từ khóa
         { content: { $ne: "Tin nhắn đã được thu hồi" } }, // Loại bỏ tin nhắn thu hồi
       ],
     }).sort({ createdAt: -1 });
-
     res.json({ status: "ok", contacts: users, data: messages });
   } catch (error) {
     console.error("Error searching messages:", error);
@@ -425,7 +418,6 @@ router.get("/messages", async (req, res) => {
   }
 });
 
-// Lấy tất cả MessageCard mà người dùng đã tạo
 router.get("/message-cards/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
