@@ -228,7 +228,7 @@ const SearchScreen = () => {
   }, []);
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#0AA2F8", paddingTop: 30 }}>
+    <View style={{ flex: 1, backgroundColor: "#0AA2F8", paddingTop: 40 }}>
       <StatusBar hidden={false} style="light" />
       <View
         style={{
@@ -238,6 +238,7 @@ const SearchScreen = () => {
           height: 50,
           backgroundColor: "#0AA2F8",
           paddingHorizontal: 10,
+          marginBottom: 10,
         }}
       >
         <TouchableOpacity
@@ -246,7 +247,6 @@ const SearchScreen = () => {
             width: 30,
             flexDirection: "row",
             alignItems: "center",
-            // justifyContent: "center",
           }}
           onPress={() => navigation.goBack()}
         >

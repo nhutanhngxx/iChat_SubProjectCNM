@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import { View, Image, TouchableOpacity, StyleSheet } from "react-native";
+import { StatusBar } from "expo-status-bar";
 
 import closeIcon from "../../assets/icons/close.png";
 
@@ -22,6 +23,7 @@ const ViewImageChat = ({ route, navigation }) => {
 
   return (
     <View style={styles.container}>
+      <StatusBar hidden={false} style="light" />
       <TouchableOpacity
         style={styles.closeButton}
         onPress={() => navigation.goBack()}
@@ -40,7 +42,7 @@ const ViewImageChat = ({ route, navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "black",
+    // backgroundColor: "black",
     justifyContent: "center",
     alignItems: "center",
   },

@@ -461,7 +461,7 @@ const MessagesTab = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "white", paddingTop: 30 },
+  container: { flex: 1, backgroundColor: "white", paddingTop: 40 },
   overlay: {
     flex: 1,
     justifyContent: "flex-end",

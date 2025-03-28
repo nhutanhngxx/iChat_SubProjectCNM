@@ -38,7 +38,7 @@ const HeaderMessages = () => {
   };
 
   return (
-    <SafeAreaView style={{ width: "100%", backgroundColor: "white" }}>
+    <View style={{ width: "100%", backgroundColor: "white" }}>
       <View
         style={{
           width: "100%",
@@ -168,7 +168,7 @@ const HeaderMessages = () => {
           </TouchableOpacity>
         </Modal>
       </View>
-    </SafeAreaView>
+    </View>
   );
 };
 

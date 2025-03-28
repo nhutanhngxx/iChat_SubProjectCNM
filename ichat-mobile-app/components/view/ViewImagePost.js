@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import { View, Image, TouchableOpacity, StyleSheet } from "react-native";
+import { StatusBar } from "expo-status-bar";
 
 import closeIcon from "../../assets/icons/close.png";
 
@@ -22,6 +23,7 @@ const ViewImagePost = ({ route, navigation }) => {
 
   return (
     <View style={styles.container}>
+      <StatusBar hidden={false} style="light" />
       <TouchableOpacity
         style={styles.closeButton}
         onPress={() => navigation.goBack()}
