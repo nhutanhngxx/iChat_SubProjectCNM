@@ -11,7 +11,7 @@ const ContactTab = () => {
   const [index, setIndex] = useState(0);
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <HeaderContactTab />
       <Tab
         value={index}
@@ -48,7 +48,7 @@ const ContactTab = () => {
           <GroupTab />
         </TabView.Item>
       </TabView>
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -56,6 +56,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "white",
+    paddingTop: 30,
   },
 });
 

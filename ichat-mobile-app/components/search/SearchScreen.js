@@ -24,7 +24,7 @@ const SearchScreen = () => {
   const searchInputRef = useRef(null);
   const { user } = useContext(UserContext);
 
-  const API_iChat = "http://172.20.10.5:5001";
+  const API_iChat = "http://172.20.59.206:5001";
 
   const handleOpenChatting = async (selectedMessage) => {
     // Xác định ID của người đang chat với user
@@ -228,7 +228,7 @@ const SearchScreen = () => {
   }, []);
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#0AA2F8", paddingTop: 40 }}>
+    <View style={{ flex: 1, backgroundColor: "#0AA2F8", paddingTop: 30 }}>
       <StatusBar hidden={false} style="light" />
       <View
         style={{
@@ -240,10 +240,23 @@ const SearchScreen = () => {
           paddingHorizontal: 10,
         }}
       >
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        <TouchableOpacity
+          style={{
+            height: "100%",
+            width: 30,
+            flexDirection: "row",
+            alignItems: "center",
+            // justifyContent: "center",
+          }}
+          onPress={() => navigation.goBack()}
+        >
           <Image
             source={require("../../assets/icons/go-back.png")}
-            style={{ width: 20, height: 20, tintColor: "white" }}
+            style={{
+              width: 25,
+              height: 25,
+              tintColor: "white",
+            }}
           />
         </TouchableOpacity>
 
@@ -254,16 +267,17 @@ const SearchScreen = () => {
             alignItems: "center",
             backgroundColor: "white",
             borderRadius: 5,
-            marginHorizontal: 5,
+            marginLeft: 5,
           }}
         >
           <TextInput
             ref={searchInputRef}
             style={{
               flex: 1,
-              fontSize: 14,
+              fontSize: 15,
               paddingHorizontal: 10,
-              height: 35,
+              height: 40,
+              paddingLeft: 10,
             }}
             placeholder="Tìm kiếm"
             value={searchText}
@@ -283,14 +297,7 @@ const SearchScreen = () => {
           )}
         </View>
       </View>
-      {/* Hiển thị loading khi đang tìm kiếm */}
-      {/* {isLoading && (
-        <ActivityIndicator
-          size="large"
-          color="#0AA2F8"
-          style={{ marginTop: 10 }}
-        />
-      )} */}
+
       {/* Tabs kết quả tìm kiếm */}
       {searchText && (
         <Tab
@@ -382,6 +389,14 @@ const SearchScreen = () => {
         </View>
       )}
       <TabView value={index} onChange={setIndex} animationType="spring">
+        {/* Hiển thị loading khi đang tìm kiếm
+        {isLoading && (
+          <ActivityIndicator
+            size="large"
+            color="#0AA2F8"
+            style={{ marginTop: 10 }}
+          />
+        )} */}
         {/* Tab "Tất cả" */}
         <TabView.Item
           style={{ width: "100%", padding: 10, backgroundColor: "white" }}
@@ -461,7 +476,6 @@ const SearchScreen = () => {
             }
           />
         </TabView.Item>
-
         {/* Tab "Tin nhắn" */}
         <TabView.Item
           style={{ width: "100%", padding: 10, backgroundColor: "white" }}
@@ -520,7 +534,6 @@ const SearchScreen = () => {
             </Text>
           )}
         </TabView.Item>
-
         {/* Tab "Tài khoản" */}
         <TabView.Item
           style={{ width: "100%", padding: 10, backgroundColor: "white" }}

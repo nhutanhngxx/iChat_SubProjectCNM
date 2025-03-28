@@ -54,8 +54,9 @@ const HeaderMessages = () => {
             flexDirection: "row",
             gap: 10,
             alignItems: "center",
-            width: 250,
             height: 50,
+            // backgroundColor: "pink",
+            flex: 1,
           }}
           onPress={() => navigation.navigate("SearchScreen")}
         >

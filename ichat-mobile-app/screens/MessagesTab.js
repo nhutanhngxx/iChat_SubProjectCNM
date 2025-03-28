@@ -35,7 +35,7 @@ import backIcon from "../assets/icons/go-back.png";
 import { UserContext } from "../context/UserContext";
 
 const MessagesTab = () => {
-  const API_iChat = "http://172.20.10.5:5001";
+  const API_iChat = "http://172.20.59.206:5001";
   const [index, setIndex] = useState(0);
   const { user } = useContext(UserContext);
   const [modalSort, setModalSort] = useState(false);
@@ -461,7 +461,7 @@ const MessagesTab = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "white" },
+  container: { flex: 1, backgroundColor: "white", paddingTop: 30 },
   overlay: {
     flex: 1,
     justifyContent: "flex-end",

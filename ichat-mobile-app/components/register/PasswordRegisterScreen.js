@@ -140,7 +140,10 @@ const PasswordRegisterScreen = ({ navigation, route }) => {
               <View style={{ gap: 20 }}>
                 <CustomButton
                   title="Tiếp theo"
-                  onPress={handleCreatePassword}
+                  // onPress={handleCreatePassword}
+                  onPress={() =>
+                    navigation.navigate("InfoRegisterScreen", { phone })
+                  }
                   backgroundColor={"#48A2FC"}
                 />
               </View>

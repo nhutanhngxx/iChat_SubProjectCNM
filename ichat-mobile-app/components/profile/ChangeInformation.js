@@ -42,7 +42,7 @@ const ChangeInformation = () => {
   ];
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#fff", paddingTop: 50 }}>
+    <View style={{ flex: 1, backgroundColor: "#fff", paddingTop: 40 }}>
       <View
         style={{
           backgroundColor: "#fff",
@@ -66,9 +66,18 @@ const ChangeInformation = () => {
       </View>
 
       {/* Các thông tin được phép thay đổi */}
-      <View style={{ flexDirection: "row", padding: 30, gap: 30 }}>
+      <View
+        style={{
+          flexDirection: "row",
+          justifyContent: "space-between",
+          padding: 20,
+        }}
+      >
         <View style={{ height: 80 }}>
-          <Image source={avatar} style={{ height: 80, width: 80 }} />
+          <Image
+            source={{ uri: user.avatar_path }}
+            style={{ height: 100, width: 100, borderRadius: 10 }}
+          />
         </View>
         <View
           style={{
@@ -111,37 +120,19 @@ const ChangeInformation = () => {
                 />
               )}
             </TouchableOpacity>
-
-            {/* {showPicker && (
-              <Modal transparent={true} animationType="none">
-                <View style={styles.modalContainer}>
-                  <View style={styles.pickerContainer}>
-                    <DateTimePicker
-                      value={dob}
-                      mode="date"
-                      display="default" // có thể sửa thành inline (chỉ IOS) để trông đẹp mắt hơn
-                      onChange={(event, selectedDate) => {
-                        if (selectedDate) {
-                          setDob(selectedDate);
-                        }
-                      }}
-                    />
-                    <TouchableOpacity onPress={() => setShowPicker(false)}>
-                      <Text style={styles.doneText}>Xong</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              </Modal>
-            )} */}
             {showPicker && (
               <Modal transparent={true} animationType="fade">
                 <View style={styles.modalContainer}>
                   <View style={styles.pickerContainer}>
-                    <Text style={{ fontSize: 25 }}>Chọn ngày sinh của bạn</Text>
+                    {Platform.OS === "ios" && (
+                      <Text style={{ fontSize: 25 }}>
+                        Chọn ngày sinh của bạn
+                      </Text>
+                    )}
                     <DateTimePicker
                       value={dob}
                       mode="date"
-                      display="spinner" // Hiển thị giao diện có nút OK trên iOS
+                      display="spinner"
                       onChange={(event, selectedDate) => {
                         if (Platform.OS === "android") {
                           setShowPicker(false); // Android đóng ngay sau khi chọn
@@ -166,12 +157,16 @@ const ChangeInformation = () => {
             )}
           </View>
 
-          <View style={{}}>
+          <View>
             <RadioGroup
               radioButtons={radioButtons}
               onPress={setSelectedId}
               selectedId={selectedId}
               layout="row"
+              containerStyle={{
+                transform: [{ scale: 0.8 }],
+                alignSelf: "flex-end",
+              }}
             />
           </View>
         </View>
@@ -210,8 +205,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     borderBottomWidth: 1,
     borderColor: "rgba(217, 217, 217, 0.5)",
-    paddingBottom: 5,
     justifyContent: "space-between",
+    alignItems: "center",
   },
   value: {
     fontSize: 18,
@@ -236,7 +231,6 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     width: "80%",
     alignItems: "center",
-    // transform: [{ scale: 0.9 }], // Chỉnh size cho pickerContainer
   },
   doneText: {
     color: "#3083F9",

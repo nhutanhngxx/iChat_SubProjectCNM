@@ -4,6 +4,9 @@ const registerService = {
   sendOTP: async (phone) => {
     try {
       if (phone) {
+        console.log("Bắt đầu gửi OTP!!");
+        console.log(phone);
+
         const response = await api.post("/auth/send-otp", { phone });
         if (response.data.status === "ok") return response.data;
       } else return;
@@ -17,7 +20,6 @@ const registerService = {
             "Số điện thoại không hợp lệ hoặc đã tồn tại",
         };
       }
-
       return {
         status: "error",
         message: error.response?.data?.message || "Không thể gửi mã OTP",

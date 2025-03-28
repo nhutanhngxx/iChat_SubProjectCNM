@@ -230,7 +230,7 @@ const TimelineTab = () => {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <HeaderTimeline />
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <FlatList
@@ -247,7 +247,7 @@ const TimelineTab = () => {
           )}
         />
       </TouchableWithoutFeedback>
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -255,6 +255,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "white",
+    paddingTop: 30,
   },
   createPostContainer: {
     padding: 10,

@@ -1,9 +1,9 @@
 import axios from "axios";
-const API_iChat = "http://172.20.10.5:5001";
+const API_iChat = "http://172.20.59.206:5001";
 
 const api = axios.create({
   baseURL: API_iChat,
-  timeout: 10000, // Request sẽ bị hủy nếu quá x giây
+  // timeout: 10000, // Request sẽ bị hủy nếu quá x giây
   headers: { "Content-Type": "application/json" },
 });
 

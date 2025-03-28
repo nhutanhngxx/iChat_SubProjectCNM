@@ -102,7 +102,10 @@ const EnterOTPScreen = ({ navigation, route }) => {
             ) : (
               <CustomButton
                 title="Tiếp theo"
-                onPress={() => handleVerify()}
+                // onPress={() => handleVerify()}
+                onPress={() =>
+                  navigation.navigate("PasswordRegisterScreen", { phone })
+                }
                 backgroundColor={"#48A2FC"}
               />
             )}

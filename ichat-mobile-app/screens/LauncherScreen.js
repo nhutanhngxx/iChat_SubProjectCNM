@@ -41,7 +41,7 @@ const LauncherScreen = ({ navigation }) => {
             <CustomButton
               title="Tạo tài khoản mới"
               onPress={() => navigation.navigate("Register")}
-              backgroundColor={"#D9D9D9"}
+              backgroundColor={"#fff"}
               textColor={"#2384FF"}
             />
           </View>
@@ -75,6 +75,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     flexShrink: 1, // 🛠 Ngăn tràn màn hình
     borderColor: "red",
+    gap: 100,
   },
 
   logoContainer: {

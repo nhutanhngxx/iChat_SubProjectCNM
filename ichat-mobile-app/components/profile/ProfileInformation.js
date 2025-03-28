@@ -28,7 +28,7 @@ const ProfileInformation = () => {
     };
   }, []);
   return (
-    <View style={{ flex: 1, backgroundColor: "#fff", paddingTop: 50 }}>
+    <View style={{ flex: 1, backgroundColor: "#fff", paddingTop: 40 }}>
       <View
         style={{
           backgroundColor: "#fff",
