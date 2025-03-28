@@ -40,7 +40,7 @@ Chúng tôi hoan nghênh những đóng góp cho iChat Mobile! Nếu bạn có b
 
 ### Steps to Contribute
 
-1. Fork the repository.  <br>
+1. Fork the repository. <br>
 2. Create your feature branch: `git checkout -b mobile-your-feature-name`. <br>
 3. Commit your changes: `git commit -m 'Add some feature'`. <br>
 4. Push to the branch: `git push origin feature/your-feature-name`. <br>
