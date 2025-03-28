@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import {
   View,
   Text,
@@ -16,12 +16,15 @@ import { CheckBox } from "@rneui/themed";
 import CustomButton from "../common/CustomButton";
 import RegisterService from "../../services/registerService";
 import { useNavigation } from "@react-navigation/native";
+import { FirebaseRecaptchaVerifierModal } from "expo-firebase-recaptcha";
+import { firebaseConfig } from "../../config/firebase";
 
 const RegisterScreen = () => {
   const navigation = useNavigation();
   const [isChecked, setChecked] = useState(false);
   const [isCheckedSocial, setCheckedSocial] = useState(false);
   const [phone, setPhone] = useState("");
+  const recaptchaVerifier = useRef(null);
 
   const handleContinueRegister = async (phone) => {
     if (!phone) {
@@ -34,11 +37,13 @@ const RegisterScreen = () => {
     }
     phone = "+84" + phone;
     navigation.navigate("EnterOTP", { phone });
-    const result = await RegisterService.sendOTP(phone);
-    console.log(result);
+    const result = await RegisterService.sendOTP(phone, recaptchaVerifier);
 
-    // if (result.status === "ok") navigation.navigate("EnterOTP", { phone });
-    // else Alert.alert("Thông báo", result.message);
+    if (result.status === "ok") navigation.navigate("EnterOTP", { phone });
+    else {
+      Alert.alert("Thông báo", result.message);
+      return;
+    }
   };
 
   const handleLoginWithFacebook = () => {
@@ -60,6 +65,12 @@ const RegisterScreen = () => {
           source={require("../../assets/images/background.png")}
           style={styles.background}
         >
+          <FirebaseRecaptchaVerifierModal
+            ref={recaptchaVerifier}
+            firebaseConfig={firebaseConfig}
+            attemptInvisibleVerification={true}
+          />
+
           <View style={styles.container}>
             <View style={styles.logoContainer}>
               <View style={styles.content}>

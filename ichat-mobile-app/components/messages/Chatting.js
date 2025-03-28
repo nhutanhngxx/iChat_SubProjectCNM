@@ -48,7 +48,7 @@ const Chatting = ({ route }) => {
     });
   }, []);
 
-  const API_iChat = "http://172.20.59.206:5001";
+  const API_iChat = "http://192.168.1.6:5001";
 
   // Hàm lấy tên thành viên từ ID để hiển thị trên tin nhắn nhóm
   const getMemberName = useCallback(

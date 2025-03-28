@@ -1,15 +1,29 @@
 import api from "./api";
+import { auth } from "../config/firebase";
+import { PhoneAuthProvider } from "firebase/auth";
 
 const registerService = {
-  sendOTP: async (phone) => {
+  sendOTP: async (phone, recaptchaVerifier) => {
     try {
-      if (phone) {
-        console.log("Bắt đầu gửi OTP!!");
-        console.log(phone);
+      if (!phone) {
+        return {
+          status: "error",
+          message: "Vui lòng nhập số điện thoại",
+        };
+      }
+      console.log("phone: ", phone);
 
-        const response = await api.post("/auth/send-otp", { phone });
-        if (response.data.status === "ok") return response.data;
-      } else return;
+      // Use PhoneAuthProvider with recaptcha verifier
+      const phoneProvider = new PhoneAuthProvider(auth);
+      const verificationId = await phoneProvider.verifyPhoneNumber(
+        phone,
+        recaptchaVerifier.current
+      );
+      return {
+        status: "ok",
+        verificationId: verificationId,
+        phoneNumber: phone,
+      };
     } catch (error) {
       console.log("Register Service Error: ", error);
       if (error.response?.status === 400) {
