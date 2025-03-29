@@ -18,6 +18,7 @@ import RegisterService from "../../services/registerService";
 import { useNavigation } from "@react-navigation/native";
 import { FirebaseRecaptchaVerifierModal } from "expo-firebase-recaptcha";
 import { firebaseConfig } from "../../config/firebase";
+import { ActivityIndicator } from "react-native";
 
 const RegisterScreen = () => {
   const navigation = useNavigation();
@@ -25,6 +26,7 @@ const RegisterScreen = () => {
   const [isCheckedSocial, setCheckedSocial] = useState(false);
   const [phone, setPhone] = useState("");
   const recaptchaVerifier = useRef(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handlePhoneRegister = async (phone) => {
     if (!phone) {
@@ -35,17 +37,29 @@ const RegisterScreen = () => {
       Alert.alert("Thông báo", "Vui lòng đọc và đồng ý với điều khoản!");
       return;
     }
-    phone = "+84" + phone;
-    const result = await RegisterService.sendOTP(phone, recaptchaVerifier);
 
-    if (result.status === "ok")
-      navigation.navigate("EnterOTP", {
-        phone,
-        verificationId: result.verificationId,
-      });
-    else {
-      Alert.alert("Thông báo", result.message);
-      return;
+    setIsLoading(true);
+    try {
+      phone = "+84" + phone;
+      const result = await RegisterService.sendOTP(phone, recaptchaVerifier);
+
+      if (result.status === "ok")
+        navigation.navigate("EnterOTP", {
+          phone,
+          verificationId: result.verificationId,
+        });
+      else {
+        Alert.alert("Thông báo", result.message);
+        return;
+      }
+    } catch (error) {
+      console.error("Unexpected error during OTP verification:", error);
+      Alert.alert(
+        "Thông báo",
+        "Đã xảy ra lỗi không mong muốn. Vui lòng thử lại sau."
+      );
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -116,12 +130,15 @@ const RegisterScreen = () => {
             </View>
 
             {/* Button continue */}
-            <CustomButton
-              title="Tiếp theo"
-              // onPress={() => handlePhoneRegister(phone)}
-              onPress={() => navigation.navigate("EnterOTP")}
-              backgroundColor={"#48A2FC"}
-            />
+            {isLoading ? (
+              <ActivityIndicator size="large" color="#48A2FC" /> // Hiển thị spinner khi loading
+            ) : (
+              <CustomButton
+                title="Xác nhận"
+                onPress={() => handlePhoneRegister(phone)}
+                backgroundColor={"#48A2FC"}
+              />
+            )}
           </View>
 
           {/* Footer */}

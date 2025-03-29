@@ -1,6 +1,6 @@
 import api from "./api";
 import { auth } from "../config/firebase";
-import { PhoneAuthProvider } from "firebase/auth";
+import { PhoneAuthProvider, signInWithCredential } from "firebase/auth";
 
 const registerService = {
   sendOTP: async (phone, recaptchaVerifier) => {
@@ -19,6 +19,8 @@ const registerService = {
         phone,
         recaptchaVerifier.current
       );
+
+      console.log("Verification ID: ", verificationId);
       return {
         status: "ok",
         verificationId: verificationId,
@@ -40,7 +42,7 @@ const registerService = {
       };
     }
   },
-  validateOTP: async (phone, otp) => {
+  validateOTP: async (phone, otp, verificationId) => {
     try {
       if (!phone || !otp) {
         return {
@@ -51,21 +53,34 @@ const registerService = {
 
       console.log(`Verifying OTP: ${otp} for phone: ${phone}`);
 
-      const otpString = String(otp).trim();
+      const credential = PhoneAuthProvider.credential(verificationId, otp);
+      const userCredential = await signInWithCredential(auth, credential);
 
-      const response = await api.post("/auth/verify-otp", {
-        phone,
-        otp: otpString,
-      });
+      console.log("User credential: ", userCredential);
 
-      console.log("OTP verification response:", response.data);
-      return response.data;
+      return {
+        status: "ok",
+        data: userCredential,
+        message: "Xác thực thành công",
+      };
     } catch (error) {
-      console.error("OTP verification error details:", error.response?.data);
-      //   Thêm phần xử lý lỗi ở đây
+      console.error("Error during sign-in:", error);
+      let errorMessage;
+      switch (error.code) {
+        case "auth/invalid-verification-code":
+          errorMessage = "Mã OTP không hợp lệ. Vui lòng thử lại.";
+          break;
+        case "auth/invalid-verification-id":
+          errorMessage = "ID xác minh không hợp lệ.";
+          break;
+        default:
+          errorMessage = "Đã xảy ra lỗi không mong muốn. Vui lòng thử lại sau.";
+          break;
+      }
+
       return {
         status: "error",
-        message: error.response?.data?.message || "Không thể xác thực OTP",
+        message: errorMessage,
       };
     }
   },

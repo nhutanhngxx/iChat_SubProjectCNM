@@ -4,42 +4,55 @@ import {
   Text,
   StyleSheet,
   ImageBackground,
-  SafeAreaView,
   TextInput,
   Alert,
-  KeyboardAvoidingView,
   TouchableWithoutFeedback,
-  Platform,
   Keyboard,
-  ScrollView,
 } from "react-native";
 import CustomButton from "../common/CustomButton";
 import RegisterService from "../../services/registerService";
+import { ActivityIndicator } from "react-native";
 
 const EnterOTPScreen = ({ navigation, route }) => {
   const [otp, setOtp] = useState("");
-  const [isOTPValid, setIsOTPValid] = useState(false);
-  // const { phone, verificationId } = route.params;
+  const { phone, verificationId } = route.params;
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleVerify = async () => {
-    const otpCode = otp.join("");
-    const result = await RegisterService.validateOTP(phone, otpCode);
-
-    if (result.status === "error") {
-      Alert.alert("Lỗi", result.message);
+    if (otp.length !== 6) {
+      Alert.alert("Lỗi", "Mã OTP phải có 6 ký tự");
       return;
     }
 
-    if (result.status === "ok") {
-      navigation.navigate("PasswordRegister", {
+    setIsLoading(true); // Hiển thị trạng thái loading
+    try {
+      const result = await RegisterService.validateOTP(
         phone,
-        tempToken: result.data.tempToken,
-      });
-    }
-  };
+        otp,
+        verificationId
+      );
 
-  const handleLogin = () => {
-    navigation.navigate("Login");
+      if (result.status === "error") {
+        Alert.alert("Lỗi", result.message);
+        return;
+      }
+
+      if (result.status === "ok") {
+        const tempToken = await result.data.user.getIdToken();
+        navigation.navigate("PasswordRegister", {
+          phone,
+          tempToken,
+        });
+      }
+    } catch (error) {
+      console.error("Unexpected error during OTP verification:", error);
+      Alert.alert(
+        "Lỗi",
+        "Đã xảy ra lỗi không mong muốn. Vui lòng thử lại sau."
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -50,36 +63,24 @@ const EnterOTPScreen = ({ navigation, route }) => {
       >
         <View style={styles.container}>
           <View style={styles.content}>
-            {!isOTPValid ? (
-              <>
-                <Text style={styles.label}>Nhập mã OTP</Text>
-                <View style={styles.otpContainer}>
-                  <TextInput
-                    style={styles.otpInput}
-                    placeholder="Nhập mã OTP"
-                    keyboardType="number-pad"
-                    value={otp}
-                    onChangeText={setOtp}
-                    maxLength={6}
-                  />
-                </View>
-              </>
-            ) : (
-              <Text style={styles.success}>
-                ĐĂNG KÝ TÀI KHOẢN THÀNH CÔNG !!!
-              </Text>
-            )}
+            <Text style={styles.label}>Nhập mã OTP</Text>
+            <View style={styles.otpContainer}>
+              <TextInput
+                style={styles.otpInput}
+                placeholder="Nhập mã OTP"
+                keyboardType="number-pad"
+                value={otp}
+                onChangeText={setOtp}
+                maxLength={6}
+              />
+            </View>
           </View>
           <View style={{ gap: 20 }}>
-            {isOTPValid ? (
-              <CustomButton
-                title="Đăng nhập"
-                onPress={() => handleLogin()}
-                backgroundColor={"#48A2FC"}
-              />
+            {isLoading ? (
+              <ActivityIndicator size="large" color="#48A2FC" /> // Hiển thị spinner khi loading
             ) : (
               <CustomButton
-                title="Tiếp theo"
+                title="Xác nhận"
                 onPress={() => handleVerify()}
                 backgroundColor={"#48A2FC"}
               />

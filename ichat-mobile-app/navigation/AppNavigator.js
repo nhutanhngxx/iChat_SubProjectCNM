@@ -56,13 +56,10 @@ export default function AppNavigator() {
           <Stack.Screen name="Login" component={LoginScreen} />
           <Stack.Screen name="EnterOTP" component={EnterOTPScreen} />
           <Stack.Screen
-            name="PasswordRegisterScreen"
+            name="PasswordRegister"
             component={PasswordRegisterScreen}
           />
-          <Stack.Screen
-            name="InfoRegisterScreen"
-            component={InfoRegisterScreen}
-          />
+          <Stack.Screen name="InfoRegister" component={InfoRegisterScreen} />
         </>
       )}
     </Stack.Navigator>

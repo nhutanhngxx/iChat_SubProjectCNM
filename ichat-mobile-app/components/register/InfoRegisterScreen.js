@@ -16,7 +16,6 @@ import {
   KeyboardAvoidingView,
   ScrollView,
 } from "react-native";
-import axios from "axios";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import CustomButton from "../common/CustomButton";
 import editIcon from "../../assets/icons/edit.png";
@@ -58,172 +57,164 @@ const InfoRegisterScreen = ({ navigation, route }) => {
   };
 
   return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={{ flex: 1 }}
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+      <ImageBackground
+        source={require("../../assets/images/background.png")}
+        style={styles.background}
       >
-        <ScrollView style={{ flex: 1 }}>
-          <ImageBackground
-            source={require("../../assets/images/background.png")}
-            style={styles.background}
-          >
-            <View style={styles.container}>
-              <Text style={styles.title}>iChat</Text>
+        <View style={styles.container}>
+          <View style={styles.content}>
+            <Text style={styles.label}>Thông tin người dùng</Text>
+          </View>
 
-              <View style={styles.content}>
-                <Text style={styles.label}>Thông tin người dùng</Text>
-              </View>
+          {/* Sô điện thoại đã đăng ký */}
+          <View style={styles.item}>
+            <Text
+              style={{
+                fontSize: 16,
+                fontWeight: "600",
+                marginLeft: 15,
+              }}
+            >
+              Số điện thoại
+            </Text>
+            <TextInput
+              style={[styles.input, { backgroundColor: "#E9E9E9" }]}
+              placeholder="Số điện thoại"
+              keyboardType="phone-pad"
+              value={phone}
+              editable={false}
+            />
+          </View>
 
-              {/* Sô điện thoại đã đăng ký */}
-              {/* <View style={styles.item}>
-                <Text
+          {/* Họ tên */}
+          <View style={styles.item}>
+            <Text
+              style={{
+                fontSize: 16,
+                fontWeight: "600",
+                marginLeft: 15,
+              }}
+            >
+              Họ và tên
+            </Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Họ và tên"
+              keyboardType="default"
+              value={fullName}
+              onChangeText={setFullName}
+            />
+          </View>
+
+          {/* Ngày sinh */}
+          <View style={styles.item}>
+            <Text
+              style={{
+                fontSize: 16,
+                fontWeight: "600",
+                marginLeft: 15,
+              }}
+            >
+              Ngày sinh
+            </Text>
+            <TouchableOpacity
+              onPress={() => {
+                Keyboard.dismiss();
+                setShowPicker(true);
+              }}
+              style={styles.inputContainer}
+            >
+              <TextInput
+                style={styles.input}
+                value={dob.toISOString().split("T")[0]}
+                editable={false}
+              />
+              {!showPicker && (
+                <Image
+                  source={editIcon}
                   style={{
-                    fontSize: 16,
-                    fontWeight: "600",
-                    marginLeft: 15,
+                    width: 25,
+                    height: 25,
+                    position: "absolute",
+                    right: 10,
+                    top: 10,
                   }}
-                >
-                  Số điện thoại
-                </Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Số điện thoại"
-                  keyboardType="phone-pad"
-                  value={phone}
-                  editable={false}
                 />
-              </View> */}
+              )}
+            </TouchableOpacity>
 
-              {/* Họ tên */}
-              <View style={styles.item}>
-                <Text
-                  style={{
-                    fontSize: 16,
-                    fontWeight: "600",
-                    marginLeft: 15,
-                  }}
-                >
-                  Họ và tên
-                </Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Họ và tên"
-                  keyboardType="default"
-                  value={fullName}
-                  onChangeText={setFullName}
-                />
-              </View>
-
-              {/* Ngày sinh */}
-              <View style={styles.item}>
-                <Text
-                  style={{
-                    fontSize: 16,
-                    fontWeight: "600",
-                    marginLeft: 15,
-                  }}
-                >
-                  Ngày sinh
-                </Text>
-                <TouchableOpacity
-                  onPress={() => setShowPicker(true)}
-                  style={styles.inputContainer}
-                >
-                  <TextInput
-                    style={styles.input}
-                    value={dob.toISOString().split("T")[0]}
-                    editable={false}
-                  />
-                  {!showPicker && (
-                    <Image
-                      source={editIcon}
-                      style={{
-                        width: 25,
-                        height: 25,
-                        position: "absolute",
-                        right: 10,
-                        top: 10,
+            {showPicker && (
+              <Modal transparent={true} animationType="fade">
+                <View style={styles.modalContainer}>
+                  <View style={styles.pickerContainer}>
+                    <DateTimePicker
+                      value={dob}
+                      mode="date"
+                      display="spinner" // Hiển thị giao diện có nút OK trên iOS
+                      onChange={(event, selectedDate) => {
+                        if (Platform.OS === "android") {
+                          setShowPicker(false); // Android đóng ngay sau khi chọn
+                        }
+                        if (dob) {
+                          setDob(selectedDate);
+                        }
                       }}
                     />
-                  )}
-                </TouchableOpacity>
+                    {/* Chỉ hiển thị nút "OK" trên iOS */}
+                    {Platform.OS === "ios" && (
+                      <TouchableOpacity
+                        onPress={() => setShowPicker(false)}
+                        style={styles.okButton}
+                      >
+                        <Text style={styles.doneText}>OK</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                </View>
+              </Modal>
+            )}
+          </View>
 
-                {showPicker && (
-                  <Modal transparent={true} animationType="fade">
-                    <View style={styles.modalContainer}>
-                      <View style={styles.pickerContainer}>
-                        <DateTimePicker
-                          value={dob}
-                          mode="date"
-                          display="spinner" // Hiển thị giao diện có nút OK trên iOS
-                          onChange={(event, selectedDate) => {
-                            if (Platform.OS === "android") {
-                              setShowPicker(false); // Android đóng ngay sau khi chọn
-                            }
-                            if (dob) {
-                              setDob(selectedDate);
-                            }
-                          }}
-                        />
-                        {/* Chỉ hiển thị nút "OK" trên iOS */}
-                        {Platform.OS === "ios" && (
-                          <TouchableOpacity
-                            onPress={() => setShowPicker(false)}
-                            style={styles.okButton}
-                          >
-                            <Text style={styles.doneText}>OK</Text>
-                          </TouchableOpacity>
-                        )}
-                      </View>
-                    </View>
-                  </Modal>
-                )}
-              </View>
+          {/* Giới tính */}
+          <View style={styles.item}>
+            <Text
+              style={{
+                fontSize: 16,
+                fontWeight: "600",
+                marginLeft: 15,
+              }}
+            >
+              Giới tính
+            </Text>
+            <RadioGroup
+              radioButtons={radioButtons}
+              onPress={setGender}
+              selectedId={gender}
+              layout="row"
+              labelStyle={{ fontSize: 16 }}
+              containerStyle={{ marginBottom: 20, width: 300 }}
+            />
+          </View>
 
-              {/* Giới tính */}
-              <View style={styles.item}>
-                <Text
-                  style={{
-                    fontSize: 16,
-                    fontWeight: "600",
-                    marginLeft: 15,
-                  }}
-                >
-                  Giới tính
-                </Text>
-                <RadioGroup
-                  radioButtons={radioButtons}
-                  onPress={setGender}
-                  selectedId={gender}
-                  layout="row"
-                  labelStyle={{ fontSize: 16 }}
-                  containerStyle={{ marginBottom: 20, width: 300 }}
-                />
-              </View>
+          <View style={{ gap: 20 }}>
+            <CustomButton
+              title="Đăng ký"
+              onPress={handleRegister}
+              backgroundColor={"#48A2FC"}
+            />
+          </View>
 
-              <View style={{ gap: 20 }}>
-                <CustomButton
-                  title="Đăng ký"
-                  onPress={handleRegister}
-                  backgroundColor={"#48A2FC"}
-                />
-              </View>
-
-              <View style={{ position: "absolute", bottom: 20 }}>
-                <Text
-                  style={styles.question}
-                  onPress={() => alert("Những câu hỏi thường gặp")}
-                >
-                  Những câu hỏi thường gặp
-                </Text>
-              </View>
-            </View>
-
-            {/* </View> */}
-          </ImageBackground>
-        </ScrollView>
-      </KeyboardAvoidingView>
+          <View style={{ position: "absolute", bottom: 20 }}>
+            <Text
+              style={styles.question}
+              onPress={() => alert("Những câu hỏi thường gặp")}
+            >
+              Những câu hỏi thường gặp
+            </Text>
+          </View>
+        </View>
+      </ImageBackground>
     </TouchableWithoutFeedback>
   );
 };
@@ -231,14 +222,11 @@ const InfoRegisterScreen = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: {
     alignItems: "center",
-    justifyContent: "space-between",
-    flex: 1,
     paddingVertical: 80,
   },
   background: {
     flex: 1,
     resizeMode: "cover",
-    justifyContent: "center",
   },
   logoContainer: {
     alignItems: "center",
@@ -248,7 +236,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: 10,
-    // height: 450,
   },
   label: {
     fontWeight: "bold",

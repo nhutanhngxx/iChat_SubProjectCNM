@@ -39,7 +39,7 @@ app.get("/", (req, res) => {
 });
 
 // Chạy server
-const PORT = process.env.PORT || 5001;
+const PORT = process.env.PORT || 5002;
 app.listen(PORT, () => {
   // đổi về app.listen nếu muốn chạy server trước đó
   console.log(`Server is running on port ${PORT}`);

@@ -68,100 +68,91 @@ const PasswordRegisterScreen = ({ navigation, route }) => {
   };
 
   return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={{ flex: 1 }}
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+      <ImageBackground
+        source={require("../../assets/images/background.png")}
+        style={styles.background}
       >
-        <SafeAreaView style={{ flex: 1 }}>
-          <ImageBackground
-            source={require("../../assets/images/background.png")}
-            style={styles.background}
-          >
-            <View style={styles.container}>
-              <Text style={styles.label}>Đăng ký tài khoản</Text>
+        <View style={styles.container}>
+          <Text style={styles.label}>Đăng ký tài khoản</Text>
 
-              {/* Nhập mật khẩu */}
-              <View style={styles.item}>
-                <Text
-                  style={{
-                    fontSize: 16,
-                    fontWeight: "600",
-                    marginLeft: 15,
-                  }}
-                >
-                  Nhập mật khẩu
-                </Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Nhập mật khẩu..."
-                  secureTextEntry={isPasswordVisible}
-                  value={password}
-                  onChangeText={setPassword}
-                />
-                <IconButton
-                  icon={isPasswordVisible ? "eye" : "eye-off"}
-                  onPress={() => setIsPasswordVisible(!isPasswordVisible)}
-                  style={{ position: "absolute", right: 5, top: 28 }}
-                  size={20}
-                />
-              </View>
+          {/* Nhập mật khẩu */}
+          <View style={styles.item}>
+            <Text
+              style={{
+                fontSize: 16,
+                fontWeight: "600",
+                marginLeft: 15,
+              }}
+            >
+              Nhập mật khẩu
+            </Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Nhập mật khẩu..."
+              secureTextEntry={isPasswordVisible}
+              value={password}
+              onChangeText={setPassword}
+            />
+            <IconButton
+              icon={isPasswordVisible ? "eye" : "eye-off"}
+              onPress={() => setIsPasswordVisible(!isPasswordVisible)}
+              style={{ position: "absolute", right: 5, top: 28 }}
+              size={20}
+            />
+          </View>
 
-              {/* Nhập lại mật khẩu */}
-              <View style={styles.item}>
-                <Text
-                  style={{
-                    fontSize: 16,
-                    fontWeight: "600",
-                    marginLeft: 15,
-                  }}
-                >
-                  Nhập lại mật khẩu
-                </Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Nhập lại mật khẩu..."
-                  secureTextEntry={isRePasswordVisible}
-                  value={rePassword}
-                  onChangeText={setRePassword}
-                />
-                <IconButton
-                  icon={isRePasswordVisible ? "eye" : "eye-off"}
-                  onPress={() => setIsRePasswordVisible(!isRePasswordVisible)}
-                  style={{ position: "absolute", right: 5, top: 28 }}
-                  size={20}
-                />
-              </View>
+          {/* Nhập lại mật khẩu */}
+          <View style={styles.item}>
+            <Text
+              style={{
+                fontSize: 16,
+                fontWeight: "600",
+                marginLeft: 15,
+              }}
+            >
+              Nhập lại mật khẩu
+            </Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Nhập lại mật khẩu..."
+              secureTextEntry={isRePasswordVisible}
+              value={rePassword}
+              onChangeText={setRePassword}
+            />
+            <IconButton
+              icon={isRePasswordVisible ? "eye" : "eye-off"}
+              onPress={() => setIsRePasswordVisible(!isRePasswordVisible)}
+              style={{ position: "absolute", right: 5, top: 28 }}
+              size={20}
+            />
+          </View>
 
-              <View style={{ width: 300, height: 50 }}>
-                <Text style={styles.error}>{error}</Text>
-              </View>
+          <View style={{ width: 300, height: 50 }}>
+            <Text style={styles.error}>{error}</Text>
+          </View>
 
-              <View style={{ gap: 20 }}>
-                <CustomButton
-                  title="Tiếp theo"
-                  // onPress={handleCreatePassword}
-                  onPress={() =>
-                    navigation.navigate("InfoRegisterScreen", { phone })
-                  }
-                  backgroundColor={"#48A2FC"}
-                />
-              </View>
+          <View style={{ gap: 20 }}>
+            <CustomButton
+              title="Tiếp theo"
+              // onPress={handleCreatePassword}
+              onPress={() => navigation.navigate("InfoRegister", { phone })}
+              backgroundColor={"#48A2FC"}
+            />
+          </View>
 
-              <View style={{ marginTop: 30 }}>
-                <Text
-                  style={styles.question}
-                  onPress={() => alert("Những câu hỏi thường gặp")}
-                >
-                  Những câu hỏi thường gặp
-                </Text>
-              </View>
-            </View>
+          <View style={{ marginTop: 30 }}>
+            <Text
+              style={styles.question}
+              onPress={() => alert("Những câu hỏi thường gặp")}
+            >
+              Những câu hỏi thường gặp
+            </Text>
+          </View>
+        </View>
 
-            {/* </View> */}
-          </ImageBackground>
-        </SafeAreaView>
-      </KeyboardAvoidingView>
+        {/* </View> */}
+      </ImageBackground>
     </TouchableWithoutFeedback>
   );
 };
