@@ -7,28 +7,19 @@ import {
   SafeAreaView,
   TextInput,
   Alert,
+  KeyboardAvoidingView,
+  TouchableWithoutFeedback,
+  Platform,
+  Keyboard,
+  ScrollView,
 } from "react-native";
 import CustomButton from "../common/CustomButton";
 import RegisterService from "../../services/registerService";
 
 const EnterOTPScreen = ({ navigation, route }) => {
-  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+  const [otp, setOtp] = useState("");
   const [isOTPValid, setIsOTPValid] = useState(false);
-  const inputRefs = useRef([]);
-  const { phone } = route.params;
-
-  const handleChange = (text, index) => {
-    const newOtp = [...otp];
-    newOtp[index] = text;
-    setOtp(newOtp);
-
-    if (text && index < 5) {
-      inputRefs.current[index + 1].focus();
-    }
-    if (!text && index > 0) {
-      inputRefs.current[index - 1].focus();
-    }
-  };
+  // const { phone, verificationId } = route.params;
 
   const handleVerify = async () => {
     const otpCode = otp.join("");
@@ -52,38 +43,25 @@ const EnterOTPScreen = ({ navigation, route }) => {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
       <ImageBackground
         source={require("../../assets/images/background.png")}
         style={styles.background}
       >
         <View style={styles.container}>
-          <Text style={styles.title}>iChat</Text>
           <View style={styles.content}>
             {!isOTPValid ? (
               <>
                 <Text style={styles.label}>Nhập mã OTP</Text>
                 <View style={styles.otpContainer}>
-                  {otp.map((digit, index) => (
-                    <TextInput
-                      key={index}
-                      ref={(ref) => (inputRefs.current[index] = ref)}
-                      style={styles.otpInput}
-                      keyboardType="number-pad"
-                      maxLength={1}
-                      value={digit}
-                      onChangeText={(text) => handleChange(text, index)}
-                      onKeyPress={({ nativeEvent }) => {
-                        if (
-                          nativeEvent.key === "Backspace" &&
-                          !otp[index] &&
-                          index > 0
-                        ) {
-                          handleChange("", index - 1);
-                        }
-                      }}
-                    />
-                  ))}
+                  <TextInput
+                    style={styles.otpInput}
+                    placeholder="Nhập mã OTP"
+                    keyboardType="number-pad"
+                    value={otp}
+                    onChangeText={setOtp}
+                    maxLength={6}
+                  />
                 </View>
               </>
             ) : (
@@ -102,17 +80,14 @@ const EnterOTPScreen = ({ navigation, route }) => {
             ) : (
               <CustomButton
                 title="Tiếp theo"
-                // onPress={() => handleVerify()}
-                onPress={() =>
-                  navigation.navigate("PasswordRegisterScreen", { phone })
-                }
+                onPress={() => handleVerify()}
                 backgroundColor={"#48A2FC"}
               />
             )}
           </View>
         </View>
       </ImageBackground>
-    </SafeAreaView>
+    </TouchableWithoutFeedback>
   );
 };
 
@@ -147,11 +122,14 @@ const styles = StyleSheet.create({
     marginVertical: 20,
   },
   otpInput: {
-    width: 40,
+    width: "80%",
     height: 50,
-    borderBottomWidth: 2,
-    marginHorizontal: 5,
-    fontSize: 20,
+    borderRadius: 10,
+    paddingHorizontal: 15,
+    marginBottom: 10,
+    backgroundColor: 0,
+    borderBottomWidth: 1,
+    borderBottomColor: "gray",
     textAlign: "center",
   },
   success: {

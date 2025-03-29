@@ -6,7 +6,7 @@ import MyTabs from "./MyTabNavigator";
 import LauncherScreen from "../screens/LauncherScreen";
 import LoginScreen from "../screens/LoginScreen";
 
-import RegisterScreen from "../components/register/RegisterScreen";
+import PhoneRegisterScreen from "../components/register/PhoneRegisterScreen";
 import EnterOTPScreen from "../components/register/EnterOTPScreen";
 import PasswordRegisterScreen from "../components/register/PasswordRegisterScreen";
 import InfoRegisterScreen from "../components/register/InfoRegisterScreen";
@@ -52,7 +52,7 @@ export default function AppNavigator() {
       ) : (
         <>
           <Stack.Screen name="Launcher" component={LauncherScreen} />
-          <Stack.Screen name="Register" component={RegisterScreen} />
+          <Stack.Screen name="Register" component={PhoneRegisterScreen} />
           <Stack.Screen name="Login" component={LoginScreen} />
           <Stack.Screen name="EnterOTP" component={EnterOTPScreen} />
           <Stack.Screen

@@ -26,7 +26,7 @@ const RegisterScreen = () => {
   const [phone, setPhone] = useState("");
   const recaptchaVerifier = useRef(null);
 
-  const handleContinueRegister = async (phone) => {
+  const handlePhoneRegister = async (phone) => {
     if (!phone) {
       Alert.alert("Thông báo", "Vui lòng điền đầy đủ thông tin!");
       return;
@@ -36,10 +36,13 @@ const RegisterScreen = () => {
       return;
     }
     phone = "+84" + phone;
-    navigation.navigate("EnterOTP", { phone });
     const result = await RegisterService.sendOTP(phone, recaptchaVerifier);
 
-    if (result.status === "ok") navigation.navigate("EnterOTP", { phone });
+    if (result.status === "ok")
+      navigation.navigate("EnterOTP", {
+        phone,
+        verificationId: result.verificationId,
+      });
     else {
       Alert.alert("Thông báo", result.message);
       return;
@@ -71,59 +74,54 @@ const RegisterScreen = () => {
             attemptInvisibleVerification={true}
           />
 
-          <View style={styles.container}>
-            <View style={styles.logoContainer}>
-              <View style={styles.content}>
-                <Text style={styles.label}>Tạo tài khoản mới</Text>
-                <Text style={{ fontSize: 10, opacity: 0.5, marginBottom: 40 }}>
-                  Tạo tài khoản mới
-                </Text>
-                {/* Input phone number */}
-                <View style={styles.countryCodeContainer}>
-                  <View style={styles.countryCode}>
-                    <Text style={styles.countryCodeText}>+84</Text>
-                  </View>
-                  <View>
-                    <TextInput
-                      style={styles.input}
-                      placeholder="Số điện thoại"
-                      keyboardType="phone-pad"
-                      value={phone}
-                      onChangeText={setPhone}
-                    />
-                  </View>
-                </View>
+          <View style={styles.content}>
+            <Text style={styles.label}>Tạo tài khoản mới</Text>
+            <Text style={{ fontSize: 10, opacity: 0.5, marginBottom: 40 }}>
+              Tạo tài khoản mới
+            </Text>
+            {/* Input phone number */}
+            <View style={styles.phoneInput}>
+              <View style={styles.countryCode}>
+                <Text style={styles.countryCodeText}>+84</Text>
+              </View>
+              <TextInput
+                style={styles.input}
+                placeholder="Số điện thoại"
+                keyboardType="phone-pad"
+                value={phone}
+                onChangeText={setPhone}
+              />
+            </View>
 
-                {/* Checkbox terms */}
-                <View style={{ marginBottom: 20, width: 300 }}>
-                  <View style={{ flexDirection: "row", alignItems: "center" }}>
-                    <CheckBox
-                      checked={isChecked}
-                      onPress={() => setChecked(!isChecked)}
-                      title="Tôi đồng ý với các điều khoản của iChat"
-                      containerStyle={{ backgroundColor: "transparent" }}
-                      textStyle={{ fontSize: 13 }}
-                    />
-                  </View>
-                  <View style={{ flexDirection: "row", alignItems: "center" }}>
-                    <CheckBox
-                      checked={isCheckedSocial}
-                      onPress={() => setCheckedSocial(!isCheckedSocial)}
-                      containerStyle={{ backgroundColor: "transparent" }}
-                      title="Tôi đồng ý với điều khoản Mạng xã hội của iChat"
-                      textStyle={{ fontSize: 13, flexWrap: "wrap" }}
-                    />
-                  </View>
-                </View>
-
-                {/* Button continue */}
-                <CustomButton
-                  title="Tiếp theo"
-                  onPress={() => handleContinueRegister(phone)}
-                  backgroundColor={"#48A2FC"}
+            {/* Checkbox terms */}
+            <View style={{ marginBottom: 20, width: 300 }}>
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <CheckBox
+                  checked={isChecked}
+                  onPress={() => setChecked(!isChecked)}
+                  title="Tôi đồng ý với các điều khoản của iChat"
+                  containerStyle={{ backgroundColor: "transparent" }}
+                  textStyle={{ fontSize: 13 }}
+                />
+              </View>
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <CheckBox
+                  checked={isCheckedSocial}
+                  onPress={() => setCheckedSocial(!isCheckedSocial)}
+                  containerStyle={{ backgroundColor: "transparent" }}
+                  title="Tôi đồng ý với điều khoản Mạng xã hội của iChat"
+                  textStyle={{ fontSize: 13, flexWrap: "wrap" }}
                 />
               </View>
             </View>
+
+            {/* Button continue */}
+            <CustomButton
+              title="Tiếp theo"
+              // onPress={() => handlePhoneRegister(phone)}
+              onPress={() => navigation.navigate("EnterOTP")}
+              backgroundColor={"#48A2FC"}
+            />
           </View>
 
           {/* Footer */}
@@ -202,17 +200,15 @@ const styles = StyleSheet.create({
   },
   content: {
     alignItems: "center",
-    justifyContent: "center",
-    height: 350,
   },
   label: {
     fontWeight: "bold",
     fontSize: 30,
   },
-  countryCodeContainer: {
+  phoneInput: {
     flexDirection: "row",
     alignItems: "center",
-    width: 300,
+    width: "80%",
     height: 50,
     borderRadius: 10,
     paddingHorizontal: 20,
@@ -220,7 +216,7 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
   },
   countryCode: {
-    marginRight: 8,
+    marginRight: 5,
     borderRightWidth: 1,
     borderRightColor: "rgba(0, 0, 0, 0.1)",
     height: "100%",
@@ -233,10 +229,9 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   input: {
-    width: "100%",
+    width: "90%",
     height: 50,
     borderRadius: 10,
-    backgroundColor: "white",
   },
   forgotPassword: {
     fontWeight: "bold",
@@ -253,6 +248,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     width: 300,
     justifyContent: "center",
+    marginTop: 10,
   },
   line: {
     flex: 1,
