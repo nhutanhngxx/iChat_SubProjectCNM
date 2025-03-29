@@ -21,8 +21,11 @@ import CustomButton from "../common/CustomButton";
 import editIcon from "../../assets/icons/edit.png";
 import { RadioGroup } from "react-native-radio-buttons-group";
 import registerService from "../../services/registerService";
+import { ActivityIndicator } from "react-native";
+import { Appbar } from "react-native-paper";
 
 const InfoRegisterScreen = ({ navigation, route }) => {
+  const [isLoading, setIsLoading] = useState(false);
   const [fullName, setFullName] = useState("");
   const [dob, setDob] = useState(new Date());
   const [gender, setGender] = useState("");
@@ -35,6 +38,7 @@ const InfoRegisterScreen = ({ navigation, route }) => {
   const { phone, password, tempToken } = route.params;
 
   const handleRegister = async () => {
+    setIsLoading(true);
     try {
       const genderValue = radioButtons.find((item) => item.id === gender).value;
       const response = await registerService.register(
@@ -53,6 +57,8 @@ const InfoRegisterScreen = ({ navigation, route }) => {
       }
     } catch (error) {
       Alert.alert("Lỗi", error.response?.data?.message || "Có lỗi xảy ra!");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -62,6 +68,15 @@ const InfoRegisterScreen = ({ navigation, route }) => {
         source={require("../../assets/images/background.png")}
         style={styles.background}
       >
+        <Appbar.Header
+          style={{
+            backgroundColor: "transparent",
+            marginTop: 30,
+          }}
+        >
+          <Appbar.BackAction onPress={() => navigation.goBack()} size={30} />
+          <Appbar.Content title="Quay lại" />
+        </Appbar.Header>
         <View style={styles.container}>
           <View style={styles.content}>
             <Text style={styles.label}>Thông tin người dùng</Text>
@@ -198,14 +213,18 @@ const InfoRegisterScreen = ({ navigation, route }) => {
           </View>
 
           <View style={{ gap: 20 }}>
-            <CustomButton
-              title="Đăng ký"
-              onPress={handleRegister}
-              backgroundColor={"#48A2FC"}
-            />
+            {isLoading ? (
+              <ActivityIndicator size="large" color="#48A2FC" /> // Hiển thị spinner khi loading
+            ) : (
+              <CustomButton
+                title="Đăng ký"
+                onPress={handleRegister}
+                backgroundColor={"#48A2FC"}
+              />
+            )}
           </View>
 
-          <View style={{ position: "absolute", bottom: 20 }}>
+          <View style={{ position: "absolute", bottom: -150 }}>
             <Text
               style={styles.question}
               onPress={() => alert("Những câu hỏi thường gặp")}
@@ -222,7 +241,7 @@ const InfoRegisterScreen = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: {
     alignItems: "center",
-    paddingVertical: 80,
+    paddingTop: 20,
   },
   background: {
     flex: 1,
@@ -235,12 +254,11 @@ const styles = StyleSheet.create({
   content: {
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 10,
   },
   label: {
     fontWeight: "bold",
     fontSize: 30,
-    marginBottom: 40,
+    marginBottom: 30,
   },
   input: {
     width: 300,

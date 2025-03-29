@@ -11,7 +11,7 @@ const registerService = {
           message: "Vui lòng nhập số điện thoại",
         };
       }
-      console.log("phone: ", phone);
+
       phone = "+84" + phone.replace(/^(0|84)/, "");
 
       // Check if phone number is existed
@@ -99,7 +99,7 @@ const registerService = {
       if (!tempToken || !phone || !password || !fullName || !dob || !gender) {
         return {
           status: "error",
-          message: "Vui lòng điền đầy đủ thông tin",
+          message: "Thiếu thông tin đăng ký",
         };
       }
       const response = await api.post("/auth/register", {

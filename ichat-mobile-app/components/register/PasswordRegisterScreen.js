@@ -19,52 +19,65 @@ import {
 } from "react-native";
 import CustomButton from "../common/CustomButton";
 import { Icon, IconButton } from "react-native-paper";
+import { ActivityIndicator } from "react-native";
+import { Appbar } from "react-native-paper";
 
 const PasswordRegisterScreen = ({ navigation, route }) => {
   const [password, setPassword] = useState("");
   const [rePassword, setRePassword] = useState("");
   const [isPasswordVisible, setIsPasswordVisible] = useState(true);
   const [isRePasswordVisible, setIsRePasswordVisible] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+
   const { phone, tempToken } = route.params;
 
   // Tạo và mật khẩu cho tài khoản; sau đó chuyển sang màn hình nhập thông tin cá nhân
   const handleCreatePassword = () => {
-    // Mật khẩu có chứa ít nhất 1 chữ cái và 1 số, độ dài từ 8 ký tự trở lên
-    const regex =
-      /^(?=.*[a-z])(?=.*\d)[a-zA-Z\d!@#$%^&*()_+{}\[\]:;<>,.?~\\/-]{8,}$/;
+    setIsLoading(true);
+    try {
+      // Mật khẩu có chứa ít nhất 1 chữ cái và 1 số, độ dài từ 8 ký tự trở lên
+      const regex =
+        /^(?=.*[a-z])(?=.*\d)[a-zA-Z\d!@#$%^&*()_+{}\[\]:;<>,.?~\\/-]{8,}$/;
 
-    // Kiểm tra mật khẩu không được để trống
-    if (password === "") {
-      Alert.alert("Mật khẩu không được để trống", "Vui lòng nhập mật khẩu");
-      setError("Mật khẩu không được để trống");
-      return;
-    }
+      // Kiểm tra mật khẩu không được để trống
+      if (password === "") {
+        Alert.alert("Mật khẩu không được để trống", "Vui lòng nhập mật khẩu");
+        setError("Mật khẩu không được để trống");
+        return;
+      }
 
-    // Kiểm tra mật khẩu có hợp lệ không
-    if (!regex.test(password)) {
+      // Kiểm tra mật khẩu có hợp lệ không
+      if (!regex.test(password)) {
+        Alert.alert(
+          "Mật khẩu không hợp lệ",
+          "Mật khẩu phải chứa ít nhất 1 chữ cái và 1 số, độ dài từ 8 ký tự trở lên"
+        );
+        setError(
+          "Mật khẩu phải chứa ít nhất 1 chữ cái và 1 số, độ dài từ 8 ký tự trở lên"
+        );
+        return;
+      }
+
+      // Kiểm tra mật khẩu nhập lại có khớp không
+      if (password !== rePassword) {
+        Alert.alert("Mật khẩu không khớp", "Vui lòng nhập lại mật khẩu");
+        setError("Mật khẩu không khớp");
+        return;
+      }
+
+      setError("");
+
+      navigation.navigate("InfoRegister", { password, phone, tempToken });
+    } catch (error) {
+      console.error("Unexpected error during creating password:", error);
       Alert.alert(
-        "Mật khẩu không hợp lệ",
-        "Mật khẩu phải chứa ít nhất 1 chữ cái và 1 số, độ dài từ 8 ký tự trở lên"
+        "Lỗi",
+        "Đã xảy ra lỗi không mong muốn. Vui lòng thử lại sau."
       );
-      setError(
-        "Mật khẩu phải chứa ít nhất 1 chữ cái và 1 số, độ dài từ 8 ký tự trở lên"
-      );
-      return;
+    } finally {
+      setIsLoading(false);
     }
-
-    if (password !== rePassword) {
-      Alert.alert("Mật khẩu không khớp", "Vui lòng nhập lại mật khẩu");
-      setError("Mật khẩu không khớp");
-      return;
-    }
-
-    setError("");
-
-    console.log("Create password");
-    navigation.navigate("InfoRegister", { password, phone, tempToken });
-
-    return;
   };
 
   return (
@@ -73,6 +86,15 @@ const PasswordRegisterScreen = ({ navigation, route }) => {
         source={require("../../assets/images/background.png")}
         style={styles.background}
       >
+        <Appbar.Header
+          style={{
+            backgroundColor: "transparent",
+            marginTop: 30,
+          }}
+        >
+          <Appbar.BackAction onPress={() => navigation.goBack()} size={30} />
+          <Appbar.Content title="Quay lại" />
+        </Appbar.Header>
         <View style={styles.container}>
           <Text style={styles.label}>Đăng ký tài khoản</Text>
 
@@ -133,12 +155,16 @@ const PasswordRegisterScreen = ({ navigation, route }) => {
           </View>
 
           <View style={{ gap: 20 }}>
-            <CustomButton
-              title="Tiếp theo"
-              // onPress={handleCreatePassword}
-              onPress={() => navigation.navigate("InfoRegister", { phone })}
-              backgroundColor={"#48A2FC"}
-            />
+            {isLoading ? (
+              <ActivityIndicator size="large" color="#48A2FC" /> // Hiển thị spinner khi loading
+            ) : (
+              <CustomButton
+                title="Tiếp theo"
+                onPress={handleCreatePassword}
+                // onPress={() => navigation.navigate("InfoRegister", { phone })}
+                backgroundColor={"#48A2FC"}
+              />
+            )}
           </View>
 
           <View style={{ marginTop: 30 }}>
@@ -160,9 +186,8 @@ const PasswordRegisterScreen = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: {
     alignItems: "center",
-    // justifyContent: "space-between",
     flex: 1,
-    paddingVertical: 80,
+    paddingTop: 20,
   },
   background: {
     flex: 1,
@@ -173,7 +198,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: 10,
-    // height: 450,
   },
   label: {
     fontWeight: "bold",

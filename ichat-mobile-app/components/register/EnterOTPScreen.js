@@ -12,6 +12,7 @@ import {
 import CustomButton from "../common/CustomButton";
 import RegisterService from "../../services/registerService";
 import { ActivityIndicator } from "react-native";
+import { Appbar } from "react-native-paper";
 
 const EnterOTPScreen = ({ navigation, route }) => {
   const [otp, setOtp] = useState("");
@@ -24,7 +25,7 @@ const EnterOTPScreen = ({ navigation, route }) => {
       return;
     }
 
-    setIsLoading(true); // Hiển thị trạng thái loading
+    setIsLoading(true);
     try {
       const result = await RegisterService.validateOTP(
         phone,
@@ -39,6 +40,8 @@ const EnterOTPScreen = ({ navigation, route }) => {
 
       if (result.status === "ok") {
         const tempToken = await result.data.user.getIdToken();
+        console.log("Temp token: ", tempToken);
+
         navigation.navigate("PasswordRegister", {
           phone,
           tempToken,
@@ -61,6 +64,15 @@ const EnterOTPScreen = ({ navigation, route }) => {
         source={require("../../assets/images/background.png")}
         style={styles.background}
       >
+        <Appbar.Header
+          style={{
+            backgroundColor: "transparent",
+            paddingTop: 50,
+          }}
+        >
+          <Appbar.BackAction onPress={() => navigation.goBack()} size={30} />
+          <Appbar.Content title="Quay lại" />
+        </Appbar.Header>
         <View style={styles.container}>
           <View style={styles.content}>
             <Text style={styles.label}>Nhập mã OTP</Text>
@@ -100,7 +112,7 @@ const styles = StyleSheet.create({
   background: {
     flex: 1,
     resizeMode: "cover",
-    justifyContent: "center",
+    // justifyContent: "center",
   },
   title: {
     fontSize: 70,

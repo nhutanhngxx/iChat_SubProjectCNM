@@ -33,18 +33,17 @@ const RegisterScreen = () => {
       Alert.alert("Thông báo", "Vui lòng điền đầy đủ thông tin!");
       return;
     }
-    if (!isChecked && !isCheckedSocial) {
+    if (!isChecked || !isCheckedSocial) {
       Alert.alert("Thông báo", "Vui lòng đọc và đồng ý với điều khoản!");
       return;
     }
-
     setIsLoading(true);
     try {
       const result = await RegisterService.sendOTP(phone, recaptchaVerifier);
 
       if (result.status === "ok")
         navigation.navigate("EnterOTP", {
-          phone,
+          phone: result.phoneNumber,
           verificationId: result.verificationId,
         });
       else {

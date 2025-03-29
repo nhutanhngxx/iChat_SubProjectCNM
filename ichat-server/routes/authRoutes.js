@@ -23,21 +23,7 @@ router.post("/check-existed-phone", async (req, res) => {
         .json({ status: "error", message: "Số điện thoại không hợp lệ." });
     }
 
-    // Kiểm tra nếu bắt đầu bằng +84 thì chuyển về 0
-    let normalizedPhone = phone;
-    if (phone.startsWith("+84")) {
-      normalizedPhone = "0" + phone.substring(3);
-    }
-
-    // Kiểm tra số điện thoại đã tồn tại
-    const existingUser = await User.findOne({
-      $or: [
-        { phone: normalizedPhone }, // Kiểm tra định dạng gốc (bắt đầu bằng 0)
-        { phone: phone }, // Kiểm tra định dạng +84
-      ],
-    })
-      .select("phone")
-      .lean();
+    const existingUser = await User.findOne({ phone }).select("phone").lean();
     if (existingUser) {
       return res.status(400).json({
         status: "error",
@@ -47,7 +33,7 @@ router.post("/check-existed-phone", async (req, res) => {
       return res.json({
         status: "ok",
         data: {
-          message: "OTP sent successfully",
+          message: "OTP đã được gửi đến số điện thoại của bạn.",
           phone,
         },
       });
@@ -110,34 +96,30 @@ router.post("/register", async (req, res) => {
   if (!tempToken) {
     return res.status(400).json({
       status: "error",
-      message: "Missing verification token. Please verify your phone first.",
+      message: "Token không hợp lệ. Vui lòng thử lại.",
     });
   }
 
   // Xác thực token
-  let decodedToken;
-  try {
-    decodedToken = jwt.verify(tempToken, process.env.JWT_SECRET);
-    console.log("Decode Token: ", decodedToken);
-  } catch (error) {
-    return res.status(401).json({ status: "error", message: "Invalid token" });
-  }
+  // let decodedToken;
+  // try {
+  //   decodedToken = jwt.verify(tempToken, process.env.JWT_SECRET);
+  //   console.log("Decode Token: ", decodedToken);
+  // } catch (error) {
+  //   return res
+  //     .status(401)
+  //     .json({ status: "error", message: "Token không hợp lệ!" });
+  // }
 
-  // Kiểm tra số điện thoại đã xác thực chưa và đã đăng ký chưa
-  if (!decodedToken.verify || decodedToken.phone !== phone) {
-    return res
-      .status(401)
-      .json({ status: "error", message: "Phone not verified" });
-  }
-
-  // Chuyển đổi số điện thoại từ +84xxxxxxxxx -> 0xxxxxxxxx
-  let formattedPhone = phone;
-  if (phone.startsWith("+84")) {
-    formattedPhone = "0" + phone.substring(3);
-  }
+  // // Kiểm tra số điện thoại đã xác thực chưa và đã đăng ký chưa
+  // if (!decodedToken.verify || decodedToken.phone !== phone) {
+  //   return res
+  //     .status(401)
+  //     .json({ status: "error", message: "Số điện thoại chưa được xác thực!" });
+  // }
 
   const newUser = await User.create({
-    phone: formattedPhone,
+    phone,
     password: await bcrypt.hash(password, 10),
     full_name: fullName,
     dob,
