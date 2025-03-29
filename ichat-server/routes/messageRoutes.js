@@ -405,25 +405,127 @@ router.get("/messages", async (req, res) => {
   }
 });
 
-// API lấy danh sách người nhận gần nhất theo ID người gửi
+// // API lấy danh sách người nhận gần nhất theo ID người gửi
+// router.get("/recent-receivers/:senderId", async (req, res) => {
+//   try {
+//     const senderId = req.params.senderId;
+
+//     const recentReceivers = await Messages.aggregate([
+//       {
+//         $match: { sender_id: new mongoose.Types.ObjectId(senderId) }, // Lọc theo sender_id
+//       },
+//       {
+//         $sort: { timestamp: -1 }, // Sắp xếp theo thời gian gần nhất
+//       },
+//       {
+//         $group: {
+//           _id: "$receiver_id", // Nhóm theo người nhận
+//           lastMessage: { $first: "$content" }, // Lấy nội dung tin nhắn gần nhất
+//           timestamp: { $first: "$timestamp" }, // Lấy thời gian tin nhắn gần nhất
+//           status: { $first: "$status" }, // Trạng thái tin nhắn gần nhất
+//           type: { $first: "$type" }, // Loại tin nhắn
+//         },
+//       },
+//       {
+//         $lookup: {
+//           from: "UserInfo", // Bảng UserInfo
+//           localField: "_id",
+//           foreignField: "_id",
+//           as: "receiverInfo",
+//         },
+//       },
+//       {
+//         $unwind: "$receiverInfo", // Giải nén thông tin người nhận
+//       },
+//       {
+//         $lookup: {
+//           from: "Message", // Lấy tin nhắn chưa đọc
+//           let: {
+//             receiverId: "$_id",
+//             senderId: new mongoose.Types.ObjectId(senderId),
+//           },
+//           pipeline: [
+//             {
+//               $match: {
+//                 $expr: {
+//                   $and: [
+//                     { $eq: ["$receiver_id", "$$receiverId"] }, // Chỉ lấy tin nhắn gửi đến người nhận này
+//                     { $eq: ["$sender_id", "$$senderId"] }, // Chỉ từ senderId hiện tại
+//                     { $ne: ["$status", "Viewed"] }, // Chỉ lấy tin nhắn chưa đọc
+//                   ],
+//                 },
+//               },
+//             },
+//             {
+//               $count: "unread", // Đếm số lượng tin nhắn chưa đọc
+//             },
+//           ],
+//           as: "unreadMessages",
+//         },
+//       },
+//       {
+//         $addFields: {
+//           unread: {
+//             $ifNull: [{ $arrayElemAt: ["$unreadMessages.unread", 0] }, 0],
+//           }, // Nếu không có thì mặc định là 0
+//         },
+//       },
+//       {
+//         $project: {
+//           _id: 0,
+//           receiver_id: "$receiverInfo._id",
+//           name: "$receiverInfo.full_name",
+//           avatar_path: "$receiverInfo.avatar_path",
+//           lastMessage: 1,
+//           timestamp: 1,
+//           status: 1,
+//           user_status: "$receiverInfo.status", // Trạng thái online/offline của người nhận
+//           type: 1,
+//           unread: 1, // Số lượng tin nhắn chưa đọc
+//         },
+//       },
+//     ]);
+
+//     res.status(200).json({ success: true, data: recentReceivers });
+//   } catch (error) {
+//     res.status(500).json({ success: false, message: error.message });
+//   }
+// });
+// API lấy danh sách người nhận gần nhất với tin nhắn cuối cùng (từ cả 2 phía)
 router.get("/recent-receivers/:senderId", async (req, res) => {
   try {
     const senderId = req.params.senderId;
 
     const recentReceivers = await Messages.aggregate([
       {
-        $match: { sender_id: new mongoose.Types.ObjectId(senderId) }, // Lọc theo sender_id
+        $match: {
+          $or: [
+            { sender_id: new mongoose.Types.ObjectId(senderId) },
+            { receiver_id: new mongoose.Types.ObjectId(senderId) },
+          ],
+        }, // Lọc tin nhắn mà người dùng là người gửi hoặc người nhận
       },
       {
         $sort: { timestamp: -1 }, // Sắp xếp theo thời gian gần nhất
       },
       {
         $group: {
-          _id: "$receiver_id", // Nhóm theo người nhận
+          _id: {
+            // Nhóm theo cặp người gửi và người nhận
+            $cond: [
+              { $eq: ["$sender_id", new mongoose.Types.ObjectId(senderId)] },
+              // Nếu người dùng hiện tại là người gửi, thì nhóm theo receiver_id
+              "$receiver_id",
+              // Ngược lại nhóm theo sender_id (vì người dùng là receiver)
+              "$sender_id",
+            ],
+          },
           lastMessage: { $first: "$content" }, // Lấy nội dung tin nhắn gần nhất
           timestamp: { $first: "$timestamp" }, // Lấy thời gian tin nhắn gần nhất
           status: { $first: "$status" }, // Trạng thái tin nhắn gần nhất
           type: { $first: "$type" }, // Loại tin nhắn
+          // Thêm trường để xác định ai là người gửi tin nhắn cuối
+          lastMessageSender: { $first: "$sender_id" },
         },
       },
       {
@@ -449,9 +551,14 @@ router.get("/recent-receivers/:senderId", async (req, res) => {
               $match: {
                 $expr: {
                   $and: [
-                    { $eq: ["$receiver_id", "$$receiverId"] }, // Chỉ lấy tin nhắn gửi đến người nhận này
-                    { $eq: ["$sender_id", "$$senderId"] }, // Chỉ từ senderId hiện tại
-                    { $ne: ["$status", "Viewed"] }, // Chỉ lấy tin nhắn chưa đọc
+                    {
+                      $eq: [
+                        "$receiver_id",
+                        new mongoose.Types.ObjectId(senderId),
+                      ],
+                    }, // Chỉ lấy tin nhắn gửi đến người dùng hiện tại
+                    { $eq: ["$sender_id", "$$receiverId"] }, // Từ người đang chat với
+                    { $ne: ["$status", "Viewed"] }, // Chưa đọc
                   ],
                 },
               },
@@ -468,6 +575,10 @@ router.get("/recent-receivers/:senderId", async (req, res) => {
           unread: {
             $ifNull: [{ $arrayElemAt: ["$unreadMessages.unread", 0] }, 0],
           }, // Nếu không có thì mặc định là 0
+          // Thêm trường xác định tin nhắn cuối cùng là từ mình hay người khác
+          isLastMessageFromMe: {
+            $eq: ["$lastMessageSender", new mongoose.Types.ObjectId(senderId)],
+          },
         },
       },
       {
@@ -482,6 +593,7 @@ router.get("/recent-receivers/:senderId", async (req, res) => {
           user_status: "$receiverInfo.status", // Trạng thái online/offline của người nhận
           type: 1,
           unread: 1, // Số lượng tin nhắn chưa đọc
+          isLastMessageFromMe: 1, // Tin nhắn cuối cùng có phải từ mình không
         },
       },
     ]);
