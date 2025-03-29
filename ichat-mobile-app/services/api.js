@@ -1,5 +1,6 @@
 import axios from "axios";
-const API_iChat = "http://192.168.1.6:5001";
+// const API_iChat = "http://192.168.1.6:5001";
+const API_iChat = `http://${window.location.hostname}:5001`;
 
 const api = axios.create({
   baseURL: API_iChat,

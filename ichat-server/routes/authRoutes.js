@@ -10,8 +10,8 @@ textflow.useKey(process.env.TEXTFLOW_API_KEY);
 const User = require("../models/UserDetails");
 const OTP = require("../models/OTP");
 
-// Gửi mã OTP theo số điện thoại
-router.post("/send-otp", async (req, res) => {
+// Kiểm tra số điện thoại đã tồn tại hay chưa
+router.post("/check-existed-phone", async (req, res) => {
   try {
     const { phone } = req.body;
     const regex = /^(\+84)[3-9][0-9]{8}$/;
@@ -23,39 +23,32 @@ router.post("/send-otp", async (req, res) => {
         .json({ status: "error", message: "Số điện thoại không hợp lệ." });
     }
 
+    // Kiểm tra nếu bắt đầu bằng +84 thì chuyển về 0
+    let normalizedPhone = phone;
+    if (phone.startsWith("+84")) {
+      normalizedPhone = "0" + phone.substring(3);
+    }
+
     // Kiểm tra số điện thoại đã tồn tại
-    const existingUser = await User.findOne({ phone }).select("phone").lean();
+    const existingUser = await User.findOne({
+      $or: [
+        { phone: normalizedPhone }, // Kiểm tra định dạng gốc (bắt đầu bằng 0)
+        { phone: phone }, // Kiểm tra định dạng +84
+      ],
+    })
+      .select("phone")
+      .lean();
     if (existingUser) {
       return res.status(400).json({
         status: "error",
         message: "Số điện thoại này đã được đăng ký.",
       });
-    }
-
-    // Gửi OTP qua SMS
-    const verificationOptions = {
-      service_name: "iChat",
-      seconds: 600,
-    };
-    const result = await textflow.sendVerificationSMS(
-      phone,
-      verificationOptions
-    );
-
-    if (result.ok) {
-      await OTP.create({
-        phone,
-        otp: result.data.verification_code,
-        expiresAt: result.data.expires,
-      });
-
-      res.json({
+    } else {
+      return res.json({
         status: "ok",
         data: {
           message: "OTP sent successfully",
           phone,
-          otp: result.data.verification_code,
-          expire: result.data.expires,
         },
       });
     }
@@ -83,10 +76,6 @@ router.post("/verify-otp", async (req, res) => {
         status: "error",
         message: "Mã OTP không đúng hoặc đã hết hạn",
       });
-    // let result = await textflow.verifyCode(phone, otp);
-    // if (!result.ok && !result.valid) {
-    //   return res.status(401).json({ status: "error", message: "Invalid OTP" });
-    // }
 
     // Tạo token
     const tempToken = jwt.sign(

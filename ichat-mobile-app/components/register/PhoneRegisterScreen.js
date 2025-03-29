@@ -40,7 +40,6 @@ const RegisterScreen = () => {
 
     setIsLoading(true);
     try {
-      phone = "+84" + phone;
       const result = await RegisterService.sendOTP(phone, recaptchaVerifier);
 
       if (result.status === "ok")

@@ -12,6 +12,16 @@ const registerService = {
         };
       }
       console.log("phone: ", phone);
+      phone = "+84" + phone.replace(/^(0|84)/, "");
+
+      // Check if phone number is existed
+      const response = await api.post("/auth/check-existed-phone", { phone });
+      if (response.data.status !== "ok") {
+        return {
+          status: "error",
+          message: response.data.message,
+        };
+      }
 
       // Use PhoneAuthProvider with recaptcha verifier
       const phoneProvider = new PhoneAuthProvider(auth);
