@@ -22,7 +22,7 @@ const ChatWindow = ({ user }) => {
     const [userListFromState, setUserListFromState] = useState([]);
     const [selectedUser, setSelectedUser] = useState(null);
 
-    const senderId = user.id || "67c0acf193390020eefc9ff2"; // ID mặc định
+    const senderId = user.id || ""; // ID mặc định
     useEffect(() => {
         dispatch(fetchMessages(senderId)); // Fetch danh sách người nhận
     }, [dispatch, senderId]);
@@ -48,6 +48,35 @@ const ChatWindow = ({ user }) => {
     }, [messages]);
     // // Lấy tin nhắn giữa sender và receiver
     // Khi chọn một user, lọc tin nhắn giữa senderId và receiverId
+    // useEffect(() => {
+    //     if (messages && messages.length > 0) {
+    //       const updatedUsers = messages.map((msg) => ({
+    //         id: msg.receiver_id,
+    //         name: msg.name,
+    //         lastMessage: msg.lastMessage,
+    //         timestamp: msg.timestamp,
+    //         unread: msg.unread || 0,
+    //         user_status: msg.user_status || "Offline",
+    //         avatar_path: msg.avatar_path || "https://default-avatar.com/avatar.jpg",
+    //       }));
+      
+    //       setUserListFromState((prevUsers) => {
+    //         const mergedUsers = [...prevUsers];
+      
+    //         updatedUsers.forEach((newUser) => {
+    //           const index = mergedUsers.findIndex((u) => u.id === newUser.id);
+    //           if (index === -1) {
+    //             mergedUsers.unshift(newUser);
+    //           } else {
+    //             mergedUsers[index] = newUser; // Cập nhật tin nhắn mới nhất
+    //           }
+    //         });
+      
+    //         return mergedUsers;
+    //       });
+    //     }
+    //   }, [messages]);
+
     useEffect(() => {
         if (selectedUser) {
             dispatch(fetchChatMessages({ senderId, receiverId: selectedUser.id })); // Fetch tin nhắn giữa sender và receiver

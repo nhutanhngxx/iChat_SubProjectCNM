@@ -7,9 +7,12 @@ import Login from "./components/Login";
 import HomeWeb from "./components/HomeWeb";
 import Test from "./components/HomeWeb/ChatWindow/test";
 import { ThemeProvider } from "./components/HomeWeb/DropDownList/SettingsModal/TabSetting/ThemeContext";
+import {PersistGate} from "redux-persist/integration/react";
+import {persistor} from "./redux/store";
 function App() {
   return (
     <Provider store={store}>
+      <PersistGate loading={null} persistor={persistor}>
       <ThemeProvider>
         <BrowserRouter>
           <Routes>
@@ -19,6 +22,7 @@ function App() {
           </Routes>
         </BrowserRouter>
       </ThemeProvider>
+      </PersistGate>
     </Provider>
   );
 }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, use } from "react";
 import {
   Layout,
   Avatar,
@@ -23,7 +23,7 @@ import {
   CloseOutlined,
 } from "@ant-design/icons";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchChatMessages } from "../../../redux/slices/messagesSlice";
+import { fetchChatMessages,sendMessage,fetchMessages,updateMessages } from "../../../redux/slices/messagesSlice";
 import Message from "./Message";
 import MessageInput from "./MessageInput";
 import ConversationDetails from "./ConversationDetails";
@@ -650,28 +650,59 @@ const MessageArea = ({ selectedChat, user }) => {
   }, [dispatch, user?.id, selectedChat?.receiver_id]);
   console.log("Chat Messages in MessageArea", chatMessages);
 
-  const handleSendMessage = (text = "") => {
-    if (
-      (text.trim() || messages.some((m) => m.image || m.file)) &&
-      selectedChat
-    ) {
+  // const handleSendMessage = (text = "") => {
+
+  //   if (
+  //     (text.trim() || messages.some((m) => m.image || m.file)) &&
+  //     selectedChat
+  //   ) {
+  //     const newMessage = {
+  //       sender_id: user?.id, // ID người gửi
+  //       receiver_id: selectedChat?.id, // ID người nhận
+  //       content: text || "",
+  //       type: "text", // Loại tin nhắn (text, image, file)
+  //       chat_type: "private",
+  //       // timestamp: new Date().toLocaleTimeString([], {
+  //       //   hour: "2-digit",
+  //       //   minute: "2-digit",
+  //       // }),
+  //       // type: "sent",
+  //       // image: messages.some((m) => m.image) ? null : undefined,
+  //       // file: messages.some((m) => m.file) ? null : undefined,
+  //     };
+  //     setMessages([...messages, newMessage]);
+  //     setInputMessage("");
+  //   }
+  // };
+  const handleSendMessage =async (text = "", image = null, file = null) => {
+    if ((text.trim() || image || file) && selectedChat) {
       const newMessage = {
-        id: messages.length + 1,
-        text: text || "",
-        sender: "You",
-        timestamp: new Date().toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-        type: "sent",
-        image: messages.some((m) => m.image) ? null : undefined,
-        file: messages.some((m) => m.file) ? null : undefined,
+        sender_id: user?.id, // ID người gửi
+        receiver_id: selectedChat?.id, // ID người nhận
+        content: text || "",
+        type: "text", // Loại tin nhắn (text, image, file)
+        chat_type: "private",
       };
-      setMessages([...messages, newMessage]);
-      setInputMessage("");
+
+     try {
+      // await dispatch(sendMessage(newMessage)).unwrap(); // Chờ gửi thành công
+      // await dispatch(fetchMessages(user?.id)); // Cập nhật danh sách người nhận
+      // dispatch(fetchChatMessages({ senderId: user.id, receiverId: selectedChat.receiver_id })); // Cập nhật tin nhắn giữa sender và receiver'
+      const response = await dispatch(sendMessage(newMessage)).unwrap(); // Chờ gửi thành công
+
+      const sentMessage = response.data; // Tin nhắn vừa gửi
+      
+      // Cập nhật danh sách tin nhắn chatMessages ngay lập tức
+      dispatch(updateMessages(sentMessage));
+
+      // Cập nhật danh sách người nhận gần nhất
+      dispatch(fetchMessages(user?.id));
+     } catch (error) {
+      console.log("Error sending message:", error);
+      
+     }
     }
   };
-
   const handleImageUpload = (imageUrl) => {
     if (selectedChat) {
       const newMessage = {
