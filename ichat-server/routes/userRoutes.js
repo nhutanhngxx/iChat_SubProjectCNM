@@ -100,6 +100,7 @@ router.post("/login", async (req, res) => {
         sameSite: "Strict",
         maxAge: 24 * 60 * 60 * 1000, // 1 ngày
       });
+      await User.findByIdAndUpdate(user._id, { status: "Online" });
       return res.send({
         status: "ok",
         accessToken,
@@ -120,6 +121,26 @@ router.post("/login", async (req, res) => {
         .status(400)
         .json({ status: "error", message: "Invalid password" });
     }
+  } catch (error) {
+    res.status(500).json({ status: "error", message: error.message });
+  }
+});
+
+// Đăng xuất
+router.post("/logout", async (req, res) => {
+  try {
+    const { userId } = req.body;
+
+    if (!userId) {
+      return res
+        .status(400)
+        .json({ status: "error", message: "Missing userId" });
+    }
+
+    await User.findByIdAndUpdate(userId, { status: "Offline" });
+
+    res.clearCookie("refreshToken");
+    res.json({ status: "ok", message: "User logged out successfully" });
   } catch (error) {
     res.status(500).json({ status: "error", message: error.message });
   }
@@ -189,6 +210,22 @@ router.post("/userdata", async (req, res) => {
     res
       .status(401)
       .json({ status: "error", message: "Invalid or expired token" });
+  }
+});
+
+// Lấy thông tin User từ ID
+router.get("/users/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    let user = await User.findById(id);
+    if (!user) {
+      return res
+        .status(404)
+        .json({ status: "error", message: "User not found" });
+    }
+    res.json({ status: "ok", user });
+  } catch (error) {
+    res.status(500).json({ status: "error", message: error.message });
   }
 });
 
