@@ -85,7 +85,13 @@ const HeaderMessages = () => {
             </TouchableOpacity>
 
             {/* Tùy chọn: Đăng xuất */}
-            <TouchableOpacity style={styles.option} onPress={handleLogout}>
+            <TouchableOpacity
+              style={styles.option}
+              onPress={() => {
+                handleLogout(); // Đăng xuất
+                setModalVisible(false); // Tắt modal
+              }}
+            >
               <Image
                 source={require("../../assets/icons/cancel.png")}
                 style={styles.optionIcon}
