@@ -36,7 +36,10 @@ const HeaderMessages = () => {
   return (
     <View style={styles.headerContainer}>
       {/* Nút Setting mở modal */}
-      <TouchableOpacity onPress={() => setModalVisible(true)}>
+      <TouchableOpacity
+        // style={{ position: "absolute", paddingTop: 60, paddingRight: 15 }}
+        onPress={() => setModalVisible(true)}
+      >
         <Image
           source={require("../../assets/icons/setting.png")}
           style={styles.icon}
@@ -63,26 +66,32 @@ const HeaderMessages = () => {
                 source={require("../../assets/icons/me.png")}
                 style={styles.optionIcon}
               />
-              <Text style={styles.optionText}>Thông tin tài khoản</Text>
+              <Text style={styles.optionText}>Thông tin Tài khoản</Text>
             </TouchableOpacity>
 
-            {/* Tùy chọn: Cài đặt quyền riêng tư */}
+            {/* Tùy chọn: Tài khoản & Bảo mật */}
             <TouchableOpacity
               style={styles.option}
               onPress={() => {
                 setModalVisible(false);
-                navigation.navigate("ProfileInformation");
+                navigation.navigate("AccountSecurity");
               }}
             >
               <Image
                 source={require("../../assets/icons/setting.png")}
                 style={styles.optionIcon}
               />
-              <Text style={styles.optionText}>Cài đặt & riêng tư</Text>
+              <Text style={styles.optionText}>Tài khoản & Bảo mật</Text>
             </TouchableOpacity>
 
             {/* Tùy chọn: Đăng xuất */}
-            <TouchableOpacity style={styles.option} onPress={handleLogout}>
+            <TouchableOpacity
+              style={styles.option}
+              onPress={() => {
+                handleLogout(); // Đăng xuất
+                setModalVisible(false); // Tắt modal
+              }}
+            >
               <Image
                 source={require("../../assets/icons/cancel.png")}
                 style={styles.optionIcon}

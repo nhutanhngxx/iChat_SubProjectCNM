@@ -236,15 +236,13 @@ const SearchScreen = () => {
           alignItems: "center",
           width: "100%",
           height: 50,
-          backgroundColor: "#0AA2F8",
+          // backgroundColor: "#0AA2F8",
           paddingHorizontal: 10,
-          marginBottom: 10,
+          // backgroundColor: "black",
         }}
       >
         <TouchableOpacity
           style={{
-            height: "100%",
-            width: 30,
             flexDirection: "row",
             alignItems: "center",
           }}
@@ -276,7 +274,7 @@ const SearchScreen = () => {
               flex: 1,
               fontSize: 15,
               paddingHorizontal: 10,
-              height: 40,
+              height: 35,
               paddingLeft: 10,
             }}
             placeholder="Tìm kiếm"

@@ -12,7 +12,11 @@ const ContactTab = () => {
 
   return (
     <View style={styles.container}>
-      <HeaderContactTab />
+      <View
+        style={{ paddingTop: 40, backgroundColor: "rgba(47, 128, 237, 0.3)" }}
+      >
+        <HeaderContactTab />
+      </View>
       <Tab
         value={index}
         onChange={setIndex}
@@ -56,7 +60,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "white",
-    paddingTop: 40,
   },
 });
 

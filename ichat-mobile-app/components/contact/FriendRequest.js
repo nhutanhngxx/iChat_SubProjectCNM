@@ -11,6 +11,9 @@ import {
   StyleSheet,
 } from "react-native";
 import { IconButton } from "react-native-paper";
+import { StatusBar } from "expo-status-bar";
+
+import settingIcon from "../../assets/icons/setting.png";
 
 const friendRequest = [
   {
@@ -187,36 +190,41 @@ const FriendRequest = () => {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
+    <View style={{ flex: 1, paddingTop: 40, backgroundColor: "white" }}>
+      <StatusBar style="dark" />
       {/* Header */}
-      <SafeAreaView
+      <View
         style={{
           flexDirection: "row",
           alignItems: "center",
-          gap: 10,
           height: 50,
           backgroundColor: "#fff",
-          paddingHorizontal: 10,
+          justifyContent: "space-between",
+          paddingRight: 10,
         }}
       >
-        <TouchableOpacity onPress={onClose}>
-          <Image
-            source={require("../../assets/icons/go-back.png")}
-            style={{ width: 25, height: 25 }}
-          />
-        </TouchableOpacity>
-        <View>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
+          <TouchableOpacity onPress={onClose}>
+            <Image
+              source={require("../../assets/icons/go-back.png")}
+              style={{ width: 25, height: 25 }}
+            />
+          </TouchableOpacity>
+
           <Text style={{ fontWeight: "bold", fontSize: 20 }}>
             Lời mời kết bạn
           </Text>
         </View>
-        <IconButton
+        <TouchableOpacity onPress={() => handleOpenSettingRequest()}>
+          <Image source={settingIcon} style={{ height: 25, width: 25 }} />
+        </TouchableOpacity>
+        {/* <IconButton
           style={{ position: "absolute", right: 0 }}
           icon={"cog-outline"}
           size={20}
           onPress={() => handleOpenSettingRequest()}
-        />
-      </SafeAreaView>
+        /> */}
+      </View>
 
       {/* List Friend Request */}
       <SafeAreaView style={{ flex: 1, backgroundColor: "white" }}>
@@ -256,7 +264,7 @@ const FriendRequest = () => {
           </TabView.Item>
         </TabView>
       </SafeAreaView>
-    </SafeAreaView>
+    </View>
   );
 };
 

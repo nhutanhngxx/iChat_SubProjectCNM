@@ -20,8 +20,12 @@ import {
   Keyboard,
   TouchableWithoutFeedback,
   Pressable,
+  Alert,
 } from "react-native";
 import { NetworkInfo } from "react-native-network-info";
+import * as ImagePicker from "expo-image-picker";
+import * as FileSystem from "expo-file-system";
+import { StatusBar } from "expo-status-bar";
 
 import { useNavigation } from "@react-navigation/native";
 import { UserContext } from "../../context/UserContext";
@@ -29,26 +33,50 @@ import axios from "axios";
 import messageService from "../../services/messageService";
 import groupService from "../../services/groupService";
 
+import MessageInputBar from "../../components/messages/MessageInputBar";
+
 const Chatting = ({ route }) => {
   const navigation = useNavigation();
   const { user } = useContext(UserContext);
   const { chat } = route.params || {};
   const flatListRef = useRef(null);
   const [inputMessage, setInputMessage] = useState("");
+  const [selectedImage, setSelectedImage] = useState(null);
   const [messages, setMessages] = useState([]);
   const [replyMessage, setReplyMessage] = useState(null);
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [groupMembers, setGroupMembers] = useState([]);
 
-  const [ipAddress, setIpAddress] = useState("");
-  useEffect(() => {
-    NetworkInfo.getIPAddress().then((ip) => {
-      setIpAddress(ip);
-    });
-  }, []);
-
   const API_iChat = "http://172.20.65.7:5001";
+
+  // Hàm chọn ảnh từ thư viện
+  const pickImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert(
+        "Quyền bị từ chối",
+        "Vui lòng cấp quyền truy cập thư viện ảnh trong cài đặt."
+      );
+      return;
+    }
+
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 0.5,
+      });
+
+      if (!result.canceled && result.assets.length > 0) {
+        setSelectedImage(result.assets[0].uri);
+      }
+    } catch (err) {
+      console.error("Lỗi khi chọn ảnh:", err);
+      Alert.alert("Lỗi", "Đã xảy ra lỗi khi chọn ảnh.");
+    }
+  };
 
   // Hàm lấy tên thành viên từ ID để hiển thị trên tin nhắn nhóm
   const getMemberName = useCallback(
@@ -161,38 +189,74 @@ const Chatting = ({ route }) => {
   // }, [messages]);
 
   const sendMessage = async () => {
-    if (inputMessage.trim()) {
-      try {
+    try {
+      // Kiểm tra nếu là tin nhắn văn bản
+      if (inputMessage.trim()) {
         const newMessage = {
           sender_id: user.id,
           receiver_id: chat.id,
           content: inputMessage,
           type: "text",
           chat_type: chat?.chatType === "group" ? "group" : "private",
-          reply_to: replyMessage ? replyMessage._id : null,
         };
 
         const response = await axios.post(
-          `${API_iChat}/messages/reply`,
+          `${API_iChat}/send-message`,
           newMessage
         );
+        if (response.status === 201) {
+          setMessages((prevMessages) => [
+            ...prevMessages,
+            response.data.data, // Thêm tin nhắn vào danh sách
+          ]);
+        } else {
+          throw new Error("Failed to send text message");
+        }
 
-        setMessages((prevMessages) => [
-          ...prevMessages,
-          response.data.newMessage,
-        ]);
-
-        // Xóa input và tin nhắn đang reply
+        // Reset input message
         setInputMessage("");
-        setReplyMessage(null);
-      } catch (error) {
-        console.error("Lỗi khi gửi tin nhắn:", error);
       }
+
+      // Kiểm tra nếu có ảnh gửi kèm
+      if (selectedImage) {
+        const fileUri = selectedImage;
+        const fileInfo = await FileSystem.getInfoAsync(fileUri);
+        const formData = new FormData();
+        formData.append("image", {
+          uri: fileUri,
+          name: `photo-${Date.now()}.jpg`,
+          type: "image/jpeg",
+        });
+
+        formData.append("sender_id", user.id);
+        formData.append("receiver_id", chat.id);
+        formData.append("type", "image");
+        formData.append(
+          "chat_type",
+          chat?.chatType === "group" ? "group" : "private"
+        );
+
+        const response = await axios.post(
+          `${API_iChat}/send-message`,
+          formData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
+        console.log("Image URL:", response.data.data.content);
+        setSelectedImage(null);
+      }
+    } catch (error) {
+      console.error("Lỗi khi gửi tin nhắn:", error);
+      Alert.alert("Lỗi", "Không thể gửi tin nhắn hoặc tệp.");
     }
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
+      <StatusBar style="dark" />
       {/* Header của Chatting */}
       <View style={styles.chatHeader}>
         <View style={{ flexDirection: "row", alignItems: "center" }}>
@@ -299,14 +363,35 @@ const Chatting = ({ route }) => {
                     </Text>
                   </View>
                 )}
-                <Text
-                  style={[
-                    styles.messageText,
-                    isRecalled && styles.recalledText,
-                  ]}
-                >
-                  {item.content}
-                </Text>
+                {item.type === "image" ? (
+                  <TouchableOpacity
+                    onPress={() =>
+                      navigation.navigate("ViewImageChat", {
+                        imageUrl: item.content,
+                      })
+                    }
+                  >
+                    <Image
+                      source={{ uri: item.content }}
+                      style={{
+                        width: 200,
+                        height: 200,
+                        borderRadius: 10,
+                        marginTop: 5,
+                      }}
+                      resizeMode="cover"
+                    />
+                  </TouchableOpacity>
+                ) : (
+                  <Text
+                    style={[
+                      styles.messageText,
+                      isRecalled && styles.recalledText,
+                    ]}
+                  >
+                    {item.content}
+                  </Text>
+                )}
                 {/* Hiển thị thời gian hh:mm gửi tin nhắn */}
                 {isLastMessage && (
                   <Text style={styles.timestamp}>
@@ -499,7 +584,7 @@ const Chatting = ({ route }) => {
         )}
 
         {/* Thanh soạn/gửi tin nhắn */}
-        <View style={styles.inputContainer}>
+        {/* <View style={styles.inputContainer}>
           <Image
             source={require("../../assets/icons/gif.png")}
             style={{ width: 30, height: 30 }}
@@ -510,6 +595,7 @@ const Chatting = ({ route }) => {
             onChangeText={setInputMessage}
             placeholder="Tin nhắn"
           />
+
           {!inputMessage.trim() ? (
             <TouchableOpacity>
               <Image
@@ -519,7 +605,7 @@ const Chatting = ({ route }) => {
             </TouchableOpacity>
           ) : null}
           {!inputMessage.trim() ? (
-            <TouchableOpacity>
+            <TouchableOpacity onPress={pickImage}>
               <Image
                 source={require("../../assets/icons/image.png")}
                 style={{ width: 25, height: 25 }}
@@ -534,9 +620,32 @@ const Chatting = ({ route }) => {
               />
             </TouchableOpacity>
           ) : null}
-        </View>
+        </View> */}
+        {/* Hiển thị ảnh đã chọn trước khi gửi */}
+        {/* {selectedImage && (
+          <View style={{ marginLeft: 10 }}>
+            <Image
+              source={{ uri: selectedImage }}
+              style={{ width: 50, height: 50, borderRadius: 5 }}
+            />
+            <TouchableOpacity onPress={sendMessage}>
+              <Image
+                source={require("../../assets/icons/send.png")}
+                style={{ width: 25, height: 25, marginTop: 5 }}
+              />
+            </TouchableOpacity>
+          </View>
+        )} */}
+        <MessageInputBar
+          inputMessage={inputMessage}
+          setInputMessage={setInputMessage}
+          selectedImage={selectedImage}
+          setSelectedImage={setSelectedImage}
+          sendMessage={sendMessage}
+          pickImage={pickImage}
+        />
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -545,6 +654,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "white",
     paddingTop: 40,
+    paddingBottom: 10,
   },
   chatHeader: {
     flexDirection: "row",

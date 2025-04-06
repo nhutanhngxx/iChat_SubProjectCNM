@@ -64,7 +64,6 @@ const GroupTab = () => {
   return (
     <View style={styles.container}>
       <ModalCreateGroup isVisible={isShowModal} onClose={handleCloseModal} />
-
       <TouchableOpacity
         style={styles.addNewGroupButton}
         onPress={() => handleOpenModal()}
@@ -73,14 +72,18 @@ const GroupTab = () => {
           source={require("../../assets/icons/add-group.png")}
           style={{ width: 20, height: 20, marginTop: 2 }}
         />
-        <Text>Tạo nhóm</Text>
+        <Text style={{ fontSize: 16, color: "#2F80ED" }}>Tạo nhóm mới</Text>
       </TouchableOpacity>
 
       {/* Header */}
       <View style={styles.header}>
-        <Text style={{ fontSize: 13 }}>
+        <Text style={{ fontSize: 16 }}>
           Nhóm đã tham gia{" "}
-          <Text style={{ fontWeight: "bold" }}>({groupList.length})</Text>
+          <Text
+            style={{ fontWeight: "bold", color: "rgba(47, 128, 237, 0.5)" }}
+          >
+            ({groupList.length})
+          </Text>
         </Text>
 
         <TouchableOpacity
@@ -91,9 +94,7 @@ const GroupTab = () => {
             source={require("../../assets/icons/sort.png")}
             style={{ width: 15, height: 15, marginTop: 2 }}
           />
-          <Text style={{ fontSize: 12, fontWeight: "600" }}>
-            Hoạt động gần đây
-          </Text>
+          <Text style={{ fontSize: 14 }}>Hoạt động gần đây</Text>
         </TouchableOpacity>
       </View>
 
@@ -112,13 +113,13 @@ const GroupTab = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { paddingHorizontal: 20, paddingTop: 10 },
+  container: { paddingHorizontal: 20 },
   addNewGroupButton: {
     display: "flex",
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
-    marginBottom: 10,
+    paddingVertical: 10,
   },
   header: {
     display: "flex",

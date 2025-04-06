@@ -127,8 +127,12 @@ const MessagesTab = () => {
 
   return (
     <View style={styles.container}>
-      <StatusBar hidden={false} style="dark" />
-      <HeaderMessages />
+      <StatusBar hidden={false} style="light" />
+      <View
+        style={{ paddingTop: 40, backgroundColor: "rgba(47, 128, 237, 0.3)" }}
+      >
+        <HeaderMessages />
+      </View>
       <View style={{ flexDirection: "row", alignItems: "center" }}>
         <View style={{ width: "50%" }}>
           <Tab
@@ -461,7 +465,7 @@ const MessagesTab = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "white", paddingTop: 40 },
+  container: { flex: 1, backgroundColor: "white" },
   overlay: {
     flex: 1,
     justifyContent: "flex-end",

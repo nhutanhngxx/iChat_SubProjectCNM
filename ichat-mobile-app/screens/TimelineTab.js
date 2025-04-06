@@ -232,21 +232,23 @@ const TimelineTab = () => {
   return (
     <View style={styles.container}>
       <HeaderTimeline />
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <FlatList
-          data={posts}
-          renderItem={renderPost}
-          keyExtractor={(item) => item.id.toString()}
-          ListHeaderComponent={renderHeader}
-          ListFooterComponent={() => (
-            <View style={styles.footer}>
-              <Text style={styles.footerText}>
-                Bạn đã xem hết bài đăng hiện tại
-              </Text>
-            </View>
-          )}
-        />
-      </TouchableWithoutFeedback>
+      <View style={{ flex: 1, backgroundColor: "white" }}>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <FlatList
+            data={posts}
+            renderItem={renderPost}
+            keyExtractor={(item) => item.id.toString()}
+            ListHeaderComponent={renderHeader}
+            ListFooterComponent={() => (
+              <View style={styles.footer}>
+                <Text style={styles.footerText}>
+                  Bạn đã xem hết bài đăng hiện tại
+                </Text>
+              </View>
+            )}
+          />
+        </TouchableWithoutFeedback>
+      </View>
     </View>
   );
 };
@@ -254,8 +256,8 @@ const TimelineTab = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "white",
-    paddingTop: 30,
+    backgroundColor: "rgba(47, 128, 237, 0.3)",
+    paddingTop: 40,
   },
   createPostContainer: {
     padding: 10,
