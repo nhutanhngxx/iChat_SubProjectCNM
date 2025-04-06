@@ -19,6 +19,7 @@
     "@rneui/themed": "^4.0.0-rc.8",
     "axios": "^1.8.4",
     "dayjs": "^1.11.13",
+    "dotenv": "^16.4.7",
     "expo": "~52.0.40",
     "expo-barcode-scanner": "^13.0.1",
     "expo-camera": "~16.0.18",
@@ -46,7 +47,8 @@
     "react-native-tab-view": "^4.0.6",
     "react-native-vector-icons": "^10.2.0",
     "react-native-web": "~0.19.13",
-    "react-native-webview": "13.12.5"
+    "react-native-webview": "13.12.5",
+    "expo-image-picker": "~16.0.6"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0"

@@ -15,7 +15,7 @@ import axios from "axios";
 
 const HeaderMessages = () => {
   const { user, setUser } = useContext(UserContext);
-  const API_iChat = "http://192.168.1.6:5001";
+  const API_iChat = "http://172.21.41.114:5001";
   const navigation = useNavigation();
   const [modalVisible, setModalVisible] = useState(false);
 
@@ -36,7 +36,10 @@ const HeaderMessages = () => {
   return (
     <View style={styles.headerContainer}>
       {/* Nút Setting mở modal */}
-      <TouchableOpacity onPress={() => setModalVisible(true)}>
+      <TouchableOpacity
+        // style={{ position: "absolute", paddingTop: 60, paddingRight: 15 }}
+        onPress={() => setModalVisible(true)}
+      >
         <Image
           source={require("../../assets/icons/setting.png")}
           style={styles.icon}

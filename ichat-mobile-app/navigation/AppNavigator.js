@@ -19,6 +19,7 @@ import ViewImagePost from "../components/view/ViewImagePost";
 import Option from "../components/messages/Options";
 import ChangeInformation from "../components/profile/ChangeInformation";
 import AddFriend from "../components/contact/AddFriend";
+import FriendRequest from "../components/contact/FriendRequest";
 
 const Stack = createStackNavigator();
 
@@ -39,6 +40,7 @@ export default function AppNavigator() {
           <Stack.Screen name="ViewImagePost" component={ViewImagePost} />
           <Stack.Screen name="Option" component={Option} />
           <Stack.Screen name="AddFriend" component={AddFriend} />
+          <Stack.Screen name="FriendRequest" component={FriendRequest} />
           <Stack.Screen
             name="ChangeInformation"
             component={ChangeInformation}

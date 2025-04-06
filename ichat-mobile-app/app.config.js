@@ -25,6 +25,7 @@ export default {
         foregroundImage: "./assets/icons/new-logo.png",
         backgroundColor: "#ffffff",
       },
+      package: "com.anonymous.snacka8e509324793425a859be124996f0590",
     },
     web: {
       favicon: "./assets/icons/new-logo.png",
@@ -42,7 +43,15 @@ export default {
     experimental: {
       bridgeless: false,
     },
-    plugins: ["expo-barcode-scanner"],
+    plugins: [
+      [
+        "expo-image-picker",
+        {
+          photosPermission: "Ứng dụng cần truy cập thư viện ảnh để chọn ảnh.",
+        },
+      ],
+      "expo-barcode-scanner",
+    ],
     extra: {
       firebaseApiKey: process.env.FIREBASE_API_KEY,
       firebaseAuthDomain: process.env.FIREBASE_AUTH_DOMAIN,

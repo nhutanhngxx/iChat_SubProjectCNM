@@ -11,25 +11,43 @@ const HeaderContactTab = () => {
         flexDirection: "row",
         alignItems: "center",
         paddingHorizontal: 10,
+        width: "100%",
       }}
     >
-      <View style={{ flexDirection: "row", gap: 10, alignItems: "center" }}>
+      <View
+        style={{
+          flexDirection: "row",
+          gap: 15,
+          alignItems: "center",
+          height: 50,
+          flex: 1,
+        }}
+      >
         <Image
           source={require("../../assets/icons/search.png")}
-          style={{ width: 20, height: 20 }}
+          style={{ width: 22, height: 22 }}
         />
         <TextInput
+          onPress={() => navigation.navigate("SearchScreen")}
           style={{
-            fontSize: 16,
-            width: "100",
+            fontSize: 15,
             color: "#2F80ED",
+            flex: 1,
+            height: 35,
+            marginRight: 15,
+            paddingLeft: 10,
+            borderRadius: 5,
+            backgroundColor: "white",
+            textAlignVertical: "center",
           }}
           placeholder="Tìm kiếm"
+          placeholderTextColor={"gray"}
+          editable={false}
         ></TextInput>
       </View>
 
       <TouchableOpacity
-        style={{ flexDirection: "row", gap: 10 }}
+        style={{ flexDirection: "row" }}
         onPress={() => navigation.navigate("AddFriend")}
       >
         <Image

@@ -41,10 +41,6 @@ const FriendTab = () => {
   const navigation = useNavigation();
   const { width } = Dimensions.get("window");
 
-  //   const handleOpenChatting = (chat) => {
-  //     navigation.navigate("Contact", { chat });
-  //   };
-
   const handleOpenChatting = (chat) => {
     navigation.navigate("Chatting", { chat });
   };
@@ -81,7 +77,7 @@ const FriendTab = () => {
           source={require("../../assets/icons/request.png")}
           style={{ width: 20, height: 20, marginTop: 2 }}
         />
-        <Text>
+        <Text style={{ fontSize: 16 }}>
           Yêu cầu kết bạn
           <Text style={{ fontWeight: "bold" }}> ({addRequest})</Text>
         </Text>
@@ -116,13 +112,13 @@ const FriendTab = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { paddingHorizontal: 20, paddingTop: 10 },
+  container: { paddingHorizontal: 20 },
   addRequest: {
     display: "flex",
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
-    marginBottom: 5,
+    paddingVertical: 10,
   },
   activeButton: {
     marginVertical: 10,

@@ -12,6 +12,7 @@ import {
 import HeaderPersonalProfile from "../components/header/HeaderPersonalProfile";
 import { UserContext } from "../context/UserContext";
 import * as ImageManipulator from "expo-image-manipulator"; // Thư viện nén ảnh
+import { StatusBar } from "expo-status-bar";
 
 const MeTab = () => {
   const { user } = useContext(UserContext);
@@ -36,9 +37,9 @@ const MeTab = () => {
   }, [userData]);
   return (
     <View style={styles.container}>
+      <StatusBar style="dark" />
       <HeaderPersonalProfile />
       <View style={styles.headerBackground} />
-
       {/* Tài khoản */}
       <View style={styles.profileContainer}>
         {userData ? (

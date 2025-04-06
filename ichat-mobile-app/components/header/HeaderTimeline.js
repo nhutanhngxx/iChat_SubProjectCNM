@@ -1,10 +1,14 @@
 import React from "react";
-import { Text, View, Image, TextInput } from "react-native";
+import { Text, View, Image, TextInput, TouchableOpacity } from "react-native";
+import { useNavigation } from "@react-navigation/native";
 
 const HeaderTimeline = () => {
+  const navigation = useNavigation();
+
   return (
     <View
       style={{
+        width: "100%",
         height: 50,
         justifyContent: "space-between",
         flexDirection: "row",
@@ -12,21 +16,43 @@ const HeaderTimeline = () => {
         paddingHorizontal: 10,
       }}
     >
-      <View style={{ flexDirection: "row", gap: 10, alignItems: "center" }}>
+      <TouchableOpacity
+        style={{
+          flexDirection: "row",
+          gap: 15,
+          alignItems: "center",
+          height: 50,
+          flex: 1,
+        }}
+        onPress={() => navigation.navigate("SearchScreen")}
+      >
         <Image
           source={require("../../assets/icons/search.png")}
-          style={{ width: 20, height: 20 }}
+          style={{ width: 22, height: 22 }}
         />
         <TextInput
-          style={{ fontSize: 16, width: "100", color: "#2F80ED" }}
+          onPress={() => navigation.navigate("SearchScreen")}
+          style={{
+            fontSize: 15,
+            color: "#2F80ED",
+            flex: 1,
+            height: 35,
+            marginRight: 20,
+            paddingLeft: 10,
+            borderRadius: 5,
+            backgroundColor: "white",
+            textAlignVertical: "center",
+          }}
           placeholder="Tìm kiếm"
+          placeholderTextColor={"gray"}
+          editable={false}
         ></TextInput>
-      </View>
+      </TouchableOpacity>
 
-      <View style={{ flexDirection: "row", gap: 10 }}>
+      <View style={{ flexDirection: "row", gap: 15 }}>
         <Image
           source={require("../../assets/icons/create-post.png")}
-          style={{ width: 20, height: 20 }}
+          style={{ width: 22, height: 22 }}
         />
         <Image
           source={require("../../assets/icons/notification.png")}

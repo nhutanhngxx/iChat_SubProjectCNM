@@ -20,8 +20,11 @@ import {
   Keyboard,
   TouchableWithoutFeedback,
   Pressable,
+  Alert,
 } from "react-native";
 import { NetworkInfo } from "react-native-network-info";
+import * as ImagePicker from "expo-image-picker";
+import { StatusBar } from "expo-status-bar";
 
 import { useNavigation } from "@react-navigation/native";
 import { UserContext } from "../../context/UserContext";
@@ -35,20 +38,50 @@ const Chatting = ({ route }) => {
   const { chat } = route.params || {};
   const flatListRef = useRef(null);
   const [inputMessage, setInputMessage] = useState("");
+  const [selectedImage, setSelectedImage] = useState(null);
   const [messages, setMessages] = useState([]);
   const [replyMessage, setReplyMessage] = useState(null);
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [groupMembers, setGroupMembers] = useState([]);
 
-  const [ipAddress, setIpAddress] = useState("");
-  useEffect(() => {
-    NetworkInfo.getIPAddress().then((ip) => {
-      setIpAddress(ip);
-    });
-  }, []);
+  const API_iChat = "http://172.21.41.114:5001";
 
-  const API_iChat = "http://192.168.1.6:5001";
+  // Hàm chọn ảnh từ thư viện
+  const pickImage = async () => {
+    // Kiểm tra quyền truy cập thư viện ảnh
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (status !== "granted") {
+      Alert.alert(
+        "Quyền bị từ chối",
+        "Vui lòng cấp quyền truy cập thư viện ảnh trong cài đặt."
+      );
+      return;
+    }
+
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+      selectionLimit: 1, // Đảm bảo chỉ chọn 1 ảnh (chỉ trên iOS 14+)
+    });
+
+    if (!result.canceled) {
+      setSelectedImage(result.assets[0].uri);
+    }
+  };
+
+  // Gửi ảnh
+  const handleSendImage = () => {
+    if (selectedImage) {
+      sendMessage(selectedImage); // Gửi ảnh thay vì text
+      setSelectedImage(null); // Xóa ảnh sau khi gửi
+    } else {
+      Alert.alert("Lỗi", "Chưa có ảnh nào được chọn!");
+    }
+  };
 
   // Hàm lấy tên thành viên từ ID để hiển thị trên tin nhắn nhóm
   const getMemberName = useCallback(
@@ -192,7 +225,8 @@ const Chatting = ({ route }) => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
+      <StatusBar style="dark" />
       {/* Header của Chatting */}
       <View style={styles.chatHeader}>
         <View style={{ flexDirection: "row", alignItems: "center" }}>
@@ -519,7 +553,7 @@ const Chatting = ({ route }) => {
             </TouchableOpacity>
           ) : null}
           {!inputMessage.trim() ? (
-            <TouchableOpacity>
+            <TouchableOpacity onPress={pickImage}>
               <Image
                 source={require("../../assets/icons/image.png")}
                 style={{ width: 25, height: 25 }}
@@ -535,8 +569,23 @@ const Chatting = ({ route }) => {
             </TouchableOpacity>
           ) : null}
         </View>
+        {/* Hiển thị ảnh đã chọn trước khi gửi */}
+        {selectedImage && (
+          <View style={{ marginLeft: 10 }}>
+            <Image
+              source={{ uri: selectedImage }}
+              style={{ width: 50, height: 50, borderRadius: 5 }}
+            />
+            <TouchableOpacity onPress={handleSendImage}>
+              <Image
+                source={require("../../assets/icons/send.png")}
+                style={{ width: 25, height: 25, marginTop: 5 }}
+              />
+            </TouchableOpacity>
+          </View>
+        )}
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -545,6 +594,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "white",
     paddingTop: 40,
+    paddingBottom: 10,
   },
   chatHeader: {
     flexDirection: "row",

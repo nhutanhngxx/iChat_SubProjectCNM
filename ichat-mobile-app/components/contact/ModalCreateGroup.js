@@ -11,6 +11,7 @@ import {
   SafeAreaView,
 } from "react-native";
 import { Appbar, Button, Checkbox } from "react-native-paper";
+import { StatusBar } from "expo-status-bar";
 
 const friendList = [
   {
@@ -137,6 +138,7 @@ const ModalCreateGroup = ({ isVisible, onClose }) => {
   return (
     <Modal animationType="slide" transparent={true} visible={isVisible}>
       <View style={styles.container}>
+        <StatusBar style="dark" />
         <View style={styles.modalView}>
           <SafeAreaView
             style={{
