@@ -6,29 +6,6 @@ const MessageCard = require("../models/MessageCard");
 const GroupChat = require("../models/GroupChat");
 const GroupMembers = require("../models/GroupMember");
 
-// Gửi tin nhắn
-// router.post("/send-message", async (req, res) => {
-//   try {
-//     const newMessage = new Messages(req.body);
-//     await newMessage.save();
-
-//     // Tự động tạo MessageCard với trạng thái unread
-//     const messageCard = new MessageCard({
-//       receiver_id: newMessage.receiver_id,
-//       message_id: newMessage._id,
-//       status: "unread",
-//       card_color: "#FF0000", // Màu đỏ cho tin nhắn chưa đọc
-//       title: "New Message",
-//     });
-//     await messageCard.save();
-
-//     res
-//       .status(201)
-//       .json({ message: "Message sent successfully", data: newMessage });
-//   } catch (error) {
-//     res.status(400).json({ error: error.message });
-//   }
-// });
 router.post("/send-message", async (req, res) => {
   try {
     const { sender_id, content, type, chat_type, group_id } = req.body;

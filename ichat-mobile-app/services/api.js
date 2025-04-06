@@ -1,7 +1,7 @@
 import axios from "axios";
 import { NetworkInfo } from "react-native-network-info";
 
-const API_iChat = "http://192.168.1.6:5001";
+const API_iChat = "http://172.20.65.7:5001";
 
 NetworkInfo.getIPAddress().then((ipAddress) => {
   console.log("Device IP Address: ", ipAddress);
