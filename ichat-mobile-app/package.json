@@ -53,7 +53,8 @@
     "expo-file-system": "~18.0.12"
   },
   "devDependencies": {
-    "@babel/core": "^7.20.0"
+    "@babel/core": "^7.20.0",
+    "typescript": "^5.3.3"
   },
   "private": true
 }
