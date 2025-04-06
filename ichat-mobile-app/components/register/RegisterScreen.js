@@ -76,7 +76,7 @@ const RegisterScreen = () => {
               <View style={styles.content}>
                 <Text style={styles.label}>Tạo tài khoản mới</Text>
                 <Text style={{ fontSize: 10, opacity: 0.5, marginBottom: 40 }}>
-                  Tạo tài khoản mới
+                  Đăng ký tài khoản mới của bạn đơn giản bằng số điện thoại
                 </Text>
                 {/* Input phone number */}
                 <View style={styles.countryCodeContainer}>
@@ -208,6 +208,7 @@ const styles = StyleSheet.create({
   label: {
     fontWeight: "bold",
     fontSize: 30,
+    marginBottom: 20,
   },
   countryCodeContainer: {
     flexDirection: "row",

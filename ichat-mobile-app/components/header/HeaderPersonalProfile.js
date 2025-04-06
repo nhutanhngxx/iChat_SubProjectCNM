@@ -15,7 +15,7 @@ import axios from "axios";
 
 const HeaderMessages = () => {
   const { user, setUser } = useContext(UserContext);
-  const API_iChat = "http://172.21.41.114:5001";
+  const API_iChat = "http://172.20.65.7:5001";
   const navigation = useNavigation();
   const [modalVisible, setModalVisible] = useState(false);
 
@@ -66,22 +66,22 @@ const HeaderMessages = () => {
                 source={require("../../assets/icons/me.png")}
                 style={styles.optionIcon}
               />
-              <Text style={styles.optionText}>Thông tin tài khoản</Text>
+              <Text style={styles.optionText}>Thông tin Tài khoản</Text>
             </TouchableOpacity>
 
-            {/* Tùy chọn: Cài đặt quyền riêng tư */}
+            {/* Tùy chọn: Tài khoản & Bảo mật */}
             <TouchableOpacity
               style={styles.option}
               onPress={() => {
                 setModalVisible(false);
-                navigation.navigate("ProfileInformation");
+                navigation.navigate("AccountSecurity");
               }}
             >
               <Image
                 source={require("../../assets/icons/setting.png")}
                 style={styles.optionIcon}
               />
-              <Text style={styles.optionText}>Cài đặt & riêng tư</Text>
+              <Text style={styles.optionText}>Tài khoản & Bảo mật</Text>
             </TouchableOpacity>
 
             {/* Tùy chọn: Đăng xuất */}

@@ -5,73 +5,75 @@ const Messages = require("../models/Messages");
 const MessageCard = require("../models/MessageCard");
 const GroupChat = require("../models/GroupChat");
 const GroupMembers = require("../models/GroupMember");
+const multer = require("multer");
 
-// Gửi tin nhắn
-// router.post("/send-message", async (req, res) => {
-//   try {
-//     const newMessage = new Messages(req.body);
-//     await newMessage.save();
+const { uploadFile } = require("../services/uploadImageToS3");
+const upload = multer({ storage: multer.memoryStorage() });
 
-//     // Tự động tạo MessageCard với trạng thái unread
-//     const messageCard = new MessageCard({
-//       receiver_id: newMessage.receiver_id,
-//       message_id: newMessage._id,
-//       status: "unread",
-//       card_color: "#FF0000", // Màu đỏ cho tin nhắn chưa đọc
-//       title: "New Message",
-//     });
-//     await messageCard.save();
+// Route để upload ảnh (dùng multer để nhận file ảnh)
+router.post("/upload-image", upload.single("image"), async (req, res) => {
+  console.log(req.file);
 
-//     res
-//       .status(201)
-//       .json({ message: "Message sent successfully", data: newMessage });
-//   } catch (error) {
-//     res.status(400).json({ error: error.message });
-//   }
-// });
-router.post("/send-message", async (req, res) => {
   try {
-    const { sender_id, content, type, chat_type, group_id } = req.body;
+    const { sender_id, receiver_id, chat_type } = req.body;
+    const image = req.file;
 
-    if (!sender_id || !content || !chat_type) {
-      return res.status(400).json({ error: "Missing required fields" });
+    if (!image || !sender_id || !receiver_id || !chat_type) {
+      return res.status(400).json({ error: "Thiếu dữ liệu" });
+    }
+    // Upload file lên S3
+    const imageUrl = await uploadFile(image);
+    // Lưu tin nhắn ảnh vào database
+    const newMessage = new Messages({
+      sender_id,
+      receiver_id,
+      content: imageUrl, // Sử dụng URL từ S3
+      type: "image",
+      chat_type,
+    });
+    await newMessage.save();
+    return res.status(201).json({
+      message: "Image message sent successfully",
+      data: newMessage,
+    });
+  } catch (err) {
+    console.error("Lỗi upload ảnh:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Route để gửi tin nhắn (văn bản và hình ảnh)
+router.post("/send-message", upload.single("image"), async (req, res) => {
+  try {
+    const { sender_id, receiver_id, content, type, chat_type } = req.body;
+    const image = req.file;
+
+    if (!sender_id || !receiver_id || !chat_type || (!content && !image)) {
+      return res.status(400).json({ error: "Thiếu dữ liệu" });
     }
 
-    // TIN NHẮN GROUP
-    // Nếu là tin nhắn trong group, gửi đến tất cả thành viên
-    if (chat_type === "group" && group_id) {
-      const members = await GroupMembers.find({ group_id }).select("user_id");
-
-      if (!members.length) {
-        return res.status(400).json({ error: "No members in this group" });
-      }
-
-      // Lưu tin nhắn cho tất cả thành viên trong nhóm
-      const messagesToInsert = members.map((member) => ({
-        sender_id,
-        receiver_id: member.user_id, // Người nhận là từng thành viên
-        group_id,
-        content,
-        type,
-        chat_type: "group",
-      }));
-
-      await Messages.insertMany(messagesToInsert);
-      return res
-        .status(201)
-        .json({ message: "Message sent to group successfully" });
-    } else {
-      // TIN NHẮN CÁ NHÂN 1-1
-      // Gửi tin nhắn bình thường
-      const newMessage = new Messages(req.body);
-      await newMessage.save();
-      return res
-        .status(201)
-        .json({ message: "Message sent successfully", data: newMessage });
+    let messageContent = content;
+    if (image) {
+      const imageUrl = await uploadFile(image); // Upload ảnh lên S3 và lấy URL
+      messageContent = imageUrl; // Sử dụng URL ảnh làm nội dung tin nhắn
     }
-  } catch (error) {
-    console.error("Error sending message:", error);
-    res.status(500).json({ error: "Internal Server Error" });
+
+    const newMessage = new Messages({
+      sender_id,
+      receiver_id,
+      content: messageContent,
+      type,
+      chat_type,
+    });
+
+    await newMessage.save();
+    return res.status(201).json({
+      message: "Message sent successfully",
+      data: newMessage,
+    });
+  } catch (err) {
+    console.error("Lỗi gửi tin nhắn:", err);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
@@ -124,37 +126,6 @@ router.post("/send-group-message", async (req, res) => {
     res.status(500).json({ status: "error", error: err.message });
   }
 });
-
-// Lấy danh sách tin nhắn nhóm
-// router.get("/messages/:userId/:groupId", async (req, res) => {
-//   try {
-//     const { userId, groupId } = req.params;
-
-//     // Kiểm tra group có tồn tại không
-//     const groupChat = await GroupChat.findOne({ _id: groupId });
-//     if (!groupChat) {
-//       return res.status(404).json({ error: "Group chat not found" });
-//     }
-
-//     // Lấy tất cả tin nhắn của nhóm
-//     const messages = await Messages.find({
-//       receiver_id: groupId,
-//       chat_type: "group",
-//     })
-//       .sort({ timestamp: 1 })
-//       .populate("sender_id", "full_name avatar_path")
-//       .exec();
-
-//     res.json({
-//       data: {
-//         group: groupChat,
-//         messages: messages,
-//       },
-//     });
-//   } catch (error) {
-//     res.status(500).json({ stauts: "error", message: error.message });
-//   }
-// });
 
 // Lấy danh sách các tin nhắn liên quan đến người dùng
 router.get("/messages/:userId", async (req, res) => {
@@ -217,6 +188,7 @@ router.put("/recall/:messageId", async (req, res) => {
       return res.status(404).json({ error: "Message not found" });
     }
 
+    message.type = "text";
     message.content = "Tin nhắn đã được thu hồi";
     await message.save();
 

@@ -35,7 +35,7 @@ import backIcon from "../assets/icons/go-back.png";
 import { UserContext } from "../context/UserContext";
 
 const MessagesTab = () => {
-  const API_iChat = "http://172.21.41.114:5001";
+  const API_iChat = "http://172.20.65.7:5001";
   const [index, setIndex] = useState(0);
   const { user } = useContext(UserContext);
   const [modalSort, setModalSort] = useState(false);
