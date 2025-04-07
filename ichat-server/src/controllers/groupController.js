@@ -16,6 +16,13 @@ const GroupController = {
           message: "Không tìm thấy các nhóm của người dùng",
         });
       }
+      if (groups.length === 0) {
+        return res.status(200).json({
+          status: "oke",
+          message: "Người dùng không tham gia nhóm nào",
+          data: [],
+        });
+      }
       return res.json({ status: "ok", data: groupChats });
     } catch (err) {
       res.status(500).json({ status: "error", message: err });

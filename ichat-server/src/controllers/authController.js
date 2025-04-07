@@ -59,6 +59,12 @@ const authController = {
       return res.status(500).json({ status: "error", message: error.message });
     }
   },
+
+  // Đăng nhập
+  login: async (req, res) => {},
+
+  // Đăng xuất
+  logout: async (req, res) => {},
 };
 
 module.exports = authController;

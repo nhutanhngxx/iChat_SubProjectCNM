@@ -67,4 +67,7 @@ router.get("/message-cards/:userId", MessageController.getUserMessagesCards);
 // Tạo MessageCard
 router.post("/messages/message-cards", MessageController.createMessageCard);
 
+// Cập nhật tất cả tin nhắn "sent" và "received" thành "viewed" khi user mở cuộc trò chuyện
+router.put("/messages/viewed", MessageController.updateMessagesViewedStatus);
+
 module.exports = router;

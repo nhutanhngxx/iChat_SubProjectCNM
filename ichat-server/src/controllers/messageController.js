@@ -419,6 +419,43 @@ const MessageController = {
       res.status(500).json({ status: "error", message: error.message });
     }
   },
+
+  // Cập nhật tất cả tin nhắn "sent" và "received" thành "viewed" khi user mở cuộc trò chuyện
+  updateMessagesViewedStatus: async (req, res) => {
+    try {
+      const { receiverId, senderId } = req.body;
+
+      if (!receiverId || !senderId) {
+        return res
+          .status(400)
+          .json({ error: "Thiếu receiverId hoặc senderId" });
+      }
+
+      // console.log("Dữ liệu nhận được:", { receiverId, senderId });
+
+      // Cập nhật tất cả tin nhắn chưa đọc giữa hai người
+      const result = await Messages.updateMany(
+        {
+          sender_id: senderId,
+          receiver_id: receiverId,
+          status: { $in: ["sent", "received"] },
+        },
+        { $set: { status: "viewed" } }
+      );
+
+      // console.log("Kết quả cập nhật:", result);
+
+      return res.status(200).json({
+        message:
+          result.modifiedCount > 0
+            ? "Tất cả tin nhắn chưa đọc đã được đánh dấu là đã xem"
+            : "Không có tin nhắn nào cần cập nhật",
+      });
+    } catch (error) {
+      console.error("Lỗi khi cập nhật trạng thái tin nhắn:", error);
+      res.status(500).json({ error: "Lỗi khi cập nhật trạng thái tin nhắn" });
+    }
+  },
 };
 
 module.exports = MessageController;
