@@ -1,5 +1,4 @@
 const User = require("../schemas/UserDetails");
-
 const bcrypt = require("bcryptjs");
 
 const authModel = {

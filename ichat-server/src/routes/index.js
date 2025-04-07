@@ -3,9 +3,11 @@ const router = express.Router();
 
 // Import các routes
 const authRoutes = require("./authRoutes");
+const groupRoutes = require("./groupRoutes");
 
 // Đăng ký các routes - prefix
-router.use("/auth", authRoutes);
+router.use("/auths", authRoutes);
+router.use("/groups", groupRoutes);
 
 // Route mặc định
 router.get("/", (req, res) => {
