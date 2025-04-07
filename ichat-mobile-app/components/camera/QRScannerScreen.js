@@ -25,6 +25,7 @@ export default function CameraFunction() {
   const [flashMode, setFlashMode] = useState("off"); // Chế độ đèn flash (mặc định tắt)
   const [recording, setRecording] = useState(false); // Trạng thái quay video (true khi đang quay)
   const [zoom, setZoom] = useState(0); // Mức độ thu phóng của camera
+  const [scanned, setScanned] = useState(false); // Trạng thái đã quét mã QR hay chưa (mặc định là chưa quét)
   let cameraRef = useRef(); // Tạo một tham chiếu đến camera
   const navigation = useNavigation(); // Hook để điều hướng giữa các màn hình
 
@@ -154,6 +155,16 @@ export default function CameraFunction() {
     navigation.navigate("Video", { uri });
   }
 
+  const handleBarCodeScanned = ({ type, data }) => {
+    if (!scanned) {
+      setScanned(true);
+      alert(`Đã quét mã QR: ${data}`);
+      console.log(`Đã quét mã QR: ${data}`);
+      // Nếu muốn reset sau vài giây để có thể quét lại
+      // setTimeout(() => setScanned(false), 3000);
+    }
+  };
+
   // Thiết kế giao diện máy ảnh
   return (
     <View style={styles.container}>
@@ -165,6 +176,10 @@ export default function CameraFunction() {
         flash={flashMode} // Chế độ flash (bật/tắt)
         mode={cameraMode} // Chế độ chụp ảnh hoặc quay video
         zoom={zoom} // Mức zoom hiện tại
+        barcodeScannerSettings={{
+          barcodeTypes: ["qr"],
+        }}
+        onBarcodeScanned={handleBarCodeScanned}
       >
         {/* Nút quay lại */}
         <TouchableOpacity

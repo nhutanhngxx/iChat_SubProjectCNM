@@ -48,7 +48,7 @@ const Chatting = ({ route }) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [groupMembers, setGroupMembers] = useState([]);
 
-  const API_iChat = "http://172.20.65.7:5001";
+  const API_iChat = "http://192.168.1.102:5001";
 
   // Hàm chọn ảnh từ thư viện
   const pickImage = async () => {
@@ -315,7 +315,7 @@ const Chatting = ({ route }) => {
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 50 : 0}
+        // keyboardVerticalOffset={Platform.OS === "ios" ? 50 : 0} // Khóa lại vì lỗi đẩy Thanh soạn tin nhắn
       >
         <FlatList
           ref={flatListRef}

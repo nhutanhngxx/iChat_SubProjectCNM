@@ -26,6 +26,7 @@
     "expo-barcode-scanner": "^13.0.1",
     "expo-camera": "~16.0.18",
     "expo-constants": "^17.0.8",
+    "expo-file-system": "~18.0.12",
     "expo-firebase-core": "^6.0.0",
     "expo-firebase-recaptcha": "^2.3.1",
     "expo-image-manipulator": "~13.0.6",
@@ -41,7 +42,6 @@
     "react-native-network-info": "^5.2.1",
     "react-native-paper": "4.9.2",
     "react-native-permissions": "^5.3.0",
-    "react-native-qrcode-scanner": "^1.5.5",
     "react-native-qrcode-svg": "^6.3.15",
     "react-native-radio-buttons-group": "^3.1.0",
     "react-native-reanimated": "^3.17.1",
@@ -50,8 +50,7 @@
     "react-native-tab-view": "^4.0.6",
     "react-native-vector-icons": "^10.2.0",
     "react-native-web": "~0.19.13",
-    "react-native-webview": "13.12.5",
-    "expo-file-system": "~18.0.12"
+    "react-native-webview": "13.12.5"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
