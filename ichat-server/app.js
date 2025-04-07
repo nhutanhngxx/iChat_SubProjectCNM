@@ -24,7 +24,7 @@ const io = new Server(server, {
 // Kết nối MongoDB
 connectDB();
 
-app.use("/api/v1", routes); // prefix cho các routes
+app.use("/api", routes); // prefix cho các routes
 
 // Chạy server
 const PORT = process.env.PORT || 5001;

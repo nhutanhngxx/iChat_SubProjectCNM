@@ -24,19 +24,13 @@ router.post(
 router.post("/send-group-message", MessageController.sendGroupMessage);
 
 // Lấy danh sách các tin nhắn liên quan đến người dùng
-router.get("/messages/:userId", MessageController.getUserMessages);
+router.get("/:userId", MessageController.getUserMessages);
 
 // Lấy tin nhắn theo Người đăng nhập và các người dùng khác
-router.get(
-  "/messages/:userId/:receiverId",
-  MessageController.getPrivateMessages
-);
+router.get("/:userId/:receiverId", MessageController.getPrivateMessages);
 
 // Xóa tất cả tin nhắn giữa người dùng đăng nhập và người nhận
-router.delete(
-  "/messages/:userId/:receiverId",
-  MessageController.deleteAllMessages
-);
+router.delete("/:userId/:receiverId", MessageController.deleteAllMessages);
 
 // Thu hồi tin nhắn
 router.put("/recall/:messageId", MessageController.recallToMessage);
@@ -54,20 +48,20 @@ router.delete(
 router.patch("/:messageId/pin", MessageController.pinMessage);
 
 // Danh sách tin nhắn đã ghim
-router.get("/messages/pinned/:chatId", MessageController.getPinnedMessages);
+router.get("/pinned/:chatId", MessageController.getPinnedMessages);
 
 // Trả lời tin nhắn
-router.post("/messages/reply", MessageController.replyToMessage);
+router.post("/reply", MessageController.replyToMessage);
 
 // API tìm kiếm tin nhắn theo nội dung
-router.get("/messages", MessageController.searchMessages);
+router.get("/search", MessageController.searchMessages);
 
 router.get("/message-cards/:userId", MessageController.getUserMessagesCards);
 
 // Tạo MessageCard
-router.post("/messages/message-cards", MessageController.createMessageCard);
+router.post("/message-cards", MessageController.createMessageCard);
 
 // Cập nhật tất cả tin nhắn "sent" và "received" thành "viewed" khi user mở cuộc trò chuyện
-router.put("/messages/viewed", MessageController.updateMessagesViewedStatus);
+router.put("/viewed", MessageController.updateMessagesViewedStatus);
 
 module.exports = router;

@@ -19,17 +19,17 @@ router.post("/block-user", FriendshipController.blockUser);
 router.post("/unfriend", FriendshipController.unfriendUser);
 
 // Xem danh sách bạn bè
-router.get("/friends/:user_id", FriendshipController.getUserFriends);
+router.get("/friends/:userId", FriendshipController.getUserFriends);
 
 // Gợi ý kết bạn (Dựa trên bạn chung)
 router.get(
-  "/friend-suggestions/:user_id",
+  "/friend-suggestions/:userId",
   FriendshipController.getListFriendsSugestion
 );
 
 // Đếm số lượng bạn chung giữa 2 user
 router.get(
-  "/mutual-friends/:user1_id/:user2_id",
+  "/mutual-friends/:user1Id/:user2Id",
   FriendshipController.countMutalFriends
 );
 

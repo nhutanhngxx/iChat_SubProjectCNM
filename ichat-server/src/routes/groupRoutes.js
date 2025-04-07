@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const GroupController = require("../controllers/groupController").default;
+const GroupController = require("../controllers/groupController");
 
 router.get("/:userId", GroupController.getUserGroups); // Lấy danh sách nhóm mà người dùng tham gia
 router.get("/search", GroupController.searchGroup); // Tìm kiếm nhóm
