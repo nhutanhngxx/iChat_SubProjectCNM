@@ -15,6 +15,8 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { UserContext } from "../../context/UserContext";
 import { Modal } from "react-native";
 import axios from "axios";
+import * as ImagePicker from "expo-image-picker";
+import * as FileSystem from "expo-file-system";
 
 import editIcon from "../../assets/icons/edit.png";
 
@@ -22,9 +24,52 @@ const ChangeInformation = () => {
   const navigation = useNavigation();
   const { user, setUser } = useContext(UserContext);
 
-  const API_iChat = "http://192.168.1.131:5001";
+  const [selectedImage, setSelectedImage] = useState(null);
+  // Hàm chọn ảnh từ thư viện
+  const pickImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert(
+        "Quyền bị từ chối",
+        "Vui lòng cấp quyền truy cập thư viện ảnh trong cài đặt."
+      );
+      return;
+    }
 
-  const [dob, setDob] = useState(user?.dob ? new Date(user.dob) : new Date());
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 0.5,
+      });
+
+      if (!result.canceled && result.assets.length > 0) {
+        setSelectedImage(result.assets[0].uri);
+      }
+    } catch (err) {
+      console.error("Lỗi khi chọn ảnh:", err);
+      Alert.alert("Lỗi", "Đã xảy ra lỗi khi chọn ảnh.");
+    }
+  };
+
+  const API_iChat = "http://172.20.68.107:5001";
+
+  // const [dob, setDob] = useState(user?.dob ? new Date(user.dob) : new Date());
+  const parseDate = (dateString) => {
+    if (!dateString) return new Date();
+    const [day, month, year] = dateString.split("/").map(Number);
+    const date = new Date(year, month - 1, day); // month - 1 vì tháng trong JS bắt đầu từ 0
+
+    // Đặt giờ giữa ngày để tránh lệch múi giờ
+    date.setHours(12, 0, 0, 0);
+
+    return date;
+  };
+
+  const initialDob = user?.dob ? parseDate(user.dob) : new Date();
+  const [dob, setDob] = useState(initialDob);
+
   const [showPicker, setShowPicker] = useState(false);
   const [fullName, setFullName] = useState(user?.full_name || "");
   const [selectedId, setSelectedId] = useState(
@@ -54,19 +99,42 @@ const ChangeInformation = () => {
 
     setLoading(true);
     try {
-      const updatedData = {
-        full_name: fullName.trim(),
-        gender: radioButtons.find((rb) => rb.id === selectedId)?.value,
-        dob: dob.toISOString().split("T")[0],
-      };
+      const formData = new FormData();
+      formData.append("full_name", fullName.trim());
+      formData.append(
+        "gender",
+        radioButtons.find((rb) => rb.id === selectedId)?.value
+      );
+      formData.append("dob", dob.toISOString().split("T")[0]);
+
+      if (selectedImage) {
+        // Kiểm tra thông tin ảnh
+        const fileInfo = await FileSystem.getInfoAsync(selectedImage);
+        if (!fileInfo.exists) {
+          alert("Ảnh không tồn tại!");
+          return;
+        }
+
+        // Lấy tên file từ uri
+        const filename = selectedImage.split("/").pop();
+        const match = /\.(\w+)$/.exec(filename ?? "");
+        const ext = match ? match[1] : "jpg";
+        const mimeType = `image/${ext}`;
+
+        // Thêm ảnh vào FormData
+        formData.append("avatar", {
+          uri: selectedImage,
+          name: filename ?? `avatar.${ext}`,
+          type: mimeType,
+        });
+      }
 
       const response = await axios.put(
         `${API_iChat}/update/${user.id}`,
-        updatedData,
+        formData,
         {
           headers: {
-            "Content-Type": "application/json",
-            // Nếu cần token: "Authorization": `Bearer ${user.token}`,
+            "Content-Type": "multipart/form-data",
           },
         }
       );
@@ -82,6 +150,7 @@ const ChangeInformation = () => {
     } catch (error) {
       console.error("Lỗi khi gọi API:", error);
       if (error.response) {
+        console.log("Response data:", error.response.data);
         alert(
           error.response.data.message || "Có lỗi xảy ra khi cập nhật thông tin."
         );
@@ -89,7 +158,7 @@ const ChangeInformation = () => {
         alert("Lỗi kết nối server. Vui lòng thử lại sau.");
       }
     } finally {
-      setLoading(false); // Tắt loading
+      setLoading(false);
     }
   };
 
@@ -124,12 +193,12 @@ const ChangeInformation = () => {
           padding: 20,
         }}
       >
-        <View style={{ height: 100 }}>
+        <TouchableOpacity style={{ height: 100 }} onPress={() => pickImage()}>
           <Image
-            source={{ uri: user.avatar_path }}
+            source={{ uri: selectedImage || user.avatar_path }}
             style={{ height: 100, width: 100, borderRadius: 10 }}
           />
-        </View>
+        </TouchableOpacity>
         <View
           style={{ justifyContent: "space-between", width: "65%", gap: 20 }}
         >
