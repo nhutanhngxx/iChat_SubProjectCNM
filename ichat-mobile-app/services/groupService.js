@@ -1,12 +1,10 @@
 import api from "./api";
 import messageService from "./messageService";
-import userService from "./userService";
 
 // Tính thời gian
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import "dayjs/locale/vi"; // Tiếng việt nè
-import { get } from "react-native/Libraries/TurboModule/TurboModuleRegistry";
 
 dayjs.extend(relativeTime);
 dayjs.locale("vi");
