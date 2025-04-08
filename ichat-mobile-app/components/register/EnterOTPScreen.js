@@ -8,6 +8,10 @@ import {
   Alert,
   TouchableWithoutFeedback,
   Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+  TouchableOpacity,
+  Image,
 } from "react-native";
 import CustomButton from "../common/CustomButton";
 import RegisterService from "../../services/registerService";
@@ -59,60 +63,69 @@ const EnterOTPScreen = ({ navigation, route }) => {
   };
 
   return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-      <ImageBackground
-        source={require("../../assets/images/background.png")}
-        style={styles.background}
-      >
-        <Appbar.Header
-          style={{
-            backgroundColor: "transparent",
-            paddingTop: 50,
-          }}
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={{ flex: 1 }}
+    >
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+        <ImageBackground
+          source={require("../../assets/images/background.png")}
+          style={styles.background}
         >
-          <Appbar.BackAction onPress={() => navigation.goBack()} size={30} />
-          <Appbar.Content title="Quay lại" />
-        </Appbar.Header>
-        <View style={styles.container}>
-          <View style={styles.content}>
-            <Text style={styles.label}>Nhập mã OTP</Text>
-            <View style={styles.otpContainer}>
-              <TextInput
-                style={styles.otpInput}
-                placeholder="Nhập mã OTP"
-                keyboardType="number-pad"
-                value={otp}
-                onChangeText={setOtp}
-                maxLength={6}
+          <View style={styles.container}>
+            {/* Header */}
+            <TouchableOpacity
+              style={{ flexDirection: "row", gap: 5, alignItems: "center" }}
+              onPress={() => navigation.goBack()}
+            >
+              <Image
+                source={require("../../assets/icons/go-back.png")}
+                style={{ width: 20, height: 20 }}
               />
+              <Text style={{ color: "#48A2FC" }}>Quay lại</Text>
+            </TouchableOpacity>
+
+            {/* Xác thực OTP ở đây */}
+            <View style={styles.content}>
+              <Text style={styles.label}>Nhập mã OTP</Text>
+              <View style={styles.otpContainer}>
+                <TextInput
+                  style={styles.otpInput}
+                  placeholder="Nhập mã OTP"
+                  keyboardType="number-pad"
+                  value={otp}
+                  onChangeText={setOtp}
+                  maxLength={6}
+                />
+              </View>
+              {/* Button Xác nhận OTP vừa nhập */}
+              <View style={{ gap: 20, alignSelf: "center" }}>
+                {isLoading ? (
+                  <ActivityIndicator size="large" color="#48A2FC" /> // Hiển thị spinner khi loading
+                ) : (
+                  <CustomButton
+                    title="Xác nhận"
+                    onPress={() => handleVerify()}
+                    backgroundColor={"#48A2FC"}
+                  />
+                )}
+              </View>
             </View>
           </View>
-          <View style={{ gap: 20 }}>
-            {isLoading ? (
-              <ActivityIndicator size="large" color="#48A2FC" /> // Hiển thị spinner khi loading
-            ) : (
-              <CustomButton
-                title="Xác nhận"
-                onPress={() => handleVerify()}
-                backgroundColor={"#48A2FC"}
-              />
-            )}
-          </View>
-        </View>
-      </ImageBackground>
-    </TouchableWithoutFeedback>
+        </ImageBackground>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    alignItems: "center",
-    justifyContent: "center",
+    flex: 1,
+    paddingTop: 40,
   },
   background: {
     flex: 1,
     resizeMode: "cover",
-    // justifyContent: "center",
   },
   title: {
     fontSize: 70,
@@ -122,7 +135,8 @@ const styles = StyleSheet.create({
   content: {
     alignItems: "center",
     justifyContent: "center",
-    height: 350,
+    flex: 1,
+    paddingBottom: 100,
   },
   label: {
     fontWeight: "bold",
