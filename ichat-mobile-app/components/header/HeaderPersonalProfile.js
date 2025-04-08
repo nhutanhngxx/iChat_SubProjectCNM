@@ -15,7 +15,7 @@ import axios from "axios";
 
 const HeaderMessages = () => {
   const { user, setUser } = useContext(UserContext);
-  const API_iChat = "http://192.168.1.102:5001";
+  const API_iChat = "http://172.20.68.107:5001";
   const navigation = useNavigation();
   const [modalVisible, setModalVisible] = useState(false);
 
@@ -59,7 +59,9 @@ const HeaderMessages = () => {
               style={styles.option}
               onPress={() => {
                 setModalVisible(false);
-                navigation.navigate("ProfileInformation");
+                setTimeout(() => {
+                  navigation.navigate("ProfileInformation");
+                }, 100);
               }}
             >
               <Image
@@ -74,7 +76,9 @@ const HeaderMessages = () => {
               style={styles.option}
               onPress={() => {
                 setModalVisible(false);
-                navigation.navigate("AccountSecurity");
+                setTimeout(() => {
+                  navigation.navigate("AccountSecurity");
+                }, 100);
               }}
             >
               <Image
@@ -88,8 +92,10 @@ const HeaderMessages = () => {
             <TouchableOpacity
               style={styles.option}
               onPress={() => {
-                handleLogout(); // Đăng xuất
-                setModalVisible(false); // Tắt modal
+                setModalVisible(false);
+                setTimeout(() => {
+                  handleLogout();
+                }, 100);
               }}
             >
               <Image

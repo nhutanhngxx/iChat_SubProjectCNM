@@ -44,7 +44,7 @@ const MeTab = () => {
       <View style={styles.profileContainer}>
         {userData ? (
           <>
-            <TouchableOpacity>
+            <View>
               <Image
                 source={
                   compressedAvatar
@@ -53,7 +53,7 @@ const MeTab = () => {
                 }
                 style={styles.avatar}
               />
-            </TouchableOpacity>
+            </View>
             <Text style={styles.name}>{userData.full_name}</Text>
             <Text style={styles.updateText}>Cập nhật tiểu sử</Text>
           </>

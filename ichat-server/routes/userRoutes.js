@@ -13,21 +13,21 @@ const { Server } = require("socket.io");
 const cors = require("cors");
 
 const multer = require("multer");
-const uploadFile = require;
+const upload = multer({ storage: multer.memoryStorage() });
+const { uploadFile } = require("../services/uploadImageToS3");
 
 const User = require("../models/UserDetails");
 const Friendship = require("../models/Friendship");
 const Messages = require("../models/Messages");
 
-router.put("/update/:id", async (req, res) => {
+router.put("/update/:id", upload.single("avatar"), async (req, res) => {
   try {
     const userId = req.params.id;
+    const image = req.file;
+
     const updateData = req.body;
 
-    // Các trường cho phép cập nhật
-    const allowedUpdates = ["full_name", "gender", "dob"];
-
-    // Lọc chỉ lấy các trường được phép cập nhật
+    const allowedUpdates = ["full_name", "gender", "dob", "avatar_path"];
     const updates = Object.keys(updateData)
       .filter((key) => allowedUpdates.includes(key))
       .reduce((obj, key) => {
@@ -35,7 +35,6 @@ router.put("/update/:id", async (req, res) => {
         return obj;
       }, {});
 
-    // Validation cơ bản phía server
     if (!updates.full_name || updates.full_name.trim() === "") {
       return res.status(400).json({
         success: false,
@@ -43,17 +42,17 @@ router.put("/update/:id", async (req, res) => {
       });
     }
 
-    // Thêm timestamp cho updated_at
+    if (image) {
+      const imageUrl = await uploadFile(image);
+      updates.avatar_path = imageUrl;
+    }
+
     updates.updated_at = Date.now();
 
-    // Tìm và cập nhật user
     const user = await User.findByIdAndUpdate(
       userId,
       { $set: updates },
-      {
-        new: true, // Trả về document đã cập nhật
-        runValidators: true, // Chạy validation của schema
-      }
+      { new: true, runValidators: true }
     );
 
     if (!user) {
@@ -69,7 +68,8 @@ router.put("/update/:id", async (req, res) => {
       data: {
         full_name: user.full_name,
         gender: user.gender,
-        dob: user.dobFormatted || user.dob, // Nếu không có dobFormatted thì trả dob gốc
+        dob: user.dobFormatted || user.dob,
+        avatar_path: user.avatar_path,
         updated_at: user.updated_at,
       },
     });
@@ -162,9 +162,6 @@ router.post("/login", async (req, res) => {
         .json({ status: "error", message: "User does not exist" });
 
     if (await bcrypt.compare(password, user.password)) {
-      // const token = jwt.sign({ phone: user.phone }, process.env.JWT_SECRET, {
-      //   expiresIn: "1h",
-      // });
       if (!process.env.JWT_SECRET) {
         return res
           .status(500)
@@ -173,6 +170,7 @@ router.post("/login", async (req, res) => {
 
       const accessToken = generateAccessToken(user);
       const refreshToken = generateRefreshToken(user);
+
       // Lưu refreshToken vào cookie
       res.cookie("refreshToken", refreshToken, {
         httpOnly: true,

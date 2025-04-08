@@ -88,6 +88,22 @@ router.post("/verify-otp", async (req, res) => {
   }
 });
 
+router.put("/update-phone", async (req, res) => {
+  const { userId, newPhone } = req.body;
+  try {
+    await User.updateOne({ _id: userId }, { phone: newPhone });
+    return res.json({
+      status: "ok",
+      message: "Số điện thoại đã được cập nhật.",
+    });
+  } catch (err) {
+    return res.status(500).json({
+      status: "error",
+      message: "Lỗi server khi cập nhật số điện thoại.",
+    });
+  }
+});
+
 // Đăng ký tài khoản
 router.post("/register", async (req, res) => {
   const { tempToken, phone, password, fullName, dob, gender } = req.body;

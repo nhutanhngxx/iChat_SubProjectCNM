@@ -22,6 +22,7 @@ import ChangeInformation from "../components/profile/ChangeInformation";
 import AddFriend from "../components/contact/AddFriend";
 import FriendRequest from "../components/contact/FriendRequest";
 import AccountSecurity from "../components/profile/AccountSecurity";
+import ChangePhoneNumber from "../components/profile/ChangePhoneNumber";
 
 const Stack = createStackNavigator();
 
@@ -32,10 +33,15 @@ export default function AppNavigator() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       {user ? (
         <>
-          <Stack.Screen name="Home" component={MyTabs} />
+          <Stack.Screen
+            name="Home"
+            component={MyTabs}
+            options={{ animation: "none" }}
+          />
           <Stack.Screen
             name="ProfileInformation"
             component={ProfileInformation}
+            options={{ animation: "none" }}
           />
           <Stack.Screen name="Chatting" component={Chatting} />
           <Stack.Screen name="QRScanner" component={QRScanner} />
@@ -53,11 +59,24 @@ export default function AppNavigator() {
             component={SearchScreen}
             options={{ animation: "fade" }}
           />
-          <Stack.Screen name="AccountSecurity" component={AccountSecurity} />
+          <Stack.Screen
+            name="AccountSecurity"
+            component={AccountSecurity}
+            options={{ animation: "none" }}
+          />
+          <Stack.Screen
+            name="ChangePhoneNumber"
+            component={ChangePhoneNumber}
+            options={{ animation: "none" }}
+          />
         </>
       ) : (
         <>
-          <Stack.Screen name="Launcher" component={LauncherScreen} />
+          <Stack.Screen
+            name="Launcher"
+            component={LauncherScreen}
+            options={{ animation: "none" }}
+          />
           <Stack.Screen name="Register" component={PhoneRegisterScreen} />
           <Stack.Screen name="Login" component={LoginScreen} />
           <Stack.Screen name="EnterOTP" component={EnterOTPScreen} />
