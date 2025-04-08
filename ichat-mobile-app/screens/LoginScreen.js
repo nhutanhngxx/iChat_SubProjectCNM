@@ -88,7 +88,7 @@ const LoginScreen = ({ navigation }) => {
                 onChangeText={setPassword}
               />
               <Text
-                onPress={() => alert("Quên mật khẩu?")}
+                onPress={() => navigation.navigate("EnterPhone")}
                 style={styles.forgotPassword}
               >
                 Quên mật khẩu?
@@ -101,7 +101,7 @@ const LoginScreen = ({ navigation }) => {
               />
               <Text
                 style={styles.registerText}
-                onPress={() => navigation.navigate("Register")}
+                onPress={() => navigation.navigate("RegisterPhone")}
               >
                 Bạn chưa có tài khoản?{" "}
                 <Text style={styles.register}>Đăng ký</Text>

@@ -6,11 +6,18 @@ import MyTabs from "./MyTabNavigator";
 import LauncherScreen from "../screens/LauncherScreen";
 import LoginScreen from "../screens/LoginScreen";
 
+// Đăng ký tạo tài khoản
 import PhoneRegisterScreen from "../components/auth/register/PhoneRegisterScreen";
 import EnterOTPScreen from "../components/auth/register/EnterOTPScreen";
 import PasswordRegisterScreen from "../components/auth/register/PasswordRegisterScreen";
 import InfoRegisterScreen from "../components/auth/register/InfoRegisterScreen";
 
+// Quên mật khẩu
+import EnterPhoneScreen from "../components/auth/reset-password/EnterPhoneScreen";
+import EnterOTPScreenForgot from "../components/auth/reset-password/EnterOTPScreen";
+import ResetPasswordScreen from "../components/auth/reset-password/ResetPasswordScreen";
+
+// Các màn hình chính
 import SearchScreen from "../components/search/SearchScreen";
 import Chatting from "../components/messages/Chatting";
 import QRScanner from "../components/camera/QRScannerScreen";
@@ -58,14 +65,26 @@ export default function AppNavigator() {
       ) : (
         <>
           <Stack.Screen name="Launcher" component={LauncherScreen} />
-          <Stack.Screen name="Register" component={PhoneRegisterScreen} />
+
+          {/* Đăng nhập */}
           <Stack.Screen name="Login" component={LoginScreen} />
+
+          {/* Đăng ký tạo tài khoản */}
+          <Stack.Screen name="PhoneRegister" component={PhoneRegisterScreen} />
           <Stack.Screen name="EnterOTP" component={EnterOTPScreen} />
           <Stack.Screen
             name="PasswordRegister"
             component={PasswordRegisterScreen}
           />
           <Stack.Screen name="InfoRegister" component={InfoRegisterScreen} />
+
+          {/* Quên mật khẩu */}
+          <Stack.Screen name="EnterPhone" component={EnterPhoneScreen} />
+          <Stack.Screen
+            name="EnterOTPForgot"
+            component={EnterOTPScreenForgot}
+          />
+          <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
         </>
       )}
     </Stack.Navigator>
