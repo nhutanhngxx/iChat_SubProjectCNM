@@ -3,12 +3,15 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "nodemon app"
+    "start": "nodemon app",
+    "dev": "nodemon app"
   },
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "aws-sdk": "^2.1692.0",
+    "axios": "^1.8.3",
     "bcrypt": "^5.1.1",
     "bcryptjs": "^2.4.3",
     "cookie-parser": "^1.4.7",
@@ -19,8 +22,9 @@
     "jsonwebtoken": "^9.0.2",
     "moment-timezone": "^0.5.47",
     "mongoose": "^8.7.3",
+    "multer": "^1.4.5-lts.2",
     "nodemon": "^3.1.7",
     "socket.io": "^4.8.1",
-    "twilio": "^5.5.0"
+    "textflow.js": "^0.1.4"
   }
 }

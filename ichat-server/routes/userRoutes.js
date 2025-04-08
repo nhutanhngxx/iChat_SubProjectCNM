@@ -5,7 +5,6 @@ const jwt = require("jsonwebtoken");
 require("dotenv").config();
 const cookieParser = require("cookie-parser");
 router.use(cookieParser());
-const twilio = require("twilio");
 const OTP = require("../models/OTP");
 
 // Socket.io => Real-time
@@ -13,50 +12,93 @@ const http = require("http");
 const { Server } = require("socket.io");
 const cors = require("cors");
 
+const multer = require("multer");
+const uploadFile = require;
+
 const User = require("../models/UserDetails");
 const Friendship = require("../models/Friendship");
 const Messages = require("../models/Messages");
 
-// Đăng ký tài khoản
-const client = require("twilio")(
-  process.env.TWILIO_ACCOUNT_SID,
-  process.env.TWILIO_AUTH_TOKEN
-);
-
-// Gửi OTP
-router.post("/send-otp", async (req, res) => {
-  const { phone } = req.body;
+router.put("/update/:id", async (req, res) => {
   try {
-    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
-    await OTP.create({ phone, otp: otpCode, createdAt: new Date() })
-      .then(() => console.log("OTP saved"))
-      .catch((err) => console.error("Error saving OTP:", err));
+    const userId = req.params.id;
+    const updateData = req.body;
 
-    await client.messages.create({
-      body: `Mã OTP của bạn là: ${otpCode}`,
-      from: "+18507493035",
-      to: phone,
+    // Các trường cho phép cập nhật
+    const allowedUpdates = ["full_name", "gender", "dob"];
+
+    // Lọc chỉ lấy các trường được phép cập nhật
+    const updates = Object.keys(updateData)
+      .filter((key) => allowedUpdates.includes(key))
+      .reduce((obj, key) => {
+        obj[key] = updateData[key];
+        return obj;
+      }, {});
+
+    // Validation cơ bản phía server
+    if (!updates.full_name || updates.full_name.trim() === "") {
+      return res.status(400).json({
+        success: false,
+        message: "Họ tên không được để trống",
+      });
+    }
+
+    // Thêm timestamp cho updated_at
+    updates.updated_at = Date.now();
+
+    // Tìm và cập nhật user
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { $set: updates },
+      {
+        new: true, // Trả về document đã cập nhật
+        runValidators: true, // Chạy validation của schema
+      }
+    );
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "Không tìm thấy người dùng",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Cập nhật thông tin thành công",
+      data: {
+        full_name: user.full_name,
+        gender: user.gender,
+        dob: user.dobFormatted || user.dob, // Nếu không có dobFormatted thì trả dob gốc
+        updated_at: user.updated_at,
+      },
     });
-
-    res.json({ status: "ok", message: "OTP sent successfully" });
   } catch (error) {
-    res.status(500).json({ status: "error", message: error.message });
+    if (error.name === "ValidationError") {
+      return res.status(400).json({
+        success: false,
+        message: "Dữ liệu không hợp lệ",
+        errors: error.errors,
+      });
+    }
+    if (error.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        message: "Số điện thoại đã được sử dụng",
+      });
+    }
+    console.error("Lỗi server:", error);
+    res.status(500).json({
+      success: false,
+      message: "Lỗi server",
+      error: error.message,
+    });
   }
 });
 
 // Đăng ký với OTP
 router.post("/register", async (req, res) => {
-  const {
-    full_name,
-    gender,
-    dob,
-    phone,
-    password,
-    avatar_path,
-    cover_path,
-    status,
-    otp,
-  } = req.body;
+  const { phone, password, full_name, dob, gender } = req.body;
 
   try {
     // Kiểm tra OTP
@@ -138,6 +180,7 @@ router.post("/login", async (req, res) => {
         sameSite: "Strict",
         maxAge: 24 * 60 * 60 * 1000, // 1 ngày
       });
+      await User.findByIdAndUpdate(user._id, { status: "Online" });
       return res.send({
         status: "ok",
         accessToken,
@@ -158,6 +201,26 @@ router.post("/login", async (req, res) => {
         .status(400)
         .json({ status: "error", message: "Invalid password" });
     }
+  } catch (error) {
+    res.status(500).json({ status: "error", message: error.message });
+  }
+});
+
+// Đăng xuất
+router.post("/logout", async (req, res) => {
+  try {
+    const { userId } = req.body;
+
+    if (!userId) {
+      return res
+        .status(400)
+        .json({ status: "error", message: "Missing userId" });
+    }
+
+    await User.findByIdAndUpdate(userId, { status: "Offline" });
+
+    res.clearCookie("refreshToken");
+    res.json({ status: "ok", message: "User logged out successfully" });
   } catch (error) {
     res.status(500).json({ status: "error", message: error.message });
   }
@@ -227,6 +290,22 @@ router.post("/userdata", async (req, res) => {
     res
       .status(401)
       .json({ status: "error", message: "Invalid or expired token" });
+  }
+});
+
+// Lấy thông tin User từ ID
+router.get("/users/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    let user = await User.findById(id);
+    if (!user) {
+      return res
+        .status(404)
+        .json({ status: "error", message: "User not found" });
+    }
+    res.json({ status: "ok", user });
+  } catch (error) {
+    res.status(500).json({ status: "error", message: error.message });
   }
 });
 

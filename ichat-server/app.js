@@ -26,11 +26,13 @@ connectDB();
 const userRoutes = require("./routes/userRoutes");
 const messageRoutes = require("./routes/messageRoutes");
 const groupRoutes = require("./routes/groupRoutes");
+const authRoutes = require("./routes/authRoutes");
 
 // Sử dụng routes
 app.use("", userRoutes);
 app.use("", messageRoutes);
 app.use("", groupRoutes);
+app.use("/auth", authRoutes);
 
 app.get("/", (req, res) => {
   res.send({ status: "Server started" });
