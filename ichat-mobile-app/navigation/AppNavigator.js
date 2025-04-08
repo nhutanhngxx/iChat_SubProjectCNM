@@ -6,10 +6,10 @@ import MyTabs from "./MyTabNavigator";
 import LauncherScreen from "../screens/LauncherScreen";
 import LoginScreen from "../screens/LoginScreen";
 
-import PhoneRegisterScreen from "../components/register/PhoneRegisterScreen";
-import EnterOTPScreen from "../components/register/EnterOTPScreen";
-import PasswordRegisterScreen from "../components/register/PasswordRegisterScreen";
-import InfoRegisterScreen from "../components/register/InfoRegisterScreen";
+import PhoneRegisterScreen from "../components/auth/register/PhoneRegisterScreen";
+import EnterOTPScreen from "../components/auth/register/EnterOTPScreen";
+import PasswordRegisterScreen from "../components/auth/register/PasswordRegisterScreen";
+import InfoRegisterScreen from "../components/auth/register/InfoRegisterScreen";
 
 import SearchScreen from "../components/search/SearchScreen";
 import Chatting from "../components/messages/Chatting";
