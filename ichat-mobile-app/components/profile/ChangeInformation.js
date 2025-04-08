@@ -55,19 +55,45 @@ const ChangeInformation = () => {
 
   const API_iChat = "http://172.20.68.107:5001";
 
-  // const [dob, setDob] = useState(user?.dob ? new Date(user.dob) : new Date());
   const parseDate = (dateString) => {
-    if (!dateString) return new Date();
-    const [day, month, year] = dateString.split("/").map(Number);
-    const date = new Date(year, month - 1, day); // month - 1 vì tháng trong JS bắt đầu từ 0
+    if (!dateString || typeof dateString !== "string") return new Date();
 
-    // Đặt giờ giữa ngày để tránh lệch múi giờ
-    date.setHours(12, 0, 0, 0);
+    // Nếu là ISO (dob)
+    const isoDate = new Date(dateString);
+    if (!isNaN(isoDate.getTime())) {
+      isoDate.setHours(12, 0, 0, 0);
+      return isoDate;
+    }
 
-    return date;
+    // Nếu là dd/MM/yyyy (dobFormatted)
+    const parts = dateString.split("/");
+    if (parts.length === 3) {
+      const [day, month, year] = parts.map(Number);
+      if (
+        !isNaN(day) &&
+        !isNaN(month) &&
+        !isNaN(year) &&
+        day >= 1 &&
+        day <= 31 &&
+        month >= 1 &&
+        month <= 12 &&
+        year >= 1900
+      ) {
+        const date = new Date(year, month - 1, day);
+        date.setHours(12, 0, 0, 0);
+        return date;
+      }
+    }
+
+    return new Date(); // Fallback nếu format không đúng
   };
 
-  const initialDob = user?.dob ? parseDate(user.dob) : new Date();
+  const initialDob = user?.dobFormatted
+    ? parseDate(user.dobFormatted)
+    : user?.dob
+    ? parseDate(user.dob)
+    : new Date();
+
   const [dob, setDob] = useState(initialDob);
 
   const [showPicker, setShowPicker] = useState(false);
@@ -221,9 +247,10 @@ const ChangeInformation = () => {
             >
               <TextInput
                 style={styles.value}
-                value={dob.toISOString().split("T")[0]}
+                value={user.dobFormatted}
                 editable={false}
               />
+
               {!showPicker && (
                 <Image
                   source={editIcon}

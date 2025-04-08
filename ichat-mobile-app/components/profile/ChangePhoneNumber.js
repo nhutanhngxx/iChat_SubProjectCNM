@@ -77,6 +77,7 @@ const ChangePhoneNumber = () => {
       );
 
       if (result.status === "ok") {
+        navigation.navigate("ProfileInformation");
         const phoneNumber = result.data.user.phoneNumber;
 
         await axios.put(`${API_iChat}/auth/update-phone`, {
@@ -84,7 +85,6 @@ const ChangePhoneNumber = () => {
           newPhone: phoneNumber,
         });
       }
-      navigation.navigate("ProfileScreen");
     } catch (error) {
       console.error("Xác thực OTP lỗi:", error);
       Alert.alert("Lỗi", "Đã xảy ra lỗi khi xác thực.");
@@ -184,7 +184,7 @@ const ChangePhoneNumber = () => {
 
               <TouchableOpacity
                 style={styles.button}
-                onPress={handleVerifyOTP}
+                onPress={() => handleVerifyOTP()}
                 disabled={isLoading}
               >
                 <Text style={styles.buttonText}>Xác nhận</Text>
