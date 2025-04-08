@@ -331,6 +331,58 @@ router.get("/users", async (req, res) => {
   }
 });
 
+// Lấy danh sách lời mời kết bạn
+router.get("/received-requests/:userId", async (req, res) => {
+  const { userId } = req.params;
+  try {
+    const friendRequests = await Friendship.find({
+      receiver_id: userId,
+      status: "pending",
+    });
+    const senderIds = friendRequests.map((request) => request.sender_id);
+    const senders = await User.find({ _id: { $in: senderIds } });
+    const friendRequestsWithSenderInfo = friendRequests.map((request) => {
+      const sender = senders.find(
+        (user) => user._id.toString() === request.sender_id.toString()
+      );
+      return {
+        id: sender._id,
+        full_name: sender.full_name,
+        avatar_path: sender.avatar_path,
+      };
+    });
+    res.json({ status: "ok", friendRequests: friendRequestsWithSenderInfo });
+  } catch (error) {
+    res.status(500).json({ status: "error", message: error.message });
+  }
+});
+
+// Lấy danh sách lời mời kết bạn mà người dùng đã gửi
+router.get("/sent-requests/:userId", async (req, res) => {
+  const { userId } = req.params;
+  try {
+    const friendRequests = await Friendship.find({
+      sender_id: userId,
+      status: "pending",
+    });
+    const receiverIds = friendRequests.map((request) => request.receiver_id);
+    const receivers = await User.find({ _id: { $in: receiverIds } });
+    const friendRequestsWithReceiverInfo = friendRequests.map((request) => {
+      const receiver = receivers.find(
+        (user) => user._id.toString() === request.receiver_id.toString()
+      );
+      return {
+        id: receiver._id,
+        full_name: receiver.full_name,
+        avatar_path: receiver.avatar_path,
+      };
+    });
+    res.json({ status: "ok", friendRequests: friendRequestsWithReceiverInfo });
+  } catch (error) {
+    res.status(500).json({ status: "error", message: error.message });
+  }
+});
+
 // Gửi lời mời kết bạn
 router.post("/send-friend-request", async (req, res) => {
   const { sender_id, receiver_id } = req.body;
@@ -417,8 +469,8 @@ router.post("/accept-friend-request", async (req, res) => {
   }
 });
 
-// Hủy lời mời kết bạn
-router.post("/cancel-friend-request", async (req, res) => {
+// Từ chối lời mời kết bạn
+router.post("/reject-friend-request", async (req, res) => {
   const { sender_id, receiver_id } = req.body;
 
   try {

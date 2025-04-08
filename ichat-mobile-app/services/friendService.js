@@ -11,8 +11,20 @@ const friendService = {
     }
   },
 
-  getFriendRequestByUserId: async (userId) => {
+  getReceivedRequestsByUserId: async (userId) => {
     try {
+      const response = await api.get(`/received-requests/${userId}`);
+      return response.data.friendRequests;
+    } catch (error) {
+      console.log("Friend Service Error: ", error);
+      return [];
+    }
+  },
+
+  getSentRequestsByUserId: async (userId) => {
+    try {
+      const response = await api.get(`/sent-requests/${userId}`);
+      return response.data.friendRequests;
     } catch (error) {
       console.log("Friend Service Error: ", error);
       return [];

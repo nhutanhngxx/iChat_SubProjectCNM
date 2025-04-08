@@ -13,18 +13,19 @@ import { Dimensions } from "react-native";
 import { UserContext } from "../../context/UserContext";
 import friendService from "../../services/friendService";
 
-const addRequest = 3;
-
 const FriendTab = () => {
   const navigation = useNavigation();
   const { width } = Dimensions.get("window");
   const [friendList, setFriendList] = useState([]);
+  const [addRequest, setAddRequest] = useState(0);
   const { user } = useContext(UserContext);
 
+  // Lấy danh sách bạn bè và số lượng yêu cầu kết bạn
   useEffect(() => {
     if (!user?.id) return;
     const fetchFriendList = async () => {
       const friends = await friendService.getFriendListByUserId(user.id);
+      setAddRequest(friends.length);
       setFriendList(friends);
     };
     fetchFriendList();
@@ -32,10 +33,12 @@ const FriendTab = () => {
     return () => clearInterval(interval);
   }, [user?.id]);
 
+  // Mở cuộc trò chuyện
   const handleOpenChatting = (chat) => {
     navigation.navigate("Chatting", { chat });
   };
 
+  // Render danh sách bạn bè
   const renderItem = ({ item }) => (
     <TouchableOpacity
       style={styles.itemContainer}
@@ -43,7 +46,7 @@ const FriendTab = () => {
       key={item.id}
     >
       <View style={styles.item_leftSide}>
-        <Avatar size={50} rounded source={item.avatar_path} />
+        <Avatar size={50} rounded source={{ uri: item.avatar_path }} />
         <Text style={{ fontWeight: "500", fontSize: 16 }}>
           {item.full_name}
         </Text>
