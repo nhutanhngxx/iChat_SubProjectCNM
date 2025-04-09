@@ -186,6 +186,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "gray",
     marginBottom: 10,
+    height: 50,
   },
   prefixContainer: {
     paddingHorizontal: 10,
@@ -195,7 +196,6 @@ const styles = StyleSheet.create({
   },
   phoneInput: {
     flex: 1,
-    height: 50,
     fontSize: 18,
   },
 });

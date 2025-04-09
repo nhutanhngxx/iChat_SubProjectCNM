@@ -17,6 +17,7 @@ import { UserContext } from "../../context/UserContext";
 import goBackIcon from "../../assets/icons/go-back.png";
 import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
+import { StatusBar } from "expo-status-bar";
 
 import { FirebaseRecaptchaVerifierModal } from "expo-firebase-recaptcha";
 import { firebaseConfig } from "../../config/firebase";
@@ -102,6 +103,7 @@ const ChangePhoneNumber = () => {
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.container}>
+          <StatusBar style="light" />
           <FirebaseRecaptchaVerifierModal
             ref={recaptchaVerifier}
             firebaseConfig={firebaseConfig}

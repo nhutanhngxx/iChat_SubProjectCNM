@@ -40,15 +40,10 @@ const ForgotPasswordScreen = ({ navigation }) => {
       return;
     }
 
-    const normalizePhone = (phoneNumber) => {
-      const trimmed = phoneNumber.trim();
-      if (trimmed.startsWith("0")) {
-        return trimmed.replace(/^0/, "+84");
-      }
-      return trimmed;
-    };
-
-    const formattedPhone = normalizePhone(phone);
+    // Định dạng số điện thoại
+    const formattedPhone = phone.startsWith("0")
+      ? phone.replace(/^0/, "+84")
+      : `+84${phone}`;
 
     try {
       setLoading(true);
@@ -149,13 +144,19 @@ const ForgotPasswordScreen = ({ navigation }) => {
             <Text style={styles.description}>
               Nhập số điện thoại của bạn để nhận mã xác minh
             </Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Nhập số điện thoại"
-              keyboardType="phone-pad"
-              value={phone}
-              onChangeText={setPhone}
-            />
+            <View style={styles.phoneContainer}>
+              <View style={styles.prefixContainer}>
+                <Text style={styles.prefixText}>+84</Text>
+              </View>
+              <TextInput
+                style={styles.phoneInput}
+                placeholder="Nhập số điện thoại"
+                keyboardType="phone-pad"
+                value={phone}
+                onChangeText={setPhone}
+              />
+            </View>
+
             <TouchableOpacity
               style={[styles.button, loading && { opacity: 0.6 }]}
               onPress={handleSendOTP}
@@ -276,6 +277,25 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     opacity: 0.6,
     textAlign: "center",
+  },
+  phoneContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    width: "100%",
+    borderBottomWidth: 1,
+    borderBottomColor: "gray",
+    marginBottom: 10,
+    height: 50,
+  },
+  prefixContainer: {
+    paddingHorizontal: 10,
+  },
+  prefixText: {
+    fontSize: 18,
+  },
+  phoneInput: {
+    flex: 1,
+    fontSize: 18,
   },
 });
 

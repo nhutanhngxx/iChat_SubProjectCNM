@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from "react";
 import { Text, View, Image, TouchableOpacity, StyleSheet } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { UserContext } from "../../context/UserContext";
+import { StatusBar } from "expo-status-bar";
 
 import avatar from "../../assets/images/avatars/avatar1.png";
 
@@ -34,6 +35,9 @@ const ProfileInformation = () => {
   }, []);
   return (
     <View style={{ flex: 1, backgroundColor: "#fff", paddingTop: 40 }}>
+      <StatusBar style="dark" />
+
+      {/* Header */}
       <View
         style={{
           backgroundColor: "#fff",

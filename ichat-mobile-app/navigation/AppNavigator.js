@@ -66,6 +66,7 @@ export default function AppNavigator() {
           <Stack.Screen
             name="ChangePassword"
             component={ChangePasswordScreen}
+            options={{ animation: "none" }}
           />
           <Stack.Screen
             name="SearchScreen"
