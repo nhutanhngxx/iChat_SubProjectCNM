@@ -91,6 +91,7 @@ const RegisterScreen = () => {
             <Text style={{ fontSize: 10, opacity: 0.5, marginBottom: 40 }}>
               Tạo tài khoản mới
             </Text>
+
             {/* Input phone number */}
             <View style={styles.phoneInput}>
               <View style={styles.countryCode}>
@@ -180,7 +181,7 @@ const RegisterScreen = () => {
               <Text
                 style={[
                   styles.question,
-                  { color: "#0C098C", fontWeight: "bold" },
+                  { color: "#0C098C", fontWeight: "bold", opacity: 0.5 },
                 ]}
                 onPress={() => handleLogin()}
               >

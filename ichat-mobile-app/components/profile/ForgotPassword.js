@@ -40,15 +40,10 @@ const ForgotPasswordScreen = ({ navigation }) => {
       return;
     }
 
-    const normalizePhone = (phoneNumber) => {
-      const trimmed = phoneNumber.trim();
-      if (trimmed.startsWith("0")) {
-        return trimmed.replace(/^0/, "+84");
-      }
-      return trimmed;
-    };
-
-    const formattedPhone = normalizePhone(phone);
+    // Định dạng số điện thoại
+    const formattedPhone = phone.startsWith("0")
+      ? phone.replace(/^0/, "+84")
+      : `+84${phone}`;
 
     try {
       setLoading(true);
@@ -116,7 +111,7 @@ const ForgotPasswordScreen = ({ navigation }) => {
 
     try {
       setLoading(true);
-      await axios.put(`${API_iChat}/auth/reset-password`, {
+      await axios.post(`${API_iChat}/auth/reset-password`, {
         phone: formattedPhone,
         newPassword,
       });
@@ -126,6 +121,10 @@ const ForgotPasswordScreen = ({ navigation }) => {
       );
       navigation.goBack();
     } catch (error) {
+      console.log(
+        "Lỗi khi đổi mật khẩu:",
+        error?.response?.data || error.message
+      );
       Alert.alert("Lỗi", "Không thể đặt lại mật khẩu.");
     } finally {
       setLoading(false);
@@ -137,17 +136,23 @@ const ForgotPasswordScreen = ({ navigation }) => {
       case 1:
         return (
           <>
-            <Text style={styles.title}>Quên mật khẩu</Text>
+            <Text style={styles.title}>Bạn quên mật khẩu à?</Text>
             <Text style={styles.description}>
-              Vui lòng nhập số điện thoại để đăng ký lại mật khẩu
+              Nhập số điện thoại của bạn để nhận mã xác minh
             </Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Nhập số điện thoại"
-              keyboardType="phone-pad"
-              value={phone}
-              onChangeText={setPhone}
-            />
+            <View style={styles.phoneContainer}>
+              <View style={styles.prefixContainer}>
+                <Text style={styles.prefixText}>+84</Text>
+              </View>
+              <TextInput
+                style={styles.phoneInput}
+                placeholder="Nhập số điện thoại"
+                keyboardType="phone-pad"
+                value={phone}
+                onChangeText={setPhone}
+              />
+            </View>
+
             <TouchableOpacity
               style={[styles.button, loading && { opacity: 0.6 }]}
               onPress={handleSendOTP}
@@ -163,6 +168,9 @@ const ForgotPasswordScreen = ({ navigation }) => {
         return (
           <>
             <Text style={styles.title}>Nhập mã OTP</Text>
+            <Text style={styles.description}>
+              Không chia sẻ mã OTP với bất kỳ ai nhé
+            </Text>
             <TextInput
               style={styles.input}
               placeholder="Nhập mã OTP"
@@ -180,6 +188,9 @@ const ForgotPasswordScreen = ({ navigation }) => {
         return (
           <>
             <Text style={styles.title}>Đặt lại mật khẩu</Text>
+            <Text style={styles.description}>
+              Đặt lại mật khẩu mới cho tài khoản của bạn
+            </Text>
             <TextInput
               style={styles.input}
               placeholder="Nhập mật khẩu mới"
@@ -232,7 +243,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    fontSize: 24,
+    fontSize: 30,
     marginBottom: 10,
     fontWeight: "bold",
     textAlign: "center",
@@ -244,6 +255,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
     marginBottom: 20,
+    fontSize: 18,
   },
   button: {
     backgroundColor: "#3083F9",
@@ -261,6 +273,25 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     opacity: 0.6,
     textAlign: "center",
+  },
+  phoneContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    width: "100%",
+    borderBottomWidth: 1,
+    borderBottomColor: "gray",
+    marginBottom: 10,
+    height: 50,
+  },
+  prefixContainer: {
+    paddingHorizontal: 10,
+  },
+  prefixText: {
+    fontSize: 18,
+  },
+  phoneInput: {
+    flex: 1,
+    fontSize: 18,
   },
 });
 

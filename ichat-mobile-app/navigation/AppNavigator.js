@@ -25,6 +25,7 @@ import AccountSecurity from "../components/profile/AccountSecurity";
 import ChangePhoneNumber from "../components/profile/ChangePhoneNumber";
 import ViewProfile from "../components/profile/ViewProfile";
 import ForgotPasswordScreen from "../components/profile/ForgotPassword";
+import ChangePasswordScreen from "../components/profile/ChangePassword";
 
 const Stack = createStackNavigator();
 
@@ -52,11 +53,20 @@ export default function AppNavigator() {
           <Stack.Screen name="ViewImagePost" component={ViewImagePost} />
           <Stack.Screen name="ViewImageChat" component={ViewImageChat} />
           <Stack.Screen name="Option" component={Option} />
-          <Stack.Screen name="AddFriend" component={AddFriend} />
+          <Stack.Screen
+            name="AddFriend"
+            component={AddFriend}
+            options={{ animation: "none" }}
+          />
           <Stack.Screen name="FriendRequest" component={FriendRequest} />
           <Stack.Screen
             name="ChangeInformation"
             component={ChangeInformation}
+          />
+          <Stack.Screen
+            name="ChangePassword"
+            component={ChangePasswordScreen}
+            options={{ animation: "none" }}
           />
           <Stack.Screen
             name="SearchScreen"

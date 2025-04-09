@@ -108,6 +108,80 @@ router.post("/reset-password", async (req, res) => {
   }
 });
 
+router.put("/change-password", async (req, res) => {
+  const { userId, currentPassword, newPassword } = req.body;
+
+  if (!newPassword || newPassword.length < 6) {
+    return res.status(400).json({
+      status: "error",
+      message: "Mật khẩu mới phải có ít nhất 6 ký tự.",
+    });
+  }
+
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      return res
+        .status(404)
+        .json({ status: "error", message: "Không tìm thấy người dùng." });
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res
+        .status(401)
+        .json({ status: "error", message: "Mật khẩu hiện tại không đúng." });
+    }
+
+    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedNewPassword;
+    await user.save();
+
+    return res
+      .status(200)
+      .json({ status: "ok", message: "Đổi mật khẩu thành công." });
+  } catch (error) {
+    return res.status(500).json({ status: "error", message: "Lỗi máy chủ." });
+  }
+});
+
+router.delete("/auth/delete-account", async (req, res) => {
+  const { userId, password } = req.body;
+
+  if (!userId || !password) {
+    return res
+      .status(400)
+      .json({ status: "error", message: "Thiếu thông tin cần thiết." });
+  }
+
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      return res
+        .status(404)
+        .json({ status: "error", message: "Không tìm thấy người dùng." });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res
+        .status(401)
+        .json({ status: "error", message: "Mật khẩu không đúng." });
+    }
+
+    await User.findByIdAndDelete(userId); // Hard delete: Sẽ xóa tài khoản vĩnh viễn
+    // Hoặc nếu muốn soft delete: Xóa tài khoản mà không xóa dữ liệu, chỉ cần đánh dấu là đã xóa
+    // user.isDeleted = true;
+    // await user.save();
+
+    return res
+      .status(200)
+      .json({ status: "ok", message: "Tài khoản đã được xóa." });
+  } catch (error) {
+    return res.status(500).json({ status: "error", message: "Đã xảy ra lỗi." });
+  }
+});
+
 // Xác thực OTP
 router.post("/verify-otp", async (req, res) => {
   const { phone, otp } = req.body;

@@ -10,8 +10,6 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { UserContext } from "../../context/UserContext";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import axios from "axios";
 import authService from "../../services/authService";
 
 const HeaderMessages = () => {
