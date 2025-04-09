@@ -1,5 +1,5 @@
 import { CameraView, Camera } from "expo-camera";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect,useContext } from "react";
 import {
   Button,
   StyleSheet,
@@ -7,12 +7,14 @@ import {
   TouchableOpacity,
   View,
   Image,
+  Alert,
 } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useNavigation } from "@react-navigation/native";
 import * as MediaLibrary from "expo-media-library";
 import Slider from "@react-native-community/slider";
 import { StatusBar } from "expo-status-bar";
+import { UserContext } from "../../context/UserContext";
 
 export default function CameraFunction() {
   const [cameraPermission, setCameraPermission] = useState(); // Trạng thái quyền truy cập camera
@@ -26,9 +28,45 @@ export default function CameraFunction() {
   const [recording, setRecording] = useState(false); // Trạng thái quay video (true khi đang quay)
   const [zoom, setZoom] = useState(0); // Mức độ thu phóng của camera
   const [scanned, setScanned] = useState(false); // Trạng thái đã quét mã QR hay chưa (mặc định là chưa quét)
+  const scannedRef = useRef(false); // Tham chiếu để theo dõi trạng thái quét mã QR
+
   let cameraRef = useRef(); // Tạo một tham chiếu đến camera
   const navigation = useNavigation(); // Hook để điều hướng giữa các màn hình
-
+  
+  const { user } = useContext(UserContext);
+  const sendQrSessionToServer = async (sessionId) => {
+    try {
+      console.log("📱 Mobile gửi sessionId:", sessionId); // <-- Thêm dòng log này ở đây
+      const response = await fetch("http://172.29.4.1:5001/auth/qr-login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ sessionId,
+          userInfo: {
+            id: user?.id,
+            name: user?.full_name,
+            phone: user?.phone,
+            avatar: user?.avatar_path,
+          },
+         }),
+      });
+  
+      const data = await response.json();
+  
+      if (response.ok) {
+        alert("Gửi yêu cầu thành công!");
+        console.log("QR login request sent:", data);
+      } else {
+        alert("Gửi yêu cầu thất bại!");
+        console.error("Lỗi từ server:", data);
+      }
+    } catch (error) {
+      alert("Đã xảy ra lỗi kết nối server.");
+      console.error("Lỗi khi gửi sessionId:", error);
+    }
+  };
+  
   // Khi màn hình được hiển thị lần đầu tiên, useEffect sẽ chạy và kiểm tra xem ứng dụng có quyền truy cập Camera, Microphone và Thư viện phương tiện hay không.
   useEffect(() => {
     (async () => {
@@ -156,14 +194,50 @@ export default function CameraFunction() {
   }
 
   const handleBarCodeScanned = ({ type, data }) => {
-    if (!scanned) {
-      setScanned(true);
-      alert(`Đã quét mã QR: ${data}`);
-      console.log(`Đã quét mã QR: ${data}`);
-      // Nếu muốn reset sau vài giây để có thể quét lại
-      // setTimeout(() => setScanned(false), 3000);
+    if (scanned) return;
+  
+  //   // Đặt scanned = true NGAY để chặn các lần quét tiếp theo
+  // setScanned(true);
+  if (scannedRef.current) return;
+
+  scannedRef.current = true; // đánh dấu đã quét ngay lập tức (đồng bộ)
+    console.log(`Đã quét mã QR: ${data}`);
+  
+    let sessionId = null;
+  
+    try {
+      const parsed = JSON.parse(data);
+      sessionId = parsed?.sessionId;
+    } catch (error) {
+      console.error("QR không phải JSON hợp lệ:", error);
+      Alert.alert("Lỗi", "QR không hợp lệ! Dữ liệu phải là JSON có chứa sessionId.");
+      setTimeout(() => setScanned(false), 3000);
+      return;
     }
+  
+    if (!sessionId) {
+      Alert.alert("Lỗi", "Không tìm thấy sessionId trong mã QR.");
+      setTimeout(() => setScanned(false), 3000);
+      return;
+    }
+  
+    Alert.alert(
+      "Đăng nhập web",
+      "Bạn có muốn đăng nhập tại trình duyệt không?",
+      [
+        { text: "Huỷ", style: "cancel" },
+        {
+          text: "Đồng ý",
+          onPress: () => {
+            sendQrSessionToServer(sessionId);
+          },
+        },
+      ]
+    );
+  
+    setTimeout(() => setScanned(false), 5000);
   };
+  
 
   // Thiết kế giao diện máy ảnh
   return (

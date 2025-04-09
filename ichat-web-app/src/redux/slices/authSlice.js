@@ -52,6 +52,36 @@ export const logoutUser = createAsyncThunk(
   }
 );
 
+// Action async để xác thực người dùng với token
+export const authenticateWithToken = createAsyncThunk(
+  "auth/authenticateWithToken",
+  async (_, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${API_URL}auth/me`, {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Token không hợp lệ");
+      }
+
+      // Lưu user vào localStorage
+      localStorage.setItem("user", JSON.stringify(data.user));
+
+      return { user: data.user, token };
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+
 const authSlice = createSlice({
   name: "auth",
   initialState: {
@@ -90,7 +120,23 @@ const authSlice = createSlice({
       .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+      })
+      .addCase(authenticateWithToken.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(authenticateWithToken.fulfilled, (state, action) => {
+        state.loading = false;
+        state.user = action.payload.user;
+        state.token = action.payload.token;
+      })
+      .addCase(authenticateWithToken.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+        state.token = null;
+        state.user = null;
       });
+
   },
 });
 

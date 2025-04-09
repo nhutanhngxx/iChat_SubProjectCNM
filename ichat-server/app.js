@@ -1,18 +1,42 @@
 const express = require("express");
 const connectDB = require("./config/db");
 require("dotenv").config();
+const http = require("http");
+const { Server } = require("socket.io");
+const cors = require("cors");
 
+const socketHandler = require("./sockets/socketHandler");
+
+// Khởi tạo Express app và HTTP server
 const app = express();
+const server = http.createServer(app);
+
+// Tạo socket server
+const io = new Server(server, {
+  cors: {
+    origin: ["http://localhost:3000", "http://localhost:8000"],
+    credentials: true,
+    methods: ["GET", "POST"],
+  },
+});
+
+// Gắn io vào app để sử dụng trong controller
+app.set("io", io);
+
+// Kết nối MongoDB
+connectDB();
+
+// Middleware
 app.use(express.json());
 
-const cors = require("cors");
+// Cấu hình CORS
 const corsOptions = {
   origin: ["http://localhost:3000", "http://localhost:8000"],
   credentials: true,
 };
 app.use(cors(corsOptions));
 
-// Middleware xử lý CORS
+// Middleware xử lý CORS cho tất cả request
 app.use((req, res, next) => {
   const allowedOrigins = ["http://localhost:3000", "http://localhost:8000"];
   const origin = req.headers.origin;
@@ -35,20 +59,11 @@ app.use((req, res, next) => {
   next();
 });
 
-// Socket.io => Real-time
-const http = require("http");
-const { Server } = require("socket.io");
-
-const server = http.createServer(app);
-const io = new Server(server, {
-  cors: {
-    origin: "*",
-    methods: ["GET", "POST"],
-  },
+// Inject io vào req để sử dụng trong controller
+app.use((req, res, next) => {
+  req.io = io;
+  next();
 });
-
-// Kết nối MongoDB
-connectDB();
 
 // Import routes
 const userRoutes = require("./routes/userRoutes");
@@ -56,6 +71,7 @@ const messageRoutes = require("./routes/messageRoutes");
 const groupRoutes = require("./routes/groupRoutes");
 const authRoutes = require("./routes/authRoutes");
 
+// Routes
 app.use("", userRoutes);
 app.use("", messageRoutes);
 app.use("", groupRoutes);
@@ -65,8 +81,11 @@ app.get("/", (req, res) => {
   res.send({ status: "Server started" });
 });
 
+// Gọi socket handler để xử lý real-time
+socketHandler(io);
+
+// Khởi chạy server
 const PORT = process.env.PORT || 5001;
-app.listen(PORT, () => {
-  // đổi về app.listen nếu muốn chạy server trước đó
-  console.log(`Server is running on port ${PORT}`);
+server.listen(PORT, () => {
+  console.log(`🚀 Server is running on port ${PORT}`);
 });

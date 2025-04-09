@@ -9,6 +9,7 @@ import { loginUser } from "../../redux/slices/authSlice";
 import { useNavigate } from "react-router-dom";
 import "./LoginWithPass.css";
 import { Modal, Spinner } from "react-bootstrap";
+import LoginWithQR from "./LoginWithQR"
 
 export default function LoginWithPass() {
   // Khai báo state cho form đăng nhập
@@ -124,10 +125,11 @@ export default function LoginWithPass() {
         </div>
 
         {loginWithQR ? (
-          <div className="qr-container">
-            <IoMdQrScanner className="qr-icon" />
-            <p>Chỉ dùng đăng nhập iChat trên máy tính</p>
-          </div>
+          // <div className="qr-container">
+          //   <IoMdQrScanner className="qr-icon" />
+          //   <p>Chỉ dùng đăng nhập iChat trên máy tính</p>
+          // </div>
+          <LoginWithQR />
         ) : (
           <>
             <div className="input-container">

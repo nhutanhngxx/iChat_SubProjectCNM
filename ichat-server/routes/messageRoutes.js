@@ -390,7 +390,6 @@ router.get("/messages", async (req, res) => {
   }
 });
 
-<<<<<<< HEAD
 // // API lấy danh sách người nhận gần nhất theo ID người gửi
 // router.get("/recent-receivers/:senderId", async (req, res) => {
 //   try {
@@ -587,7 +586,8 @@ router.get("/recent-receivers/:senderId", async (req, res) => {
     res.status(200).json({ success: true, data: recentReceivers });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
-=======
+  }
+});
 router.get("/message-cards/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
@@ -613,7 +613,6 @@ router.post("/messages/message-cards", async (req, res) => {
     res.status(201).json({ status: "ok", data: newMessageCard });
   } catch (error) {
     res.status(500).json({ status: "error", message: error.message });
->>>>>>> b829b0d9f5efab3b406f8f028fcde6f8ee876a68
   }
 });
 

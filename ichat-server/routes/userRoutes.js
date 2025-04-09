@@ -290,8 +290,6 @@ router.post("/userdata", async (req, res) => {
     res
       .status(401)
       .json({ status: "error", message: "Invalid or expired token" });
-<<<<<<< HEAD
-=======
   }
 });
 
@@ -308,7 +306,6 @@ router.get("/users/:id", async (req, res) => {
     res.json({ status: "ok", user });
   } catch (error) {
     res.status(500).json({ status: "error", message: error.message });
->>>>>>> b829b0d9f5efab3b406f8f028fcde6f8ee876a68
   }
 });
 

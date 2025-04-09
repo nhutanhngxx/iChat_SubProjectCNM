@@ -5,10 +5,16 @@ const axios = require("axios");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const textflow = require("textflow.js");
+const authController = require("../controllers/authController");
 textflow.useKey(process.env.TEXTFLOW_API_KEY);
 
 const User = require("../models/UserDetails");
 const OTP = require("../models/OTP");
+
+router.get("/qr-session", authController.getQRSession);
+router.post("/qr-login", authController.qrLogin);
+router.post("/confirm-login", authController.confirmLogin);
+router.get("/me", authController.getMe);
 
 // Kiểm tra số điện thoại đã tồn tại hay chưa
 router.post("/check-existed-phone", async (req, res) => {

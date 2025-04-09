@@ -1,13 +1,7 @@
 const express = require("express");
-<<<<<<< HEAD
-const GroupMembers = require("../models/GroupMember");
-const GroupChats = require("../models/GroupChat");
-const Message = require("../models/Messages");
-=======
 const GroupMember = require("../models/GroupMember");
 const GroupChat = require("../models/GroupChat");
 const User = require("../models/UserDetails");
->>>>>>> b829b0d9f5efab3b406f8f028fcde6f8ee876a68
 
 const router = express.Router();
 
@@ -29,7 +23,6 @@ router.get("/groups-message/:userId", async (req, res) => {
     const groups = await GroupMembers.find({ user_id: req.params.userId });
     const groupIds = groups.map((group) => group.group_id);
 
-<<<<<<< HEAD
     // Lấy thông tin nhóm
     const groupChats = await GroupChats.find({ _id: { $in: groupIds } });
 
@@ -66,7 +59,6 @@ router.get("/groups-message/:userId", async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 });
-=======
 // Tìm kiếm nhóm
 router.get("/groups", async (req, res) => {
   try {
@@ -124,5 +116,4 @@ router.get("/groups/:groupId/members", async (req, res) => {
 //   }
 // });
 
->>>>>>> b829b0d9f5efab3b406f8f028fcde6f8ee876a68
 module.exports = router;
