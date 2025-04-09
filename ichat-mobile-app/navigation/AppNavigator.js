@@ -43,6 +43,7 @@ export default function AppNavigator() {
             component={ProfileInformation}
             options={{ animation: "none" }}
           />
+
           <Stack.Screen name="Chatting" component={Chatting} />
           <Stack.Screen name="QRScanner" component={QRScanner} />
           <Stack.Screen name="ViewImagePost" component={ViewImagePost} />

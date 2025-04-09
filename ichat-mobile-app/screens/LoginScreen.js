@@ -13,7 +13,6 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import axios from "axios";
 import CustomButton from "../components/common/CustomButton";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -34,8 +33,12 @@ const LoginScreen = ({ navigation }) => {
     }
     setLoading(true);
     try {
+      const formattedPhone = phone.startsWith("0")
+        ? phone.replace(/^0/, "+84")
+        : `+84${phone}`;
+
       const response = await axios.post(`${API_iChat}/login`, {
-        phone,
+        phone: formattedPhone,
         password,
       });
       const { accessToken, user } = response.data;
@@ -73,13 +76,19 @@ const LoginScreen = ({ navigation }) => {
                 Vui lòng nhập số điện thoại và mật khẩu để đăng nhập
               </Text>
 
-              <TextInput
-                style={styles.input}
-                placeholder="Số điện thoại"
-                keyboardType="phone-pad"
-                value={phone}
-                onChangeText={setPhone}
-              />
+              <View style={styles.phoneContainer}>
+                <View style={styles.prefixContainer}>
+                  <Text style={styles.prefixText}>+84</Text>
+                </View>
+                <TextInput
+                  style={styles.phoneInput}
+                  placeholder="Nhập số điện thoại"
+                  keyboardType="phone-pad"
+                  value={phone}
+                  onChangeText={setPhone}
+                  maxLength={10} // không tính +84
+                />
+              </View>
               <TextInput
                 style={styles.input}
                 placeholder="Mật khẩu"
@@ -88,7 +97,7 @@ const LoginScreen = ({ navigation }) => {
                 onChangeText={setPassword}
               />
               <Text
-                onPress={() => alert("Quên mật khẩu?")}
+                onPress={() => alert("Chức năng này chưa khả dụng")}
                 style={styles.forgotPassword}
               >
                 Quên mật khẩu?
@@ -162,6 +171,28 @@ const styles = StyleSheet.create({
   register: {
     color: "#0C098C",
     fontWeight: "bold",
+  },
+  phoneContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    width: "100%",
+    borderBottomWidth: 1,
+    borderBottomColor: "gray",
+    marginBottom: 10,
+  },
+
+  prefixContainer: {
+    paddingHorizontal: 10,
+  },
+
+  prefixText: {
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+
+  phoneInput: {
+    flex: 1,
+    height: 50,
   },
 });
 
