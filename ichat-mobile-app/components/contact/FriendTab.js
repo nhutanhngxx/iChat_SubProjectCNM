@@ -20,12 +20,23 @@ const FriendTab = () => {
   const [addRequest, setAddRequest] = useState(0);
   const { user } = useContext(UserContext);
 
+  // Lấy danh sách lời mời kết bạn đã nhận
+  useEffect(() => {
+    if (!user?.id) return;
+    const fetchFriendRequest = async () => {
+      const requests = await friendService.getReceivedRequestsByUserId(user.id);
+      setAddRequest(requests.length);
+    };
+    fetchFriendRequest();
+    const interval = setInterval(fetchFriendRequest, 1000);
+    return () => clearInterval(interval);
+  }, [user?.id]);
+
   // Lấy danh sách bạn bè và số lượng yêu cầu kết bạn
   useEffect(() => {
     if (!user?.id) return;
     const fetchFriendList = async () => {
       const friends = await friendService.getFriendListByUserId(user.id);
-      setAddRequest(friends.length);
       setFriendList(friends);
     };
     fetchFriendList();

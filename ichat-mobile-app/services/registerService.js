@@ -1,4 +1,4 @@
-import api from "./api";
+import { apiService } from "./api";
 import { auth } from "../config/firebase";
 import { PhoneAuthProvider, signInWithCredential } from "firebase/auth";
 
@@ -15,7 +15,9 @@ const registerService = {
       phone = "+84" + phone.replace(/^(0|84)/, "");
 
       // Check if phone number is existed
-      const response = await api.post("/auth/check-existed-phone", { phone });
+      const response = await apiService.post("/auth/check-existed-phone", {
+        phone,
+      });
       if (response.data.status !== "ok") {
         return {
           status: "error",
@@ -102,7 +104,7 @@ const registerService = {
           message: "Thiếu thông tin đăng ký",
         };
       }
-      const response = await api.post("/auth/register", {
+      const response = await apiService.post("/auth/register", {
         tempToken,
         phone,
         password,

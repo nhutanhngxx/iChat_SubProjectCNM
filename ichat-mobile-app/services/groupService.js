@@ -1,4 +1,4 @@
-import api from "./api";
+import { apiService } from "./api";
 import messageService from "./messageService";
 
 // Tính thời gian
@@ -50,7 +50,7 @@ const formatGroupList = async (groups) => {
 const groupService = {
   getAllGroupsByUserId: async (userId) => {
     try {
-      const response = await api.get(`/groups/${userId}`);
+      const response = await apiService.get(`/groups/${userId}`);
       return formatGroupList(response.data);
     } catch (error) {
       console.log("Group Service Error: ", error);
@@ -59,7 +59,7 @@ const groupService = {
   },
   getGroupMembers: async (groupId) => {
     try {
-      const members = await api.get(`/groups/${groupId}/members`);
+      const members = await apiService.get(`/groups/${groupId}/members`);
       return members.data.data;
     } catch (error) {
       console.log("Group Service Error: ", error);
