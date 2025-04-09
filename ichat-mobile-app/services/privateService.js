@@ -1,6 +1,3 @@
-import api from "./api";
-import messageService from "./messageService";
-
 // Tính thời gian
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";

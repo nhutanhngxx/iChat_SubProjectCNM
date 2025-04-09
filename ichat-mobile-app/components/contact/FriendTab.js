@@ -1,6 +1,6 @@
 import { useNavigation } from "@react-navigation/native";
 import { Avatar } from "@rneui/themed";
-import React from "react";
+import React, { useContext, useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -10,49 +10,57 @@ import {
   StyleSheet,
 } from "react-native";
 import { Dimensions } from "react-native";
-
-const friendList = [
-  {
-    id: "1",
-    name: "Nguyễn Nhựt Anh",
-    lastMessage: "[Hình ảnh]",
-    time: "1 phút trước",
-    avatar: require("../../assets/images/avatars/avatar1.png"),
-  },
-  {
-    id: "2",
-    name: "Trần Minh Quân",
-    lastMessage: "Xin chào!",
-    time: "5 phút trước",
-    avatar: require("../../assets/images/avatars/avatar2.png"),
-  },
-  {
-    id: "3",
-    name: "Lê Phương Thảo",
-    lastMessage: "Bạn khỏe không?",
-    time: "10 phút trước",
-    avatar: require("../../assets/images/avatars/avatar3.png"),
-  },
-];
-
-const addRequest = 3;
+import { UserContext } from "../../context/UserContext";
+import friendService from "../../services/friendService";
 
 const FriendTab = () => {
   const navigation = useNavigation();
   const { width } = Dimensions.get("window");
+  const [friendList, setFriendList] = useState([]);
+  const [addRequest, setAddRequest] = useState(0);
+  const { user } = useContext(UserContext);
 
+  // Lấy danh sách lời mời kết bạn đã nhận
+  useEffect(() => {
+    if (!user?.id) return;
+    const fetchFriendRequest = async () => {
+      const requests = await friendService.getReceivedRequestsByUserId(user.id);
+      setAddRequest(requests.length);
+    };
+    fetchFriendRequest();
+    const interval = setInterval(fetchFriendRequest, 1000);
+    return () => clearInterval(interval);
+  }, [user?.id]);
+
+  // Lấy danh sách bạn bè và số lượng yêu cầu kết bạn
+  useEffect(() => {
+    if (!user?.id) return;
+    const fetchFriendList = async () => {
+      const friends = await friendService.getFriendListByUserId(user.id);
+      setFriendList(friends);
+    };
+    fetchFriendList();
+    const interval = setInterval(fetchFriendList, 1000);
+    return () => clearInterval(interval);
+  }, [user?.id]);
+
+  // Mở cuộc trò chuyện
   const handleOpenChatting = (chat) => {
     navigation.navigate("Chatting", { chat });
   };
 
+  // Render danh sách bạn bè
   const renderItem = ({ item }) => (
     <TouchableOpacity
       style={styles.itemContainer}
       onPress={() => handleOpenChatting(item)}
+      key={item.id}
     >
       <View style={styles.item_leftSide}>
-        <Avatar size={50} rounded source={item.avatar} />
-        <Text style={{ fontWeight: "500", fontSize: 16 }}>{item.name}</Text>
+        <Avatar size={50} rounded source={{ uri: item.avatar_path }} />
+        <Text style={{ fontWeight: "500", fontSize: 16 }}>
+          {item.full_name}
+        </Text>
       </View>
       <View style={{ display: "flex", flexDirection: "row", gap: 20 }}>
         <Image

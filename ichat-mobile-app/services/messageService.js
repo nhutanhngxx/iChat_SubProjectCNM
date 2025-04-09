@@ -1,10 +1,10 @@
-import api from "./api";
+import { apiService } from "./api";
 
 const messageService = {
   getMessagesByGroupId: async (chatId) => {
     try {
       if (chatId) {
-        const response = await api.get(`/messages/${chatId}`);
+        const response = await apiService.get(`/messages/${chatId}`);
         if (response.data.status === "ok") return response.data.data;
       } else return;
     } catch (error) {

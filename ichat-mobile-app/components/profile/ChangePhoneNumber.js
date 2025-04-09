@@ -9,12 +9,15 @@ import {
   Image,
   Keyboard,
   TouchableWithoutFeedback,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 
 import { UserContext } from "../../context/UserContext";
 import goBackIcon from "../../assets/icons/go-back.png";
 import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
+import { StatusBar } from "expo-status-bar";
 
 import { FirebaseRecaptchaVerifierModal } from "expo-firebase-recaptcha";
 import { firebaseConfig } from "../../config/firebase";
@@ -23,7 +26,7 @@ import registerService from "../../services/registerService";
 
 const maskPhoneNumber = (phone) => {
   if (!phone || phone.length < 10) return phone;
-  return phone.slice(0, 3) + "****" + phone.slice(-3);
+  return phone.slice(0, 5) + "***" + phone.slice(-3);
 };
 
 const ChangePhoneNumber = () => {
@@ -94,115 +97,138 @@ const ChangePhoneNumber = () => {
   };
 
   return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <View style={styles.container}>
-        <FirebaseRecaptchaVerifierModal
-          ref={recaptchaVerifier}
-          firebaseConfig={firebaseConfig}
-        />
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={{ flexDirection: "row", alignItems: "center", gap: 5 }}
-            onPress={() => navigation.goBack()}
-          >
-            <Image
-              source={goBackIcon}
-              style={{ width: 25, height: 25, tintColor: "#fff" }}
-            />
-            <Text style={styles.headerTitle}>Thay đổi số điện thoại</Text>
-          </TouchableOpacity>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "android" ? "padding" : "height"}
+      style={{ flex: 1 }}
+    >
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <View style={styles.container}>
+          <StatusBar style="light" />
+          <FirebaseRecaptchaVerifierModal
+            ref={recaptchaVerifier}
+            firebaseConfig={firebaseConfig}
+          />
+          <View style={styles.header}>
+            <TouchableOpacity
+              style={{ flexDirection: "row", alignItems: "center", gap: 5 }}
+              onPress={() => navigation.goBack()}
+            >
+              <Image
+                source={goBackIcon}
+                style={{ width: 25, height: 25, tintColor: "#fff" }}
+              />
+              <Text style={styles.headerTitle}>Thay đổi số điện thoại</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={{ padding: 20, flex: 1 }}>
+            {step === 1 ? (
+              <>
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Số điện thoại hiện tại</Text>
+                  <Text style={styles.disabledInput}>
+                    {maskPhoneNumber(user?.phone)}
+                  </Text>
+                </View>
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Số điện thoại mới</Text>
+                  <View
+                    style={
+                      Platform.OS === "ios"
+                        ? [styles.phoneInputContainer, { paddingVertical: 10 }]
+                        : styles.phoneInputContainer
+                    }
+                  >
+                    <View style={styles.countryCodeBox}>
+                      <Text style={styles.countryCodeText}>+84</Text>
+                    </View>
+                    <TextInput
+                      style={styles.phoneInput}
+                      placeholder="Nhập số điện thoại"
+                      keyboardType="phone-pad"
+                      value={newPhone}
+                      onChangeText={setNewPhone}
+                      maxLength={10}
+                      placeholderTextColor="#999"
+                    />
+                  </View>
+                </View>
+
+                <TouchableOpacity
+                  style={styles.button}
+                  onPress={handleRequestOTP}
+                  disabled={isLoading}
+                >
+                  <Text style={styles.buttonText}>Gửi mã xác thực</Text>
+                </TouchableOpacity>
+
+                <View style={{ height: 50 }}></View>
+
+                <View style={styles.noticeBox}>
+                  <Text style={styles.sectionTitle}>Thông tin</Text>
+                  <Text style={styles.notice}>
+                    • Sau khi thay đổi, tài khoản sẽ được liên kết với số điện
+                    thoại mới.
+                  </Text>
+                  <Text style={styles.notice}>
+                    • Bạn bè và người lạ có thể tìm thấy bạn qua số điện thoại
+                    mới.
+                  </Text>
+                </View>
+
+                <View
+                  style={[styles.noticeBox, { backgroundColor: "#fff0f0" }]}
+                >
+                  <Text style={[styles.sectionTitle, { color: "#d32f2f" }]}>
+                    Lưu ý
+                  </Text>
+                  <Text style={[styles.notice, { color: "#d32f2f" }]}>
+                    • Mỗi tài khoản chỉ được liên kết với một số điện thoại.
+                  </Text>
+                </View>
+              </>
+            ) : (
+              <>
+                <Text style={styles.label}>
+                  Mã xác thực đã được gửi đến số:{" "}
+                  <Text style={{ fontWeight: "400" }}>{newPhone}</Text>
+                </Text>
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Nhập mã OTP</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Nhập mã OTP"
+                    keyboardType="number-pad"
+                    value={otp}
+                    onChangeText={setOtp}
+                    maxLength={6}
+                  />
+                </View>
+
+                <TouchableOpacity
+                  style={styles.button}
+                  onPress={() => handleVerifyOTP()}
+                  disabled={isLoading}
+                >
+                  <Text style={styles.buttonText}>Xác nhận</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={() => {
+                    setStep(1);
+                    setOtp("");
+                  }}
+                >
+                  <Text style={styles.link}>Nhập lại số điện thoại</Text>
+                </TouchableOpacity>
+              </>
+            )}
+          </View>
         </View>
-
-        <View style={{ padding: 20, flex: 1 }}>
-          {step === 1 ? (
-            <>
-              <View style={styles.noticeBox}>
-                <Text style={styles.sectionTitle}>Thông tin</Text>
-                <Text style={styles.notice}>
-                  • Sau khi thay đổi, tài khoản sẽ được liên kết với số điện
-                  thoại mới.
-                </Text>
-                <Text style={styles.notice}>
-                  • Bạn bè và người lạ có thể tìm thấy bạn qua số điện thoại
-                  mới.
-                </Text>
-              </View>
-
-              <View style={[styles.noticeBox, { backgroundColor: "#fff0f0" }]}>
-                <Text style={[styles.sectionTitle, { color: "#d32f2f" }]}>
-                  Lưu ý
-                </Text>
-                <Text style={[styles.notice, { color: "#d32f2f" }]}>
-                  • Mỗi tài khoản chỉ được liên kết với một số điện thoại.
-                </Text>
-              </View>
-
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>Số điện thoại hiện tại</Text>
-                <Text style={styles.disabledInput}>
-                  {maskPhoneNumber(user?.phone)}
-                </Text>
-              </View>
-
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>Số điện thoại mới</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Nhập số điện thoại mới"
-                  keyboardType="phone-pad"
-                  value={newPhone}
-                  onChangeText={setNewPhone}
-                />
-              </View>
-
-              <TouchableOpacity
-                style={styles.button}
-                onPress={handleRequestOTP}
-                disabled={isLoading}
-              >
-                <Text style={styles.buttonText}>Gửi mã xác thực</Text>
-              </TouchableOpacity>
-            </>
-          ) : (
-            <>
-              <Text style={styles.label}>
-                Mã xác thực đã được gửi đến số:{" "}
-                <Text style={{ fontWeight: "400" }}>{newPhone}</Text>
-              </Text>
-
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>Nhập mã OTP</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Nhập mã OTP"
-                  keyboardType="number-pad"
-                  value={otp}
-                  onChangeText={setOtp}
-                  maxLength={6}
-                />
-              </View>
-
-              <TouchableOpacity
-                style={styles.button}
-                onPress={() => handleVerifyOTP()}
-                disabled={isLoading}
-              >
-                <Text style={styles.buttonText}>Xác nhận</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                onPress={() => {
-                  setStep(1);
-                  setOtp("");
-                }}
-              >
-                <Text style={styles.link}>Nhập lại số điện thoại</Text>
-              </TouchableOpacity>
-            </>
-          )}
-        </View>
-      </View>
-    </TouchableWithoutFeedback>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
   );
 };
 
@@ -283,6 +309,43 @@ const styles = StyleSheet.create({
     marginTop: 15,
     color: "#3083F9",
     textAlign: "center",
+    fontSize: 16,
+  },
+  phoneInputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 10,
+    backgroundColor: "#f2f2f2",
+    paddingHorizontal: 12,
+  },
+  countryCodeBox: {
+    marginRight: 8,
+    borderRightWidth: 1,
+    borderRightColor: "#ccc",
+    paddingRight: 8,
+  },
+  countryCodeText: {
+    fontSize: 16,
+    color: "#333",
+  },
+  phoneInput: {
+    flex: 1,
+    fontSize: 16,
+    color: "#000",
+    paddingLeft: 8,
+  },
+  button: {
+    marginTop: 20,
+    backgroundColor: "#007AFF",
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: "center",
+  },
+  buttonText: {
+    color: "#fff",
+    fontWeight: "600",
     fontSize: 16,
   },
 });

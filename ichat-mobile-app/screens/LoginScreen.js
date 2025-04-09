@@ -24,7 +24,7 @@ const LoginScreen = ({ navigation }) => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const API_iChat = "http://172.20.68.107:5001";
+  const API_iChat = "http://192.168.1.196:5001";
 
   const handleLogin = async () => {
     if (!phone.trim() || !password.trim()) {
@@ -97,6 +97,7 @@ const LoginScreen = ({ navigation }) => {
                 onChangeText={setPassword}
               />
               <Text
+                onPress={() => navigation.navigate("ForgotPassword")}
                 onPress={() => alert("Chức năng này chưa khả dụng")}
                 style={styles.forgotPassword}
               >
@@ -108,12 +109,14 @@ const LoginScreen = ({ navigation }) => {
                 onPress={handleLogin}
                 backgroundColor={"#48A2FC"}
               />
-              <Text
-                style={styles.registerText}
-                onPress={() => navigation.navigate("Register")}
-              >
+              <Text style={styles.registerText}>
                 Bạn chưa có tài khoản?{" "}
-                <Text style={styles.register}>Đăng ký</Text>
+                <Text
+                  style={styles.register}
+                  onPress={() => navigation.navigate("Register")}
+                >
+                  Đăng ký ngay
+                </Text>
               </Text>
             </View>
           </ImageBackground>
@@ -128,6 +131,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 20,
+    flex: 1,
   },
   background: {
     flex: 1,
@@ -148,12 +152,12 @@ const styles = StyleSheet.create({
   input: {
     width: "100%",
     height: 50,
-    borderRadius: 10,
     paddingHorizontal: 15,
     marginBottom: 10,
     backgroundColor: 0,
     borderBottomWidth: 1,
     borderBottomColor: "gray",
+    fontSize: 18,
   },
   forgotPassword: {
     fontWeight: "bold",
@@ -161,16 +165,39 @@ const styles = StyleSheet.create({
     fontSize: 14,
     alignSelf: "flex-end",
     marginRight: 10,
-    marginBottom: 20,
+    marginVertical: 20,
+    opacity: 0.5,
   },
   registerText: {
     fontSize: 16,
     textAlign: "center",
     marginTop: 10,
+    position: "absolute",
+    bottom: 30,
   },
   register: {
     color: "#0C098C",
     fontWeight: "bold",
+    opacity: 0.5,
+  },
+  phoneContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    width: "100%",
+    borderBottomWidth: 1,
+    borderBottomColor: "gray",
+    marginBottom: 10,
+    height: 50,
+  },
+  prefixContainer: {
+    paddingHorizontal: 10,
+  },
+  prefixText: {
+    fontSize: 18,
+  },
+  phoneInput: {
+    flex: 1,
+    fontSize: 18,
   },
   phoneContainer: {
     flexDirection: "row",

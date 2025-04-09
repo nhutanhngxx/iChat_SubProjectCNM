@@ -2,12 +2,18 @@ import React, { useState, useEffect, useContext } from "react";
 import { Text, View, Image, TouchableOpacity, StyleSheet } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { UserContext } from "../../context/UserContext";
+import { StatusBar } from "expo-status-bar";
 
 import avatar from "../../assets/images/avatars/avatar1.png";
 
 const ProfileInformation = () => {
   const navigation = useNavigation();
   const { user } = useContext(UserContext);
+
+  const maskPhoneNumber = (phone) => {
+    if (!phone || phone.length < 10) return phone;
+    return phone.slice(0, 5) + "***" + phone.slice(-3);
+  };
 
   useEffect(() => {
     console.log("User từ Context:", user);
@@ -29,6 +35,9 @@ const ProfileInformation = () => {
   }, []);
   return (
     <View style={{ flex: 1, backgroundColor: "#fff", paddingTop: 40 }}>
+      <StatusBar style="dark" />
+
+      {/* Header */}
       <View
         style={{
           backgroundColor: "#fff",
@@ -98,7 +107,7 @@ const ProfileInformation = () => {
         </View>
         <View style={styles.container}>
           <Text style={styles.title}>Số điện thoại</Text>
-          <Text style={styles.value}>{user.phone}</Text>
+          <Text style={styles.value}>{maskPhoneNumber(user.phone)}</Text>
         </View>
         {/* Button chức năng */}
         <View
