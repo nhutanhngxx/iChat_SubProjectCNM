@@ -220,7 +220,7 @@ const Chatting = ({ route }) => {
       // Kiểm tra nếu có ảnh gửi kèm
       if (selectedImage) {
         const fileUri = selectedImage;
-        const fileInfo = await FileSystem.getInfoAsync(fileUri);
+        await FileSystem.getInfoAsync(fileUri);
         const formData = new FormData();
         formData.append("image", {
           uri: fileUri,
@@ -584,58 +584,6 @@ const Chatting = ({ route }) => {
         )}
 
         {/* Thanh soạn/gửi tin nhắn */}
-        {/* <View style={styles.inputContainer}>
-          <Image
-            source={require("../../assets/icons/gif.png")}
-            style={{ width: 30, height: 30 }}
-          />
-          <TextInput
-            style={styles.input}
-            value={inputMessage}
-            onChangeText={setInputMessage}
-            placeholder="Tin nhắn"
-          />
-
-          {!inputMessage.trim() ? (
-            <TouchableOpacity>
-              <Image
-                source={require("../../assets/icons/microphone.png")}
-                style={{ width: 25, height: 25 }}
-              />
-            </TouchableOpacity>
-          ) : null}
-          {!inputMessage.trim() ? (
-            <TouchableOpacity onPress={pickImage}>
-              <Image
-                source={require("../../assets/icons/image.png")}
-                style={{ width: 25, height: 25 }}
-              />
-            </TouchableOpacity>
-          ) : null}
-          {inputMessage.trim() ? (
-            <TouchableOpacity onPress={sendMessage}>
-              <Image
-                source={require("../../assets/icons/send.png")}
-                style={{ width: 25, height: 25 }}
-              />
-            </TouchableOpacity>
-          ) : null}
-        </View> */}
-        {/* Hiển thị ảnh đã chọn trước khi gửi */}
-        {/* {selectedImage && (
-          <View style={{ marginLeft: 10 }}>
-            <Image
-              source={{ uri: selectedImage }}
-              style={{ width: 50, height: 50, borderRadius: 5 }}
-            />
-            <TouchableOpacity onPress={sendMessage}>
-              <Image
-                source={require("../../assets/icons/send.png")}
-                style={{ width: 25, height: 25, marginTop: 5 }}
-              />
-            </TouchableOpacity>
-          </View>
-        )} */}
         <MessageInputBar
           inputMessage={inputMessage}
           setInputMessage={setInputMessage}

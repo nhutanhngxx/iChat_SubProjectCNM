@@ -1,9 +1,9 @@
-import api from "./api";
+import { apiService } from "./api";
 
 const userService = {
   getUserById: async (userId) => {
     try {
-      const response = await api.get(`/users/${userId}`);
+      const response = await apiService.get(`/users/${userId}`);
       return response.data;
     } catch (error) {
       console.log("User Service Error: ", error);

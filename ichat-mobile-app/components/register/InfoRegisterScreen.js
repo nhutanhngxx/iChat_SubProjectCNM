@@ -63,185 +63,192 @@ const InfoRegisterScreen = ({ navigation, route }) => {
   };
 
   return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-      <ImageBackground
-        source={require("../../assets/images/background.png")}
-        style={styles.background}
-      >
-        <Appbar.Header
-          style={{
-            backgroundColor: "transparent",
-            marginTop: 30,
-          }}
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={{ flex: 1 }}
+    >
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+        <ImageBackground
+          source={require("../../assets/images/background.png")}
+          style={styles.background}
         >
-          <Appbar.BackAction onPress={() => navigation.goBack()} size={30} />
-          <Appbar.Content title="Quay lại" />
-        </Appbar.Header>
-        <View style={styles.container}>
-          <View style={styles.content}>
-            <Text style={styles.label}>Thông tin người dùng</Text>
-          </View>
-
-          {/* Sô điện thoại đã đăng ký */}
-          <View style={styles.item}>
-            <Text
-              style={{
-                fontSize: 16,
-                fontWeight: "600",
-                marginLeft: 15,
-              }}
-            >
-              Số điện thoại
-            </Text>
-            <TextInput
-              style={[styles.input, { backgroundColor: "#E9E9E9" }]}
-              placeholder="Số điện thoại"
-              keyboardType="phone-pad"
-              value={phone}
-              editable={false}
-            />
-          </View>
-
-          {/* Họ tên */}
-          <View style={styles.item}>
-            <Text
-              style={{
-                fontSize: 16,
-                fontWeight: "600",
-                marginLeft: 15,
-              }}
-            >
-              Họ và tên
-            </Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Họ và tên"
-              keyboardType="default"
-              value={fullName}
-              onChangeText={setFullName}
-            />
-          </View>
-
-          {/* Ngày sinh */}
-          <View style={styles.item}>
-            <Text
-              style={{
-                fontSize: 16,
-                fontWeight: "600",
-                marginLeft: 15,
-              }}
-            >
-              Ngày sinh
-            </Text>
+          <View style={styles.container}>
             <TouchableOpacity
-              onPress={() => {
-                Keyboard.dismiss();
-                setShowPicker(true);
-              }}
-              style={styles.inputContainer}
+              style={{ flexDirection: "row", gap: 5, alignItems: "center" }}
+              onPress={() => navigation.goBack()}
             >
-              <TextInput
-                style={styles.input}
-                value={dob.toISOString().split("T")[0]}
-                editable={false}
+              <Image
+                source={require("../../assets/icons/go-back.png")}
+                style={{ width: 20, height: 20 }}
               />
-              {!showPicker && (
-                <Image
-                  source={editIcon}
-                  style={{
-                    width: 25,
-                    height: 25,
-                    position: "absolute",
-                    right: 10,
-                    top: 10,
-                  }}
-                />
-              )}
+              <Text style={{ color: "#48A2FC" }}>Quay lại</Text>
             </TouchableOpacity>
+            <View style={styles.content}>
+              <Text style={styles.label}>Thông tin người dùng</Text>
+            </View>
 
-            {showPicker && (
-              <Modal transparent={true} animationType="fade">
-                <View style={styles.modalContainer}>
-                  <View style={styles.pickerContainer}>
-                    <DateTimePicker
-                      value={dob}
-                      mode="date"
-                      display="spinner" // Hiển thị giao diện có nút OK trên iOS
-                      onChange={(event, selectedDate) => {
-                        if (Platform.OS === "android") {
-                          setShowPicker(false); // Android đóng ngay sau khi chọn
-                        }
-                        if (dob) {
-                          setDob(selectedDate);
-                        }
+            <View style={{ flex: 1, alignItems: "center" }}>
+              {/* Sô điện thoại đã đăng ký */}
+              <View style={styles.item}>
+                <Text
+                  style={{
+                    fontSize: 16,
+                    fontWeight: "600",
+                    marginLeft: 15,
+                  }}
+                >
+                  Số điện thoại
+                </Text>
+                <TextInput
+                  style={[styles.input, { backgroundColor: "#E9E9E9" }]}
+                  placeholder="Số điện thoại"
+                  keyboardType="phone-pad"
+                  value={phone}
+                  editable={false}
+                />
+              </View>
+
+              {/* Họ tên */}
+              <View style={styles.item}>
+                <Text
+                  style={{
+                    fontSize: 16,
+                    fontWeight: "600",
+                    marginLeft: 15,
+                  }}
+                >
+                  Họ và tên
+                </Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Họ và tên"
+                  keyboardType="default"
+                  value={fullName}
+                  onChangeText={setFullName}
+                />
+              </View>
+
+              {/* Ngày sinh */}
+              <View style={styles.item}>
+                <Text
+                  style={{
+                    fontSize: 16,
+                    fontWeight: "600",
+                    marginLeft: 15,
+                  }}
+                >
+                  Ngày sinh
+                </Text>
+                <TouchableOpacity
+                  onPress={() => {
+                    Keyboard.dismiss();
+                    setShowPicker(true);
+                  }}
+                  style={styles.inputContainer}
+                >
+                  <TextInput
+                    style={styles.input}
+                    value={dob.toISOString().split("T")[0]}
+                    editable={false}
+                  />
+                  {!showPicker && (
+                    <Image
+                      source={editIcon}
+                      style={{
+                        width: 25,
+                        height: 25,
+                        position: "absolute",
+                        right: 10,
+                        top: 10,
                       }}
                     />
-                    {/* Chỉ hiển thị nút "OK" trên iOS */}
-                    {Platform.OS === "ios" && (
-                      <TouchableOpacity
-                        onPress={() => setShowPicker(false)}
-                        style={styles.okButton}
-                      >
-                        <Text style={styles.doneText}>OK</Text>
-                      </TouchableOpacity>
-                    )}
+                  )}
+                </TouchableOpacity>
+              </View>
+
+              {/* Giới tính */}
+              <View style={styles.item}>
+                <Text
+                  style={{
+                    fontSize: 16,
+                    fontWeight: "600",
+                    marginLeft: 15,
+                  }}
+                >
+                  Giới tính
+                </Text>
+                <RadioGroup
+                  radioButtons={radioButtons}
+                  onPress={setGender}
+                  selectedId={gender}
+                  layout="row"
+                  labelStyle={{ fontSize: 16 }}
+                  containerStyle={{ marginBottom: 20, width: 300 }}
+                />
+              </View>
+
+              <View style={{ gap: 20 }}>
+                {isLoading ? (
+                  <ActivityIndicator size="large" color="#48A2FC" /> // Hiển thị spinner khi loading
+                ) : (
+                  <CustomButton
+                    title="Đăng ký"
+                    onPress={handleRegister}
+                    backgroundColor={"#48A2FC"}
+                  />
+                )}
+              </View>
+              {showPicker && (
+                <Modal transparent={true} animationType="fade">
+                  <View style={styles.modalContainer}>
+                    <View style={styles.pickerContainer}>
+                      <DateTimePicker
+                        value={dob}
+                        mode="date"
+                        display="spinner" // Hiển thị giao diện có nút OK trên iOS
+                        onChange={(event, selectedDate) => {
+                          if (Platform.OS === "android") {
+                            setShowPicker(false); // Android đóng ngay sau khi chọn
+                          }
+                          if (dob) {
+                            setDob(selectedDate);
+                          }
+                        }}
+                      />
+                      {/* Chỉ hiển thị nút "OK" trên iOS */}
+                      {Platform.OS === "ios" && (
+                        <TouchableOpacity
+                          onPress={() => setShowPicker(false)}
+                          style={styles.okButton}
+                        >
+                          <Text style={styles.doneText}>OK</Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
                   </View>
-                </View>
-              </Modal>
-            )}
-          </View>
+                </Modal>
+              )}
+            </View>
 
-          {/* Giới tính */}
-          <View style={styles.item}>
-            <Text
-              style={{
-                fontSize: 16,
-                fontWeight: "600",
-                marginLeft: 15,
-              }}
-            >
-              Giới tính
-            </Text>
-            <RadioGroup
-              radioButtons={radioButtons}
-              onPress={setGender}
-              selectedId={gender}
-              layout="row"
-              labelStyle={{ fontSize: 16 }}
-              containerStyle={{ marginBottom: 20, width: 300 }}
-            />
+            <View style={{ position: "absolute", bottom: -150 }}>
+              <Text
+                style={styles.question}
+                onPress={() => alert("Những câu hỏi thường gặp")}
+              >
+                Những câu hỏi thường gặp
+              </Text>
+            </View>
           </View>
-
-          <View style={{ gap: 20 }}>
-            {isLoading ? (
-              <ActivityIndicator size="large" color="#48A2FC" /> // Hiển thị spinner khi loading
-            ) : (
-              <CustomButton
-                title="Đăng ký"
-                onPress={handleRegister}
-                backgroundColor={"#48A2FC"}
-              />
-            )}
-          </View>
-
-          <View style={{ position: "absolute", bottom: -150 }}>
-            <Text
-              style={styles.question}
-              onPress={() => alert("Những câu hỏi thường gặp")}
-            >
-              Những câu hỏi thường gặp
-            </Text>
-          </View>
-        </View>
-      </ImageBackground>
-    </TouchableWithoutFeedback>
+        </ImageBackground>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    alignItems: "center",
-    paddingTop: 20,
+    paddingTop: 40,
+    flex: 1,
   },
   background: {
     flex: 1,
@@ -288,6 +295,28 @@ const styles = StyleSheet.create({
   item: {
     alignItems: "left",
     gap: 5,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.5)",
+  },
+  pickerContainer: {
+    backgroundColor: "#fff",
+    padding: 20,
+    borderRadius: 10,
+    width: "85%",
+    alignItems: "center",
+  },
+  okButton: {
+    marginTop: 10,
+    borderRadius: 5,
+  },
+  doneText: {
+    color: "#3083F9",
+    fontSize: 18,
+    fontWeight: "bold",
   },
 });
 

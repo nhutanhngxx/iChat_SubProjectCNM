@@ -43,6 +43,71 @@ router.post("/check-existed-phone", async (req, res) => {
   }
 });
 
+router.post("/confirm-phone", async (req, res) => {
+  try {
+    const { phone } = req.body;
+    const regex = /^(\+84)[3-9][0-9]{8}$/;
+    if (!phone || !regex.test(phone.trim())) {
+      return res
+        .status(400)
+        .json({ status: "error", message: "Số điện thoại không hợp lệ." });
+    }
+    const existingUser = await User.findOne({ phone }).select("phone").lean();
+
+    if (existingUser) {
+      return res.json({
+        status: "ok",
+        data: {
+          message: "OTP đã được gửi đến số điện thoại của bạn.",
+          phone,
+        },
+      });
+    } else {
+      return res.status(400).json({
+        status: "error",
+        message: "Số điện thoại này chưa được đăng ký.",
+      });
+    }
+  } catch (error) {
+    res.status(500).json({ status: "error", message: error.message });
+  }
+});
+
+router.post("/reset-password", async (req, res) => {
+  const { phone, newPassword } = req.body;
+
+  if (!newPassword || newPassword.length < 6) {
+    return res.status(400).json({
+      status: "error",
+      message: "Mật khẩu phải có ít nhất 6 ký tự.",
+    });
+  }
+
+  try {
+    const user = await User.findOne({ phone });
+
+    if (!user) {
+      return res.status(400).json({
+        status: "error",
+        message: "Không tìm thấy người dùng.",
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+
+    await user.save();
+
+    return res.status(200).json({
+      status: "ok",
+      message:
+        "Nếu số điện thoại tồn tại, bạn sẽ nhận được thông báo thay đổi mật khẩu.",
+    });
+  } catch (error) {
+    return res.status(500).json({ status: "error", message: error.message });
+  }
+});
+
 // Xác thực OTP
 router.post("/verify-otp", async (req, res) => {
   const { phone, otp } = req.body;
@@ -88,6 +153,22 @@ router.post("/verify-otp", async (req, res) => {
   }
 });
 
+router.put("/update-phone", async (req, res) => {
+  const { userId, newPhone } = req.body;
+  try {
+    await User.updateOne({ _id: userId }, { phone: newPhone });
+    return res.json({
+      status: "ok",
+      message: "Số điện thoại đã được cập nhật.",
+    });
+  } catch (err) {
+    return res.status(500).json({
+      status: "error",
+      message: "Lỗi server khi cập nhật số điện thoại.",
+    });
+  }
+});
+
 // Đăng ký tài khoản
 router.post("/register", async (req, res) => {
   const { tempToken, phone, password, fullName, dob, gender } = req.body;
@@ -99,24 +180,6 @@ router.post("/register", async (req, res) => {
       message: "Token không hợp lệ. Vui lòng thử lại.",
     });
   }
-
-  // Xác thực token
-  // let decodedToken;
-  // try {
-  //   decodedToken = jwt.verify(tempToken, process.env.JWT_SECRET);
-  //   console.log("Decode Token: ", decodedToken);
-  // } catch (error) {
-  //   return res
-  //     .status(401)
-  //     .json({ status: "error", message: "Token không hợp lệ!" });
-  // }
-
-  // // Kiểm tra số điện thoại đã xác thực chưa và đã đăng ký chưa
-  // if (!decodedToken.verify || decodedToken.phone !== phone) {
-  //   return res
-  //     .status(401)
-  //     .json({ status: "error", message: "Số điện thoại chưa được xác thực!" });
-  // }
 
   const newUser = await User.create({
     phone,

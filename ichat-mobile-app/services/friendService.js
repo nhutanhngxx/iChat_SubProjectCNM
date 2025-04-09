@@ -1,9 +1,9 @@
-import api from "./api";
+import { apiService } from "./api";
 
 const friendService = {
   getFriendListByUserId: async (userId) => {
     try {
-      const response = await api.get(`/friends/${userId}`);
+      const response = await apiService.get(`/friends/${userId}`);
       return response.data.friends;
     } catch (error) {
       console.log("Friend Service Error: ", error);
@@ -13,7 +13,7 @@ const friendService = {
 
   getReceivedRequestsByUserId: async (userId) => {
     try {
-      const response = await api.get(`/received-requests/${userId}`);
+      const response = await apiService.get(`/received-requests/${userId}`);
       return response.data.friendRequests;
     } catch (error) {
       console.log("Friend Service Error: ", error);
@@ -23,7 +23,7 @@ const friendService = {
 
   getSentRequestsByUserId: async (userId) => {
     try {
-      const response = await api.get(`/sent-requests/${userId}`);
+      const response = await apiService.get(`/sent-requests/${userId}`);
       return response.data.friendRequests;
     } catch (error) {
       console.log("Friend Service Error: ", error);

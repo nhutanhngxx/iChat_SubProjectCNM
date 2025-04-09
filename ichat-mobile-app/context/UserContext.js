@@ -5,7 +5,7 @@ export const UserContext = createContext();
 
 export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [isLoading, setIsLoading] = useState(true); // Thêm trạng thái loading
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const loadUser = async () => {
@@ -24,7 +24,7 @@ export const UserProvider = ({ children }) => {
   }, []);
 
   if (isLoading) {
-    return null; // Hoặc hiển thị một Splash Screen
+    return null;
   }
 
   return (
