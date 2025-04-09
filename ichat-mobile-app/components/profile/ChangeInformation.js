@@ -22,7 +22,7 @@ const ChangeInformation = () => {
   const navigation = useNavigation();
   const { user, setUser } = useContext(UserContext);
 
-  const API_iChat = "http://172.20.64.6:5001";
+  const API_iChat = "http://172.20.64.6:5001/api";
 
   const [dob, setDob] = useState(user?.dob ? new Date(user.dob) : new Date());
   const [showPicker, setShowPicker] = useState(false);

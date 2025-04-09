@@ -1,15 +1,11 @@
-import {
-  getUserGroups as _getUserGroups,
-  getGroupMembers as _getGroupMembers,
-  searchGroup as _searchGroup,
-} from "../models/groupModel";
+const GroupModel = require("../models/groupModel");
 
 const GroupController = {
   // Lấy danh sách nhóm mà người dùng tham gia
   getUserGroups: async (req, res) => {
     const userId = req.params.userId;
     try {
-      const groupChats = await _getUserGroups(userId);
+      const groupChats = await GroupModel.getUserGroups(userId);
       if (!groups) {
         return res.status(404).json({
           status: "error",
@@ -33,7 +29,7 @@ const GroupController = {
   getGroupMembers: async (req, res) => {
     const groupId = req.params.groupId;
     try {
-      const members = await _getGroupMembers(groupId);
+      const members = await GroupModel.getGroupMembers(groupId);
       res.json({ status: "ok", data: members });
     } catch (err) {
       res.status(500).json({ status: "error", message: err });
@@ -69,7 +65,7 @@ const GroupController = {
       return res.status(400).json({ error: "Thiếu từ khóa tìm kiếm." });
     }
     try {
-      const groups = await _searchGroup(search);
+      const groups = await GroupModel.searchGroup(search);
       res.json({ status: "ok", contacts: null, data: groups });
     } catch (error) {
       console.error("Error searching messages:", error);
@@ -78,4 +74,4 @@ const GroupController = {
   },
 };
 
-export default GroupController;
+module.exports = GroupController;

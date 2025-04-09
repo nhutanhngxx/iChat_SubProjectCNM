@@ -1,11 +1,11 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-const API_URL = `http://${window.location.hostname}:5001/`;
+const API_URL = `http://${window.location.hostname}:5001/api/`;
 // Định nghĩa action async để đăng nhập
 export const loginUser = createAsyncThunk(
   "auth/loginUser",
   async ({ phone, password }, { rejectWithValue }) => {
     try {
-      const response = await fetch(`${API_URL}login`, {
+      const response = await fetch(`${API_URL}auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ phone, password }),
@@ -33,7 +33,7 @@ export const logoutUser = createAsyncThunk(
   "auth/logoutUser",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await fetch(`${API_URL}logout`, {
+      const response = await fetch(`${API_URL}auth/logout`, {
         method: "POST",
         credentials: "include", // Gửi cookie chứa refreshToken nếu có
       });

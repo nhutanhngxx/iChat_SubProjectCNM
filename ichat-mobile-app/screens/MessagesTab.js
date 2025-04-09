@@ -35,7 +35,7 @@ import backIcon from "../assets/icons/go-back.png";
 import { UserContext } from "../context/UserContext";
 
 const MessagesTab = () => {
-  const API_iChat = "http://172.20.64.6:5001";
+  const API_iChat = "http://172.20.64.6:5001/api";
   const [index, setIndex] = useState(0);
   const { user } = useContext(UserContext);
   const [modalSort, setModalSort] = useState(false);
@@ -108,7 +108,7 @@ const MessagesTab = () => {
     // let timeout;
     const fetchMessageCards = async () => {
       try {
-        const response = await fetch(`${API_iChat}/message-cards/${user?.id}`);
+        const response = await fetch(`${API_iChat}/messages/message-cards/${user?.id}`);
         const data = await response.json();
         if (data.status === "ok") {
           setMessageCards(data.data);

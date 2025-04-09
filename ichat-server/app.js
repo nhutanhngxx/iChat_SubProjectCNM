@@ -1,10 +1,13 @@
 const express = require("express");
+const http = require("http");
+const cors = require("cors");
 const connectDB = require("./src/config/db");
 require("dotenv").config(); // Đọc biến môi trường
+const { Server } = require("socket.io");
 
 const routes = require("./src/routes/index"); // import routes từ index.js
 
-const socketHandler = require("./sockets/socketHandler");
+const socketHandler = require("./src/sockets/socketHandler");
 
 // Khởi tạo Express app và HTTP server
 const app = express();

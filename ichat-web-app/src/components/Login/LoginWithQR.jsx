@@ -113,16 +113,19 @@ export default function LoginWithQR() {
           return ( */}
       <div>
         {userInfo ? (
-          <div>
-            <p>Đăng nhập với: {userInfo.name}</p>
+          <div style={{ justifyItems: "center", border: "1px solid #ccc", padding: "20px 50px", borderRadius: "10px" }}>
+            <h2 style={{ marginBottom: "10px", fontWeight: 'bold' }}>Xác nhận đăng nhập</h2>
+            <img src={userInfo.avatar} alt="Avatar" style={{ width: "100px", height: "100px", borderRadius: "50%" }} />
+            <p style={{ padding: "10px" }}>{userInfo.name}</p>
             <button onClick={handleConfirmLogin}
               style={{
-                backgroundColor: "#4CAF50",
-                color: "white",
-                padding: "10px 20px",
+                backgroundColor: "none",
+                padding: "10px",
                 border: "none",
                 borderRadius: "5px",
                 cursor: "pointer",
+                fontSize: "16px",
+                color: "violet"
               }}
             >Xác nhận đăng nhập</button>
           </div>
@@ -140,6 +143,6 @@ export default function LoginWithQR() {
       {/* ) : (
         <p style={{ textAlign: "center" }}>Đang tạo mã QR...</p>
       )} */}
-    </div>
+    </div >
   );
 }

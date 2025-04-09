@@ -22,15 +22,8 @@ router.post(
 
 // Gửi tin nhắn nhóm
 router.post("/send-group-message", MessageController.sendGroupMessage);
-
-// Lấy danh sách các tin nhắn liên quan đến người dùng
-router.get("/:userId", MessageController.getUserMessages);
-
-// Lấy tin nhắn theo Người đăng nhập và các người dùng khác
-router.get("/:userId/:receiverId", MessageController.getPrivateMessages);
-
-// Xóa tất cả tin nhắn giữa người dùng đăng nhập và người nhận
-router.delete("/:userId/:receiverId", MessageController.deleteAllMessages);
+// recentReceivers
+router.get("/recent-receivers/:senderId", MessageController.recentReceivers);
 
 // Thu hồi tin nhắn
 router.put("/recall/:messageId", MessageController.recallToMessage);
@@ -64,4 +57,12 @@ router.post("/message-cards", MessageController.createMessageCard);
 // Cập nhật tất cả tin nhắn "sent" và "received" thành "viewed" khi user mở cuộc trò chuyện
 router.put("/viewed", MessageController.updateMessagesViewedStatus);
 
+// Lấy danh sách các tin nhắn liên quan đến người dùng
+router.get("/:userId", MessageController.getUserMessages);
+
+// Lấy tin nhắn theo Người đăng nhập và các người dùng khác
+router.get("/:userId/:receiverId", MessageController.getPrivateMessages);
+
+// Xóa tất cả tin nhắn giữa người dùng đăng nhập và người nhận
+router.delete("/:userId/:receiverId", MessageController.deleteAllMessages);
 module.exports = router;

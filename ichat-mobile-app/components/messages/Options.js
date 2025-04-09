@@ -32,7 +32,7 @@ const Option = ({ route }) => {
       setIpAddress(ip);
     });
   }, []);
-  const API_iChat = "http://172.20.64.6:5001";
+  const API_iChat = "http://172.20.64.6:5001/api";
 
   useEffect(() => {
     console.log("avatar: ", avatar);
