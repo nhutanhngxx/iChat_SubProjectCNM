@@ -167,7 +167,25 @@ const ChangeInformation = () => {
 
       const result = response.data;
       if (result.success) {
-        setUser({ ...user, ...result.data });
+        console.log("API trả về dữ liệu:", result.data);
+
+        // Đảm bảo cập nhật đầy đủ thông tin user
+        const updatedUser = {
+          ...user,
+          full_name: fullName.trim(),
+          gender: radioButtons.find((rb) => rb.id === selectedId)?.value,
+          dob: dob.toISOString().split("T")[0],
+          dobFormatted: `${dob.getDate().toString().padStart(2, "0")}/${(
+            dob.getMonth() + 1
+          )
+            .toString()
+            .padStart(2, "0")}/${dob.getFullYear()}`,
+          avatar_path: result.data.avatar_path || user.avatar_path,
+        };
+
+        // Cập nhật context
+        await setUser(updatedUser);
+
         alert("Cập nhật thông tin thành công!");
         navigation.goBack();
       } else {
@@ -247,10 +265,13 @@ const ChangeInformation = () => {
             >
               <TextInput
                 style={styles.value}
-                value={user.dobFormatted}
+                value={`${dob.getDate().toString().padStart(2, "0")}/${(
+                  dob.getMonth() + 1
+                )
+                  .toString()
+                  .padStart(2, "0")}/${dob.getFullYear()}`}
                 editable={false}
               />
-
               {!showPicker && (
                 <Image
                   source={editIcon}

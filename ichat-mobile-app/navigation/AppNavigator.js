@@ -23,6 +23,8 @@ import AddFriend from "../components/contact/AddFriend";
 import FriendRequest from "../components/contact/FriendRequest";
 import AccountSecurity from "../components/profile/AccountSecurity";
 import ChangePhoneNumber from "../components/profile/ChangePhoneNumber";
+import ViewProfile from "../components/profile/ViewProfile";
+import ForgotPasswordScreen from "../components/profile/ForgotPassword";
 
 const Stack = createStackNavigator();
 
@@ -45,6 +47,7 @@ export default function AppNavigator() {
           />
 
           <Stack.Screen name="Chatting" component={Chatting} />
+          <Stack.Screen name="ViewProfile" component={ViewProfile} />
           <Stack.Screen name="QRScanner" component={QRScanner} />
           <Stack.Screen name="ViewImagePost" component={ViewImagePost} />
           <Stack.Screen name="ViewImageChat" component={ViewImageChat} />
@@ -86,6 +89,10 @@ export default function AppNavigator() {
             component={PasswordRegisterScreen}
           />
           <Stack.Screen name="InfoRegister" component={InfoRegisterScreen} />
+          <Stack.Screen
+            name="ForgotPassword"
+            component={ForgotPasswordScreen}
+          />
         </>
       )}
     </Stack.Navigator>

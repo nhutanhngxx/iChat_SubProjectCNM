@@ -97,7 +97,7 @@ const LoginScreen = ({ navigation }) => {
                 onChangeText={setPassword}
               />
               <Text
-                onPress={() => alert("Chức năng này chưa khả dụng")}
+                onPress={() => navigation.navigate("ForgotPassword")}
                 style={styles.forgotPassword}
               >
                 Quên mật khẩu?

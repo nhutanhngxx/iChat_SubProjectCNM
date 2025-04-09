@@ -9,6 +9,11 @@ const ProfileInformation = () => {
   const navigation = useNavigation();
   const { user } = useContext(UserContext);
 
+  const maskPhoneNumber = (phone) => {
+    if (!phone || phone.length < 10) return phone;
+    return phone.slice(0, 5) + "***" + phone.slice(-3);
+  };
+
   useEffect(() => {
     console.log("User từ Context:", user);
   }, [user]);
@@ -98,7 +103,7 @@ const ProfileInformation = () => {
         </View>
         <View style={styles.container}>
           <Text style={styles.title}>Số điện thoại</Text>
-          <Text style={styles.value}>{user.phone}</Text>
+          <Text style={styles.value}>{maskPhoneNumber(user.phone)}</Text>
         </View>
         {/* Button chức năng */}
         <View

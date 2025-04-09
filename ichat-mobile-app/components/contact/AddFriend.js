@@ -16,6 +16,7 @@ import goBackIcon from "../../assets/icons/go-back.png";
 import downIcon from "../../assets/icons/down.png";
 import searchIcon from "../../assets/icons/search.png";
 import qrIcon from "../../assets/icons/qr.png";
+import { StatusBar } from "expo-status-bar";
 import { UserContext } from "../../context/UserContext";
 
 const AddFriend = () => {
@@ -48,8 +49,10 @@ const AddFriend = () => {
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View style={{ flex: 1, backgroundColor: "#fff", paddingTop: 40 }}>
+        <StatusBar style="dark" />
         {/* Header Add friend Screen */}
-        <View
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
           style={{
             flexDirection: "row",
             alignItems: "center",
@@ -60,7 +63,7 @@ const AddFriend = () => {
           <Text style={{ fontSize: 20, fontWeight: "bold", marginLeft: 10 }}>
             Thêm bạn bè
           </Text>
-        </View>
+        </TouchableOpacity>
 
         {/* Mã QR của tài khoản */}
         <View style={{ alignItems: "center", marginVertical: 30 }}>
