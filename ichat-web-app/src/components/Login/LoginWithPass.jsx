@@ -11,6 +11,7 @@ import "./LoginWithPass.css";
 import { Modal, Spinner } from "react-bootstrap";
 import LoginWithQR from "./LoginWithQR"
 
+
 export default function LoginWithPass() {
   // Khai báo state cho form đăng nhập
   const [loginWithQR, setLoginWithQR] = useState(false);
@@ -84,7 +85,9 @@ export default function LoginWithPass() {
       <div className="container-header">
         <div className="container-header-logo">
           <img
-            src="https://i.ibb.co/LVnMJ5t/i-Chat-removebg-preview.png"
+            // src="https://i.ibb.co/LVnMJ5t/i-Chat-removebg-preview.png"
+            src="https://i.ibb.co/TGJ0mZm/logo-ichat-removebg.png"
+            style={{ width: "160px", height: "160px" }}
             alt="logo_ichat"
           />
         </div>

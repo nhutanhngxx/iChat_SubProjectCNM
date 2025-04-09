@@ -73,25 +73,25 @@ export default function LoginWithQR() {
   const handleConfirmLogin = async () => {
     console.log("👉 Đã nhấn nút xác nhận"); // THÊM LOG NÀY
     try {
-      console.log("📤 Gửi request xác nhận với sessionId:", sessionId);
+      console.log("Gửi request xác nhận với sessionId:", sessionId);
       const res = await axios.post(`auth/confirm-login`, { sessionId });
-      console.log("📦 Phản hồi từ confirm-login:", res.data);
+      console.log("Phản hồi từ confirm-login:", res.data);
 
-      console.log("✅ Đã xác nhận đăng nhập:", res.data); // THÊM LOG NÀY
+      console.log("Đã xác nhận đăng nhập:", res.data); // THÊM LOG NÀY
       if (res.data.token) {
         localStorage.setItem("token", res.data.token);
-        console.log("✅ Nhận token:", res.data.token);
+        console.log("Nhận token:", res.data.token);
         // gọi hàm đăng nhập 
         await dispatch(authenticateWithToken());
         navigate("/home");
       } else {
-        console.warn("⚠️ Không nhận được token từ confirm-login:", res.data);
+        console.warn("Không nhận được token từ confirm-login:", res.data);
         alert("Đăng nhập thất bại!");
       }
     } catch (err) {
-      console.error("❌ Lỗi khi xác nhận đăng nhập:", err);
+      console.error("Lỗi khi xác nhận đăng nhập:", err);
       if (err.response) {
-        console.error("📦 Server trả về lỗi:", err.response.data);
+        console.error("Server trả về lỗi:", err.response.data);
         alert("Lỗi: " + JSON.stringify(err.response.data));
       } else {
         alert("Xác nhận thất bại! " + err.message);
@@ -115,7 +115,16 @@ export default function LoginWithQR() {
         {userInfo ? (
           <div>
             <p>Đăng nhập với: {userInfo.name}</p>
-            <button onClick={handleConfirmLogin}>Xác nhận đăng nhập</button>
+            <button onClick={handleConfirmLogin}
+              style={{
+                backgroundColor: "#4CAF50",
+                color: "white",
+                padding: "10px 20px",
+                border: "none",
+                borderRadius: "5px",
+                cursor: "pointer",
+              }}
+            >Xác nhận đăng nhập</button>
           </div>
         ) : (
           <>

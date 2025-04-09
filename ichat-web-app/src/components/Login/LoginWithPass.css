@@ -23,7 +23,7 @@ body {
   margin-bottom: 20px;
 }
 .container-header {
-  margin-bottom: 30px;
+  margin-bottom: 10px;
   display: flex;
   flex-direction: column;
   justify-content: center;

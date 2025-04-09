@@ -25,7 +25,7 @@ const LoginScreen = ({ navigation }) => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const API_iChat = "http://172.29.4.1:5001";
+  const API_iChat = "http://172.20.64.6:5001";
 
   const handleLogin = async () => {
     if (!phone.trim() || !password.trim()) {
