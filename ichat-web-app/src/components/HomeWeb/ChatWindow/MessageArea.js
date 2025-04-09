@@ -598,7 +598,7 @@ const MessageArea = ({ selectedChat, user }) => {
   // Lấy dữ liệu tin nhắn từ Redux Store
   const dispatch = useDispatch();
   const chatMessages = useSelector((state) => state.messages.chatMessages);
-
+  
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState("");
   // Hiển thị thông tin hội thoại
