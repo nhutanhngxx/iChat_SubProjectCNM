@@ -5,19 +5,19 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
+  Alert, // ← Thêm Alert từ React Native
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import HeaderAccountSecurity from "../header/HeaderAccountSecurity";
+import { StatusBar } from "expo-status-bar";
 
 const AccountSecurity = () => {
   const navigation = useNavigation();
-  const handlePress = (feature) => {
-    console.log("Navigate to:", feature);
-  };
 
   return (
     <View style={styles.container}>
+      <StatusBar style="light" />
       <HeaderAccountSecurity />
       <ScrollView contentContainerStyle={styles.list}>
         <SecurityItem
@@ -33,22 +33,40 @@ const AccountSecurity = () => {
         <SecurityItem
           icon="qr-code-outline"
           label="Mã QR đăng nhập"
-          onPress={() => handlePress("QRCode")}
+          onPress={() => navigation.navigate("AddFriend")}
         />
         <SecurityItem
           icon="key-outline"
           label="Thay đổi mật khẩu"
-          onPress={() => handlePress("ChangePassword")}
+          onPress={() => navigation.navigate("ChangePassword")}
         />
         <SecurityItem
           icon="time-outline"
           label="Lịch sử thay đổi"
-          onPress={() => handlePress("History")}
+          onPress={() =>
+            Alert.alert("Lịch sử thay đổi", "Chức năng này hiện chưa khả dụng")
+          }
         />
         <SecurityItem
           icon="trash-outline"
           label="Xóa tài khoản"
-          onPress={() => handlePress("DeleteAccount")}
+          onPress={() =>
+            Alert.alert(
+              "Xóa tài khoản",
+              "Bạn có chắc chắn muốn xóa tài khoản không?",
+              [
+                { text: "Hủy", style: "cancel" },
+                {
+                  text: "Xóa",
+                  style: "destructive",
+                  onPress: () => {
+                    alert("Tính năng này hiện chưa khả dụng");
+                    // Xử lý xóa tài khoản ở đây
+                  },
+                },
+              ]
+            )
+          }
           danger
         />
       </ScrollView>

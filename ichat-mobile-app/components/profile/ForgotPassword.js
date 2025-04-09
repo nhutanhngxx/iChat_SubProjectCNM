@@ -23,7 +23,7 @@ import {
   getAuth,
 } from "firebase/auth";
 
-const API_iChat = "http://172.20.70.188:5001";
+const API_iChat = "http://192.168.1.196:5001";
 
 const ForgotPasswordScreen = ({ navigation }) => {
   const [step, setStep] = useState(1);
@@ -120,7 +120,7 @@ const ForgotPasswordScreen = ({ navigation }) => {
 
     try {
       setLoading(true);
-      await axios.put(`${API_iChat}/auth/reset-password`, {
+      await axios.post(`${API_iChat}/auth/reset-password`, {
         phone: formattedPhone,
         newPassword,
       });
@@ -130,6 +130,10 @@ const ForgotPasswordScreen = ({ navigation }) => {
       );
       navigation.goBack();
     } catch (error) {
+      console.log(
+        "Lỗi khi đổi mật khẩu:",
+        error?.response?.data || error.message
+      );
       Alert.alert("Lỗi", "Không thể đặt lại mật khẩu.");
     } finally {
       setLoading(false);
@@ -141,9 +145,9 @@ const ForgotPasswordScreen = ({ navigation }) => {
       case 1:
         return (
           <>
-            <Text style={styles.title}>Quên mật khẩu</Text>
+            <Text style={styles.title}>Bạn quên mật khẩu à?</Text>
             <Text style={styles.description}>
-              Vui lòng nhập số điện thoại để đăng ký lại mật khẩu
+              Nhập số điện thoại của bạn để nhận mã xác minh
             </Text>
             <TextInput
               style={styles.input}
@@ -167,6 +171,9 @@ const ForgotPasswordScreen = ({ navigation }) => {
         return (
           <>
             <Text style={styles.title}>Nhập mã OTP</Text>
+            <Text style={styles.description}>
+              Không chia sẻ mã OTP với bất kỳ ai nhé
+            </Text>
             <TextInput
               style={styles.input}
               placeholder="Nhập mã OTP"
@@ -184,6 +191,9 @@ const ForgotPasswordScreen = ({ navigation }) => {
         return (
           <>
             <Text style={styles.title}>Đặt lại mật khẩu</Text>
+            <Text style={styles.description}>
+              Đặt lại mật khẩu mới cho tài khoản của bạn
+            </Text>
             <TextInput
               style={styles.input}
               placeholder="Nhập mật khẩu mới"
@@ -236,7 +246,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    fontSize: 24,
+    fontSize: 30,
     marginBottom: 10,
     fontWeight: "bold",
     textAlign: "center",
@@ -248,6 +258,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
     marginBottom: 20,
+    fontSize: 18,
   },
   button: {
     backgroundColor: "#3083F9",

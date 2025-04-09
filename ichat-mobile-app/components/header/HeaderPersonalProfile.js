@@ -15,7 +15,7 @@ import axios from "axios";
 
 const HeaderMessages = () => {
   const { user, setUser } = useContext(UserContext);
-  const API_iChat = "http://172.20.70.188:5001";
+  const API_iChat = "http://192.168.1.196:5001";
   const navigation = useNavigation();
   const [modalVisible, setModalVisible] = useState(false);
 
