@@ -1,8 +1,55 @@
 import { apiService } from "./api";
 import { auth } from "../config/firebase";
 import { PhoneAuthProvider, signInWithCredential } from "firebase/auth";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const registerService = {
+const PREFIX = "auth";
+const authService = {
+  // Đăng nhập
+  login: async ({ phone, password }) => {
+    try {
+      const formattedPhone = phone.startsWith("0")
+        ? phone.replace(/^0/, "+84")
+        : `+84${phone}`;
+
+      const response = await apiService.post(`/login`, {
+        phone: formattedPhone,
+        password,
+      });
+
+      if (response.data.status === "ok") {
+        // return response.data;
+        const { accessToken, user } = response.data;
+        await AsyncStorage.setItem("token", accessToken);
+        await AsyncStorage.setItem("user", JSON.stringify(user));
+        return { user };
+      } else return response.data.message;
+    } catch (error) {
+      console.log("Login Service Error: ", error);
+      return {
+        status: "error",
+        message:
+          error.response?.data?.message || "Không thể đăng nhập tài khoản",
+      };
+    }
+  },
+
+  // Đăng xuất
+  logout: async (userId) => {
+    try {
+      await apiService.post(`/logout`, { userId });
+      await AsyncStorage.removeItem("token");
+      await AsyncStorage.removeItem("user");
+    } catch (error) {
+      console.log("Logout Service Error: ", error);
+      return {
+        status: "error",
+        message:
+          error.response?.data?.message || "Không thể đăng xuất tài khoản",
+      };
+    }
+  },
+
   sendOTP: async (phone, recaptchaVerifier) => {
     try {
       if (!phone) {
@@ -15,7 +62,7 @@ const registerService = {
       phone = "+84" + phone.replace(/^(0|84)/, "");
 
       // Check if phone number is existed
-      const response = await apiService.post("/auth/check-existed-phone", {
+      const response = await apiService.post(`/${PREFIX}/check-existed-phone`, {
         phone,
       });
       if (response.data.status !== "ok") {
@@ -104,7 +151,7 @@ const registerService = {
           message: "Thiếu thông tin đăng ký",
         };
       }
-      const response = await apiService.post("/auth/register", {
+      const response = await apiService.post(`/${PREFIX}/register`, {
         tempToken,
         phone,
         password,
@@ -125,4 +172,4 @@ const registerService = {
   },
 };
 
-export default registerService;
+export default authService;

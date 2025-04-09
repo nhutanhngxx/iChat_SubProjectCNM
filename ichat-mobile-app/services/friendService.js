@@ -1,7 +1,6 @@
 import { apiService } from "./api";
 
 const PREFIX = "friends";
-
 const friendService = {
   getFriendListByUserId: async (userId) => {
     try {
@@ -32,6 +31,22 @@ const friendService = {
       return [];
     }
   },
+
+  sendFriendRequest: async (senderId, receiverId) => {},
+
+  acceptFriendRequest: async (requestId) => {},
+
+  rejectFriendRequest: async (requestId) => {},
+
+  cancelFriendRequest: async (requestId) => {},
+
+  unfriendUser: async (friendId) => {},
+
+  blockUser: async (userId) => {},
+
+  unblockUser: async (userId) => {},
+
+  getBlockedUsersByUserId: async (userId) => {},
 };
 
 export default friendService;

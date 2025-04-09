@@ -48,7 +48,7 @@ const Chatting = ({ route }) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [groupMembers, setGroupMembers] = useState([]);
 
-  const API_iChat = "http://172.20.70.188:5001";
+  const API_iChat = "http://192.168.1.6:5001";
 
   // Hàm chọn ảnh từ thư viện
   const pickImage = async () => {
@@ -137,19 +137,17 @@ const Chatting = ({ route }) => {
       fetchMessages();
       const interval = setInterval(fetchMessages, 1000);
       return () => clearInterval(interval);
-      // }
     }, [user, chat]);
   } else {
     useEffect(() => {
       if (chat?.id && user?.id) {
         const fetchMessages = async () => {
           try {
-            const response = await axios.get(
-              `${API_iChat}/messages/${user.id}/${chat.id}`
-            );
-            if (response.data.status === "ok") {
-              setMessages(response.data.data);
-            }
+            const response = await messageService.getPrivateMessages({
+              userId: user.id,
+              chatId: chat.id,
+            });
+            setMessages(response);
           } catch (error) {
             console.error("Lỗi khi lấy tin nhắn:", error);
           }

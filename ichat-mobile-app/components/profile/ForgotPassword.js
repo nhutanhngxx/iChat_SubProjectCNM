@@ -15,7 +15,7 @@ import {
 } from "react-native";
 import { FirebaseRecaptchaVerifierModal } from "expo-firebase-recaptcha";
 import { firebaseConfig } from "../../config/firebase";
-import registerService from "../../services/registerService";
+import authService from "../../services/authService";
 import axios from "axios";
 import {
   PhoneAuthProvider,
@@ -23,7 +23,7 @@ import {
   getAuth,
 } from "firebase/auth";
 
-const API_iChat = "http://172.20.70.188:5001";
+const API_iChat = "http://192.168.1.6:5001";
 
 const ForgotPasswordScreen = ({ navigation }) => {
   const [step, setStep] = useState(1);
@@ -85,11 +85,7 @@ const ForgotPasswordScreen = ({ navigation }) => {
     }
     try {
       setLoading(true);
-      const result = await registerService.validateOTP(
-        phone,
-        otp,
-        verificationId
-      );
+      const result = await authService.validateOTP(phone, otp, verificationId);
       if (result.status === "ok") {
         setStep(3);
       } else {

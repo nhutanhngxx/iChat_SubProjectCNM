@@ -17,14 +17,13 @@ import axios from "axios";
 import CustomButton from "../components/common/CustomButton";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { UserContext } from "../context/UserContext";
+import authService from "../services/authService";
 
 const LoginScreen = ({ navigation }) => {
   const { setUser } = useContext(UserContext);
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-
-  const API_iChat = "http://172.20.70.188:5001";
 
   const handleLogin = async () => {
     if (!phone.trim() || !password.trim()) {
@@ -33,17 +32,12 @@ const LoginScreen = ({ navigation }) => {
     }
     setLoading(true);
     try {
-      const formattedPhone = phone.startsWith("0")
-        ? phone.replace(/^0/, "+84")
-        : `+84${phone}`;
-
-      const response = await axios.post(`${API_iChat}/login`, {
-        phone: formattedPhone,
-        password,
-      });
-      const { accessToken, user } = response.data;
-      await AsyncStorage.setItem("token", accessToken);
-      await AsyncStorage.setItem("user", JSON.stringify(user));
+      const response = await authService.login({ phone, password });
+      const { user } = response;
+      // console.log("Login response:", response);
+      // const { accessToken, user } = response;
+      // await AsyncStorage.setItem("token", accessToken);
+      // await AsyncStorage.setItem("user", JSON.stringify(user));
       setUser(user);
       Alert.alert("Đăng nhập thành công!", `Chào mừng ${user.full_name}`);
     } catch (error) {

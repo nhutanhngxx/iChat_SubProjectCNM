@@ -47,10 +47,11 @@ const formatGroupList = async (groups) => {
   });
 };
 
+const PREFIX = "groups";
 const groupService = {
   getAllGroupsByUserId: async (userId) => {
     try {
-      const response = await apiService.get(`/groups/${userId}`);
+      const response = await apiService.get(`/${PREFIX}/${userId}`);
       return formatGroupList(response.data);
     } catch (error) {
       console.log("Group Service Error: ", error);
@@ -59,13 +60,17 @@ const groupService = {
   },
   getGroupMembers: async (groupId) => {
     try {
-      const members = await apiService.get(`/groups/${groupId}/members`);
+      const members = await apiService.get(`/${PREFIX}/${groupId}/members`);
       return members.data.data;
     } catch (error) {
       console.log("Group Service Error: ", error);
       return [];
     }
   },
+
+  getGroupById: async (groupId) => {},
+
+  createGroup: async () => {},
 };
 
 export default groupService;

@@ -21,7 +21,7 @@ import axios from "axios";
 import { FirebaseRecaptchaVerifierModal } from "expo-firebase-recaptcha";
 import { firebaseConfig } from "../../config/firebase";
 import { ActivityIndicator } from "react-native";
-import registerService from "../../services/registerService";
+import authService from "../../services/authService";
 
 const maskPhoneNumber = (phone) => {
   if (!phone || phone.length < 10) return phone;
@@ -31,7 +31,7 @@ const maskPhoneNumber = (phone) => {
 const ChangePhoneNumber = () => {
   const navigation = useNavigation();
   const { user } = useContext(UserContext);
-  const API_iChat = "http://172.20.68.107:5001";
+  const API_iChat = "http://192.168.1.6:5001";
   const [phone, setPhone] = useState("");
   const recaptchaVerifier = useRef(null);
   const [verificationId, setVerificationId] = useState(null);
@@ -48,7 +48,7 @@ const ChangePhoneNumber = () => {
 
     try {
       setIsLoading(true);
-      const result = await registerService.sendOTP(newPhone, recaptchaVerifier);
+      const result = await authService.sendOTP(newPhone, recaptchaVerifier);
       if (result.status === "ok") {
         Alert.alert("Thành công", "Mã OTP đã được gửi.");
         setVerificationId(result.verificationId);
@@ -72,7 +72,7 @@ const ChangePhoneNumber = () => {
     try {
       setIsLoading(true);
 
-      const result = await registerService.validateOTP(
+      const result = await authService.validateOTP(
         newPhone,
         otp,
         verificationId

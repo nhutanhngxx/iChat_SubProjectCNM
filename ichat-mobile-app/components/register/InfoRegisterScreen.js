@@ -20,7 +20,7 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import CustomButton from "../common/CustomButton";
 import editIcon from "../../assets/icons/edit.png";
 import { RadioGroup } from "react-native-radio-buttons-group";
-import registerService from "../../services/registerService";
+import authService from "../../services/authService";
 import { ActivityIndicator } from "react-native";
 import { Appbar } from "react-native-paper";
 
@@ -41,7 +41,7 @@ const InfoRegisterScreen = ({ navigation, route }) => {
     setIsLoading(true);
     try {
       const genderValue = radioButtons.find((item) => item.id === gender).value;
-      const response = await registerService.register(
+      const response = await authService.register(
         tempToken,
         phone,
         password,

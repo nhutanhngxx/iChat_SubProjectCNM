@@ -12,20 +12,21 @@ import { useNavigation } from "@react-navigation/native";
 import { UserContext } from "../../context/UserContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
+import authService from "../../services/authService";
 
 const HeaderMessages = () => {
   const { user, setUser } = useContext(UserContext);
-  const API_iChat = "http://172.20.70.188:5001";
   const navigation = useNavigation();
   const [modalVisible, setModalVisible] = useState(false);
 
   const handleLogout = async () => {
     try {
-      // Gửi yêu cầu cập nhật trạng thái thành "Offline"
-      await axios.post(`${API_iChat}/logout`, { userId: user.id });
-      // Xóa thông tin người dùng trên máy
-      await AsyncStorage.removeItem("token");
-      await AsyncStorage.removeItem("user");
+      // // Gửi yêu cầu cập nhật trạng thái thành "Offline"
+      // await axios.post(`${API_iChat}/logout`, { userId: user.id });
+      // // Xóa thông tin người dùng trên máy
+      // await AsyncStorage.removeItem("token");
+      // await AsyncStorage.removeItem("user");
+      authService.logout(user.id);
       // Cập nhật Context API
       setUser(null);
     } catch (error) {
