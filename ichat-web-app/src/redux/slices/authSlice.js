@@ -31,11 +31,13 @@ export const loginUser = createAsyncThunk(
 // Action async để logout (gọi API logout)
 export const logoutUser = createAsyncThunk(
   "auth/logoutUser",
-  async (_, { rejectWithValue }) => {
+  async (userId, { rejectWithValue }) => {
     try {
       const response = await fetch(`${API_URL}auth/logout`, {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
         credentials: "include", // Gửi cookie chứa refreshToken nếu có
+        body: JSON.stringify({ userId }), // <-- truyền userId ở đây
       });
 
       const data = await response.json();
@@ -80,6 +82,29 @@ export const authenticateWithToken = createAsyncThunk(
     }
   }
 );
+export const checkExistedPhone = createAsyncThunk(
+  "auth/checkExistedPhone",
+  async (phone, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${API_URL}auth/check-existed-phone`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Kiểm tra số điện thoại thất bại");
+      }
+
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
 
 
 const authSlice = createSlice({
@@ -89,8 +114,21 @@ const authSlice = createSlice({
     token: localStorage.getItem("token") || null,
     loading: false,
     error: null,
+    phoneCheck: {
+      loading: false,
+      exists: false,
+      error: null,
+    },
   },
-  reducers: {},
+  reducers: {
+    clearAuthError(state) {
+      state.error = null;
+      state.phoneCheck.error = null;
+    },
+    clearPhoneCheckStatus(state) {
+      state.phoneCheck.exists = false;
+    }
+  },
   extraReducers: (builder) => {
     builder
       .addCase(logoutUser.pending, (state) => {
@@ -135,9 +173,34 @@ const authSlice = createSlice({
         state.error = action.payload;
         state.token = null;
         state.user = null;
+      })
+      .addCase(checkExistedPhone.pending, (state) => {
+        if (!state.phoneCheck) state.phoneCheck = { loading: false, exists: false, error: null };
+        state.phoneCheck.loading = true;
+        state.phoneCheck.error = null;
+        state.phoneCheck.exists = false;
+      })
+      .addCase(checkExistedPhone.fulfilled, (state, action) => {
+        state.phoneCheck.loading = false;
+        state.phoneCheck.exists = false; // Vì BE trả về "chưa tồn tại", nên exists = false
+      })
+      .addCase(checkExistedPhone.rejected, (state, action) => {
+        state.phoneCheck.loading = false;
+      
+        // Nếu lỗi là "số đã tồn tại", thì exists = true
+        if (
+          action.payload === "Số điện thoại này đã được đăng ký."
+        ) {
+          state.phoneCheck.exists = true;
+        } else {
+          state.phoneCheck.error = action.payload;
+        }
       });
+      
 
   },
 });
+export const { clearAuthError, clearPhoneCheckStatus } = authSlice.actions;
+
 
 export default authSlice.reducer;

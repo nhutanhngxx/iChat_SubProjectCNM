@@ -19,12 +19,6 @@ const rootReducer = combineReducers({
 const persistedReducer = persistReducer(persistConfig, rootReducer);
 
 const store = configureStore({
-  // reducer: {
-  //   // auth: authReducer,
-  //   // messages: persistedMessagesReducer, // Chỉ persist messages
-  //   reducer: persistedReducer,
-  //   messages: messagesSlice, // Chỉ persist messages
-  // }, 
   reducer: persistedReducer,
 });
 

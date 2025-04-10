@@ -6,7 +6,7 @@ const authModel = {
   checkExistedPhone: async (phone) => {
     try {
       const exists = await User.exists({ phone }).lean();
-      return !exists;
+      return exists;
     } catch (error) {
       console.error("Lỗi kiểm tra số điện thoại:", error);
       throw new Error("Lỗi kiểm tra số điện thoại");
