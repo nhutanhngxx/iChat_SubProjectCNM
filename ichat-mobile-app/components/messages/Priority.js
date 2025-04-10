@@ -7,11 +7,8 @@ import {
   TouchableOpacity,
   FlatList,
 } from "react-native";
-import { NetworkInfo } from "react-native-network-info";
 import { useNavigation } from "@react-navigation/native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { UserContext } from "../../context/UserContext";
-import axios from "axios";
 import groupService from "../../services/groupService";
 import userService from "../../services/userService";
 import messageService from "../../services/messageService";

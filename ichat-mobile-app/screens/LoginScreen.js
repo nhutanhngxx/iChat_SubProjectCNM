@@ -6,16 +6,13 @@ import {
   ImageBackground,
   TextInput,
   Alert,
-  ActivityIndicator,
   KeyboardAvoidingView,
   ScrollView,
   Platform,
   TouchableWithoutFeedback,
   Keyboard,
 } from "react-native";
-import axios from "axios";
 import CustomButton from "../components/common/CustomButton";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { UserContext } from "../context/UserContext";
 import authService from "../services/authService";
 
@@ -34,10 +31,6 @@ const LoginScreen = ({ navigation }) => {
     try {
       const response = await authService.login({ phone, password });
       const { user } = response;
-      // console.log("Login response:", response);
-      // const { accessToken, user } = response;
-      // await AsyncStorage.setItem("token", accessToken);
-      // await AsyncStorage.setItem("user", JSON.stringify(user));
       setUser(user);
       Alert.alert("Đăng nhập thành công!", `Chào mừng ${user.full_name}`);
     } catch (error) {

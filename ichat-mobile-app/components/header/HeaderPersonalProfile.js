@@ -20,12 +20,7 @@ const HeaderMessages = () => {
   const handleLogout = async () => {
     try {
       // // Gửi yêu cầu cập nhật trạng thái thành "Offline"
-      // await axios.post(`${API_iChat}/logout`, { userId: user.id });
-      // // Xóa thông tin người dùng trên máy
-      // await AsyncStorage.removeItem("token");
-      // await AsyncStorage.removeItem("user");
       authService.logout(user.id);
-      // Cập nhật Context API
       setUser(null);
     } catch (error) {
       console.error("Lỗi khi đăng xuất:", error);
