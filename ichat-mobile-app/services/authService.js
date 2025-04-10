@@ -101,6 +101,7 @@ const authService = {
       };
     }
   },
+
   validateOTP: async (phone, otp, verificationId) => {
     try {
       if (!phone || !otp) {
@@ -143,6 +144,7 @@ const authService = {
       };
     }
   },
+
   register: async (tempToken, phone, password, fullName, dob, gender) => {
     try {
       if (!tempToken || !phone || !password || !fullName || !dob || !gender) {

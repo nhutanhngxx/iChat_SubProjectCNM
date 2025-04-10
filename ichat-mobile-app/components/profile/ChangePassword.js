@@ -26,7 +26,7 @@ const ChangePasswordScreen = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const API_iChat = "http://192.168.1.196:5001";
+  const API_iChat = "http://172.20.65.58:5001/auth";
 
   const handleChangePassword = async () => {
     setIsLoading(true);
@@ -45,7 +45,7 @@ const ChangePasswordScreen = () => {
     }
 
     try {
-      const response = await axios.put(`${API_iChat}/auth/change-password`, {
+      const response = await axios.put(`${API_iChat}/change-password`, {
         userId: user.id,
         currentPassword,
         newPassword,
@@ -139,7 +139,7 @@ const styles = StyleSheet.create({
   },
   header: {
     width: "100%",
-    height: 80,
+    height: 90,
     justifyContent: "space-between",
     flexDirection: "row",
     alignItems: "flex-end",

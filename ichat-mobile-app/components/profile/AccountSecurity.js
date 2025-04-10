@@ -43,30 +43,30 @@ const AccountSecurity = () => {
         <SecurityItem
           icon="time-outline"
           label="Lịch sử thay đổi"
-          onPress={() =>
-            Alert.alert("Lịch sử thay đổi", "Chức năng này hiện chưa khả dụng")
-          }
+          // onPress={() =>
+          //   Alert.alert("Lịch sử thay đổi", "Chức năng này hiện chưa khả dụng")
+          // }
         />
         <SecurityItem
           icon="trash-outline"
           label="Xóa tài khoản"
-          onPress={() =>
-            Alert.alert(
-              "Xóa tài khoản",
-              "Bạn có chắc chắn muốn xóa tài khoản không?",
-              [
-                { text: "Hủy", style: "cancel" },
-                {
-                  text: "Xóa",
-                  style: "destructive",
-                  onPress: () => {
-                    alert("Tính năng này hiện chưa khả dụng");
-                    // Xử lý xóa tài khoản ở đây
-                  },
-                },
-              ]
-            )
-          }
+          // onPress={() =>
+          //   Alert.alert(
+          //     "Xóa tài khoản",
+          //     "Bạn có chắc chắn muốn xóa tài khoản không?",
+          //     [
+          //       { text: "Hủy", style: "cancel" },
+          //       {
+          //         text: "Xóa",
+          //         style: "destructive",
+          //         onPress: () => {
+          //          Alert.alert("Tính năng này hiện chưa khả dụng");
+          //           // Xử lý xóa tài khoản ở đây
+          //         },
+          //       },
+          //     ]
+          //   )
+          // }
           danger
         />
       </ScrollView>

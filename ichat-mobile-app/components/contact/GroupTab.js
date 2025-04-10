@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   FlatList,
   StyleSheet,
+  Alert,
 } from "react-native";
 import { Dimensions } from "react-native";
 import ModalCreateGroup from "./ModalCreateGroup";
@@ -88,7 +89,7 @@ const GroupTab = () => {
 
         <TouchableOpacity
           style={styles.recentActive}
-          onPress={() => alert("Xem tất cả bạn bè đang hoạt động")}
+          onPress={() => Alert.alert("Xem tất cả bạn bè đang hoạt động")}
         >
           <Image
             source={require("../../assets/icons/sort.png")}

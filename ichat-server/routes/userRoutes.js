@@ -315,7 +315,7 @@ router.get("/users", async (req, res) => {
     let users;
     if (!search) {
       users = await User.find(); // Nếu không có search, trả về toàn bộ user
-    } else if (/^\d+$/.test(search)) {
+    } else if (/^\+?\d+$/.test(search)) {
       // Nếu chỉ chứa số, tìm chính xác theo số điện thoại
       users = await User.find({ phone: search });
     } else {

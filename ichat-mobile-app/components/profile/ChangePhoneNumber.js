@@ -32,7 +32,7 @@ const maskPhoneNumber = (phone) => {
 const ChangePhoneNumber = () => {
   const navigation = useNavigation();
   const { user } = useContext(UserContext);
-  const API_iChat = "http://192.168.1.6:5001";
+  const API_iChat = "http://172.20.65.58:5001";
   const [phone, setPhone] = useState("");
   const recaptchaVerifier = useRef(null);
   const [verificationId, setVerificationId] = useState(null);
@@ -236,7 +236,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff" },
   header: {
     width: "100%",
-    height: 80,
+    height: 90,
     justifyContent: "space-between",
     flexDirection: "row",
     alignItems: "flex-end",

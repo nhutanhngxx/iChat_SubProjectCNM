@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   View,
   Image,
+  Alert,
 } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useNavigation } from "@react-navigation/native";
@@ -158,10 +159,8 @@ export default function CameraFunction() {
   const handleBarCodeScanned = ({ type, data }) => {
     if (!scanned) {
       setScanned(true);
-      alert(`Đã quét mã QR: ${data}`);
+      Alert.alert(`Đã quét mã QR: ${data}`);
       console.log(`Đã quét mã QR: ${data}`);
-      // Nếu muốn reset sau vài giây để có thể quét lại
-      // setTimeout(() => setScanned(false), 3000);
     }
   };
 

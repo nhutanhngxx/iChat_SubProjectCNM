@@ -23,7 +23,7 @@ import {
   getAuth,
 } from "firebase/auth";
 
-const API_iChat = "http://192.168.1.6:5001";
+const API_iChat = "http://172.20.65.58:5001";
 
 const ForgotPasswordScreen = ({ navigation }) => {
   const [step, setStep] = useState(1);
