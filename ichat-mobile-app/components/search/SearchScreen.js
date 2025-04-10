@@ -162,10 +162,16 @@ const SearchScreen = () => {
   // Hàm gọi API tìm kiếm
   const handleSearch = async () => {
     setIsLoading(true);
+    const formattedPhone = searchText.startsWith("0")
+      ? searchText.replace(/^0/, "+84")
+      : `+84${searchText}`;
+    const encodedPhone = encodeURIComponent(formattedPhone);
+    console.log("Encoded phone:", encodedPhone);
+
     try {
       const [usersResponse, messagesResponse, groupsResponse] =
         await Promise.all([
-          axios.get(`${API_iChat}/users?search=${searchText}`),
+          axios.get(`${API_iChat}/users?search=${encodedPhone}`),
           axios.get(`${API_iChat}/messages?search=${searchText}`),
           axios.get(`${API_iChat}/groups?search=${searchText}`),
         ]);

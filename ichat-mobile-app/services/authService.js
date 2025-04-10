@@ -3,6 +3,15 @@ import { auth } from "../config/firebase";
 import { PhoneAuthProvider, signInWithCredential } from "firebase/auth";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+const formatPhoneNumber = (phone) => {
+  if (!phone) return null;
+  const cleaned = phone.replace(/\s+/g, "");
+  if (cleaned.startsWith("+84")) return cleaned;
+  if (cleaned.startsWith("0")) return "+84" + cleaned.slice(1);
+  if (cleaned.startsWith("84")) return "+84" + cleaned.slice(2);
+  return "+84" + cleaned;
+};
+
 const PREFIX = "auth";
 const authService = {
   // Đăng nhập
@@ -46,6 +55,31 @@ const authService = {
         status: "error",
         message:
           error.response?.data?.message || "Không thể đăng xuất tài khoản",
+      };
+    }
+  },
+
+  sendOTPWithoutCheck: async (phone, recaptchaVerifier) => {
+    try {
+      phone = formatPhoneNumber(phone);
+      console.log("Formatted phone:", phone);
+
+      const phoneProvider = new PhoneAuthProvider(auth);
+      const verificationId = await phoneProvider.verifyPhoneNumber(
+        phone,
+        recaptchaVerifier.current
+      );
+
+      return {
+        status: "ok",
+        verificationId: verificationId,
+        phoneNumber: phone,
+      };
+    } catch (error) {
+      console.log("OTP Error:", error);
+      return {
+        status: "error",
+        message: "Không thể gửi mã OTP",
       };
     }
   },

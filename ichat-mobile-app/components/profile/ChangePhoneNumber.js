@@ -29,6 +29,15 @@ const maskPhoneNumber = (phone) => {
   return phone.slice(0, 5) + "***" + phone.slice(-3);
 };
 
+const formatPhoneNumber = (phone) => {
+  if (!phone) return null;
+  const cleaned = phone.replace(/\s+/g, "");
+  if (cleaned.startsWith("+84")) return cleaned;
+  if (cleaned.startsWith("0")) return "+84" + cleaned.slice(1);
+  if (cleaned.startsWith("84")) return "+84" + cleaned.slice(2);
+  return "+84" + cleaned;
+};
+
 const ChangePhoneNumber = () => {
   const navigation = useNavigation();
   const { user } = useContext(UserContext);
@@ -40,16 +49,21 @@ const ChangePhoneNumber = () => {
   const [newPhone, setNewPhone] = useState("");
   const [otp, setOtp] = useState("");
   const [step, setStep] = useState(1); // 1: Nhập sđt mới, 2: Nhập OTP
+  const [formattedNewPhone, setFormattedNewPhone] = useState("");
 
   const handleRequestOTP = async () => {
-    if (!newPhone || newPhone.length < 9) {
-      Alert.alert("Lỗi", "Vui lòng nhập số điện thoại hợp lệ.");
-      return;
-    }
+    const formatted = formatPhoneNumber(newPhone);
+    setFormattedNewPhone(formatted); // Lưu lại số điện thoại đã định dạng
+
+    console.log("formattedNewPhone", formatted);
+    console.log("User phone", user.phone);
 
     try {
       setIsLoading(true);
-      const result = await authService.sendOTP(newPhone, recaptchaVerifier);
+      const result = await authService.sendOTPWithoutCheck(
+        user.phone,
+        recaptchaVerifier
+      );
       if (result.status === "ok") {
         Alert.alert("Thành công", "Mã OTP đã được gửi.");
         setVerificationId(result.verificationId);
@@ -70,22 +84,26 @@ const ChangePhoneNumber = () => {
       return;
     }
 
+    if (!formattedNewPhone) {
+      Alert.alert("Lỗi", "Vui lòng nhập số điện thoại hợp lệ.");
+      return;
+    }
+
     try {
       setIsLoading(true);
 
       const result = await authService.validateOTP(
-        newPhone,
+        user.phone,
         otp,
         verificationId
       );
 
       if (result.status === "ok") {
         navigation.navigate("ProfileInformation");
-        const phoneNumber = result.data.user.phoneNumber;
 
         await axios.put(`${API_iChat}/auth/update-phone`, {
           userId: user.id,
-          newPhone: phoneNumber,
+          newPhone: formattedNewPhone,
         });
       }
     } catch (error) {
