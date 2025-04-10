@@ -107,12 +107,14 @@ const authService = {
 
       // Use PhoneAuthProvider with recaptcha verifier
       const phoneProvider = new PhoneAuthProvider(auth);
+      console.log(phoneProvider);
+
       const verificationId = await phoneProvider.verifyPhoneNumber(
         phone,
         recaptchaVerifier.current
       );
 
-      console.log("Verification ID: ", verificationId);
+      console.log("Verification ID: ", recaptchaVerifier);
       return {
         status: "ok",
         verificationId: verificationId,
@@ -205,6 +207,64 @@ const authService = {
       };
     }
   },
+
+  resetPassword: async (phone) => {},
+
+  changePassword: async ({
+    userId,
+    currentPassword,
+    newPassword,
+    confirmPassword,
+  }) => {
+    if (newPassword.length < 6) {
+      return {
+        status: "error",
+        message: "Mật khẩu mới phải có ít nhất 6 ký tự.",
+      };
+    }
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      return {
+        status: "error",
+        message: "Vui lòng nhập đầy đủ thông tin.",
+      };
+    }
+
+    if (newPassword !== confirmPassword) {
+      return {
+        status: "error",
+        message: "Mật khẩu mới không trùng khớp.",
+      };
+    }
+    try {
+      const response = await apiService.put(`/${PREFIX}/change-password`, {
+        userId,
+        currentPassword,
+        newPassword,
+      });
+      if (response.data.status === "ok") {
+        return {
+          status: "ok",
+          message: response.data.message,
+        };
+      } else {
+        return {
+          status: "error",
+          message: response.data.message,
+        };
+      }
+    } catch (error) {
+      console.log("Change Password Service Error: ", error);
+      return {
+        status: "error",
+        message:
+          error.response?.data?.message || "Không thể đổi mật khẩu tài khoản",
+      };
+    }
+  },
+
+  changePhoneNumber: async ({}) => {},
+
+  changeInformation: async ({}) => {},
 
   changePhone: async (userId, newPhone) => {
     try {

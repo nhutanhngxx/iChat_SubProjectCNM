@@ -9,33 +9,26 @@ import {
   Animated,
   FlatList,
   TextInput,
-  TouchableWithoutFeedback,
-  Keyboard,
-  SafeAreaView,
 } from "react-native";
 import { Tab } from "@rneui/themed";
 import { TabView } from "@rneui/base";
 import { Checkbox } from "react-native-paper";
-import axios from "axios";
 import { StatusBar } from "expo-status-bar";
 
 import HeaderMessages from "../components/header/HeaderMessagesTab";
 import PriorityMessages from "../components/messages/Priority";
 import OtherMessages from "../components/messages/Other";
 
-import moreIcon from "../assets/icons/more.png";
-import addFriendIcon from "../assets/icons/add-friend.png";
-import loginDeviceIcon from "../assets/icons/login-device.png";
 import unReadIcon from "../assets/icons/unread.png";
 import tagIcon from "../assets/icons/tag.png";
 import sortIcon from "../assets/icons/sort.png";
 import addIcon from "../assets/icons/add.png";
 import backIcon from "../assets/icons/go-back.png";
 
+import cardService from "../services/cardService";
 import { UserContext } from "../context/UserContext";
 
 const MessagesTab = () => {
-  const API_iChat = "http://192.168.1.85:5001";
   const [index, setIndex] = useState(0);
   const { user } = useContext(UserContext);
   const [modalSort, setModalSort] = useState(false);
@@ -54,17 +47,14 @@ const MessagesTab = () => {
   // Thêm tag
   const createMessageCard = async (own_id, title, card_color) => {
     try {
-      const response = await axios.post(`${API_iChat}/messages/message-cards`, {
+      const response = await cardService.createMessageCard({
         own_id,
         title,
         card_color,
       });
-
-      if (response.data.status === "ok") {
-        console.log("Tạo MessageCard thành công:", response.data.data);
-        setModalAddTag(false);
-        return response.data.data;
-      }
+      console.log("Tạo MessageCard thành công:", response);
+      setModalAddTag(false);
+      return response;
     } catch (error) {
       console.error("Lỗi khi tạo MessageCard:", error.message);
     }
@@ -108,11 +98,8 @@ const MessagesTab = () => {
     // let timeout;
     const fetchMessageCards = async () => {
       try {
-        const response = await fetch(`${API_iChat}/message-cards/${user?.id}`);
-        const data = await response.json();
-        if (data.status === "ok") {
-          setMessageCards(data.data);
-        }
+        const response = await cardService.getMessageCardsByUserId(user.id);
+        setMessageCards(response);
       } catch (error) {
         console.error("Error fetching message cards:", error);
       } finally {

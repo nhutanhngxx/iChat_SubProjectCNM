@@ -10,19 +10,14 @@ import {
   View,
   Image,
   StyleSheet,
-  SafeAreaView,
   FlatList,
-  TextInput,
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
   Modal,
-  Keyboard,
-  TouchableWithoutFeedback,
   Pressable,
   Alert,
 } from "react-native";
-import { NetworkInfo } from "react-native-network-info";
 import * as ImagePicker from "expo-image-picker";
 import * as FileSystem from "expo-file-system";
 import { StatusBar } from "expo-status-bar";

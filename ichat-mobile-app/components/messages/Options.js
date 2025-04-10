@@ -4,24 +4,19 @@ import {
   View,
   Image,
   StyleSheet,
-  SafeAreaView,
-  FlatList,
-  TextInput,
   TouchableOpacity,
-  KeyboardAvoidingView,
-  Platform,
   ScrollView,
+  Alert,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 
 import { useNavigation } from "@react-navigation/native";
 import { UserContext } from "../../context/UserContext";
-import axios from "axios";
-import { NetworkInfo } from "react-native-network-info";
 
 import HeaderOption from "../header/HeaderOption";
 import userService from "../../services/userService";
 import groupService from "../../services/groupService";
+import messageService from "../../services/messageService";
 
 const Option = ({ route }) => {
   const navigation = useNavigation();
@@ -71,12 +66,14 @@ const Option = ({ route }) => {
   // Xóa tất cả tin nhắn giữa 2 người
   const deleteChatHistory = async () => {
     try {
-      const response = await axios.delete(
-        `${API_iChat}/messages/${user.id}/${id}`
-      );
+      const response = messageService.deleteChatHistory(user._id, id);
 
-      if (response.data.status === "ok") {
+      if (response.status === "ok") {
+        Alert.alert("Thông báo", response.message);
         navigation.navigate("MessagesStack");
+      }
+      if (response.status === "error") {
+        Alert.alert("Thông báo", response.message);
       }
     } catch (error) {
       console.error("Lỗi khi xóa lịch sử trò chuyện:", error);

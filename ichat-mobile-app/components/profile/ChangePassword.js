@@ -13,10 +13,10 @@ import {
   Image,
 } from "react-native";
 import { UserContext } from "../../context/UserContext";
-import axios from "axios";
 import { useNavigation } from "@react-navigation/native";
 import goBackIcon from "../../assets/icons/go-back.png";
 import { StatusBar } from "expo-status-bar";
+import authService from "../../services/authService";
 
 const ChangePasswordScreen = () => {
   const { user } = useContext(UserContext);
@@ -26,39 +26,25 @@ const ChangePasswordScreen = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const API_iChat = "http://192.168.1.85:5001/auth";
-
   const handleChangePassword = async () => {
     setIsLoading(true);
-    if (newPassword.length < 6) {
-      Alert.alert("Lỗi", "Mật khẩu mới phải có ít nhất 6 ký tự.");
-      return;
-    }
-    if (!currentPassword || !newPassword || !confirmPassword) {
-      Alert.alert("Lỗi", "Vui lòng nhập đầy đủ thông tin.");
-      return;
-    }
-
-    if (newPassword !== confirmPassword) {
-      Alert.alert("Lỗi", "Mật khẩu mới không trùng khớp.");
-      return;
-    }
 
     try {
-      const response = await axios.put(`${API_iChat}/change-password`, {
+      const response = await authService.changePassword({
         userId: user.id,
         currentPassword,
         newPassword,
+        confirmPassword,
       });
 
-      if (response.data.status === "ok") {
+      if (response.status === "ok") {
         Alert.alert("Thành công", "Đổi mật khẩu thành công.");
         setCurrentPassword("");
         setNewPassword("");
         setConfirmPassword("");
         navigation.goBack();
       } else {
-        Alert.alert("Lỗi", response.data.message || "Không thể đổi mật khẩu.");
+        Alert.alert("Lỗi", response.message || "Không thể đổi mật khẩu.");
       }
     } catch (error) {
       console.error("Lỗi đổi mật khẩu:", error);

@@ -1,6 +1,5 @@
-import { useContext } from "react";
 import { apiService } from "./api";
-import { UserContext } from "../context/UserContext";
+
 const PREFIX = "messages";
 
 const messageService = {
@@ -62,6 +61,31 @@ const messageService = {
 
   // Thu hồi tin nhắn
   recallMessage: async (messageId) => {},
+
+  // Xóa tin nhắn giữa 2 người
+  deleteChatHistory: async (userId, chatId) => {
+    try {
+      const response = await apiService.delete(
+        `/${PREFIX}/${userId}/${chatId}`
+      );
+      if (response.data.status === "ok")
+        return {
+          status: response.data.status,
+          message: response.data.message,
+        };
+      else
+        return {
+          status: response.data.status,
+          message: response.data.message,
+        };
+    } catch (error) {
+      console.log("Không thể xóa lịch sử trò chuyện: ", error);
+      return {
+        status: "error",
+        message: "Không thể xóa lịch sử trò chuyện",
+      };
+    }
+  },
 };
 
 export default messageService;

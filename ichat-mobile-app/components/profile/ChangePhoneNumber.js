@@ -21,7 +21,6 @@ import { StatusBar } from "expo-status-bar";
 
 import { FirebaseRecaptchaVerifierModal } from "expo-firebase-recaptcha";
 import { firebaseConfig } from "../../config/firebase";
-import { ActivityIndicator } from "react-native";
 import authService from "../../services/authService";
 
 const maskPhoneNumber = (phone) => {
