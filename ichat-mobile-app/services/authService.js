@@ -2,6 +2,7 @@ import { apiService } from "./api";
 import { auth } from "../config/firebase";
 import { PhoneAuthProvider, signInWithCredential } from "firebase/auth";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios from "axios";
 
 const formatPhoneNumber = (phone) => {
   if (!phone) return null;
@@ -14,7 +15,6 @@ const formatPhoneNumber = (phone) => {
 
 const PREFIX = "auth";
 const authService = {
-  // Đăng nhập
   login: async ({ phone, password }) => {
     try {
       const formattedPhone = phone.startsWith("0")
@@ -43,7 +43,6 @@ const authService = {
     }
   },
 
-  // Đăng xuất
   logout: async (userId) => {
     try {
       await apiService.post(`/logout`, { userId });
@@ -187,7 +186,7 @@ const authService = {
           message: "Thiếu thông tin đăng ký",
         };
       }
-      const response = await apiService.post(`/${PREFIX}/register`, {
+      const response = await c.post(`/${PREFIX}/register`, {
         tempToken,
         phone,
         password,
@@ -204,6 +203,19 @@ const authService = {
         status: "error",
         message: error.response?.data?.message || "Không thể đăng ký tài khoản",
       };
+    }
+  },
+
+  changePhone: async (userId, newPhone) => {
+    try {
+      const response = await apiService.put(`/${PREFIX}/update-phone`, {
+        userId,
+        newPhone,
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Lỗi khi cập nhật số điện thoại:", error);
+      throw error;
     }
   },
 };
