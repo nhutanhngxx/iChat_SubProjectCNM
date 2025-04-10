@@ -8,6 +8,7 @@ import {
   StyleSheet,
   Platform,
   ActivityIndicator,
+  Alert,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import RadioGroup from "react-native-radio-buttons-group";
@@ -53,7 +54,7 @@ const ChangeInformation = () => {
     }
   };
 
-  const API_iChat = "http://192.168.1.6:5001";
+  const API_iChat = "http://172.20.65.58:5001";
 
   const parseDate = (dateString) => {
     if (!dateString || typeof dateString !== "string") return new Date();
@@ -113,7 +114,7 @@ const ChangeInformation = () => {
   // Validation trước khi gửi
   const validateInput = () => {
     if (!fullName.trim()) {
-      alert("Vui lòng nhập họ tên đầy đủ.");
+      Alert.alert("Vui lòng nhập họ tên đầy đủ.");
       return false;
     }
     return true;
@@ -137,7 +138,7 @@ const ChangeInformation = () => {
         // Kiểm tra thông tin ảnh
         const fileInfo = await FileSystem.getInfoAsync(selectedImage);
         if (!fileInfo.exists) {
-          alert("Ảnh không tồn tại!");
+          Alert.alert("Ảnh không tồn tại!");
           return;
         }
 
@@ -186,20 +187,20 @@ const ChangeInformation = () => {
         // Cập nhật context
         await setUser(updatedUser);
 
-        alert("Cập nhật thông tin thành công!");
+        Alert.alert("Cập nhật thông tin thành công!");
         navigation.goBack();
       } else {
-        alert(result.message || "Có lỗi xảy ra khi cập nhật thông tin.");
+        Alert.alert(result.message || "Có lỗi xảy ra khi cập nhật thông tin.");
       }
     } catch (error) {
       console.error("Lỗi khi gọi API:", error);
       if (error.response) {
         console.log("Response data:", error.response.data);
-        alert(
+        Alert.alert(
           error.response.data.message || "Có lỗi xảy ra khi cập nhật thông tin."
         );
       } else {
-        alert("Lỗi kết nối server. Vui lòng thử lại sau.");
+        Alert.alert("Lỗi kết nối server. Vui lòng thử lại sau.");
       }
     } finally {
       setLoading(false);

@@ -19,11 +19,15 @@ const HeaderViewProfile = () => {
     <View
       style={{
         flexDirection: "row",
-        alignItems: "center",
-        height: 50,
-        paddingRight: 10,
-        backgroundColor: "rgba(217, 217, 217, 0.5)",
+        alignItems: "flex-end",
+        height: 80,
+        padding: 10,
+        backgroundColor: 0,
         justifyContent: "space-between",
+        position: "absolute",
+        width: "100%",
+        zIndex: 10,
+        elevation: 10,
       }}
     >
       <TouchableOpacity onPress={() => navigation.goBack()}>

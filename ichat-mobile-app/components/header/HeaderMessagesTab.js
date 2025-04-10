@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Modal,
   SafeAreaView,
+  Alert,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 
@@ -34,7 +35,7 @@ const HeaderMessages = () => {
     if (hasPermission) {
       navigation.navigate("QRScannerScreen");
     } else {
-      alert("Ứng dụng cần quyền truy cập camera.");
+      Alert.alert("Ứng dụng cần quyền truy cập camera.");
     }
   };
 
@@ -42,60 +43,62 @@ const HeaderMessages = () => {
     <View
       style={{
         width: "100%",
-        height: 50,
-        justifyContent: "space-between",
         flexDirection: "row",
-        alignItems: "center",
-        paddingHorizontal: 10,
+        height: 90,
+        justifyContent: "space-between",
+        alignItems: "flex-end",
+        padding: 10,
+        backgroundColor: "rgba(47, 128, 237, 0.3)",
       }}
     >
       <StatusBar style={"light"} />
-      <TouchableOpacity
-        style={{
-          flexDirection: "row",
-          gap: 15,
-          alignItems: "center",
-          height: 50,
-          flex: 1,
-        }}
-        onPress={() => navigation.navigate("SearchScreen")}
-      >
-        <Image
-          source={require("../../assets/icons/search.png")}
-          style={{ width: 22, height: 22 }}
-        />
-        <TextInput
-          onPress={() => navigation.navigate("SearchScreen")}
+      <View style={{ flexDirection: "row", alignItems: "center" }}>
+        <TouchableOpacity
           style={{
-            fontSize: 15,
-            color: "#2F80ED",
+            flexDirection: "row",
+            gap: 15,
+            alignItems: "center",
             flex: 1,
-            height: 35,
-            marginRight: 20,
-            paddingLeft: 10,
-            borderRadius: 5,
-            backgroundColor: "white",
-            textAlignVertical: "center",
           }}
-          placeholder="Tìm kiếm"
-          placeholderTextColor={"gray"}
-          editable={false}
-        ></TextInput>
-      </TouchableOpacity>
-
-      <View style={{ flexDirection: "row", gap: 15 }}>
-        <TouchableOpacity onPress={() => navigation.navigate("QRScanner")}>
+          onPress={() => navigation.navigate("SearchScreen")}
+        >
           <Image
-            source={require("../../assets/icons/qr.png")}
+            source={require("../../assets/icons/search.png")}
             style={{ width: 22, height: 22 }}
           />
+          <TextInput
+            onPress={() => navigation.navigate("SearchScreen")}
+            style={{
+              fontSize: 15,
+              color: "#2F80ED",
+              flex: 1,
+              height: 35,
+              marginRight: 20,
+              paddingLeft: 10,
+              borderRadius: 5,
+              backgroundColor: "white",
+              textAlignVertical: "center",
+            }}
+            placeholder="Tìm kiếm"
+            placeholderTextColor={"gray"}
+            editable={false}
+          ></TextInput>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => setModalVisible(true)}>
-          <Image
-            source={require("../../assets/icons/add.png")}
-            style={{ width: 25, height: 25 }}
-          />
-        </TouchableOpacity>
+
+        <View style={{ flexDirection: "row", gap: 15 }}>
+          <TouchableOpacity onPress={() => navigation.navigate("QRScanner")}>
+            <Image
+              source={require("../../assets/icons/qr.png")}
+              style={{ width: 22, height: 22 }}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setModalVisible(true)}>
+            <Image
+              source={require("../../assets/icons/add.png")}
+              style={{ width: 25, height: 25 }}
+            />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Modal Add friend */}
