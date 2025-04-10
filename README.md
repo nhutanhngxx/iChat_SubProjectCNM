@@ -2,14 +2,14 @@
 
 ## 📌 Giới thiệu
 
-iChat là một ứng dụng nhắn tin tức thời hỗ trợ trên cả hai nền tảng Web và Mobile. Đây là bài tập lớn trong môn học Công nghệ mới trong phát triển ứng dụng CNTT, tập trung vào việc áp dụng các công nghệ hiện đại để xây dựng một hệ thống chat linh hoạt, bảo mật và hiệu quả.
+**iChat** là một ứng dụng nhắn tin tức thời hỗ trợ trên cả hai nền tảng Web và Mobile. Đây là bài tập lớn trong môn học Công nghệ mới trong phát triển ứng dụng Công nghệ thông tin, tập trung vào việc áp dụng các công nghệ hiện đại để xây dựng một hệ thống chat linh hoạt, bảo mật và hiệu quả.
 
 ## 🎯 Mục tiêu dự án
 
 - Xây dựng ứng dụng chat thời gian thực với giao diện thân thiện.
 - Hỗ trợ đa nền tảng (Web & Mobile).
 - Đảm bảo bảo mật dữ liệu và tin nhắn người dùng.
-- Sử dụng công nghệ mới trong phát triển ứng dụng CNTT.
+- Sử dụng công nghệ mới trong phát triển ứng dụng Công nghệ thông tin.
 
 ## 🛠️ Công nghệ sử dụng
 
@@ -42,8 +42,8 @@ iChat là một ứng dụng nhắn tin tức thời hỗ trợ trên cả hai n
 - 💬 Nhắn tin Cá nhân và Nhóm
 - 📤 Gửi hình ảnh, emoji, file đính kèm
 - 🛠 Cá nhân hóa hồ sơ người dùng
-- 🔔 Thông báo tin nhắn mới theo thời gian thực
 - 🔍 Tìm kiếm bạn bè, tài khoản, nhóm chat
+- 🔔 Thông báo tin nhắn mới theo thời gian thực (Đang phát triển)
 
 ## 📌 Cài đặt và chạy ứng dụng
 
@@ -73,18 +73,17 @@ npm start
 ### 3️⃣ Khởi chạy Backend
 
 ```cd ichat-server
+npm install
 npm start
 ```
 
 ## 🏗️ Thành viên nhóm
 
-- Nguyễn Nhựt Anh - Phụ trách Mobile App
-- Đinh Nguyên Chung - Phụ trách Frontend Web
-- Nguyễn Thành Cương - Phụ trách Mobile App
-- Nguyễn Xuân Nam - Phụ trách Frontend Web
+- Nguyễn Nhựt Anh & Nguyễn Thành Cương - Phụ trách Mobile App
+- Đinh Nguyên Chung & Nguyễn Xuân Nam - Phụ trách Frontend Web
 - Backend Developer
 - Database & DevOps
 
 ## 📜 Giấy phép
 
-Dự án này được phát triển cho mục đích học tập và nghiên cứu trong môn học Công nghệ mới trong phát triển ứng dụng CNTT.
+Dự án này được phát triển cho mục đích học tập và nghiên cứu trong môn học Công nghệ mới trong phát triển ứng dụng Công nghệ thông tin.
