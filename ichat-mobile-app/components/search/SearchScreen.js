@@ -24,7 +24,7 @@ const SearchScreen = () => {
   const searchInputRef = useRef(null);
   const { user } = useContext(UserContext);
 
-  const API_iChat = "http://172.20.65.58:5001";
+  const API_iChat = "http://192.168.1.85:5001";
 
   const handleOpenChatting = async (selectedMessage) => {
     // Xác định ID của người đang chat với user
@@ -129,10 +129,14 @@ const SearchScreen = () => {
   };
 
   // Xóa 1 item khỏi lịch sử tìm kiếm
-  const removeSearchItem = (index) => {
-    setHistorySearch((prevHistory) =>
-      prevHistory.filter((_, i) => i !== index)
-    );
+  const removeSearchItem = async (indexToRemove) => {
+    try {
+      const newHistory = historySearch.filter((_, i) => i !== indexToRemove);
+      await AsyncStorage.setItem("searchHistory", JSON.stringify(newHistory));
+      setHistorySearch(newHistory);
+    } catch (error) {
+      console.error("Lỗi xóa 1 item khỏi lịch sử:", error);
+    }
   };
 
   // Xử lý tìm kiếm tự động khi searchText thay đổi
@@ -234,71 +238,70 @@ const SearchScreen = () => {
   }, []);
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#0AA2F8", paddingTop: 40 }}>
+    <View style={{ flex: 1, backgroundColor: "#0AA2F8" }}>
       <StatusBar hidden={false} style="light" />
       <View
         style={{
           flexDirection: "row",
-          alignItems: "center",
+          alignItems: "flex-end",
           width: "100%",
-          height: 50,
-          // backgroundColor: "#0AA2F8",
-          paddingHorizontal: 10,
-          // backgroundColor: "black",
+          padding: 10,
+          height: 90,
         }}
       >
-        <TouchableOpacity
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-          }}
-          onPress={() => navigation.goBack()}
-        >
-          <Image
-            source={require("../../assets/icons/go-back.png")}
-            style={{
-              width: 25,
-              height: 25,
-              tintColor: "white",
-            }}
-          />
-        </TouchableOpacity>
-
         <View
           style={{
-            flex: 1,
             flexDirection: "row",
             alignItems: "center",
-            backgroundColor: "white",
-            borderRadius: 5,
-            marginLeft: 5,
           }}
         >
-          <TextInput
-            ref={searchInputRef}
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Image
+              source={require("../../assets/icons/go-back.png")}
+              style={{
+                width: 25,
+                height: 25,
+                tintColor: "white",
+              }}
+            />
+          </TouchableOpacity>
+
+          <View
             style={{
               flex: 1,
-              fontSize: 15,
-              paddingHorizontal: 10,
-              height: 35,
-              paddingLeft: 10,
+              flexDirection: "row",
+              alignItems: "center",
+              backgroundColor: "white",
+              borderRadius: 5,
+              marginLeft: 5,
             }}
-            placeholder="Tìm kiếm"
-            value={searchText}
-            onChangeText={setSearchText}
-            onSubmitEditing={() => {
-              saveSearchHistory(searchText);
-              setSearchText("");
-            }}
-          />
-          {searchText.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchText("")}>
-              <Image
-                source={require("../../assets/icons/close.png")}
-                style={{ width: 20, height: 20, marginRight: 5 }}
-              />
-            </TouchableOpacity>
-          )}
+          >
+            <TextInput
+              ref={searchInputRef}
+              style={{
+                flex: 1,
+                fontSize: 15,
+                paddingHorizontal: 10,
+                textAlignVertical: "center",
+                height: 30,
+              }}
+              placeholder="Tìm kiếm"
+              value={searchText}
+              onChangeText={setSearchText}
+              onSubmitEditing={() => {
+                saveSearchHistory(searchText);
+                setSearchText("");
+              }}
+            />
+            {searchText.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchText("")}>
+                <Image
+                  source={require("../../assets/icons/close.png")}
+                  style={{ width: 20, height: 20, marginRight: 5 }}
+                />
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
       </View>
 

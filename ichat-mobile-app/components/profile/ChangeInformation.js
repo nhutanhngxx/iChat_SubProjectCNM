@@ -18,8 +18,10 @@ import { Modal } from "react-native";
 import axios from "axios";
 import * as ImagePicker from "expo-image-picker";
 import * as FileSystem from "expo-file-system";
+import { StatusBar } from "expo-status-bar";
 
 import editIcon from "../../assets/icons/edit.png";
+import goBackIcon from "../../assets/icons/go-back.png";
 
 const ChangeInformation = () => {
   const navigation = useNavigation();
@@ -54,7 +56,7 @@ const ChangeInformation = () => {
     }
   };
 
-  const API_iChat = "http://172.20.65.58:5001";
+  const API_iChat = "http://192.168.1.85:5001";
 
   const parseDate = (dateString) => {
     if (!dateString || typeof dateString !== "string") return new Date();
@@ -208,27 +210,31 @@ const ChangeInformation = () => {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#fff", paddingTop: 40 }}>
+    <View style={{ flex: 1, backgroundColor: "#fff" }}>
+      <StatusBar style="light" />
       <View
         style={{
-          backgroundColor: "#fff",
-          paddingRight: 10,
-          paddingTop: 5,
+          width: "100%",
+          height: 90,
+          justifyContent: "space-between",
           flexDirection: "row",
-          alignItems: "center",
-          gap: 10,
-          height: 50,
+          alignItems: "flex-end",
+          backgroundColor: "#3083F9",
+          padding: 10,
         }}
       >
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        <TouchableOpacity
+          style={{ flexDirection: "row", alignItems: "center", gap: 5 }}
+          onPress={() => navigation.goBack()}
+        >
           <Image
-            source={require("../../assets/icons/go-back.png")}
-            style={{ width: 25, height: 25 }}
+            source={goBackIcon}
+            style={{ width: 25, height: 25, tintColor: "#fff" }}
           />
+          <Text style={{ color: "#fff", fontSize: 18, fontWeight: "bold" }}>
+            Chỉnh sửa thông tin
+          </Text>
         </TouchableOpacity>
-        <Text style={{ fontSize: 20, fontWeight: "bold" }}>
-          Chỉnh sửa thông tin
-        </Text>
       </View>
 
       <View

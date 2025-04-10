@@ -26,7 +26,7 @@ const ChangePasswordScreen = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const API_iChat = "http://172.20.65.58:5001/auth";
+  const API_iChat = "http://192.168.1.85:5001/auth";
 
   const handleChangePassword = async () => {
     setIsLoading(true);

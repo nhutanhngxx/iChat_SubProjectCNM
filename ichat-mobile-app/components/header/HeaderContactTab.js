@@ -34,7 +34,7 @@ const HeaderContactTab = () => {
               fontSize: 15,
               color: "#2F80ED",
               flex: 1,
-              height: 35,
+              height: 30,
               marginRight: 15,
               paddingLeft: 10,
               borderRadius: 5,

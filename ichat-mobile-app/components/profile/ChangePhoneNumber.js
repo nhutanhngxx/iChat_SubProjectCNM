@@ -40,9 +40,8 @@ const formatPhoneNumber = (phone) => {
 
 const ChangePhoneNumber = () => {
   const navigation = useNavigation();
-  const { user } = useContext(UserContext);
-  const API_iChat = "http://172.20.65.58:5001";
-  const [phone, setPhone] = useState("");
+  const { user, setUser } = useContext(UserContext);
+  const API_iChat = "http://192.168.1.85:5001";
   const recaptchaVerifier = useRef(null);
   const [verificationId, setVerificationId] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -55,8 +54,8 @@ const ChangePhoneNumber = () => {
     const formatted = formatPhoneNumber(newPhone);
     setFormattedNewPhone(formatted); // Lưu lại số điện thoại đã định dạng
 
-    console.log("formattedNewPhone", formatted);
-    console.log("User phone", user.phone);
+    console.log("Formatted New Phone: ", formatted);
+    console.log("User phone: ", user.phone);
 
     try {
       setIsLoading(true);
@@ -100,12 +99,9 @@ const ChangePhoneNumber = () => {
 
       if (result.status === "ok") {
         navigation.navigate("ProfileInformation");
-
-        await axios.put(`${API_iChat}/auth/update-phone`, {
-          userId: user.id,
-          newPhone: formattedNewPhone,
-        });
+        await authService.changePhone(user.id, formattedNewPhone);
       }
+      setUser({ ...user, phone: formattedNewPhone });
     } catch (error) {
       console.error("Xác thực OTP lỗi:", error);
       Alert.alert("Lỗi", "Đã xảy ra lỗi khi xác thực.");

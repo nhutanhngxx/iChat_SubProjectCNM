@@ -20,19 +20,49 @@ import axios from "axios";
 import { NetworkInfo } from "react-native-network-info";
 
 import HeaderOption from "../header/HeaderOption";
+import userService from "../../services/userService";
+import groupService from "../../services/groupService";
 
 const Option = ({ route }) => {
   const navigation = useNavigation();
-  const { user } = useContext(UserContext);
-  const { id, name, avatar } = route.params || {};
+  const { user } = useContext(UserContext); // Lấy thông tin người dùng từ context
+  const { id, name, avatar } = route.params || {}; // Nhận id, name, avatar từ route.params
+  const [receiverInfo, setReceiverInfo] = useState(null); // Thông tin người nhận
+  const [sharedGroups, setSharedGroups] = useState([]); // Danh sách nhóm chung giữa 2 người
 
-  const [ipAddress, setIpAddress] = useState("");
   useEffect(() => {
-    NetworkInfo.getIPAddress().then((ip) => {
-      setIpAddress(ip);
-    });
-  }, []);
-  const API_iChat = "http://172.20.65.58:5001";
+    const fetchReceiverInfo = async () => {
+      const res = await userService.getUserById(id);
+      if (res.status === "ok") {
+        setReceiverInfo(res.user);
+        console.log("Người đang chat:", res.user);
+      }
+    };
+    if (id) fetchReceiverInfo();
+  }, [id]);
+
+  useEffect(() => {
+    const fetchSharedGroups = async () => {
+      try {
+        const res = await groupService.getAllGroupsByUserId(user.id);
+        if (res.status === "ok") {
+          const groups = res.groups || [];
+          // Tìm các nhóm có receiver (id đang chat)
+          const filtered = groups.filter((group) => group.members.includes(id));
+          setSharedGroups(filtered);
+          console.log("Nhóm chung:", filtered);
+        }
+      } catch (err) {
+        console.error("Lỗi khi lấy nhóm:", err);
+      }
+    };
+
+    if (user?.id && id) {
+      fetchSharedGroups();
+    }
+  }, [user?.id, id]);
+
+  const API_iChat = "http://192.168.1.85:5001";
 
   useEffect(() => {
     console.log("avatar: ", avatar);
@@ -83,22 +113,24 @@ const Option = ({ route }) => {
           </TouchableOpacity>
           <Text style={{ textAlign: "center" }}>Tìm tin nhắn</Text>
         </View>
-        <View style={{ width: 100, gap: 10, alignItems: "center" }}>
-          <TouchableOpacity
-            onPress={() =>
-              navigation.navigate("ViewProfile", {
-                name: name,
-                avatar: avatar,
-              })
-            }
-          >
-            <Image
-              source={require("../../assets/icons/me.png")}
-              style={styles.icon}
-            />
-          </TouchableOpacity>
-          <Text>Xem hồ sơ</Text>
-        </View>
+        {receiverInfo && (
+          <View style={{ width: 100, gap: 10, alignItems: "center" }}>
+            <TouchableOpacity
+              onPress={() =>
+                navigation.navigate("ViewProfile", {
+                  name: name,
+                  avatar: avatar,
+                })
+              }
+            >
+              <Image
+                source={require("../../assets/icons/me.png")}
+                style={styles.icon}
+              />
+            </TouchableOpacity>
+            <Text>Xem hồ sơ</Text>
+          </View>
+        )}
       </View>
 
       <ScrollView
@@ -162,7 +194,9 @@ const Option = ({ route }) => {
               source={require("../../assets/icons/friend.png")}
               style={styles.icon}
             />
-            <Text style={styles.title}>Xem các nhóm chung (5)</Text>
+            <Text style={styles.title}>
+              Xem các nhóm chung ({sharedGroups.length})
+            </Text>
           </TouchableOpacity>
         </View>
         <View style={{ gap: 15 }}>

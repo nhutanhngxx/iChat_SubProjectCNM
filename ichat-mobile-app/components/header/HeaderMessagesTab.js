@@ -72,12 +72,12 @@ const HeaderMessages = () => {
               fontSize: 15,
               color: "#2F80ED",
               flex: 1,
-              height: 35,
               marginRight: 20,
               paddingLeft: 10,
               borderRadius: 5,
               backgroundColor: "white",
               textAlignVertical: "center",
+              height: 30,
             }}
             placeholder="Tìm kiếm"
             placeholderTextColor={"gray"}
