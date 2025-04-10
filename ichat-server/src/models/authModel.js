@@ -30,6 +30,47 @@ const authModel = {
       throw new Error("Lỗi tạo người dùng");
     }
   },
+
+  changePassword: async (userId, currentPassword, newPassword) => {
+    if (!newPassword || newPassword.length < 6) {
+      return {
+        status: "error",
+        message: "Mật khẩu mới phải có ít nhất 6 ký tự.",
+      };
+    }
+
+    try {
+      const user = await User.findById(userId);
+      if (!user) {
+        return {
+          status: "error",
+          message: "Không tìm thấy người dùng.",
+        };
+      }
+
+      const isMatch = await bcrypt.compare(currentPassword, user.password);
+      if (!isMatch) {
+        return {
+          status: "error",
+          message: "Mật khẩu hiện tại không đúng.",
+        };
+      }
+
+      const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+      user.password = hashedNewPassword;
+      await user.save();
+
+      return {
+        status: "ok",
+        message: "Đổi mật khẩu thành công.",
+      };
+    } catch (error) {
+      return {
+        status: "error",
+        message: "Lỗi máy chủ.",
+      };
+    }
+  },
 };
 
 module.exports = authModel;

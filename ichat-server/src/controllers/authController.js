@@ -6,6 +6,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
 const User = require("../schemas/UserDetails");
+const authModel = require("../models/authModel");
 
 // Tạo accesstoken
 const generateAccessToken = (user) => {
@@ -262,5 +263,23 @@ const authController = {
     }
   },
 };
+authController.changePassword = async (req, res) => {
+  const { userId, currentPassword, newPassword } = req.body;
 
+  try {
+    const result = await authModel.changePassword(
+      userId,
+      currentPassword,
+      newPassword
+    );
+
+    if (result.status === "error") {
+      return res.status(400).json({ status: "error", message: result.message });
+    }
+
+    return res.status(200).json(result);
+  } catch (error) {
+    return res.status(500).json({ status: "error", message: error.message });
+  }
+};
 module.exports = authController;

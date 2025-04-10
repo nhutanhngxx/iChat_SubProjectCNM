@@ -2,8 +2,13 @@ import React, { useState } from "react";
 import "./css/AccountSecurity.css"; // Import file CSS
 import { FiChevronRight, FiChevronLeft } from "react-icons/fi";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { useDispatch, useSelector } from "react-redux";
+import { changePassword } from "../../../../../redux/slices/authSlice"; // đường dẫn tới slice của bạn
+
 
 const SecuritySettings = () => {
+  const dispatch = useDispatch();
+  const { user, loading, error } = useSelector((state) => state.auth); // Lấy thông tin người dùng từ Redux store
   const [lockScreenEnabled, setLockScreenEnabled] = useState(false);
   const [twoFactorAuthEnabled, setTwoFactorAuthEnabled] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
@@ -66,14 +71,26 @@ const SecuritySettings = () => {
     setConfirmPasswordValid(value === newPassword);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (validateNewPassword(newPassword) && confirmPassword === newPassword) {
-      alert("Đổi mật khẩu thành công!");
-      resetForm();
+      try {
+        console.log("UserId of change password:", user.id);
+
+        await dispatch(changePassword({ userId: user.id, currentPassword, newPassword })).unwrap();
+
+        alert("Đổi mật khẩu thành công!");
+        resetForm();
+        setShowChangePassword(false);
+      } catch (err) {
+        alert(`Lỗi: ${err}`);
+        console.error("Lỗi thay đổi mật khẩu", err);
+
+      }
     } else {
       alert("Vui lòng kiểm tra lại các trường nhập!");
     }
+
   };
 
   return (

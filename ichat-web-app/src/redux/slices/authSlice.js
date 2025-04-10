@@ -105,6 +105,34 @@ export const checkExistedPhone = createAsyncThunk(
   }
 );
 
+// CHangePassword
+export const changePassword = createAsyncThunk(
+  "auth/changePassword",
+  async ({ userId, currentPassword, newPassword }, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem("token");    
+
+      const response = await fetch(`${API_URL}auth/change-password`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify({ userId, currentPassword, newPassword }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Đổi mật khẩu thất bại");
+      }
+
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
 
 
 const authSlice = createSlice({
@@ -119,6 +147,7 @@ const authSlice = createSlice({
       exists: false,
       error: null,
     },
+    successMessage: null,
   },
   reducers: {
     clearAuthError(state) {
@@ -195,12 +224,26 @@ const authSlice = createSlice({
         } else {
           state.phoneCheck.error = action.payload;
         }
-      });
+      })
+      .addCase(changePassword.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(changePassword.fulfilled, (state, action) => {
+        state.loading = false;
+        // Nếu muốn hiển thị thông báo đổi mật khẩu thành công thì lưu message vào state:
+        state.successMessage = action.payload.message;
+      })
+      .addCase(changePassword.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
       
 
   },
 });
-export const { clearAuthError, clearPhoneCheckStatus } = authSlice.actions;
+export const { clearAuthError, clearPhoneCheckStatus,resetSuccessMessage  } = authSlice.actions;
 
 
 export default authSlice.reducer;
