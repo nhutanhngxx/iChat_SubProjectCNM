@@ -38,7 +38,7 @@ const PrivacySettings = () => {
   return (
     <div className="privacy-settings">
       <div className={`main-content ${showBlockList ? "shift-left" : ""}`}>
-        <h2>Cá nhân</h2>
+        <h2 style={{ fontSize: "18px", fontWeight: "bold" }}>Cá nhân</h2>
         <div className="setting-item">
           <p>Hiện ngày sinh</p>
           <Switch checked={showBirthday} onChange={(e) => setShowBirthday(e)} />
