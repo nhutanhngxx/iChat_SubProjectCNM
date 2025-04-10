@@ -48,7 +48,7 @@ const Chatting = ({ route }) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [groupMembers, setGroupMembers] = useState([]);
 
-  const API_iChat = "http://172.20.64.6:5001/api";
+  const API_iChat = "http://192.168.1.80:5001/api";
 
   // Hàm chọn ảnh từ thư viện
   const pickImage = async () => {

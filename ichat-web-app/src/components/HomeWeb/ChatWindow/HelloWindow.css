@@ -5,7 +5,11 @@
   align-items: center;
   text-align: center;
   justify-content: center;
-  background-image: url("https://i.ibb.co/v471Jbbx/bgApp.png");
+  background-image: url("https://i.ibb.co/p6FPMSqT/new-background.png");
+  background-size: cover; /* Để ảnh phủ toàn bộ background */
+  background-position: center; /* Căn giữa ảnh */
+  background-repeat: no-repeat; /* Không lặp lại ảnh */
+  
 }
 
 .hello-window h2 {

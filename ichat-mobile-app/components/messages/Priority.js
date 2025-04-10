@@ -33,7 +33,7 @@ const Priority = () => {
   const [groupList, setGroupList] = useState([]);
   const [allUser, setAllUser] = useState([]);
 
-  const API_iChat = "http://172.20.64.6:5001/api";
+  const API_iChat = "http://192.168.1.80:5001/api";
 
   // Gộp danh sách chat và group chat và sắp xếp theo thời gian tin nhắn cuối cùng
   const listChat = chatList.concat(groupList);
