@@ -159,41 +159,60 @@ const UserModel = require("../models/userModel");
 
 const UserController = {
   updateInfoUser: async (req, res) => {
-    try {
-      const userId = req.params.id;
-      const updateData = req.body;
-      const updatedUser = await UserModel.updateInfoUser(userId, updateData);
-
-      res.status(200).json({
-        success: true,
-        message: "Cập nhật thông tin thành công",
-        data: updatedUser,
-      });
-    } catch (error) {
-      if (error.type === "Validation") {
-        return res.status(400).json({ success: false, message: error.message });
-      }
-      if (error.type === "NotFound") {
-        return res.status(404).json({ success: false, message: error.message });
-      }
-      if (error.name === "ValidationError") {
-        return res
-          .status(400)
-          .json({
+    updateInfoUser: async (req, res) => {
+      try {
+        const userId = req.params.id;
+        const files = req.files;
+        const updateData = req.body;
+  
+        // Upload avatar nếu có
+        if (files?.avatar?.[0]) {
+          const avatarUrl = await uploadFile(files.avatar[0]);
+          updateData.avatar_path = avatarUrl;
+        }
+  
+        // Upload cover nếu có
+        if (files?.cover?.[0]) {
+          const coverUrl = await uploadFile(files.cover[0]);
+          updateData.cover_path = coverUrl;
+        }
+  
+        const updatedUser = await UserModel.updateInfoUser(userId, updateData);
+  
+        res.status(200).json({
+          success: true,
+          message: "Cập nhật thông tin thành công",
+          data: updatedUser,
+        });
+      } catch (error) {
+        if (error.type === "Validation") {
+          return res.status(400).json({ success: false, message: error.message });
+        }
+        if (error.type === "NotFound") {
+          return res.status(404).json({ success: false, message: error.message });
+        }
+        if (error.name === "ValidationError") {
+          return res.status(400).json({
             success: false,
             message: "Dữ liệu không hợp lệ",
             errors: error.errors,
           });
+        }
+        if (error.code === 11000) {
+          return res.status(400).json({
+            success: false,
+            message: "Số điện thoại đã được sử dụng",
+          });
+        }
+  
+        console.error("Lỗi server:", error);
+        res.status(500).json({
+          success: false,
+          message: "Lỗi server",
+          error: error.message,
+        });
       }
-      if (error.code === 11000) {
-        return res
-          .status(400)
-          .json({ success: false, message: "Số điện thoại đã được sử dụng" });
-      }
-      res
-        .status(500)
-        .json({ success: false, message: "Lỗi server", error: error.message });
-    }
+    
   },
   getUserFromToken: async (req, res) => {
     const authHeader = req.headers.authorization;
