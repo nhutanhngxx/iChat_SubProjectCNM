@@ -30,9 +30,10 @@ const authController = {
 
       // Kiểm tra số điện thoại hợp lệ
       if (!phone || !validators.validatePhone(phone)) {
-        return res
-          .status(400)
-          .json({ status: "error", message: "Số điện thoại không hợp lệ." });
+        return res.status(400).json({
+          status: "error",
+          message: "Số điện thoại không hợp lệ.",
+        });
       }
 
       // Kiểm tra số điện thoại đã tồn tại trong cơ sở dữ liệu hay chưa
@@ -70,7 +71,13 @@ const authController = {
 
     try {
       // Tạo người dùng mới
-      await AuthModel.register({ phone, password, fullName, dob, gender });
+      const newUser = authModel.register({
+        phone,
+        password,
+        fullName,
+        dob,
+        gender,
+      });
       return res.status(201).json({
         status: "ok",
         message: "Người dùng đã được tạo.",

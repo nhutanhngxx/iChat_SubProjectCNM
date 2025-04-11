@@ -24,6 +24,9 @@ export default function LoginWithPass() {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  // Add this new state to track if loading should be visible
+  const [showLoading, setShowLoading] = useState(true);
+
 
   //  Lấy dữ liệu từ store
   const dispatch = useDispatch();
@@ -37,14 +40,6 @@ export default function LoginWithPass() {
   const [showRegister, setShowRegister] = useState(false);
   // Open Forgot Password
   const [showForgotPassword, setShowForgotPassword] = useState(false);
-  const validVnPrefixes = [
-    "032", "033", "034", "035", "036", "037", "038", "039", // Viettel
-    "070", "076", "077", "078", "079", "089", "090", "093", // Mobifone
-    "081", "082", "083", "084", "085", "088", "091", "094", // Vinaphone
-    "056", "058", "092",                                     // Vietnamobile
-    "059", "099",                                            // Gmobile
-    "086", "096", "097", "098",                              // Viettel (cũ)
-  ];
 
   // Sửa lỗi khai báo `error` bị trùng
   const { user, token, loading, error } = useSelector((state) => state.auth);
@@ -106,6 +101,40 @@ export default function LoginWithPass() {
   };
   console.log("User:", user);
   console.log("Token:", token);
+  useEffect(() => {
+    // Khi mới vào trang, cho hiện loading tạm thời trong 2s
+    setShowLoading(true);
+    const timeoutId = setTimeout(() => {
+      setShowLoading(false);
+    }, 2000);
+
+    return () => clearTimeout(timeoutId);
+  }, []);
+
+  // Add this effect to handle the loading timeout
+  useEffect(() => {
+    let timeoutId;
+
+    if (loading) {
+      // When loading starts, show the loading indicator
+      setShowLoading(true);
+
+      // Set a timeout to hide it after 10 seconds
+      timeoutId = setTimeout(() => {
+        setShowLoading(false);
+      }, 10000); // 10 seconds
+    } else {
+      // When loading stops, hide the loading indicator
+      setShowLoading(false);
+    }
+
+    // Clean up the timeout when component unmounts or loading changes
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [loading]);
 
   return (
     <div className="container-login">
@@ -247,7 +276,7 @@ export default function LoginWithPass() {
                 {error}
               </p>
             )}
-            {loading && (
+            {showLoading && (
               // <p className="loading" style={{ marginLeft: "30px" }}>
               //   Đang xử lý...
               // </p>
@@ -266,8 +295,8 @@ export default function LoginWithPass() {
             )}
 
             <div className="container-body-button">
-              <button onClick={handleLogin} disabled={loading}>
-                {loading ? "Đang đăng nhập..." : "Đăng nhập với mật khẩu"}
+              <button onClick={handleLogin} disabled={showLoading || phoneError !== ""}>
+                {showLoading ? "Đang đăng nhập..." : "Đăng nhập với mật khẩu"}
               </button>
             </div>
 

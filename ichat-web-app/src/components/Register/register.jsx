@@ -1,142 +1,59 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import "./register.css";
 import { parsePhoneNumberFromString } from "libphonenumber-js";
-import { useDispatch, useSelector } from "react-redux";
-import { checkExistedPhone } from "../../redux/slices/authSlice";
-import { auth, RecaptchaVerifier, signInWithPhoneNumber } from "../../firebase/config"; // đường dẫn tới firebase.js
-import { PhoneAuthProvider, signInWithCredential } from "firebase/auth";
-
-
+import { useDispatch } from "react-redux";
+import { checkExistedPhone, sendOtpFirebase, verifyOtpFirebase, registerUser } from "../../redux/slices/authSlice";
+import { auth } from "../../firebase/config";
 
 const RegisterModal = ({ visible, onClose, onRegister }) => {
     const dispatch = useDispatch();
-
     const [step, setStep] = useState(1);
-
     const [phone, setPhone] = useState("");
     const [otp, setOtp] = useState("");
     const [password, setPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
+    const [confirmShowPassword, setConfirmShowPassword] = useState(false);
     const [fullName, setFullName] = useState("");
     const [dob, setDob] = useState("");
     const [gender, setGender] = useState("");
-    // OTP
-    const [otpValues, setOtpValues] = useState(["", "", "", ""]);
+    const [otpValues, setOtpValues] = useState(["", "", "", "", "", ""]);
     const otpRefs = useRef([]);
-    // Mã quốc gia
     const [countryCode, setCountryCode] = useState("VN");
-    // state lưu mã xác thực
-    const [verificationId, setVerificationId] = useState(null);
-    //Timer đếm ngược
     const [countdown, setCountdown] = useState(60);
     const timerRef = useRef(null);
+    const recaptchaVerifierRef = useRef(null);
 
-    //Hàm gửi OTP qua Firebase
-    const sendOtpWithFirebase = async (fullPhoneNumber) => {
-        try {
-            // Check if recaptcha-container exists
-            if (!document.getElementById('recaptcha-container')) {
-                console.error("recaptcha-container not found in DOM");
-                alert("Error: reCAPTCHA container not found. Please refresh the page.");
-                return;
-            }
-            console.log("phoneNumber to send get otp: ", fullPhoneNumber);
-
-            // Reset reCAPTCHA if it exists
-            if (window.recaptchaVerifier) {
-                try {
-                    window.recaptchaVerifier.clear();
-                } catch (e) {
-                    console.error("Error clearing existing reCAPTCHA:", e);
-                }
-                window.recaptchaVerifier = null;
-            }
-
-            // Make sure auth is properly initialized
-            if (!auth || !auth.app) {
-                console.error("Firebase auth is not properly initialized");
-                alert("Authentication service not available. Please try again later.");
-                return;
-            }
-
-            console.log("Creating reCAPTCHA verifier...");
-
-            // Create new reCAPTCHA verifier with proper structure
-            window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-                size: 'invisible',
-                callback: () => {
-                    console.log("reCAPTCHA verified");
-                }
+    // Khởi tạo và làm mới reCAPTCHA
+    const initializeRecaptcha = () => {
+        if (!window.recaptchaVerifier) {
+            window.recaptchaVerifier = new auth.RecaptchaVerifier(
+                "recaptcha-container",
+                {
+                    size: "invisible", // Hoặc "normal" nếu bạn muốn hiển thị reCAPTCHA
+                    callback: () => {
+                        // reCAPTCHA đã được xác minh, có thể gửi OTP
+                    },
+                    "expired-callback": () => {
+                        console.log("reCAPTCHA expired, resetting...");
+                        window.recaptchaVerifier.render().then((widgetId) => {
+                            window.recaptchaWidgetId = widgetId;
+                        });
+                    },
+                },
+                auth
+            );
+            window.recaptchaVerifier.render().then((widgetId) => {
+                window.recaptchaWidgetId = widgetId;
             });
-
-            const appVerifier = window.recaptchaVerifier;
-            console.log("Sending OTP to:", fullPhoneNumber);
-
-            const confirmationResult = await signInWithPhoneNumber(auth, fullPhoneNumber, appVerifier);
-            window.confirmationResult = confirmationResult;
-
-            setVerificationId(confirmationResult.verificationId);
-            setStep(2);
-            startCountdown();
-
-            alert("Mã OTP đã được gửi tới số điện thoại!");
-        } catch (error) {
-            console.error("Lỗi gửi OTP:", error);
-
-            if (error.code === 'auth/invalid-api-key') {
-                alert("Lỗi cấu hình Firebase. Vui lòng liên hệ quản trị viên.");
-            } else if (error.code === 'auth/invalid-phone-number') {
-                alert("Số điện thoại không hợp lệ. Vui lòng kiểm tra lại.");
-            } else {
-                alert(`Không thể gửi OTP: ${error.message || "Hãy thử lại."}`);
-            }
-
-            if (window.recaptchaVerifier) {
-                try {
-                    window.recaptchaVerifier.clear();
-                } catch (e) {
-                    console.error("Error clearing reCAPTCHA after main error:", e);
-                }
-                window.recaptchaVerifier = null;
-            }
         }
+        recaptchaVerifierRef.current = window.recaptchaVerifier;
     };
-    // Hàm xác thực OTP
-    const verifyOtp = async () => {
-        try {
-            // Ensure OTP is proper length
-            if (otp.length !== 6) {
-                alert("Vui lòng nhập đủ 6 số OTP");
-                return false;
-            }
 
-            console.log("Verifying OTP:", otp);
-            console.log("With verification ID:", verificationId);
-
-            const credential = PhoneAuthProvider.credential(verificationId, otp);
-            await signInWithCredential(auth, credential);
-
-            alert("Xác thực OTP thành công!");
-            setStep(3); // Chuyển sang bước tiếp theo
-            return true;
-        } catch (error) {
-            console.error("Xác thực OTP thất bại:", error);
-
-            if (error.code === 'auth/invalid-verification-code') {
-                alert("Mã OTP không đúng. Vui lòng kiểm tra lại.");
-            } else if (error.code === 'auth/code-expired') {
-                alert("Mã OTP đã hết hạn. Vui lòng yêu cầu mã mới.");
-            } else {
-                alert("Mã OTP không đúng hoặc đã hết hạn.");
-            }
-            return false;
-        }
-    };
-    // Hàm bắt đầu đếm ngược
+    // Đếm ngược cho OTP
     const startCountdown = () => {
-
-        setCountdown(60); // reset về 60s
+        setCountdown(60);
         if (timerRef.current) clearInterval(timerRef.current);
         timerRef.current = setInterval(() => {
             setCountdown((prev) => {
@@ -148,7 +65,7 @@ const RegisterModal = ({ visible, onClose, onRegister }) => {
             });
         }, 1000);
     };
-    //Hàm dừng đếm ngược
+
     const stopCountdown = () => {
         if (timerRef.current) {
             clearInterval(timerRef.current);
@@ -156,110 +73,132 @@ const RegisterModal = ({ visible, onClose, onRegister }) => {
         }
         setCountdown(0);
     };
-    // Hàm xử lý khi nhập OTP
+
+    // Xử lý OTP input
     const handleOtpChange = (e, index) => {
         const value = e.target.value;
-
         if (!/^\d?$/.test(value)) return;
 
         const newOtp = [...otpValues];
-
         if (value === "") {
-            // Nếu đang xoá
-            const hasValueAfter = newOtp.slice(index + 1).some((v) => v !== "");
-
-            // Xoá ô hiện tại
             newOtp[index] = "";
-
-            if (hasValueAfter) {
-                // Nếu sau ô này vẫn còn số => xoá luôn những số sau
-                for (let i = index + 1; i < newOtp.length; i++) {
-                    newOtp[i] = "";
-                }
-            }
-
             setOtpValues(newOtp);
             setOtp(newOtp.join(""));
-
-            // Dù còn hay không, đều focus về ô trước
             if (index > 0) {
                 otpRefs.current[index - 1]?.focus();
             }
         } else {
-            // Nếu nhập số thì cập nhật giá trị
             newOtp[index] = value;
             setOtpValues(newOtp);
             setOtp(newOtp.join(""));
-
-            // Nếu không phải ô cuối thì focus tiếp
             if (index < newOtp.length - 1) {
                 otpRefs.current[index + 1]?.focus();
             }
         }
     };
-    // Hàm xử lý khi click vào ô OTP
+
     const handleOtpClick = (index) => {
-        // Nếu ô đầu tiên chưa nhập thì luôn focus ô đầu tiên
         if (!otpValues[0] && index !== 0) {
             otpRefs.current[0].focus();
         }
     };
 
-    // Check xem số điện thoại đã tồn tại trong DB chưa
-    const handleCheckPhone = async (phone) => {
-        const resultAction = await dispatch(checkExistedPhone(phone));
+    // Kiểm tra số điện thoại đã tồn tại
+    const handleCheckPhone = async (phoneNumber) => {
+        const resultAction = await dispatch(checkExistedPhone(phoneNumber));
         if (checkExistedPhone.fulfilled.match(resultAction)) {
-
             console.log("Số điện thoại hợp lệ, chưa tồn tại.");
-        } else if (checkExistedPhone.rejected.match(resultAction)) {
-            console.log(resultAction.payload); // Có thể là "Số điện thoại này đã được đăng ký."
-            alert(resultAction.payload); // Hiển thị thông báo lỗi
-
+            return true;
+        } else {
+            alert(resultAction.payload);
+            return false;
         }
     };
-    // Hàm xử lý bước tiếp theo
+
+    // Xử lý bước tiếp theo
     const handleNextStep = async () => {
         if (step === 1) {
             const phoneRegex = /^[0-9]{9,11}$/;
-            if (!phoneRegex.test(phone)) {
+            const trimmedPhone = String(phone).trim();
+
+            if (!phoneRegex.test(trimmedPhone)) {
                 alert("Số điện thoại không hợp lệ");
                 return;
             }
-            // TODO: check DB + gửi OTP
-            const parsedNumber = parsePhoneNumberFromString(phone, countryCode);
 
+            const parsedNumber = parsePhoneNumberFromString(phone, countryCode);
             if (!parsedNumber || !parsedNumber.isValid()) {
                 alert("Số điện thoại không hợp lệ với quốc gia đã chọn!");
                 return;
             }
 
-            // Nếu hợp lệ: gửi OTP hoặc lưu số đầy đủ
-            console.log("Số đầy đủ:", parsedNumber.number); // e.g. +84987654321
-            // Gọi hàm kiểm tra số điện thoại đã tồn tại trong DB
-            await handleCheckPhone(parsedNumber.number)
-            // Gọi API gửi OTP ở đây
-            // await handleCheckPhone(parsedNumber.number);
-            await sendOtpWithFirebase(parsedNumber.number);
-            // setStep(2);
-            stopCountdown(); // Dừng đếm ngược nếu có
+            try {
+                // Kiểm tra số điện thoại
+                const isPhoneValid = await handleCheckPhone(parsedNumber.number);
+                if (!isPhoneValid) return;
+
+                const formattedNumber = parsedNumber.format("E.164");
+                console.log("Sending OTP to:", formattedNumber);
+
+                // Đảm bảo reCAPTCHA đã sẵn sàng
+                if (!recaptchaVerifierRef.current) {
+                    initializeRecaptcha();
+                }
+
+                // Gửi OTP
+                const resultOtp = await dispatch(
+                    sendOtpFirebase({
+                        phoneNumber: formattedNumber,
+                        recaptchaVerifier: recaptchaVerifierRef.current,
+                    })
+                );
+
+                if (sendOtpFirebase.fulfilled.match(resultOtp)) {
+                    setStep(2);
+                    startCountdown();
+                    alert("Mã OTP đã được gửi tới số điện thoại!");
+                } else {
+                    console.error("Không thể gửi mã OTP:", resultOtp.payload);
+                    alert("Không thể gửi mã OTP: " + resultOtp.payload);
+                }
+            } catch (error) {
+                console.error("Lỗi khi gửi OTP:", error);
+                alert("Gửi OTP thất bại, vui lòng thử lại.");
+            }
             return;
-
-
         }
 
-        if (step === 2 && otp.length !== 6) {
-            const verified = await verifyOtp();
-            if (!verified) return;
-            // Don't need to call setStep here as verifyOtp already does that if successful
+        if (step === 2) {
+            if (otp.length !== 6) {
+                alert("Vui lòng nhập đủ 6 số OTP");
+                return;
+            }
+
+            const verifyResult = await dispatch(verifyOtpFirebase(otp));
+            if (verifyOtpFirebase.fulfilled.match(verifyResult)) {
+                console.log("OTP xác thực thành công");
+                setStep(3);
+                stopCountdown();
+            } else {
+                alert(verifyResult.payload || "OTP không đúng");
+            }
             return;
         }
 
         if (step === 3) {
-            const passRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/;
+            const passRegex = /^(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{6,}$/;
             if (!passRegex.test(password)) {
-                alert("Mật khẩu phải có ít nhất 6 ký tự, gồm chữ và số");
+                alert("Mật khẩu phải có ít nhất 6 ký tự, gồm ít nhất 1 chữ hoa và 1 số");
                 return;
             }
+
+            if (password !== confirmPassword) {
+                alert("Mật khẩu nhập lại không khớp");
+                return;
+            }
+
+            setStep(4);
+            return;
         }
 
         if (step === 4) {
@@ -267,24 +206,62 @@ const RegisterModal = ({ visible, onClose, onRegister }) => {
                 alert("Vui lòng điền đầy đủ thông tin");
                 return;
             }
+            const mappedGender =
+                gender === "Nam" ? "Male" : gender === "Nữ" ? "Female" : "Other";
+            const parsedNumber = parsePhoneNumberFromString(phone, countryCode);
+            const result = await dispatch(
+                registerUser({
+                    phone: parsedNumber.number,
+                    password,
+                    fullName,
+                    dob,
+                    gender: mappedGender,
+                })
+            );
 
-            const tempToken = "TEMP_TOKEN"; // Tạm hardcode
-            onRegister({ phone, password, fullName, dob, gender, tempToken });
-            onClose(); // Đóng modal sau đăng ký
+            if (registerUser.fulfilled.match(result)) {
+                alert("Đăng ký thành công!");
+                onClose();
+            } else {
+                alert(result.payload || "Đăng ký thất bại");
+            }
         }
-
-        setStep((prev) => prev + 1);
     };
 
+    // Xử lý quay lại bước trước
     const handlePreviousStep = () => {
         if (step > 1) {
             setStep((prev) => prev - 1);
+            if (step === 2) {
+                stopCountdown();
+            }
         }
     };
-    React.useEffect(() => {
+
+    // Khởi tạo reCAPTCHA và dọn dẹp
+    useEffect(() => {
+        if (!document.getElementById("recaptcha-container")) {
+            const recaptchaDiv = document.createElement("div");
+            recaptchaDiv.id = "recaptcha-container";
+            document.body.appendChild(recaptchaDiv);
+        }
+
+        initializeRecaptcha();
+
         return () => {
-            if (timerRef.current) {
-                clearInterval(timerRef.current);
+            stopCountdown();
+            if (recaptchaVerifierRef.current) {
+                try {
+                    recaptchaVerifierRef.current.clear();
+                } catch (e) {
+                    console.error("Error clearing reCAPTCHA:", e);
+                }
+                recaptchaVerifierRef.current = null;
+                window.recaptchaVerifier = null;
+            }
+            const recaptchaContainer = document.getElementById("recaptcha-container");
+            if (recaptchaContainer) {
+                recaptchaContainer.remove();
             }
         };
     }, []);
@@ -295,10 +272,11 @@ const RegisterModal = ({ visible, onClose, onRegister }) => {
         <div className="modal-overlay">
             <div className="modal">
                 <div>
-                    <img style={{
-                        width: "150px",
-                        height: "auto"
-                    }} src="https://i.ibb.co/TGJ0mZm/logo-ichat-removebg.png" alt="logo-ichat" />
+                    <img
+                        style={{ width: "150px", height: "auto" }}
+                        src="https://i.ibb.co/TGJ0mZm/logo-ichat-removebg.png"
+                        alt="logo-ichat"
+                    />
                     <h2>Đăng Ký Tài Khoản</h2>
                 </div>
 
@@ -306,7 +284,6 @@ const RegisterModal = ({ visible, onClose, onRegister }) => {
                 {step === 1 && (
                     <>
                         <div style={{ display: "flex", gap: "5px", borderBottom: "1px solid #ccc", padding: "5px", borderRadius: "5px" }}>
-                            {/* Chọn quốc gia */}
                             <select value={countryCode} onChange={(e) => setCountryCode(e.target.value)} style={{ width: "100px" }}>
                                 <option value="VN">+84 (VN)</option>
                                 <option value="US">+1 (US)</option>
@@ -322,9 +299,10 @@ const RegisterModal = ({ visible, onClose, onRegister }) => {
                                 maxLength={15}
                             />
                         </div>
-
                         <div id="recaptcha-container"></div>
-                        <button className="handleNextStep" onClick={handleNextStep}>Gửi mã OTP</button>
+                        <button className="handleNextStep" onClick={handleNextStep}>
+                            Gửi mã OTP
+                        </button>
                     </>
                 )}
 
@@ -346,16 +324,35 @@ const RegisterModal = ({ visible, onClose, onRegister }) => {
                                 />
                             ))}
                         </div>
-                        {/* Đếm ngược hoặc nút gửi lại mã */}
                         {countdown > 0 ? (
-                            <p style={{ textAlign: 'center' }}>Bạn có thể gửi lại mã sau: {countdown}s</p>
+                            <p style={{ textAlign: "center" }}>Bạn có thể gửi lại mã sau: {countdown}s</p>
                         ) : (
                             <button
                                 className="resend-otp"
                                 onClick={async () => {
-                                    const parsedNumber = parsePhoneNumberFromString(phone, countryCode);
-                                    if (parsedNumber && parsedNumber.isValid()) {
-                                        await sendOtpWithFirebase(parsedNumber.number);
+                                    try {
+                                        const parsedNumber = parsePhoneNumberFromString(phone, countryCode);
+                                        if (parsedNumber && parsedNumber.isValid()) {
+                                            const formattedNumber = parsedNumber.format("E.164");
+                                            if (!recaptchaVerifierRef.current) {
+                                                initializeRecaptcha();
+                                            }
+                                            const resultOtp = await dispatch(
+                                                sendOtpFirebase({
+                                                    phoneNumber: formattedNumber,
+                                                    recaptchaVerifier: recaptchaVerifierRef.current,
+                                                })
+                                            );
+                                            if (sendOtpFirebase.fulfilled.match(resultOtp)) {
+                                                startCountdown();
+                                                alert("Đã gửi lại mã OTP thành công!");
+                                            } else {
+                                                alert("Không thể gửi lại mã OTP: " + resultOtp.payload);
+                                            }
+                                        }
+                                    } catch (error) {
+                                        console.error("Error resending OTP:", error);
+                                        alert("Lỗi khi gửi lại mã OTP");
                                     }
                                 }}
                                 style={{ width: "100%" }}
@@ -363,10 +360,11 @@ const RegisterModal = ({ visible, onClose, onRegister }) => {
                                 Gửi lại mã OTP
                             </button>
                         )}
-                        <button className="handleNextStep" onClick={handleNextStep}>Xác nhận OTP</button>
+                        <button className="handleNextStep" onClick={handleNextStep}>
+                            Xác nhận OTP
+                        </button>
                     </>
                 )}
-
 
                 {/* B3 - Nhập mật khẩu */}
                 {step === 3 && (
@@ -384,15 +382,36 @@ const RegisterModal = ({ visible, onClose, onRegister }) => {
                                 style={{
                                     position: "absolute",
                                     right: "10px",
-                                    top: "50%",
+                                    top: "19%",
                                     transform: "translateY(-50%)",
                                     cursor: "pointer",
                                 }}
                             >
                                 {showPassword ? <FaEyeSlash /> : <FaEye />}
                             </span>
+                            <input
+                                type={confirmShowPassword ? "text" : "password"}
+                                placeholder="Nhập lại mật khẩu"
+                                value={confirmPassword}
+                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                style={{ paddingRight: "40px" }}
+                            />
+                            <span
+                                onClick={() => setConfirmShowPassword(!confirmShowPassword)}
+                                style={{
+                                    position: "absolute",
+                                    right: "10px",
+                                    top: "68%",
+                                    transform: "translateY(-50%)",
+                                    cursor: "pointer",
+                                }}
+                            >
+                                {confirmShowPassword ? <FaEyeSlash /> : <FaEye />}
+                            </span>
                         </div>
-                        <button className="handleNextStep" onClick={handleNextStep}>Tiếp tục</button>
+                        <button className="handleNextStep" onClick={handleNextStep}>
+                            Tiếp tục
+                        </button>
                     </>
                 )}
 
@@ -416,7 +435,9 @@ const RegisterModal = ({ visible, onClose, onRegister }) => {
                             <option value="Nữ">Nữ</option>
                             <option value="Khác">Khác</option>
                         </select>
-                        <button className="handleNextStep" onClick={handleNextStep}>Hoàn tất đăng ký</button>
+                        <button className="handleNextStep" onClick={handleNextStep}>
+                            Hoàn tất đăng ký
+                        </button>
                     </>
                 )}
 
@@ -426,7 +447,7 @@ const RegisterModal = ({ visible, onClose, onRegister }) => {
                             Quay lại
                         </button>
                     )}
-                    <button className="cancel cancel-modal" onClick={onClose} >
+                    <button className="cancel cancel-modal" onClick={onClose}>
                         X
                     </button>
                 </div>
