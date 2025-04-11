@@ -1,15 +1,4 @@
 {
-  "extends": "expo/tsconfig.base",
-  "compilerOptions": {
-    "strict": true,
-    "paths": {
-      "@/*": [
-        "./*"
-      ]
-    }
-  },
-  "include": [
-    "**/*.ts",
-    "**/*.tsx"
-, "app/index.js"  ]
+  "compilerOptions": {},
+  "extends": "expo/tsconfig.base"
 }

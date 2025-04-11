@@ -1,0 +1,73 @@
+import { useContext } from "react";
+import { createStackNavigator } from "@react-navigation/stack";
+import { UserContext } from "../context/UserContext";
+
+import MyTabs from "./MyTabNavigator";
+import LauncherScreen from "../screens/LauncherScreen";
+import LoginScreen from "../screens/LoginScreen";
+
+import PhoneRegisterScreen from "../components/register/PhoneRegisterScreen";
+import EnterOTPScreen from "../components/register/EnterOTPScreen";
+import PasswordRegisterScreen from "../components/register/PasswordRegisterScreen";
+import InfoRegisterScreen from "../components/register/InfoRegisterScreen";
+
+import SearchScreen from "../components/search/SearchScreen";
+import Chatting from "../components/messages/Chatting";
+import QRScanner from "../components/camera/QRScannerScreen";
+import ProfileInformation from "../components/profile/ProfileInformation";
+import ViewImagePost from "../components/view/ViewImagePost";
+import ViewImageChat from "../components/view/ViewImageChat";
+import Option from "../components/messages/Options";
+import ChangeInformation from "../components/profile/ChangeInformation";
+import AddFriend from "../components/contact/AddFriend";
+import FriendRequest from "../components/contact/FriendRequest";
+import AccountSecurity from "../components/profile/AccountSecurity";
+
+const Stack = createStackNavigator();
+
+export default function AppNavigator() {
+  const { user } = useContext(UserContext);
+
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      {user ? (
+        <>
+          <Stack.Screen name="Home" component={MyTabs} />
+          <Stack.Screen
+            name="ProfileInformation"
+            component={ProfileInformation}
+          />
+          <Stack.Screen name="Chatting" component={Chatting} />
+          <Stack.Screen name="QRScanner" component={QRScanner} />
+          <Stack.Screen name="ViewImagePost" component={ViewImagePost} />
+          <Stack.Screen name="ViewImageChat" component={ViewImageChat} />
+          <Stack.Screen name="Option" component={Option} />
+          <Stack.Screen name="AddFriend" component={AddFriend} />
+          <Stack.Screen name="FriendRequest" component={FriendRequest} />
+          <Stack.Screen
+            name="ChangeInformation"
+            component={ChangeInformation}
+          />
+          <Stack.Screen
+            name="SearchScreen"
+            component={SearchScreen}
+            options={{ animation: "fade" }}
+          />
+          <Stack.Screen name="AccountSecurity" component={AccountSecurity} />
+        </>
+      ) : (
+        <>
+          <Stack.Screen name="Launcher" component={LauncherScreen} />
+          <Stack.Screen name="Register" component={PhoneRegisterScreen} />
+          <Stack.Screen name="Login" component={LoginScreen} />
+          <Stack.Screen name="EnterOTP" component={EnterOTPScreen} />
+          <Stack.Screen
+            name="PasswordRegister"
+            component={PasswordRegisterScreen}
+          />
+          <Stack.Screen name="InfoRegister" component={InfoRegisterScreen} />
+        </>
+      )}
+    </Stack.Navigator>
+  );
+}

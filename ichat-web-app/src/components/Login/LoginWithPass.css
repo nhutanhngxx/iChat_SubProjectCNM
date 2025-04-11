@@ -11,7 +11,7 @@ body {
   justify-content: center;
   align-items: center;
   height: 100vh;
-  background-image: url("https://i.ibb.co/v471Jbbx/bgApp.png");
+  background-image: url("https://i.ibb.co/p6FPMSqT/new-background.png");
   background-size: cover; /* Để ảnh phủ toàn bộ background */
   background-position: center; /* Căn giữa ảnh */
   background-repeat: no-repeat; /* Không lặp lại ảnh */
@@ -20,10 +20,9 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-bottom: 20px;
 }
 .container-header {
-  margin-bottom: 30px;
+  margin-bottom: 10px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -121,11 +120,16 @@ body {
   align-items: center;
   margin-top: 20px;
 }
-.container-body-link a {
+.container-body-link button {
   text-decoration: none;
   color: #aca9a9;
   font-size: 14px;
+  cursor: pointer;
+  padding-right: 5px;
 }
+.container-body-link button:hover{
+  color: #13ecec;
+} 
 .container-body-link_QR a {
   text-decoration: none;
   color: #48a2fc;
@@ -153,20 +157,20 @@ body {
   box-shadow: #bdbdbd 0px 0px 10px;
   position: absolute;
   padding: 5px 10px;
-  margin-left: -80px;
+  margin-left: -50px;
   margin-top: 0px;
 }
 .toggle-login-mode a {
   text-decoration: none;
   color: #000000;
 }
-.toggle-login-mode:hover {
+.toggle-login-mode a:hover {
   text-decoration: underline;
 }
 .menu-mini .icon {
   position: absolute;
   z-index: 1;
-  top: 33%;
+  top: 37%;
   left: 62%;
 }
 /* modal loadding */
@@ -261,4 +265,42 @@ body {
   margin-top: 10px;
   font-size: 14px;
   color: #333;
+}
+
+/* .input-field.invalid {
+  border: 2px solid red;
+}
+
+.input-field.valid {
+  border: 2px solid green;
+} */
+
+.phone-input-container {
+  max-width: 300px;
+  margin: 10px auto;
+  font-family: sans-serif;
+}
+
+.phone-input {
+  width: 100%;
+  padding: 8px;
+  font-size: 16px;
+  border: 2px solid #ccc;
+  border-radius: 6px;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.phone-input.error {
+  border-color: red;
+}
+
+.phone-input.success {
+  border-color: green;
+}
+
+.error-text {
+  color: red;
+  font-size: 14px;
+  margin-top: 4px;
 }

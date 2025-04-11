@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
 // const API_URL = "http://localhost:5001/messages/";
-const API_URL = `http://${window.location.hostname}:5001//`;
+const API_URL = `http://${window.location.hostname}:5001/api/messages/`;
 
 // Lấy danh sách người nhận gần nhất
 export const fetchMessages = createAsyncThunk(
@@ -18,7 +18,7 @@ export const fetchChatMessages = createAsyncThunk(
   "messages/fetchChatMessages",
   async ({ senderId, receiverId }) => {
     const response = await fetch(
-      `${API_URL}messages/${senderId}/${receiverId}`
+      `${API_URL}${senderId}/${receiverId}`
     );
     const data = await response.json();
     return data.data;

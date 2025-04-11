@@ -1,18 +1,44 @@
 const express = require("express");
-const connectDB = require("./config/db");
-require("dotenv").config();
+const http = require("http");
+const cors = require("cors");
+const connectDB = require("./src/config/db");
+require("dotenv").config(); // Đọc biến môi trường
+const { Server } = require("socket.io");
 
+const routes = require("./src/routes/index"); // import routes từ index.js
+
+const socketHandler = require("./src/sockets/socketHandler");
+
+// Khởi tạo Express app và HTTP server
 const app = express();
+const server = http.createServer(app);
+
+// Tạo socket server
+const io = new Server(server, {
+  cors: {
+    origin: ["http://localhost:3000", "http://localhost:8000"],
+    credentials: true,
+    methods: ["GET", "POST"],
+  },
+});
+
+// Gắn io vào app để sử dụng trong controller
+app.set("io", io);
+
+// Kết nối MongoDB
+connectDB();
+
+// Middleware
 app.use(express.json());
 
-const cors = require("cors");
+// Cấu hình CORS
 const corsOptions = {
   origin: ["http://localhost:3000", "http://localhost:8000"],
   credentials: true,
 };
 app.use(cors(corsOptions));
 
-// Middleware xử lý CORS
+// Middleware xử lý CORS cho tất cả request
 app.use((req, res, next) => {
   const allowedOrigins = ["http://localhost:3000", "http://localhost:8000"];
   const origin = req.headers.origin;
@@ -35,23 +61,22 @@ app.use((req, res, next) => {
   next();
 });
 
+// Inject io vào req để sử dụng trong controller
+app.use((req, res, next) => {
+  req.io = io;
+  next();
+});
+
 // Kết nối MongoDB
 connectDB();
 
-// Import routes
-const userRoutes = require("./routes/userRoutes");
-const messageRoutes = require("./routes/messageRoutes");
-const groupRoutes = require("./routes/groupRoutes");
+app.use("/api", routes); // prefix cho các routes
 
-app.use("", userRoutes);
-app.use("", messageRoutes);
-app.use("", groupRoutes);
+// Gọi socket handler để xử lý real-time
+socketHandler(io);
 
-app.get("/", (req, res) => {
-  res.send({ status: "Server started" });
-});
-
+// Khởi chạy server
 const PORT = process.env.PORT || 5001;
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+server.listen(PORT, () => {
+  console.log(`🚀 Server is running on port ${PORT}`);
 });

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 // import React, { useState } from "react";
 // import { Menu, Dropdown } from "antd";
 // import { UserOutlined } from "@ant-design/icons";
@@ -84,6 +85,9 @@
 
 // export default ProfileDropdown;
 import React, { useState,useEffect } from "react";
+=======
+import React, { useState } from "react";
+>>>>>>> web
 import { Menu, Dropdown } from "antd";
 import { UserOutlined } from "@ant-design/icons";
 import "./Dropdown.css";
@@ -113,7 +117,12 @@ const ProfileDropdown = ({ onOpenSettings }) => {
   const handleLogout = async () => {
     setIsLoading(true); // Bắt đầu hiển thị loader
     try {
-      await dispatch(logoutUser()).unwrap();
+      console.log("Đang thực hiện đăng xuất...");
+      console.log("user from Dropdown: ", user.id);
+      
+      
+      await dispatch(logoutUser(user.id)).unwrap();
+
       navigate("/"); // Chuyển hướng sau khi logout thành công
     } catch (error) {
       console.error("Lỗi khi đăng xuất:", error);
