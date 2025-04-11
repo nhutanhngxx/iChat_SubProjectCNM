@@ -15,14 +15,14 @@ import axios from "axios";
 
 const HeaderMessages = () => {
   const { user, setUser } = useContext(UserContext);
-  const API_iChat = "http://192.168.1.80:5001";
+  const API_iChat = "http://192.168.110.158:5001";
   const navigation = useNavigation();
   const [modalVisible, setModalVisible] = useState(false);
 
   const handleLogout = async () => {
     try {
       // Gửi yêu cầu cập nhật trạng thái thành "Offline"
-      await axios.post(`${API_iChat}/logout`, { userId: user.id });
+      await axios.post(`${API_iChat}/api/auth/logout`, { userId: user.id });
       // Xóa thông tin người dùng trên máy
       await AsyncStorage.removeItem("token");
       await AsyncStorage.removeItem("user");

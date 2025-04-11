@@ -25,19 +25,22 @@ const LoginScreen = ({ navigation }) => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const API_iChat = "http://192.168.1.80:5001/api/auth";
+  const API_iChat = "http://192.168.110.158:5001/api/auth";
 
   const handleLogin = async () => {
     if (!phone.trim() || !password.trim()) {
       Alert.alert("Lỗi", "Vui lòng nhập số điện thoại và mật khẩu!");
       return;
     }
+
     setLoading(true);
     try {
+      const formattedPhone = "+84" + phone.replace(/^(0|84)/, "");
       const response = await axios.post(`${API_iChat}/login`, {
-        phone,
+        phone: formattedPhone,
         password,
       });
+
       const { accessToken, user } = response.data;
       await AsyncStorage.setItem("token", accessToken);
       await AsyncStorage.setItem("user", JSON.stringify(user));

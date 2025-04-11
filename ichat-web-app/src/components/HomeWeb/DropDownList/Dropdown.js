@@ -175,12 +175,41 @@ console.log("user from Dropdown: ", user);
       </Menu.Item>
     </Menu>
   );
+  const getInitials = (fullName) => {
+    if (!fullName) return "";
+    return fullName
+      .split(" ")
+      .map(word => word[0])
+      .join("")
+      .toUpperCase();
+  };
+  
 
   return (
     <>
       <Dropdown overlay={menu} trigger={["click"]} placement="bottomRight">
         <div className="avatar-container-sidebar">
-          <img src={user?.avatar_path || ""} alt="Avatar"></img>
+          {/* <img src={user?.avatar_path || ""} alt="Avatar"></img> */}
+          {user?.avatar_path ? (
+            <img src={user.avatar_path} alt="Avatar" />
+          ) : (
+            <div style={{
+              width: "50px",
+              height: "50px",
+              borderRadius: "50%",
+              backgroundColor: "#007bff",
+              color: "#fff",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontWeight: "bold",
+              fontSize: "14px",
+              textTransform: "uppercase"
+            }}>
+              {getInitials(user?.full_name)}
+  </div>
+)}
+
         </div>
       </Dropdown>
       <ProfileModal

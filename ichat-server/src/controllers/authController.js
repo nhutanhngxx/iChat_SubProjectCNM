@@ -7,6 +7,10 @@ const jwt = require("jsonwebtoken");
 require("dotenv").config();
 const User = require("../schemas/UserDetails");
 const authModel = require("../models/authModel");
+const textflow = require("textflow.js");
+textflow.useKey(process.env.TEXTFLOW_API_KEY);
+const OTP = require("../schemas/OTP");
+const phoneRegex = /^(\+84)[3-9][0-9]{8}$/;
 
 // Tạo accesstoken
 const generateAccessToken = (user) => {
@@ -91,7 +95,7 @@ const authController = {
   //   Đăng nhập
   login: async (req, res) => {
     const { phone, password } = req.body;
-
+    console.log("Đăng nhập với số điện thoại:", phone);
     try {
       const user = await User.findOne({ phone });
       if (!user)
@@ -269,6 +273,52 @@ const authController = {
       res.status(500).json({ message: error.message });
     }
   },
+  updatePhone: async (req, res) => {
+    const { userId, newPhone } = req.body;
+    try {
+      await authModel.updatePhone(userId, newPhone);
+      return res.json({
+        status: "ok",
+        message: "Số điện thoại đã được cập nhật.",
+      });
+    } catch (err) {
+      return res.status(500).json({
+        status: "error",
+        message: "Lỗi server khi cập nhật số điện thoại.",
+      });
+    }
+  },
+  deleteAccount: async (req, res) => {
+    const { userId, password } = req.body;
+    const result = await authModel.deleteAccount(userId, password);
+    return res.status(result.status === "ok" ? 200 : 400).json(result);
+  },
+  verifyOtp: async (req, res) => {
+    const { phone, otp } = req.body;
+    try {
+      const otpRecord = await OTP.findOne({ phone });
+      if (!otpRecord || otp.toString() !== otpRecord.otp) {
+        return res.status(401).json({
+          status: "error",
+          message: "Mã OTP không đúng hoặc đã hết hạn",
+        });
+      }
+
+      const tempToken = jwt.sign(
+        { phone, verify: true },
+        process.env.JWT_SECRET,
+        { expiresIn: "1h" }
+      );
+      await OTP.deleteOne({ _id: otpRecord._id });
+
+      return res.json({
+        status: "ok",
+        data: { message: "OTP verified", phone, tempToken },
+      });
+    } catch (error) {
+      return res.status(500).json({ status: "error", message: error.message });
+    }
+  },
 };
 authController.changePassword = async (req, res) => {
   const { userId, currentPassword, newPassword } = req.body;
@@ -294,6 +344,26 @@ authController.resetPassword = async (req, res) => {
 
   try {
     const result = await authModel.resetPassword(phone, newPassword);
+
+    if (result.status === "error") {
+      return res.status(400).json({ status: "error", message: result.message });
+    }
+
+    return res.status(200).json(result);
+  } catch (error) {
+    return res.status(500).json({ status: "error", message: error.message });
+  }
+};
+authController.confirmPhone = async (req, res) => {
+  try {
+    const { phone } = req.body;
+    const regex = /^(\+84)[3-9][0-9]{8}$/;
+    if (!phone || !regex.test(phone.trim())) {
+      return res
+        .status(400)
+        .json({ status: "error", message: "Số điện thoại không hợp lệ." });
+    }
+    const result = await authModel.checkExistedPhone(phone);
 
     if (result.status === "error") {
       return res.status(400).json({ status: "error", message: result.message });

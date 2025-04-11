@@ -9,8 +9,11 @@ export const fetchMessages = createAsyncThunk(
   async (id) => {
     const response = await fetch(`${API_URL}recent-receivers/${id}`);
     const data = await response.json();
+    if (!response.ok) {
+      throw new Error("Failed to fetch messages", data.message);
+    }
     return data.data;
-  }
+  } 
 );
 
 // Lấy tin nhắn giữa sender và receiver
