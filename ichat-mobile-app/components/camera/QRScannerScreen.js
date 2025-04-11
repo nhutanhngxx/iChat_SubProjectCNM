@@ -15,6 +15,7 @@ import * as MediaLibrary from "expo-media-library";
 import Slider from "@react-native-community/slider";
 import { StatusBar } from "expo-status-bar";
 import { UserContext } from "../../context/UserContext";
+import { getHostIP } from "../../services/api";
 
 export default function CameraFunction() {
   const [cameraPermission, setCameraPermission] = useState(); // Trạng thái quyền truy cập camera
@@ -33,6 +34,9 @@ export default function CameraFunction() {
   let cameraRef = useRef(); // Tạo một tham chiếu đến camera
   const navigation = useNavigation(); // Hook để điều hướng giữa các màn hình
 
+  const ipAdr = getHostIP();
+  const API_iChat = `http://${ipAdr}:5001`;
+
   const { user } = useContext(UserContext);
   const sendQrSessionToServer = async (sessionId) => {
     try {
@@ -40,24 +44,21 @@ export default function CameraFunction() {
         "📱 Mobile gửi sessionId (sendQrSessionToServer):",
         sessionId
       ); // <-- Thêm dòng log này ở đây
-      const response = await fetch(
-        "http://172.20.65.201:5001/api/auth/qr-login",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
+      const response = await fetch(`${API_iChat}/api/auth/qr-login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          sessionId,
+          userInfo: {
+            id: user?.id,
+            name: user?.full_name,
+            phone: user?.phone,
+            avatar: user?.avatar_path,
           },
-          body: JSON.stringify({
-            sessionId,
-            userInfo: {
-              id: user?.id,
-              name: user?.full_name,
-              phone: user?.phone,
-              avatar: user?.avatar_path,
-            },
-          }),
-        }
-      );
+        }),
+      });
 
       const data = await response.json();
 

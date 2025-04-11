@@ -11,10 +11,12 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { UserContext } from "../../context/UserContext";
 import authService from "../../services/authService";
+import { getHostIP } from "../../services/api";
 
 const HeaderMessages = () => {
   const { user, setUser } = useContext(UserContext);
-  const API_iChat = "http://172.20.65.201:5001";
+  const ipAdr = getHostIP();
+  const API_iChat = `http://${ipAdr}:5001`;
   const navigation = useNavigation();
   const [modalVisible, setModalVisible] = useState(false);
 
