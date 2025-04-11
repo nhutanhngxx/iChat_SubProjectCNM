@@ -88,7 +88,7 @@ const ChangePhoneNumber = () => {
       const isExistedPhone = await authService.checkExistedPhone(formatted);
       if (isExistedPhone.result) {
         const result = await authService.sendOTPWithoutCheck(
-          user.phone,
+          newPhone,
           recaptchaVerifier
         );
         if (result.status === "ok") {
@@ -268,7 +268,7 @@ const ChangePhoneNumber = () => {
                 <Text style={styles.label}>
                   Mã xác thực đã được gửi đến số:{" "}
                   <Text style={{ fontWeight: "400" }}>
-                    {maskPhoneNumber(newPhone)}
+                    {maskPhoneNumber(formatPhoneNumber(newPhone))}
                   </Text>
                 </Text>
 
