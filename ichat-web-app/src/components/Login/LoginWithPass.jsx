@@ -240,10 +240,10 @@ export default function LoginWithPass() {
               </div>
             </div>
             {phone !== "" && phoneError && (
-              <p className="error-text" style={{ color: "red", marginLeft: "30px" }}>{phoneError}</p>
+              <p className="error-text" style={{ color: "red", marginLeft: "30px", fontSize: "10px" }}>{phoneError}</p>
             )}
             {error && (
-              <p className="error" style={{ color: "red", marginLeft: "30px" }}>
+              <p className="error" style={{ color: "red", marginLeft: "30px", fontSize: "10px" }}>
                 {error}
               </p>
             )}

@@ -136,28 +136,6 @@ export const changePassword = createAsyncThunk(
   }
 );
 // Gửi OTP bằng Firebase
-// export const sendOtpFirebase = createAsyncThunk('auth/sendOtpFirebase', async (phone, thunkAPI) => {
-//   try {
-//     if (!window.recaptchaVerifier) {
-//       window.recaptchaVerifier = new RecaptchaVerifier(
-//         'recaptcha-container', // id của thẻ div bạn tạo
-//         {
-//           size: 'invisible',
-//           callback: (response) => {
-//             console.log("reCAPTCHA solved", response);
-//           },
-//         },
-//         auth
-//       );
-//     }
-//     const appVerifier = window.recaptchaVerifier;
-//     const confirmationResult = await signInWithPhoneNumber(auth, phone, appVerifier);
-//     window.confirmationResult = confirmationResult;
-//     return { success: true };
-//   } catch (error) {
-//     return thunkAPI.rejectWithValue(error.message);
-//   }
-// });
 // In your authSlice.js
 export const sendOtpFirebase = createAsyncThunk(
   'auth/sendOtpFirebase',
@@ -172,12 +150,20 @@ export const sendOtpFirebase = createAsyncThunk(
         }
         window.recaptchaVerifier = null;
       }
+      // // Clear the container element
+      // const recaptchaContainer = document.getElementById('recaptcha-container');
+      // if (recaptchaContainer) {
+      //   recaptchaContainer.innerHTML = '';
+      // }
+   
 
       // Important: Ensure auth is properly initialized
       if (!auth || !auth.app) {
         throw new Error("Firebase auth is not properly initialized");
       }
 
+      if(!window.recaptchaVerifier) {
+      }
       // Create new reCAPTCHA verifier
       window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
         size: 'invisible',
@@ -185,7 +171,7 @@ export const sendOtpFirebase = createAsyncThunk(
           console.log("reCAPTCHA verified");
         }
       });
-
+      
       const appVerifier = window.recaptchaVerifier;
       const confirmationResult = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
       window.confirmationResult = confirmationResult;
@@ -197,6 +183,70 @@ export const sendOtpFirebase = createAsyncThunk(
     }
   }
 );
+// export const sendOtpFirebase = createAsyncThunk(
+//   'auth/sendOtpFirebase',
+//   async (phoneNumber, { rejectWithValue }) => {
+//     try {
+//       // 1. Ensure phone number format
+//       if (!phoneNumber.startsWith('+')) {
+//         phoneNumber = '+' + phoneNumber;
+//       }
+      
+//       // 2. Check for existing recaptchaVerifier and clear it
+//       if (window.recaptchaVerifier) {
+//         try {
+//           window.recaptchaVerifier.clear();
+//         } catch (e) {
+//           console.error("Error clearing existing reCAPTCHA:", e);
+//         }
+//         window.recaptchaVerifier = null;
+//       }
+      
+//       // 3. Check for container and create it if it doesn't exist
+//       let recaptchaContainer = document.getElementById('recaptcha-container');
+//       if (!recaptchaContainer) {
+//         console.log("Creating recaptcha container");
+//         recaptchaContainer = document.createElement('div');
+//         recaptchaContainer.id = 'recaptcha-container';
+//         document.body.appendChild(recaptchaContainer);
+//       } else {
+//         // Clear container but don't remove it
+//         recaptchaContainer.innerHTML = '';
+//       }
+      
+//       // 4. Ensure auth is properly initialized
+//       if (!auth || !auth.app) {
+//         throw new Error("Firebase auth is not properly initialized");
+//       }
+      
+//       // 5. Add a small delay to ensure DOM is ready
+//       await new Promise(resolve => setTimeout(resolve, 100));
+      
+//       // 6. Create reCAPTCHA verifier with proper error handling
+//       console.log("Creating new reCAPTCHA verifier");
+//       window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+//         size: 'invisible',
+//         callback: () => {
+//           console.log("reCAPTCHA verified successfully");
+//         },
+//         'expired-callback': () => {
+//           console.log("reCAPTCHA expired");
+//         }
+//       });
+      
+//       // 7. Send verification code
+//       console.log("Sending verification code to:", phoneNumber);
+//       const appVerifier = window.recaptchaVerifier;
+//       const confirmationResult = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
+//       window.confirmationResult = confirmationResult;
+      
+//       return confirmationResult.verificationId;
+//     } catch (error) {
+//       console.error("Firebase OTP error:", error);
+//       return rejectWithValue(error.message || "Failed to send OTP");
+//     }
+//   }
+// );
 
 // Xác minh OTP
 export const verifyOtpFirebase = createAsyncThunk('auth/verifyOtpFirebase', async (otp, thunkAPI) => {

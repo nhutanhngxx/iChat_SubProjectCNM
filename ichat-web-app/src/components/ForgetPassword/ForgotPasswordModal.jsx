@@ -34,7 +34,24 @@ const ForgotPasswordModal = ({ visible, onClose }) => {
     const handlePreviousStep = () => {
         setStep((prev) => Math.max(prev - 1, 1));
     };
+    // reset capcha
+    const resetRecaptcha = () => {
+        // Clear existing reCAPTCHA
+        if (window.recaptchaVerifier) {
+            try {
+                window.recaptchaVerifier.clear();
+            } catch (e) {
+                console.error("Error clearing reCAPTCHA:", e);
+            }
+            window.recaptchaVerifier = null;
+        }
 
+        // Reset container
+        const container = document.getElementById('recaptcha-container');
+        if (container) {
+            container.innerHTML = '';
+        }
+    };
 
     // Hàm bắt đầu đếm ngược
     const startCountdown = () => {
@@ -76,6 +93,7 @@ const ForgotPasswordModal = ({ visible, onClose }) => {
 
             return alert("Số điện thoại chưa đăng ký.");
         }
+        resetRecaptcha(); // Reset reCAPTCHA when the modal is closed
 
         const resultOtp = await dispatch(sendOtpFirebase(phoneNumber));
         if (sendOtpFirebase.fulfilled.match(resultOtp)) {
@@ -89,6 +107,29 @@ const ForgotPasswordModal = ({ visible, onClose }) => {
         }
 
     };
+    // Gửi lại mã OTP
+    const handleResendOtp = async () => {
+        try {
+            const parsedPhone = parsePhoneNumberFromString(phone, countryCode);
+            if (!parsedPhone || !parsedPhone.isValid()) {
+                return alert('Số điện thoại không hợp lệ');
+            }
+
+            // Don't call handleNextStep() since we're already on step 2
+            const resultOtp = await dispatch(sendOtpFirebase(parsedPhone.number));
+
+            if (sendOtpFirebase.fulfilled.match(resultOtp)) {
+                startCountdown(); // Start countdown again
+                alert("Đã gửi lại mã OTP thành công!");
+            } else {
+                console.error("Không thể gửi lại mã OTP: ", resultOtp.payload);
+                alert('Không thể gửi lại mã OTP: ' + resultOtp.payload);
+            }
+        } catch (error) {
+            console.error("Error in resend OTP:", error);
+            alert("Đã xảy ra lỗi khi gửi lại mã OTP");
+        }
+    }
 
     const handleOtpChange = (value, index) => {
         const newOtp = [...otp];
@@ -138,12 +179,16 @@ const ForgotPasswordModal = ({ visible, onClose }) => {
     useEffect(() => {
         return () => {
             if (visible) {
+                resetRecaptcha();
                 stopCountdown();
             }
         };
     }, []);
 
-    if (!visible) return null;
+    if (!visible) {
+        return null;
+
+    };
 
     return (
         <div className="modal-overlay">
@@ -204,6 +249,20 @@ const ForgotPasswordModal = ({ visible, onClose }) => {
                                 />
                             ))}
                         </div>
+                        {/* Đếm ngược hoặc nút gửi lại mã */}
+                        {countdown > 0 ? (
+                            <p style={{ textAlign: 'center' }}>Bạn có thể gửi lại mã sau: {countdown}s</p>
+                        ) : (
+                            <button
+                                className="resend-otp"
+                                onClick={() => {
+                                    handleResendOtp();
+                                }}
+                                style={{ width: "100%" }}
+                            >
+                                Gửi lại mã OTP
+                            </button>
+                        )}
                         <div style={{ display: "flex", flexDirection: "column-reverse", gap: "10px" }} >
 
                             <button style={{ width: "40%", alignSelf: "center", borderRadius: "20px 0 0 20px" }} onClick={handlePreviousStep}>Quay lại</button>
@@ -263,7 +322,8 @@ const ForgotPasswordModal = ({ visible, onClose }) => {
                         </div>
                     </>
                 )}
-                <div id="recaptcha-container"></div>
+                {/* // Add this div to your ForgotPasswordModal component */}
+                <div id="recaptcha-container" style={{ position: 'relative', marginTop: '10px' }}></div>
 
             </div>
         </div>
