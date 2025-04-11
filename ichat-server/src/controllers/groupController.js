@@ -6,13 +6,14 @@ const GroupController = {
     const userId = req.params.userId;
     try {
       const groupChats = await GroupModel.getUserGroups(userId);
-      if (!groups) {
+
+      if (!groupChats) {
         return res.status(404).json({
           status: "error",
           message: "Không tìm thấy các nhóm của người dùng",
         });
       }
-      if (groups.length === 0) {
+      if (groupChats.length === 0) {
         return res.status(200).json({
           status: "oke",
           message: "Người dùng không tham gia nhóm nào",

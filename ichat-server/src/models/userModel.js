@@ -3,7 +3,7 @@ const jwt = require("jsonwebtoken");
 
 // Hàm xử lý cập nhật user
 const updateInfoUser = async (userId, updateData) => {
-  const allowedUpdates = ["full_name", "gender", "dob"];
+  const allowedUpdates = ["full_name", "gender", "dob", "avatar_path"];
 
   const updates = Object.keys(updateData)
     .filter((key) => allowedUpdates.includes(key))
@@ -12,9 +12,12 @@ const updateInfoUser = async (userId, updateData) => {
       return obj;
     }, {});
 
-  if (!updates.full_name || updates.full_name.trim() === "") {
-    throw { type: "Validation", message: "Họ tên không được để trống" };
-  }
+  // if (!updates.full_name || updates.full_name.trim() === "") {
+  //   return res.status(400).json({
+  //     success: false,
+  //     message: "Họ tên không được để trống",
+  //   });
+  // }
 
   updates.updated_at = Date.now();
 

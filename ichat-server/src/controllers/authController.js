@@ -222,10 +222,12 @@ const authController = {
 
     res.json({ message: "Gửi thành công" });
   },
+
   getQRSession: async (req, res) => {
     const sessionId = await sessionService.generateSession();
     res.json({ sessionId });
   },
+
   confirmLogin: async (req, res) => {
     const { sessionId } = req.body;
     const session = await sessionStore.getSession(sessionId);
@@ -273,6 +275,7 @@ const authController = {
       res.status(500).json({ message: error.message });
     }
   },
+
   updatePhone: async (req, res) => {
     const { userId, newPhone } = req.body;
     try {
@@ -288,11 +291,13 @@ const authController = {
       });
     }
   },
+
   deleteAccount: async (req, res) => {
     const { userId, password } = req.body;
     const result = await authModel.deleteAccount(userId, password);
     return res.status(result.status === "ok" ? 200 : 400).json(result);
   },
+
   verifyOtp: async (req, res) => {
     const { phone, otp } = req.body;
     try {
@@ -319,7 +324,33 @@ const authController = {
       return res.status(500).json({ status: "error", message: error.message });
     }
   },
+
+  verifyPassword: async (req, res) => {
+    try {
+      const { phone, password } = req.body;
+
+      if (!phone || !password) {
+        return res.status(400).json({ isValid: false });
+      }
+
+      const user = await User.findOne({ phone });
+      if (!user) {
+        return res.status(400).json({ isValid: false });
+      }
+
+      const isPasswordValid = await bcrypt.compare(password, user.password);
+      if (!isPasswordValid) {
+        return res.status(400).json({ isValid: false });
+      }
+
+      return res.status(200).json({ isValid: true });
+    } catch (error) {
+      console.error("Error in verify-password:", error);
+      return res.status(500).json({ isValid: false });
+    }
+  },
 };
+
 authController.changePassword = async (req, res) => {
   const { userId, currentPassword, newPassword } = req.body;
 
@@ -339,6 +370,7 @@ authController.changePassword = async (req, res) => {
     return res.status(500).json({ status: "error", message: error.message });
   }
 };
+
 authController.resetPassword = async (req, res) => {
   const { phone, newPassword } = req.body;
 
@@ -354,6 +386,7 @@ authController.resetPassword = async (req, res) => {
     return res.status(500).json({ status: "error", message: error.message });
   }
 };
+
 authController.confirmPhone = async (req, res) => {
   try {
     const { phone } = req.body;
