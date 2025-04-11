@@ -176,7 +176,7 @@ const ProfileModal = ({ visible, onClose, user: initialUser }) => {
 const [isUpdateMode, setIsUpdateMode] = useState(false);
   const [coverImage, setCoverImage] = useState(null);
   const [avatarImage, setAvatarImage] = useState(null);
-  const [userModal, setUserModal] = useState({});
+  const [userModal, setUserModal] = useState(initialUser);
   const [compressedCoverFile, setCompressedCoverFile] = useState(null);
   const [compressedAvatarFile, setCompressedAvatarFile] = useState(null);
 
@@ -316,8 +316,11 @@ useEffect(() => {
       if (updateUser.fulfilled.match(action)) {
        // Cập nhật cả local state và redux store
       const updatedUserData = action.payload;
-      setUserModal(updatedUserData);
-      dispatch(setUser(updatedUserData));
+      dispatch(setUser({
+        ...userModal,
+        ...updatedUserData,
+        id: userModal.id,
+      }));
       
       // Cập nhật các state khác
       setCoverImage(updatedUserData.cover_path);
