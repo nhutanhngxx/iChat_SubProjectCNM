@@ -25,7 +25,7 @@ import {
 import { getHostIP } from "../../services/api";
 
 const ipAdr = getHostIP();
-const API_iChat = `http://${ipAdr}:5001`;
+const API_iChat = `http://${ipAdr}:5001/api`;
 
 const ForgotPasswordScreen = ({ navigation }) => {
   const [step, setStep] = useState(1);
@@ -52,8 +52,9 @@ const ForgotPasswordScreen = ({ navigation }) => {
       const res = await axios.post(`${API_iChat}/auth/confirm-phone`, {
         phone: formattedPhone,
       });
+      console.log("Response from confirm-phone:", res.data);
 
-      if (res.data.status === "ok") {
+      if (res.status === 200) {
         const phoneProvider = new PhoneAuthProvider(getAuth());
         const verificationId = await phoneProvider.verifyPhoneNumber(
           formattedPhone,
@@ -62,10 +63,11 @@ const ForgotPasswordScreen = ({ navigation }) => {
 
         setVerificationId(verificationId);
         setStep(2);
-        Alert.alert("Thông báo", "Đã gửi mã OTP tới số điện thoại.");
-      } else {
-        Alert.alert("Lỗi", res.data.message || "Số điện thoại không hợp lệ.");
+        // Alert.alert("Thông báo", "Đã gửi mã OTP tới số điện thoại.");
       }
+      // } else {
+      //   Alert.alert("Lỗi", res.data.message || "Số điện thoại không hợp lệ.");
+      // }
     } catch (error) {
       const errorMessage =
         error?.response?.data?.message || "Không thể gửi mã OTP.";
@@ -101,15 +103,9 @@ const ForgotPasswordScreen = ({ navigation }) => {
       return;
     }
 
-    const normalizePhone = (phoneNumber) => {
-      const trimmed = phoneNumber.trim();
-      if (trimmed.startsWith("0")) {
-        return trimmed.replace(/^0/, "+84");
-      }
-      return trimmed;
-    };
-
-    const formattedPhone = normalizePhone(phone);
+    const formattedPhone = phone.startsWith("0")
+      ? phone.replace(/^0/, "+84")
+      : `+84${phone}`;
 
     try {
       setLoading(true);
