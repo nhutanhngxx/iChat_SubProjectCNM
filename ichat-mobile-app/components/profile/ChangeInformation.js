@@ -132,27 +132,28 @@ const ChangeInformation = () => {
     try {
       const formData = new FormData();
       formData.append("full_name", fullName.trim());
-      formData.append(
-        "gender",
-        radioButtons.find((rb) => rb.id === selectedId)?.value
-      );
+      const gender = radioButtons.find((rb) => rb.id === selectedId)?.value;
+      if (!gender) {
+        Alert.alert("Vui lòng chọn giới tính!");
+        setLoading(false);
+        return;
+      }
+      formData.append("gender", gender);
       formData.append("dob", dob.toISOString().split("T")[0]);
 
       if (selectedImage) {
-        // Kiểm tra thông tin ảnh
         const fileInfo = await FileSystem.getInfoAsync(selectedImage);
         if (!fileInfo.exists) {
           Alert.alert("Ảnh không tồn tại!");
+          setLoading(false);
           return;
         }
 
-        // Lấy tên file từ uri
         const filename = selectedImage.split("/").pop();
         const match = /\.(\w+)$/.exec(filename ?? "");
         const ext = match ? match[1] : "jpg";
         const mimeType = `image/${ext}`;
 
-        // Thêm ảnh vào FormData
         formData.append("avatar", {
           uri: selectedImage,
           name: filename ?? `avatar.${ext}`,
@@ -160,7 +161,10 @@ const ChangeInformation = () => {
         });
       }
 
-      console.log("FormData:", formData);
+      // Log FormData for debugging
+      for (let [key, value] of formData.entries()) {
+        console.log(`${key}: ${value}`);
+      }
 
       const response = await axios.put(
         `${API_iChat}/users/update/${user.id}`,
@@ -171,24 +175,27 @@ const ChangeInformation = () => {
           },
         }
       );
-      console.log("Response:", response.data);
+
+      console.log("Response:", response);
 
       const result = response.data;
-      if (result.success) {
-        console.log("API trả về dữ liệu:", result.data);
+      // Check if the response is successful (status 200 and result has user data)
+      if (response.status === 200 && result.id) {
+        console.log("API trả về dữ liệu:", result);
 
         // Đảm bảo cập nhật đầy đủ thông tin user
         const updatedUser = {
           ...user,
           full_name: fullName.trim(),
-          gender: radioButtons.find((rb) => rb.id === selectedId)?.value,
+          gender: gender,
           dob: dob.toISOString().split("T")[0],
           dobFormatted: `${dob.getDate().toString().padStart(2, "0")}/${(
             dob.getMonth() + 1
           )
             .toString()
             .padStart(2, "0")}/${dob.getFullYear()}`,
-          avatar_path: result.data.avatar_path || user.avatar_path,
+          avatar_path: result.avatar_path || user.avatar_path,
+          cover_path: result.cover_path || user.cover_path || "",
         };
 
         console.log("User sau khi cập nhật:", updatedUser);
@@ -199,6 +206,7 @@ const ChangeInformation = () => {
         Alert.alert("Cập nhật thông tin thành công!");
         navigation.goBack();
       } else {
+        console.log("Error result:", result);
         Alert.alert(result.message || "Có lỗi xảy ra khi cập nhật thông tin.");
       }
     } catch (error) {
