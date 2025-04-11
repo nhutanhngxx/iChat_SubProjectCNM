@@ -11,23 +11,16 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { UserContext } from "../../context/UserContext";
 import authService from "../../services/authService";
-import { getHostIP } from "../../services/api";
 
 const HeaderMessages = () => {
   const { user, setUser } = useContext(UserContext);
-  const ipAdr = getHostIP();
-  const API_iChat = `http://${ipAdr}:5001`;
   const navigation = useNavigation();
   const [modalVisible, setModalVisible] = useState(false);
 
   const handleLogout = async () => {
     try {
-      // Gửi yêu cầu cập nhật trạng thái thành "Offline"
-      await axios.post(`${API_iChat}/api/auth/logout`, { userId: user.id });
-      // Xóa thông tin người dùng trên máy
-      await AsyncStorage.removeItem("token");
-      await AsyncStorage.removeItem("user");
-      // Cập nhật Context API
+      // // Gửi yêu cầu cập nhật trạng thái thành "Offline"
+      authService.logout(user.id);
       setUser(null);
     } catch (error) {
       console.error("Lỗi khi đăng xuất:", error);

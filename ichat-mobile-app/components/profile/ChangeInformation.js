@@ -58,7 +58,7 @@ const ChangeInformation = () => {
   };
 
   const ipAdr = getHostIP();
-  const API_iChat = `http://${ipAdr}:5001`;
+  const API_iChat = `http://${ipAdr}:5001/api`;
 
   const parseDate = (dateString) => {
     if (!dateString || typeof dateString !== "string") return new Date();
@@ -160,8 +160,10 @@ const ChangeInformation = () => {
         });
       }
 
+      console.log("FormData:", formData);
+
       const response = await axios.put(
-        `${API_iChat}/update/${user.id}`,
+        `${API_iChat}/users/update/${user.id}`,
         formData,
         {
           headers: {
@@ -169,6 +171,7 @@ const ChangeInformation = () => {
           },
         }
       );
+      console.log("Response:", response.data);
 
       const result = response.data;
       if (result.success) {
@@ -187,6 +190,8 @@ const ChangeInformation = () => {
             .padStart(2, "0")}/${dob.getFullYear()}`,
           avatar_path: result.data.avatar_path || user.avatar_path,
         };
+
+        console.log("User sau khi cập nhật:", updatedUser);
 
         // Cập nhật context
         await setUser(updatedUser);

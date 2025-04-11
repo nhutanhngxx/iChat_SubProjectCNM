@@ -20,7 +20,7 @@ const authService = {
         ? phone.replace(/^0/, "+84")
         : `+84${phone}`;
 
-      const response = await apiService.post(`/login`, {
+      const response = await apiService.post(`/${PREFIX}/login`, {
         phone: formattedPhone,
         password,
       });
@@ -42,9 +42,21 @@ const authService = {
     }
   },
 
+  checkPassword: async ({ phone, password }) => {
+    try {
+      const response = await apiService.post(`/${PREFIX}/verify-password`, {
+        phone,
+        password,
+      });
+      return response.data.isValid === true;
+    } catch (error) {
+      return false;
+    }
+  },
+
   logout: async (userId) => {
     try {
-      await apiService.post(`/logout`, { userId });
+      await apiService.post(`/${PREFIX}/logout`, { userId });
       await AsyncStorage.removeItem("token");
       await AsyncStorage.removeItem("user");
     } catch (error) {
@@ -82,6 +94,40 @@ const authService = {
     }
   },
 
+  checkExistedPhone: async (phone) => {
+    if (!phone) {
+      return {
+        result: true,
+        message: "Vui lòng nhập số điện thoại",
+      };
+    }
+    try {
+      const response = await apiService.post(`/${PREFIX}/check-existed-phone`, {
+        phone,
+      });
+
+      if (response.data.status === "error") {
+        return {
+          result: false,
+          message: "Số điện thoại đã tồn tại",
+        };
+      } else
+        return {
+          result: true,
+          message: "Số điện thoại chưa tồn tại",
+        };
+    } catch (error) {
+      console.log("Cannot check existed phone: ", error);
+      if (error.response?.status === 400) {
+        return {
+          result: false,
+          message: error.response?.data?.message,
+        };
+      }
+      return true;
+    }
+  },
+
   sendOTP: async (phone, recaptchaVerifier) => {
     try {
       if (!phone) {
@@ -93,18 +139,6 @@ const authService = {
 
       phone = "+84" + phone.replace(/^(0|84)/, "");
 
-      // Check if phone number is existed
-      const response = await apiService.post(`/${PREFIX}/check-existed-phone`, {
-        phone,
-      });
-      if (response.data.status !== "ok") {
-        return {
-          status: "error",
-          message: response.data.message,
-        };
-      }
-
-      // Use PhoneAuthProvider with recaptcha verifier
       const phoneProvider = new PhoneAuthProvider(auth);
       console.log(phoneProvider);
 

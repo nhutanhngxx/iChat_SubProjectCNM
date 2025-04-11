@@ -4,7 +4,7 @@ const PREFIX = "users";
 const userService = {
   getUserById: async (userId) => {
     try {
-      const response = await apiService.get(`/${PREFIX}/${userId}`);
+      const response = await apiService.get(`/${PREFIX}/users/${userId}`);
       return response.data;
     } catch (error) {
       console.log("User Service Error: ", error);
@@ -14,7 +14,7 @@ const userService = {
 
   getAllUser: async () => {
     try {
-      const response = await apiService.get(`/${PREFIX}`);
+      const response = await apiService.get(`/${PREFIX}/`);
       return response.data.users;
     } catch (error) {
       console.log("User Service Error: ", error);

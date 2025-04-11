@@ -27,7 +27,6 @@ const LoginScreen = ({ navigation }) => {
       Alert.alert("Lỗi", "Vui lòng nhập số điện thoại và mật khẩu!");
       return;
     }
-
     setLoading(true);
     try {
       const response = await authService.login({ phone, password });
@@ -40,9 +39,13 @@ const LoginScreen = ({ navigation }) => {
       }
     } catch (error) {
       console.error("Login error:", error);
-      const errorMessage =
-        error.response?.data?.message || "Có lỗi xảy ra! Vui lòng thử lại.";
-      Alert.alert("Lỗi", errorMessage);
+      if (error.response?.status === 401) {
+        Alert.alert("Lỗi", "Số điện thoại hoặc mật khẩu không đúng!");
+      } else {
+        const errorMessage =
+          error.response?.data?.message || "Có lỗi xảy ra! Vui lòng thử lại.";
+        Alert.alert("Lỗi", errorMessage);
+      }
     } finally {
       setLoading(false);
     }

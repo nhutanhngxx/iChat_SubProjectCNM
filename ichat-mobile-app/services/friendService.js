@@ -7,7 +7,7 @@ const friendService = {
       const response = await apiService.get(`/${PREFIX}/${userId}`);
       return response.data.friends;
     } catch (error) {
-      console.log("Friend Service Error: ", error);
+      // console.log("Friend Service Error: ", error);
       return [];
     }
   },
@@ -17,7 +17,7 @@ const friendService = {
       const response = await apiService.get(`/received-requests/${userId}`);
       return response.data.friendRequests;
     } catch (error) {
-      console.log("Friend Service Error: ", error);
+      // console.log("Friend Service Error: ", error);
       return [];
     }
   },
@@ -27,7 +27,7 @@ const friendService = {
       const response = await apiService.get(`/sent-requests/${userId}`);
       return response.data.friendRequests;
     } catch (error) {
-      console.log("Friend Service Error: ", error);
+      // console.log("Friend Service Error: ", error);
       return [];
     }
   },
