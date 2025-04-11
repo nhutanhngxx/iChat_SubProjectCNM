@@ -264,13 +264,11 @@ router.post("/refresh-token", (req, res) => {
 // Lấy thông tin User từ Bearer Token
 router.post("/userdata", async (req, res) => {
   const authHeader = req.headers.authorization;
-
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return res
       .status(401)
       .json({ status: "error", message: "No token provided" });
   }
-
   const token = authHeader.split(" ")[1];
 
   try {
@@ -310,7 +308,6 @@ router.get("/users/:id", async (req, res) => {
 // Lấy tất cả user từ database (Tìm kiếm nếu tìm thấy)
 router.get("/users", async (req, res) => {
   const { search } = req.query;
-
   try {
     let users;
     if (!search) {

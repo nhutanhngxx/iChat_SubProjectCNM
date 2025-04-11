@@ -35,9 +35,13 @@ const LoginScreen = ({ navigation }) => {
       Alert.alert("Đăng nhập thành công!", `Chào mừng ${user.full_name}`);
     } catch (error) {
       console.error("Login error:", error);
-      const errorMessage =
-        error.response?.data?.message || "Có lỗi xảy ra! Vui lòng thử lại.";
-      Alert.alert("Lỗi", errorMessage);
+      if (error.response?.status === 401) {
+        Alert.alert("Lỗi", "Số điện thoại hoặc mật khẩu không đúng!");
+      } else {
+        const errorMessage =
+          error.response?.data?.message || "Có lỗi xảy ra! Vui lòng thử lại.";
+        Alert.alert("Lỗi", errorMessage);
+      }
     } finally {
       setLoading(false);
     }

@@ -40,7 +40,7 @@ const formatPhoneNumber = (phone) => {
 const ChangePhoneNumber = () => {
   const navigation = useNavigation();
   const { user, setUser } = useContext(UserContext);
-  const API_iChat = "http://192.168.1.85:5001";
+  const API_iChat = "http://192.168.1.251:5001";
   const recaptchaVerifier = useRef(null);
   const [verificationId, setVerificationId] = useState(null);
   const [isLoading, setIsLoading] = useState(false);

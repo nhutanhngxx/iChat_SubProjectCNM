@@ -33,7 +33,7 @@ const getHostIP = () => {
 
 // Tạo API instance
 const createApi = async () => {
-  const DEFAULT_IP = "192.168.1.85";
+  const DEFAULT_IP = "192.168.1.251";
   const PORT = 5001;
 
   const hostIP = getHostIP();

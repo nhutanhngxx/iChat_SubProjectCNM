@@ -57,7 +57,7 @@ const Option = ({ route }) => {
     }
   }, [user?.id, id]);
 
-  const API_iChat = "http://192.168.1.85:5001";
+  const API_iChat = "http://192.168.1.251:5001";
 
   useEffect(() => {
     console.log("avatar: ", avatar);

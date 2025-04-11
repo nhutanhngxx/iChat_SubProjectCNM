@@ -21,7 +21,7 @@ import { UserContext } from "../../context/UserContext";
 import axios from "axios";
 
 const AddFriend = () => {
-  const API_iChat = "http://192.168.1.85:5001";
+  const API_iChat = "http://192.168.1.251:5001";
   const { user } = useContext(UserContext);
   const [countryCode, setCountryCode] = useState("+84");
   const [phoneNumber, setPhoneNumber] = useState("");

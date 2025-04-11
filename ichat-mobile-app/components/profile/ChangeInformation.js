@@ -56,7 +56,7 @@ const ChangeInformation = () => {
     }
   };
 
-  const API_iChat = "http://192.168.1.85:5001";
+  const API_iChat = "http://192.168.1.251:5001";
 
   const parseDate = (dateString) => {
     if (!dateString || typeof dateString !== "string") return new Date();

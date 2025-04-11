@@ -24,7 +24,7 @@ const SearchScreen = () => {
   const searchInputRef = useRef(null);
   const { user } = useContext(UserContext);
 
-  const API_iChat = "http://192.168.1.85:5001";
+  const API_iChat = "http://192.168.1.251:5001";
 
   const handleOpenChatting = async (selectedMessage) => {
     // Xác định ID của người đang chat với user
@@ -166,16 +166,20 @@ const SearchScreen = () => {
   // Hàm gọi API tìm kiếm
   const handleSearch = async () => {
     setIsLoading(true);
-    const formattedPhone = searchText.startsWith("0")
-      ? searchText.replace(/^0/, "+84")
-      : `+84${searchText}`;
-    const encodedPhone = encodeURIComponent(formattedPhone);
-    console.log("Encoded phone:", encodedPhone);
+
+    let finalSearchQuery = searchText.trim();
+    if (/^\d+$/.test(finalSearchQuery)) {
+      finalSearchQuery = finalSearchQuery.startsWith("0")
+        ? finalSearchQuery.replace(/^0/, "+84")
+        : `+84${finalSearchQuery}`;
+    }
 
     try {
       const [usersResponse, messagesResponse, groupsResponse] =
         await Promise.all([
-          axios.get(`${API_iChat}/users?search=${encodedPhone}`),
+          axios.get(
+            `${API_iChat}/users?search=${encodeURIComponent(finalSearchQuery)}`
+          ),
           axios.get(`${API_iChat}/messages?search=${searchText}`),
           axios.get(`${API_iChat}/groups?search=${searchText}`),
         ]);
