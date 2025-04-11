@@ -134,6 +134,7 @@ const ConversationDetails = ({
       console.error("Emoji is undefined or invalid:", event); // Log lỗi nếu emoji không hợp lệ
     }
   };
+  console.log("Selected from coversationDetails:", selectedChat);
   if (!isVisible) return null; // Ẩn component nếu isVisible = fals và Chỉ return sau khi đã gọi hết các Hook
 
   return (
@@ -171,11 +172,11 @@ const ConversationDetails = ({
               <div className="avatar">
                 <Avatar
                   size={60}
-                  src={`https://i.pravatar.cc/300?img=${selectedChat.id}`}
+                  src={`${selectedChat.avatar_path}`}
                 />
               </div>
               <h3>
-                {selectedChat.name}{" "}
+                {selectedChat.name}
                 <EditOutlined
                   className="icon-edit"
                   onClick={handleShowModalSetNickName}
@@ -403,7 +404,7 @@ const ConversationDetails = ({
             </div>
             <div className="modal-set-nickname-body">
               <img
-                src={`https://i.pravatar.cc/300?img=${selectedChat.id}`}
+                src={`${selectedChat.avatar_path}`}
                 alt=""
               />
               <p>

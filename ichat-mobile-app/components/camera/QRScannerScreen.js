@@ -36,8 +36,8 @@ export default function CameraFunction() {
   const { user } = useContext(UserContext);
   const sendQrSessionToServer = async (sessionId) => {
     try {
-      console.log("📱 Mobile gửi sessionId:", sessionId); // <-- Thêm dòng log này ở đây
-      const response = await fetch("http://192.168.1.80:5001/api/auth/qr-login", {
+      console.log("📱 Mobile gửi sessionId (sendQrSessionToServer):", sessionId); // <-- Thêm dòng log này ở đây
+      const response = await fetch("http://172.20.65.201:5001/api/auth/qr-login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

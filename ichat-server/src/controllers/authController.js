@@ -84,7 +84,7 @@ const authController = {
   //   Đăng nhập
   login: async (req, res) => {
     const { phone, password } = req.body;
-
+    console.log("Đăng nhập với số điện thoại:", phone);
     try {
       const user = await User.findOne({ phone });
       if (!user)

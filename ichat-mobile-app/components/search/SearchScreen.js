@@ -24,7 +24,7 @@ const SearchScreen = () => {
   const searchInputRef = useRef(null);
   const { user } = useContext(UserContext);
 
-  const API_iChat = "http://192.168.1.80:5001/api";
+  const API_iChat = "http://172.20.65.201:5001/api";
 
   const handleOpenChatting = async (selectedMessage) => {
     // Xác định ID của người đang chat với user
