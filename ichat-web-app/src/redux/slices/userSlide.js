@@ -17,7 +17,7 @@ export const updateUser = createAsyncThunk(
           },
         }
       );
-      return response.data.data; // Dữ liệu người dùng đã cập nhật
+      return response.data; // Dữ liệu người dùng đã cập nhật
     } catch (err) {
       return rejectWithValue(err.response?.data || err.message);
     }

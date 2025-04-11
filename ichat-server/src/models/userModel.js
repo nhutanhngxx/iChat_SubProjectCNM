@@ -1,43 +1,44 @@
 const User = require("../schemas/UserDetails");
 const jwt = require("jsonwebtoken");
+const mongoose = require("mongoose");
 
 // Hàm xử lý cập nhật user
 const updateInfoUser = async (userId, updateData) => {
-  const allowedUpdates = ["full_name", "gender", "dob", "avatar_path"];
+    const allowedUpdates = ["full_name", "gender", "dob", "avatar_path", "cover_path"];
 
-  const updates = Object.keys(updateData)
-    .filter((key) => allowedUpdates.includes(key))
-    .reduce((obj, key) => {
-      obj[key] = updateData[key];
-      return obj;
-    }, {});
-
-  // if (!updates.full_name || updates.full_name.trim() === "") {
-  //   return res.status(400).json({
-  //     success: false,
-  //     message: "Họ tên không được để trống",
-  //   });
-  // }
-
-  updates.updated_at = Date.now();
-
-  const user = await User.findByIdAndUpdate(
-    userId,
-    { $set: updates },
-    {
-      new: true,
-      runValidators: true,
+    // Lọc các trường được cập nhật
+    const updates = Object.keys(updateData)
+      .filter((key) => allowedUpdates.includes(key))
+      .reduce((obj, key) => {
+        obj[key] = updateData[key];
+        return obj;
+      }, {});
+  
+    // // Kiểm tra dữ liệu hợp lệ
+    // if (!updates.full_name || updates.full_name.trim() === "") {
+    //   throw { type: "Validation", message: "Họ tên không được để trống" };
+    // }
+  
+    updates.updated_at = Date.now();
+  
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { $set: updates },
+      { new: true, runValidators: true }
+    );
+  
+    if (!user) {
+      throw { type: "NotFound", message: "Không tìm thấy người dùng" };
     }
-  );
-
-  if (!user) throw { type: "NotFound", message: "Không tìm thấy người dùng" };
-
-  return {
-    full_name: user.full_name,
-    gender: user.gender,
-    dob: user.dobFormatted || user.dob,
-    updated_at: user.updated_at,
-  };
+  
+    return {
+      full_name: user.full_name,
+      gender: user.gender,
+      dob: user.dobFormatted || user.dob,
+      avatar_path: user.avatar_path,
+      cover_path: user.cover_path,
+      updated_at: user.updated_at,
+    };
 };
 
 // Hàm lấy user từ token

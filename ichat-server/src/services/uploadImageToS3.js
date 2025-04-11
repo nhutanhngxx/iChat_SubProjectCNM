@@ -16,7 +16,7 @@ const uploadFile = async (file) => {
   }
   if (FILE_TYPE_MATCH.includes(file.mimetype)) {
     const uploadParams = {
-      Bucket: process.env.BUCKET_NAME,
+      Bucket: process.env.AWS_BUCKET_NAME,
       Key: filePath,
       Body: file.buffer,
       ContentType: file.mimetype,

@@ -156,45 +156,152 @@
 
 // module.exports = UserController;
 const UserModel = require("../models/userModel");
+const mongoose = require("mongoose");
+const { uploadFile } = require("../services/uploadImageToS3");
+const User = require("../schemas/UserDetails");
 
 const UserController = {
+  // updateInfoUser: async (req, res) => {
+  
+  //     try {
+  //       const userId = req.params.id;
+  //       const files = req.files;
+  //       const updateData = req.body;
+  
+  //       // Upload avatar nếu có
+  //       if (files?.avatar?.[0]) {
+  //         const avatarUrl = await uploadFile(files.avatar[0]);
+  //         updateData.avatar_path = avatarUrl;
+  //       }
+  
+  //       // Upload cover nếu có
+  //       if (files?.cover?.[0]) {
+  //         const coverUrl = await uploadFile(files.cover[0]);
+  //         updateData.cover_path = coverUrl;
+  //       }
+  
+  //       const updatedUser = await UserModel.updateInfoUser(userId, updateData);
+  
+  //       res.status(200).json({
+  //         success: true,
+  //         message: "Cập nhật thông tin thành công",
+  //         data: updatedUser,
+  //       });
+  //     } catch (error) {
+  //       if (error.type === "Validation") {
+  //         return res.status(400).json({ success: false, message: error.message });
+  //       }
+  //       if (error.type === "NotFound") {
+  //         return res.status(404).json({ success: false, message: error.message });
+  //       }
+  //       if (error.name === "ValidationError") {
+  //         return res.status(400).json({
+  //           success: false,
+  //           message: "Dữ liệu không hợp lệ",
+  //           errors: error.errors,
+  //         });
+  //       }
+  //       if (error.code === 11000) {
+  //         return res.status(400).json({
+  //           success: false,
+  //           message: "Số điện thoại đã được sử dụng",
+  //         });
+  //       }
+  
+  //       console.error("Lỗi server:", error);
+  //       res.status(500).json({
+  //         success: false,
+  //         message: "Lỗi server",
+  //         error: error.message,
+  //       });
+  //     }
+    
+  // },
+  // updateInfoUser: async (req, res) => {
+  //   try {
+  //     const { full_name, gender, dob } = req.body;
+  //     const { id } = req.params;
+  
+  //     let avatarUrl, coverUrl;
+  //     console.log(req.files);
+      
+  
+  //     if (req.files?.avatar[0]) {
+  //       avatarUrl = await uploadFile(req.files.avatar[0]);
+  //     }else{
+  //       console.log("không có avatar",req.files?.avatar[0]);
+        
+  //     }
+      
+  
+  //     if (req.files?.cover[0]) {
+  //       coverUrl = await uploadFile(req.files.cover[0]);
+  //     }
+  //     else{
+  //       console.log("không có cover",req.files?.cover[0]);
+  //     }
+  
+  //     const updateData = {
+  //       full_name,
+  //       gender,
+  //       dob,
+  //     };
+  
+  //     if (avatarUrl) updateData.avatar = avatarUrl;
+  //     if (coverUrl) updateData.cover = coverUrl;
+  
+  //     const updatedUser = await User.findByIdAndUpdate(id, updateData, { new: true });
+  
+  //     res.json(updatedUser);
+  //   } catch (error) {
+  //     console.error("Update error:", error);
+  //     res.status(500).json({ message: "Lỗi cập nhật thông tin", error });
+  //   }
+  // },
   updateInfoUser: async (req, res) => {
     try {
-      const userId = req.params.id;
-      const updateData = req.body;
-      const updatedUser = await UserModel.updateInfoUser(userId, updateData);
-
-      res.status(200).json({
-        success: true,
-        message: "Cập nhật thông tin thành công",
-        data: updatedUser,
-      });
+      const { full_name, gender, dob } = req.body;
+      const { id } = req.params;
+  
+      let avatarUrl, coverUrl;
+  
+      console.log("FILES RECEIVED:", Object.keys(req.files || {}));
+      console.log("FULL FILES OBJECT:", req.files);
+  
+      // Xử lý avatar
+      if (req.files && req.files.avatar && req.files.avatar.length > 0) {
+        avatarUrl = await uploadFile(req.files.avatar[0]);
+      } else {
+        console.log("Không có avatar", req.files?.avatar);
+      }
+  
+      // Xử lý cover
+      if (req.files && req.files.cover && req.files.cover.length > 0) {
+        coverUrl = await uploadFile(req.files.cover[0]);
+      } else {
+        console.log("Không có cover", req.files?.cover);
+      }
+  
+      const updateData = {
+        full_name,
+        gender,
+        dob,
+      };
+  console.log(avatarUrl);
+  console.log(coverUrl);
+  
+      if (avatarUrl) updateData.avatar_path = avatarUrl;
+      if (coverUrl) updateData.cover_path = coverUrl;
+  
+      const updatedUser = await User.findByIdAndUpdate(id, updateData, { new: true });
+  
+      res.json(updatedUser);
     } catch (error) {
-      if (error.type === "Validation") {
-        return res.status(400).json({ success: false, message: error.message });
-      }
-      if (error.type === "NotFound") {
-        return res.status(404).json({ success: false, message: error.message });
-      }
-      if (error.name === "ValidationError") {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message: "Dữ liệu không hợp lệ",
-            errors: error.errors,
-          });
-      }
-      if (error.code === 11000) {
-        return res
-          .status(400)
-          .json({ success: false, message: "Số điện thoại đã được sử dụng" });
-      }
-      res
-        .status(500)
-        .json({ success: false, message: "Lỗi server", error: error.message });
+      console.error("Update error:", error);
+      res.status(500).json({ message: "Lỗi cập nhật thông tin", error });
     }
-  },
+  }
+  ,
   getUserFromToken: async (req, res) => {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith("Bearer ")) {

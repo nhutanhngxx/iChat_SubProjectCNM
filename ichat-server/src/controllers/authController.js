@@ -12,6 +12,7 @@ textflow.useKey(process.env.TEXTFLOW_API_KEY);
 const OTP = require("../schemas/OTP");
 const phoneRegex = /^(\+84)[3-9][0-9]{8}$/;
 
+
 // Tạo accesstoken
 const generateAccessToken = (user) => {
   return jwt.sign({ phone: user.phone }, process.env.JWT_SECRET, {

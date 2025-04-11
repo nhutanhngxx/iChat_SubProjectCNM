@@ -1,4 +1,6 @@
 const GroupModel = require("../models/groupModel");
+const mongoose = require("mongoose");
+const GroupChat = require("../schemas/GroupChat");
 
 const GroupController = {
   // Lấy danh sách nhóm mà người dùng tham gia

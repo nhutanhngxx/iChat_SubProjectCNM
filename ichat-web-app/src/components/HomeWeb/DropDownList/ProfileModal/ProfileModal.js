@@ -297,9 +297,10 @@ useEffect(() => {
         formData.append("avatar", avatarFile);
       }
     }
+    formData.append("cover", compressedCoverFile);
   
     if (compressedCoverFile) {
-      formData.append("cover", compressedCoverFile);
+      // formData.append("cover", compressedCoverFile);
     } else {
       const coverInput = document.getElementById("cover-upload");
       const coverFile = coverInput?.files?.[0];
