@@ -330,6 +330,8 @@ const [compressedAvatarFile, setCompressedAvatarFile] = useState(null);
         <div
           className="cover-photo"
           onClick={() => document.getElementById("cover-upload").click()}
+          style={{ cursor: "pointer" }}
+          title="Thay đổi ảnh bìa"
         >
           <input
             id="cover-upload"
@@ -349,6 +351,8 @@ const [compressedAvatarFile, setCompressedAvatarFile] = useState(null);
           <div
             className="avatar-wrapper"
             onClick={() => document.getElementById("avatar-upload").click()}
+            style={{ cursor: "pointer" }}
+            title="Thay đổi ảnh đại diện"
           >
             <Avatar size={70} src={avatarImage || userModal?.avatar_path} />
             <input
@@ -357,6 +361,7 @@ const [compressedAvatarFile, setCompressedAvatarFile] = useState(null);
               accept="image/jpeg,image/png,image/jpg"
               onChange={handleAvatarChange}
               style={{ display: "none" }}
+              
             />
           </div>
           <span className="profile-name">{userModal?.full_name || ""}</span>
