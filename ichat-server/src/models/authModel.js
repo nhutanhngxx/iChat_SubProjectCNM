@@ -103,6 +103,22 @@ const authModel = {
       return { status: "error", message: error.message };
     }
   },
+  findUserByPhone: async (phone) => await User.findOne({ phone }).lean(),
+  deleteAccount: async (userId, password) => {
+    const user = await User.findById(userId);
+    if (!user)
+      return { status: "error", message: "Không tìm thấy người dùng." };
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) return { status: "error", message: "Mật khẩu không đúng." };
+
+    await User.findByIdAndDelete(userId);
+    return { status: "ok", message: "Tài khoản đã được xóa." };
+  },
+
+  updatePhone: async (userId, newPhone) => {
+    await User.updateOne({ _id: userId }, { phone: newPhone });
+  },
 };
 
 module.exports = authModel;

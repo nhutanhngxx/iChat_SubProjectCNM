@@ -13,4 +13,8 @@ router.post("/confirm-login", AuthController.confirmLogin); // Xác nhận đăn
 router.get("/me", AuthController.getMe); // Lấy thông tin người dùng hiện tại
 router.put("/change-password", AuthController.changePassword); // Đổi mật khẩu
 router.post("/reset-password", AuthController.resetPassword); // Đặt lại mật khẩu
+router.put("/update-phone", AuthController.updatePhone);
+router.delete("/delete-account", AuthController.deleteAccount);
+router.post("/confirm-phone", AuthController.confirmPhone);
+router.post("/verify-otp", AuthController.verifyOtp);
 module.exports = router;
