@@ -123,8 +123,10 @@ router.post("/register", async (req, res) => {
       dob,
       phone,
       password: encryptedPassword,
-      avatar_path: avatar_path || "",
-      cover_path: cover_path || "",
+      avatar_path:
+        "https://nhutanhngxx.s3.ap-southeast-1.amazonaws.com/new-logo.png",
+      cover_path:
+        "https://chiemtaimobile.vn/images/companies/1/%E1%BA%A2nh%20Blog/anh-bia-facebook-dep/anh-bia-facebook-dep-phong-canh-long-ho-sang-som.jpg?1705621434725",
       status: status || "Offline",
     });
 
@@ -201,6 +203,31 @@ router.post("/login", async (req, res) => {
     }
   } catch (error) {
     res.status(500).json({ status: "error", message: error.message });
+  }
+});
+
+router.post("/verify-password", async (req, res) => {
+  try {
+    const { phone, password } = req.body;
+
+    if (!phone || !password) {
+      return res.status(400).json({ isValid: false });
+    }
+
+    const user = await User.findOne({ phone });
+    if (!user) {
+      return res.status(400).json({ isValid: false });
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(400).json({ isValid: false });
+    }
+
+    return res.status(200).json({ isValid: true });
+  } catch (error) {
+    console.error("Error in verify-password:", error);
+    return res.status(500).json({ isValid: false });
   }
 });
 

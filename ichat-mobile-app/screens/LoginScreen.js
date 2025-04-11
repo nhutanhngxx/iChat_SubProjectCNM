@@ -31,8 +31,12 @@ const LoginScreen = ({ navigation }) => {
     try {
       const response = await authService.login({ phone, password });
       const { user } = response;
-      setUser(user);
-      Alert.alert("Đăng nhập thành công!", `Chào mừng ${user.full_name}`);
+      if (user) {
+        setUser(user);
+        Alert.alert("Đăng nhập thành công!", `Chào mừng ${user?.full_name}`);
+      } else {
+        Alert.alert("Lỗi", "Sai số điện thoại hoặc mật khẩu!");
+      }
     } catch (error) {
       console.error("Login error:", error);
       if (error.response?.status === 401) {

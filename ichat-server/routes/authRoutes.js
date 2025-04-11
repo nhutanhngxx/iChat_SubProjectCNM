@@ -260,6 +260,8 @@ router.post("/register", async (req, res) => {
     full_name: fullName,
     dob,
     gender,
+    avatar_path:
+      "https://nhutanhngxx.s3.ap-southeast-1.amazonaws.com/new-logo.png",
   });
   res
     .status(201)

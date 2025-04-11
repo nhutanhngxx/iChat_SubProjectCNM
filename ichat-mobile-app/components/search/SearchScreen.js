@@ -8,15 +8,13 @@ import {
   TouchableOpacity,
   Image,
   Alert,
-  ActivityIndicator,
 } from "react-native";
 import { Tab, TabView } from "@rneui/themed";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { UserContext } from "../../context/UserContext";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { NetworkInfo } from "react-native-network-info";
 import { StatusBar } from "expo-status-bar";
+import { getHostIP } from "../../services/api";
 
 const SearchScreen = () => {
   const route = useRoute();
@@ -24,7 +22,8 @@ const SearchScreen = () => {
   const searchInputRef = useRef(null);
   const { user } = useContext(UserContext);
 
-  const API_iChat = "http://192.168.1.251:5001";
+  const ipAdr = getHostIP();
+  const API_iChat = `http://${ipAdr}:5001`;
 
   const handleOpenChatting = async (selectedMessage) => {
     // Xác định ID của người đang chat với user
@@ -166,14 +165,12 @@ const SearchScreen = () => {
   // Hàm gọi API tìm kiếm
   const handleSearch = async () => {
     setIsLoading(true);
-
     let finalSearchQuery = searchText.trim();
     if (/^\d+$/.test(finalSearchQuery)) {
       finalSearchQuery = finalSearchQuery.startsWith("0")
         ? finalSearchQuery.replace(/^0/, "+84")
         : `+84${finalSearchQuery}`;
     }
-
     try {
       const [usersResponse, messagesResponse, groupsResponse] =
         await Promise.all([
@@ -183,15 +180,12 @@ const SearchScreen = () => {
           axios.get(`${API_iChat}/messages?search=${searchText}`),
           axios.get(`${API_iChat}/groups?search=${searchText}`),
         ]);
-
       setSearchUsers(
         usersResponse.data.status === "ok" ? usersResponse.data.users : []
       );
-
       setSearchMessages(
         messagesResponse.data.status === "ok" ? messagesResponse.data.data : [] // Kiểm tra đúng key response
       );
-
       setSearchGroups(
         groupsResponse.data.status === "ok" ? groupsResponse.data.data : []
       );

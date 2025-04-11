@@ -2,7 +2,6 @@ import { apiService } from "./api";
 import { auth } from "../config/firebase";
 import { PhoneAuthProvider, signInWithCredential } from "firebase/auth";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import axios from "axios";
 
 const formatPhoneNumber = (phone) => {
   if (!phone) return null;
@@ -40,6 +39,18 @@ const authService = {
         message:
           error.response?.data?.message || "Không thể đăng nhập tài khoản",
       };
+    }
+  },
+
+  checkPassword: async ({ phone, password }) => {
+    try {
+      const response = await apiService.post(`/verify-password`, {
+        phone,
+        password,
+      });
+      return response.data.isValid === true;
+    } catch (error) {
+      return false;
     }
   },
 
@@ -83,6 +94,40 @@ const authService = {
     }
   },
 
+  checkExistedPhone: async (phone) => {
+    if (!phone) {
+      return {
+        result: true,
+        message: "Vui lòng nhập số điện thoại",
+      };
+    }
+    try {
+      const response = await apiService.post(`/${PREFIX}/check-existed-phone`, {
+        phone,
+      });
+
+      if (response.data.status === "error") {
+        return {
+          result: false,
+          message: "Số điện thoại đã tồn tại",
+        };
+      } else
+        return {
+          result: true,
+          message: "Số điện thoại chưa tồn tại",
+        };
+    } catch (error) {
+      console.log("Cannot check existed phone: ", error);
+      if (error.response?.status === 400) {
+        return {
+          result: false,
+          message: error.response?.data?.message,
+        };
+      }
+      return true;
+    }
+  },
+
   sendOTP: async (phone, recaptchaVerifier) => {
     try {
       if (!phone) {
@@ -94,18 +139,6 @@ const authService = {
 
       phone = "+84" + phone.replace(/^(0|84)/, "");
 
-      // Check if phone number is existed
-      const response = await apiService.post(`/${PREFIX}/check-existed-phone`, {
-        phone,
-      });
-      if (response.data.status !== "ok") {
-        return {
-          status: "error",
-          message: response.data.message,
-        };
-      }
-
-      // Use PhoneAuthProvider with recaptcha verifier
       const phoneProvider = new PhoneAuthProvider(auth);
       console.log(phoneProvider);
 
@@ -188,7 +221,7 @@ const authService = {
           message: "Thiếu thông tin đăng ký",
         };
       }
-      const response = await c.post(`/${PREFIX}/register`, {
+      const response = await apiService.post(`/${PREFIX}/register`, {
         tempToken,
         phone,
         password,

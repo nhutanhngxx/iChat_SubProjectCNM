@@ -12,16 +12,15 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
-
 import { UserContext } from "../../context/UserContext";
 import goBackIcon from "../../assets/icons/go-back.png";
 import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
 import { StatusBar } from "expo-status-bar";
-
 import { FirebaseRecaptchaVerifierModal } from "expo-firebase-recaptcha";
 import { firebaseConfig } from "../../config/firebase";
 import authService from "../../services/authService";
+import { getHostIP } from "../../services/api";
 
 const maskPhoneNumber = (phone) => {
   if (!phone || phone.length < 10) return phone;
@@ -40,34 +39,66 @@ const formatPhoneNumber = (phone) => {
 const ChangePhoneNumber = () => {
   const navigation = useNavigation();
   const { user, setUser } = useContext(UserContext);
-  const API_iChat = "http://192.168.1.251:5001";
+  const ipAdr = getHostIP();
+  const API_iChat = `http://${ipAdr}:5001`;
   const recaptchaVerifier = useRef(null);
   const [verificationId, setVerificationId] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [newPhone, setNewPhone] = useState("");
+  const [password, setPassword] = useState("");
   const [otp, setOtp] = useState("");
-  const [step, setStep] = useState(1); // 1: Nhập sđt mới, 2: Nhập OTP
+  const [step, setStep] = useState(1);
   const [formattedNewPhone, setFormattedNewPhone] = useState("");
 
-  const handleRequestOTP = async () => {
-    const formatted = formatPhoneNumber(newPhone);
-    setFormattedNewPhone(formatted); // Lưu lại số điện thoại đã định dạng
-
-    console.log("Formatted New Phone: ", formatted);
-    console.log("User phone: ", user.phone);
+  const handleVerifyPassword = async (phone, password) => {
+    if (!phone || !password) {
+      Alert.alert("Lỗi", "Vui lòng nhập số điện thoại và mật khẩu.");
+      return;
+    }
+    console.log(password);
 
     try {
       setIsLoading(true);
-      const result = await authService.sendOTPWithoutCheck(
-        user.phone,
-        recaptchaVerifier
-      );
-      if (result.status === "ok") {
-        Alert.alert("Thành công", "Mã OTP đã được gửi.");
-        setVerificationId(result.verificationId);
+      const isValid = await authService.checkPassword({ phone, password });
+      console.log("Check Password Response: ", isValid);
+      if (isValid === true) {
         setStep(2);
       } else {
-        Alert.alert("Lỗi", result.message);
+        Alert.alert("Lỗi", "Mật khẩu không chính xác.");
+      }
+    } catch (error) {
+      console.error("Lỗi khi xác thực mật khẩu:", error);
+      Alert.alert("Lỗi", "Đã xảy ra lỗi. Vui lòng thử lại sau.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRequestOTP = async () => {
+    const formatted = formatPhoneNumber(newPhone);
+    setFormattedNewPhone(formatted);
+
+    if (!newPhone) {
+      Alert.alert("Thông báo", "Vui lòng nhập số điện thoại bạn cần thay đổi!");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const isExistedPhone = await authService.checkExistedPhone(formatted);
+      if (isExistedPhone.result) {
+        const result = await authService.sendOTPWithoutCheck(
+          user.phone,
+          recaptchaVerifier
+        );
+        if (result.status === "ok") {
+          setVerificationId(result.verificationId);
+          setStep(3);
+        } else {
+          Alert.alert("Lỗi", result.message);
+        }
+      } else {
+        Alert.alert("Lỗi", isExistedPhone.message);
       }
     } catch (error) {
       Alert.alert("Lỗi", "Đã xảy ra lỗi khi gửi OTP.");
@@ -89,7 +120,6 @@ const ChangePhoneNumber = () => {
 
     try {
       setIsLoading(true);
-
       const result = await authService.validateOTP(
         user.phone,
         otp,
@@ -97,10 +127,12 @@ const ChangePhoneNumber = () => {
       );
 
       if (result.status === "ok") {
-        navigation.navigate("ProfileInformation");
         await authService.changePhone(user.id, formattedNewPhone);
+        setUser({ ...user, phone: formattedNewPhone });
+        navigation.navigate("ProfileInformation");
+      } else {
+        Alert.alert("Lỗi", result.message);
       }
-      setUser({ ...user, phone: formattedNewPhone });
     } catch (error) {
       console.error("Xác thực OTP lỗi:", error);
       Alert.alert("Lỗi", "Đã xảy ra lỗi khi xác thực.");
@@ -145,38 +177,27 @@ const ChangePhoneNumber = () => {
                 </View>
 
                 <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Số điện thoại mới</Text>
-                  <View
-                    style={
-                      Platform.OS === "ios"
-                        ? [styles.phoneInputContainer, { paddingVertical: 10 }]
-                        : styles.phoneInputContainer
-                    }
-                  >
-                    <View style={styles.countryCodeBox}>
-                      <Text style={styles.countryCodeText}>+84</Text>
-                    </View>
-                    <TextInput
-                      style={styles.phoneInput}
-                      placeholder="Nhập số điện thoại"
-                      keyboardType="phone-pad"
-                      value={newPhone}
-                      onChangeText={setNewPhone}
-                      maxLength={10}
-                      placeholderTextColor="#999"
-                    />
-                  </View>
+                  <Text style={styles.label}>Mật khẩu của bạn</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Nhập mật khẩu của bạn"
+                    secureTextEntry
+                    value={password}
+                    onChangeText={setPassword}
+                    placeholderTextColor="#999"
+                  />
                 </View>
 
                 <TouchableOpacity
-                  style={styles.button}
-                  onPress={handleRequestOTP}
+                  style={[styles.button, isLoading && { opacity: 0.6 }]}
+                  // onPress={() => setStep(2)}
+                  onPress={() => handleVerifyPassword(user?.phone, password)}
                   disabled={isLoading}
                 >
-                  <Text style={styles.buttonText}>Gửi mã xác thực</Text>
+                  <Text style={styles.buttonText}>Xác thực tài khoản</Text>
                 </TouchableOpacity>
 
-                <View style={{ height: 50 }}></View>
+                <View style={{ height: 50 }} />
 
                 <View style={styles.noticeBox}>
                   <Text style={styles.sectionTitle}>Thông tin</Text>
@@ -201,11 +222,54 @@ const ChangePhoneNumber = () => {
                   </Text>
                 </View>
               </>
+            ) : step === 2 ? (
+              <>
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Số điện thoại hiện tại</Text>
+                  <Text style={styles.disabledInput}>
+                    {maskPhoneNumber(user?.phone)}
+                  </Text>
+                </View>
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Số điện thoại mới</Text>
+                  <View
+                    style={
+                      Platform.OS === "ios"
+                        ? [styles.phoneInputContainer, { paddingVertical: 10 }]
+                        : styles.phoneInputContainer
+                    }
+                  >
+                    <View style={styles.countryCodeBox}>
+                      <Text style={styles.countryCodeText}>+84</Text>
+                    </View>
+                    <TextInput
+                      style={styles.phoneInput}
+                      placeholder="Nhập số điện thoại mới"
+                      keyboardType="phone-pad"
+                      value={newPhone}
+                      onChangeText={setNewPhone}
+                      maxLength={10}
+                      placeholderTextColor="#999"
+                    />
+                  </View>
+                </View>
+
+                <TouchableOpacity
+                  style={[styles.button, isLoading && { opacity: 0.6 }]}
+                  onPress={handleRequestOTP}
+                  disabled={isLoading}
+                >
+                  <Text style={styles.buttonText}>Gửi mã OTP</Text>
+                </TouchableOpacity>
+              </>
             ) : (
               <>
                 <Text style={styles.label}>
                   Mã xác thực đã được gửi đến số:{" "}
-                  <Text style={{ fontWeight: "400" }}>{newPhone}</Text>
+                  <Text style={{ fontWeight: "400" }}>
+                    {maskPhoneNumber(user?.phone)}
+                  </Text>
                 </Text>
 
                 <View style={styles.inputGroup}>
@@ -221,21 +285,33 @@ const ChangePhoneNumber = () => {
                 </View>
 
                 <TouchableOpacity
-                  style={styles.button}
-                  onPress={() => handleVerifyOTP()}
+                  style={[styles.button, isLoading && { opacity: 0.6 }]}
+                  onPress={handleVerifyOTP}
                   disabled={isLoading}
                 >
                   <Text style={styles.buttonText}>Xác nhận</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity
-                  onPress={() => {
-                    setStep(1);
-                    setOtp("");
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "center",
+                    marginTop: 15,
                   }}
                 >
-                  <Text style={styles.link}>Nhập lại số điện thoại</Text>
-                </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => {
+                      setStep(2);
+                      setOtp("");
+                    }}
+                  >
+                    <Text style={styles.link}>Nhập lại số điện thoại</Text>
+                  </TouchableOpacity>
+                  <Text style={{ marginHorizontal: 10 }}>|</Text>
+                  <TouchableOpacity onPress={handleRequestOTP}>
+                    <Text style={styles.link}>Gửi lại OTP</Text>
+                  </TouchableOpacity>
+                </View>
               </>
             )}
           </View>
@@ -306,7 +382,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   button: {
-    marginTop: 30,
+    marginTop: 20,
     backgroundColor: "#3083F9",
     paddingVertical: 14,
     borderRadius: 10,
@@ -319,9 +395,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   link: {
-    marginTop: 15,
     color: "#3083F9",
-    textAlign: "center",
     fontSize: 16,
   },
   phoneInputContainer: {
@@ -347,19 +421,6 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     color: "#000",
-    paddingLeft: 8,
-  },
-  button: {
-    marginTop: 20,
-    backgroundColor: "#007AFF",
-    paddingVertical: 14,
-    borderRadius: 10,
-    alignItems: "center",
-  },
-  buttonText: {
-    color: "#fff",
-    fontWeight: "600",
-    fontSize: 16,
   },
 });
 

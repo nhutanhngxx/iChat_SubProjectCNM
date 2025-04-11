@@ -22,6 +22,7 @@ import { StatusBar } from "expo-status-bar";
 
 import editIcon from "../../assets/icons/edit.png";
 import goBackIcon from "../../assets/icons/go-back.png";
+import { getHostIP } from "../../services/api";
 
 const ChangeInformation = () => {
   const navigation = useNavigation();
@@ -56,7 +57,8 @@ const ChangeInformation = () => {
     }
   };
 
-  const API_iChat = "http://192.168.1.251:5001";
+  const ipAdr = getHostIP();
+  const API_iChat = `http://${ipAdr}:5001`;
 
   const parseDate = (dateString) => {
     if (!dateString || typeof dateString !== "string") return new Date();

@@ -92,8 +92,8 @@ export default function AppNavigator() {
             component={LauncherScreen}
             options={{ animation: "none" }}
           />
-          <Stack.Screen name="Register" component={PhoneRegisterScreen} />
           <Stack.Screen name="Login" component={LoginScreen} />
+          <Stack.Screen name="Register" component={PhoneRegisterScreen} />
           <Stack.Screen name="EnterOTP" component={EnterOTPScreen} />
           <Stack.Screen
             name="PasswordRegister"
