@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
-const API_URL = `http://${window.location.hostname}:5001/`;
+const API_URL = `http://${window.location.hostname}:5001/api/users`;
 
 // Thunk để cập nhật thông tin người dùng
 export const updateUser = createAsyncThunk(

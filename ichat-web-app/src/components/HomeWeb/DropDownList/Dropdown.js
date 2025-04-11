@@ -103,16 +103,23 @@ const ProfileDropdown = ({ onOpenSettings }) => {
   const [isSettingsModalVisible, setSettingsModalVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false); // 🔥 State để kiểm soát loader
   const user = useSelector((state) => state.auth.user);
-  const navigate = useNavigate();
 
+  const navigate = useNavigate();
+console.log("user from Dropdown: ", user);
   useEffect(() => {
-    console.log("User mới đã cập nhật: ", user);
+    console.log("User mới đã cập nhật tereeb dropdown: ", user);
   }, [user]);
 
   // Đăng xuất
   const handleLogout = async () => {
     setIsLoading(true); // Bắt đầu hiển thị loader
     try {
+      if (!user?.id) {
+        console.error("User ID not found");
+        // If no user ID, just clear local state and redirect
+        navigate("/");
+        return;
+      }
       console.log("Đang thực hiện đăng xuất...");
       console.log("user from Dropdown: ", user.id);
       

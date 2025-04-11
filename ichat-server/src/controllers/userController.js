@@ -3,17 +3,101 @@ const User = require("../schemas/UserDetails");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
+const { uploadFile } = require("../services/uploadImageToS3");
 
 const UserController = {
   // Cập nhật thông tin người dùng
+  // updateInfoUser: async (req, res) => {
+  //   try {
+  //     const userId = req.params.id;
+  //     const updateData = req.body;
+
+  //     // Các trường cho phép cập nhật
+  //     const allowedUpdates = ["full_name", "gender", "dob"];
+
+  //     // Lọc chỉ lấy các trường được phép cập nhật
+  //     const updates = Object.keys(updateData)
+  //       .filter((key) => allowedUpdates.includes(key))
+  //       .reduce((obj, key) => {
+  //         obj[key] = updateData[key];
+  //         return obj;
+  //       }, {});
+
+  //     // Validation cơ bản phía server
+  //     if (!updates.full_name || updates.full_name.trim() === "") {
+  //       return res.status(400).json({
+  //         success: false,
+  //         message: "Họ tên không được để trống",
+  //       });
+  //     }
+
+  //     // Thêm timestamp cho updated_at
+  //     updates.updated_at = Date.now();
+
+  //     // Tìm và cập nhật user
+  //     const user = await User.findByIdAndUpdate(
+  //       userId,
+  //       { $set: updates },
+  //       {
+  //         new: true, // Trả về document đã cập nhật
+  //         runValidators: true, // Chạy validation của schema
+  //       }
+  //     );
+
+  //     if (!user) {
+  //       return res.status(404).json({
+  //         success: false,
+  //         message: "Không tìm thấy người dùng",
+  //       });
+  //     }
+
+  //     res.status(200).json({
+  //       success: true,
+  //       message: "Cập nhật thông tin thành công",
+  //       data: {
+  //         full_name: user.full_name,
+  //         gender: user.gender,
+  //         dob: user.dobFormatted || user.dob, // Nếu không có dobFormatted thì trả dob gốc
+  //         updated_at: user.updated_at,
+  //       },
+  //     });
+  //   } catch (error) {
+  //     if (error.name === "ValidationError") {
+  //       return res.status(400).json({
+  //         success: false,
+  //         message: "Dữ liệu không hợp lệ",
+  //         errors: error.errors,
+  //       });
+  //     }
+  //     if (error.code === 11000) {
+  //       return res.status(400).json({
+  //         success: false,
+  //         message: "Số điện thoại đã được sử dụng",
+  //       });
+  //     }
+  //     console.error("Lỗi server:", error);
+  //     res.status(500).json({
+  //       success: false,
+  //       message: "Lỗi server",
+  //       error: error.message,
+  //     });
+  //   }
+  // },
   updateInfoUser: async (req, res) => {
     try {
       const userId = req.params.id;
       const updateData = req.body;
-
+      const files = req.files;
+  
       // Các trường cho phép cập nhật
-      const allowedUpdates = ["full_name", "gender", "dob"];
-
+      const allowedUpdates = [
+        "full_name",
+        "gender",
+        "dob",
+        "avatar_path",
+        "cover_path",
+      ];
+  
       // Lọc chỉ lấy các trường được phép cập nhật
       const updates = Object.keys(updateData)
         .filter((key) => allowedUpdates.includes(key))
@@ -21,42 +105,56 @@ const UserController = {
           obj[key] = updateData[key];
           return obj;
         }, {});
-
-      // Validation cơ bản phía server
+  
+      // Validation cơ bản
       if (!updates.full_name || updates.full_name.trim() === "") {
         return res.status(400).json({
           success: false,
           message: "Họ tên không được để trống",
         });
       }
-
-      // Thêm timestamp cho updated_at
+  
+      // Xử lý file avatar nếu có
+      if (files?.avatar?.[0]) {
+        const avatarUrl = await uploadFile(files.avatar[0]);
+        updates.avatar_path = avatarUrl;
+      }
+  
+      // Xử lý file cover nếu có
+      if (files?.cover?.[0]) {
+        const coverUrl = await uploadFile(files.cover[0]);
+        updates.cover_path = coverUrl;
+      }
+  
+      // Cập nhật thời gian
       updates.updated_at = Date.now();
-
+  
       // Tìm và cập nhật user
       const user = await User.findByIdAndUpdate(
         userId,
         { $set: updates },
         {
-          new: true, // Trả về document đã cập nhật
-          runValidators: true, // Chạy validation của schema
+          new: true,
+          runValidators: true,
         }
       );
-
+  
       if (!user) {
         return res.status(404).json({
           success: false,
           message: "Không tìm thấy người dùng",
         });
       }
-
+  
       res.status(200).json({
         success: true,
         message: "Cập nhật thông tin thành công",
         data: {
           full_name: user.full_name,
           gender: user.gender,
-          dob: user.dobFormatted || user.dob, // Nếu không có dobFormatted thì trả dob gốc
+          dob: user.dobFormatted || user.dob,
+          avatar_path: user.avatar_path,
+          cover_path: user.cover_path,
           updated_at: user.updated_at,
         },
       });
@@ -82,7 +180,7 @@ const UserController = {
       });
     }
   },
-
+  
   //   Lấy thông tin người dùng từ bearer token
   getUserFromToken: async (req, res) => {
     const authHeader = req.headers.authorization;

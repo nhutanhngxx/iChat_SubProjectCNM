@@ -342,9 +342,7 @@ const authSlice = createSlice({
     },
     clearPhoneCheckStatus(state) {
       state.phoneCheck.exists = false;
-    }
-  },
-  reducers: {
+    },
     setUser: (state, action) => {
       state.user = action.payload;
       localStorage.setItem("user", JSON.stringify(action.payload)); // cập nhật cả localStorage nếu cần

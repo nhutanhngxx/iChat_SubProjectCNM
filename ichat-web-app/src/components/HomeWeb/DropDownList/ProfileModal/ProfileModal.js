@@ -15,6 +15,7 @@ const UpdateProfileModal = ({ visible, onClose, user, onUpdateSuccess }) => {
   const [day, setDay] = useState("");
   const [month, setMonth] = useState("");
   const [year, setYear] = useState("");
+  
 
   // Thêm state để lưu giá trị ban đầu
   const [initialValues, setInitialValues] = useState({
@@ -96,7 +97,7 @@ const UpdateProfileModal = ({ visible, onClose, user, onUpdateSuccess }) => {
           <label>Tên hiển thị</label>
           <Input
             value={fullName}
-            onChange={(e) => setFullName(e.target.value.trim())}
+            onChange={(e) => setFullName(e.target.value)}
             className="name-input"
           />
         </div>
@@ -166,18 +167,42 @@ const UpdateProfileModal = ({ visible, onClose, user, onUpdateSuccess }) => {
 
 // Modal chính hiển thị thông tin người dùng
 const ProfileModal = ({ visible, onClose, user: initialUser }) => {
-  const [isUpdateMode, setIsUpdateMode] = useState(false);
-  const [coverImage, setCoverImage] = useState(initialUser?.cover_path);
-  const [avatarImage, setAvatarImage] = useState(initialUser?.avatar_path);
-  const [userModal, setUserModal] = useState(initialUser);
-
+//   const [isUpdateMode, setIsUpdateMode] = useState(false);
+//   const [coverImage, setCoverImage] = useState(initialUser?.cover_path);
+//   const [avatarImage, setAvatarImage] = useState(initialUser?.avatar_path);
+//   const [userModal, setUserModal] = useState(initialUser || {});
+//   const [compressedCoverFile, setCompressedCoverFile] = useState(null);
+// const [compressedAvatarFile, setCompressedAvatarFile] = useState(null);
+const [isUpdateMode, setIsUpdateMode] = useState(false);
+  const [coverImage, setCoverImage] = useState(null);
+  const [avatarImage, setAvatarImage] = useState(null);
+  const [userModal, setUserModal] = useState({});
   const [compressedCoverFile, setCompressedCoverFile] = useState(null);
-const [compressedAvatarFile, setCompressedAvatarFile] = useState(null);
+  const [compressedAvatarFile, setCompressedAvatarFile] = useState(null);
+
+  console.log("User mới đã cập nhật trong profile modal: ", initialUser);
 
   const dispatch = useDispatch();
-
+// Update useEffect to handle initialization and cleanup
+useEffect(() => {
+  if (initialUser?.id) {
+    setUserModal(initialUser);
+    setCoverImage(initialUser.cover_path);
+    setAvatarImage(initialUser.avatar_path);
+  } else {
+    // Reset state when user is null (e.g., during logout)
+    setUserModal({});
+    setCoverImage(null);
+    setAvatarImage(null);
+    setCompressedCoverFile(null);
+    setCompressedAvatarFile(null);
+    setIsUpdateMode(false);
+  }
+}, [initialUser]);
   const hasChanges = () => {
+
     if (!userModal || !initialUser) return false;
+
     const avatarInput = document.getElementById("avatar-upload");
     const coverInput = document.getElementById("cover-upload");
 
@@ -244,9 +269,17 @@ const [compressedAvatarFile, setCompressedAvatarFile] = useState(null);
   
 
   const handleUpdateUserData = async () => {
+
     if (!hasChanges()) {
       return;
     }
+
+      // Check for valid user ID first
+  if (!userModal?.id) {
+    console.error("Missing userId");
+    alert("Lỗi: Không tìm thấy thông tin người dùng");
+    return;
+  }
   
     const formData = new FormData();
     formData.append("full_name", userModal.full_name);
@@ -276,14 +309,25 @@ const [compressedAvatarFile, setCompressedAvatarFile] = useState(null);
     }
   
     try {
+      
       const action = await dispatch(
         updateUser({ userId: userModal.id, formData })
       );
       if (updateUser.fulfilled.match(action)) {
-        setUser((prev) => ({ ...prev, ...action.payload }));
-        dispatch(setUser(action.payload));
-        alert("Cập nhật thành công!");
-        onClose();
+       // Cập nhật cả local state và redux store
+      const updatedUserData = action.payload;
+      setUserModal(updatedUserData);
+      dispatch(setUser(updatedUserData));
+      
+      // Cập nhật các state khác
+      setCoverImage(updatedUserData.cover_path);
+      setAvatarImage(updatedUserData.avatar_path);
+      setCompressedCoverFile(null);
+      setCompressedAvatarFile(null);
+
+      alert("Cập nhật thành công!");
+     
+      onClose();
       } else {
         alert(action.payload?.message || "Cập nhật thất bại");
       }
@@ -292,6 +336,16 @@ const [compressedAvatarFile, setCompressedAvatarFile] = useState(null);
       alert("Lỗi kết nối server!");
     }
   };
+  // Thêm useEffect để đồng bộ state khi initialUser thay đổi
+useEffect(() => {
+  if (initialUser?.id) {
+    setUserModal(initialUser);
+    setCoverImage(initialUser.cover_path);
+    setAvatarImage(initialUser.avatar_path);
+    setCompressedCoverFile(null);
+    setCompressedAvatarFile(null);
+  }
+}, [initialUser]);
   
   const handleUserUpdated = (updatedUser) => {
     setUserModal((prevUser) => ({
@@ -310,7 +364,8 @@ const [compressedAvatarFile, setCompressedAvatarFile] = useState(null);
       />
     );
   }
-
+  
+  
   return (
     <Modal
       title={
