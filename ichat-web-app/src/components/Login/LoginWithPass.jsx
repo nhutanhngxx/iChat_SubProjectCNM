@@ -9,6 +9,7 @@ import { loginUser } from "../../redux/slices/authSlice";
 import { useNavigate } from "react-router-dom";
 import "./LoginWithPass.css";
 import { Modal, Spinner } from "react-bootstrap";
+import { setUserRedux } from "../../redux/slices/userSlide";
 
 export default function LoginWithPass() {
   // Khai báo state cho form đăng nhập
@@ -22,7 +23,7 @@ export default function LoginWithPass() {
   const navigate = useNavigate();
 
   // Sửa lỗi khai báo `error` bị trùng
-  const { user, token, loading, error } = useSelector((state) => state.auth);
+  const { token, loading, error } = useSelector((state) => state.auth);
   //  Hàm xử lý đăng nhập
   // const handleLogin = (e) => {
   //     e.preventDefault();
@@ -75,8 +76,6 @@ export default function LoginWithPass() {
       setPhoneError(""); // Hợp lệ
     }
   };
-  console.log("User:", user);
-  console.log("Token:", token);
 
   return (
     <div className="container-login">

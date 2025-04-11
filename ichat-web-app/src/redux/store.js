@@ -1,6 +1,7 @@
 import { configureStore } from "@reduxjs/toolkit";
 import authReducer from "./slices/authSlice";
 import messagesSlice from "./slices/messagesSlice";
+
 import { persistStore, persistReducer } from "redux-persist";
 import storage from "redux-persist/lib/storage"; // Lưu vào localStorage
 import { combineReducers } from "redux";
@@ -26,6 +27,7 @@ const store = configureStore({
   //   messages: messagesSlice, // Chỉ persist messages
   // }, 
   reducer: persistedReducer,
+  middleware: (getDefaultMiddleware) => getDefaultMiddleware()
 });
 
 export const persistor = persistStore(store);

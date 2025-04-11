@@ -60,7 +60,12 @@ const authSlice = createSlice({
     loading: false,
     error: null,
   },
-  reducers: {},
+  reducers: {
+    setUser: (state, action) => {
+      state.user = action.payload;
+      localStorage.setItem("user", JSON.stringify(action.payload)); // cập nhật cả localStorage nếu cần
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(logoutUser.pending, (state) => {
@@ -93,5 +98,6 @@ const authSlice = createSlice({
       });
   },
 });
+export const { setUser } = authSlice.actions;
 
 export default authSlice.reducer;

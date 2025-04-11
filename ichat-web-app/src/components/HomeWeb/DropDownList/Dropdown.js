@@ -83,7 +83,7 @@
 // };
 
 // export default ProfileDropdown;
-import React, { useState } from "react";
+import React, { useState,useEffect } from "react";
 import { Menu, Dropdown } from "antd";
 import { UserOutlined } from "@ant-design/icons";
 import "./Dropdown.css";
@@ -91,17 +91,23 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { logoutUser } from "../../../redux/slices/authSlice";
 import ClipLoader from "react-spinners/ClipLoader";
+import { setUserRedux } from "../../../redux/slices/userSlide";
 
 import ProfileModal from "./ProfileModal/ProfileModal";
 import SettingsModal from "./SettingsModal/SettingsModal";
+
 
 const ProfileDropdown = ({ onOpenSettings }) => {
   const dispatch = useDispatch();
   const [isProfileModalVisible, setProfileModalVisible] = useState(false);
   const [isSettingsModalVisible, setSettingsModalVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false); // 🔥 State để kiểm soát loader
-  const { user } = useSelector((state) => state.auth);
+  const user = useSelector((state) => state.auth.user);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    console.log("User mới đã cập nhật: ", user);
+  }, [user]);
 
   // Đăng xuất
   const handleLogout = async () => {

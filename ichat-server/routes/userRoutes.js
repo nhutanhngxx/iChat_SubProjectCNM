@@ -6,6 +6,107 @@ const User = require("../models/UserDetails");
 require("dotenv").config(); // Đọc JWT_SECRET từ .env
 const cookieParser = require("cookie-parser");
 router.use(cookieParser());
+
+const multer = require("multer");
+const upload = multer({ storage: multer.memoryStorage() });
+const { uploadFile } = require("../services/uploadImageToS3");
+
+router.put(
+  "/update/:id",
+  upload.fields([
+    { name: "avatar", maxCount: 1 },
+    { name: "cover", maxCount: 1 },
+  ]),
+  async (req, res) => {
+    try {
+      const userId = req.params.id;
+      const files = req.files;
+
+      const updateData = req.body;
+
+      const allowedUpdates = [
+        "full_name",
+        "gender",
+        "dob",
+        "avatar_path",
+        "cover_path",
+      ];
+      const updates = Object.keys(updateData)
+        .filter((key) => allowedUpdates.includes(key))
+        .reduce((obj, key) => {
+          obj[key] = updateData[key];
+          return obj;
+        }, {});
+
+      if (!updates.full_name || updates.full_name.trim() === "") {
+        return res.status(400).json({
+          success: false,
+          message: "Họ tên không được để trống",
+        });
+      }
+      // Xử lý upload avatar
+      if (files?.avatar?.[0]) {
+        const avatarUrl = await uploadFile(files.avatar[0]);
+        updates.avatar_path = avatarUrl;
+      }
+
+      // Xử lý upload cover
+      if (files?.cover?.[0]) {
+        const coverUrl = await uploadFile(files.cover[0]);
+        updates.cover_path = coverUrl;
+      }
+
+      updates.updated_at = Date.now();
+
+      const user = await User.findByIdAndUpdate(
+        userId,
+        { $set: updates },
+        { new: true, runValidators: true }
+      );
+
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: "Không tìm thấy người dùng",
+        });
+      }
+
+      res.status(200).json({
+        success: true,
+        message: "Cập nhật thông tin thành công",
+        data: {
+          full_name: user.full_name,
+          gender: user.gender,
+          dob: user.dobFormatted || user.dob,
+          avatar_path: user.avatar_path,
+          cover_path: user.cover_path,
+          updated_at: user.updated_at,
+        },
+      });
+    } catch (error) {
+      if (error.name === "ValidationError") {
+        return res.status(400).json({
+          success: false,
+          message: "Dữ liệu không hợp lệ",
+          errors: error.errors,
+        });
+      }
+      if (error.code === 11000) {
+        return res.status(400).json({
+          success: false,
+          message: "Số điện thoại đã được sử dụng",
+        });
+      }
+      console.error("Lỗi server:", error);
+      res.status(500).json({
+        success: false,
+        message: "Lỗi server",
+        error: error.message,
+      });
+    }
+  }
+);
+
 // Đăng ký tài khoản
 router.post("/register", async (req, res) => {
   const {
