@@ -121,7 +121,7 @@ const ChangePhoneNumber = () => {
     try {
       setIsLoading(true);
       const result = await authService.validateOTP(
-        user.phone,
+        newPhone,
         otp,
         verificationId
       );
@@ -268,7 +268,7 @@ const ChangePhoneNumber = () => {
                 <Text style={styles.label}>
                   Mã xác thực đã được gửi đến số:{" "}
                   <Text style={{ fontWeight: "400" }}>
-                    {maskPhoneNumber(user?.phone)}
+                    {maskPhoneNumber(newPhone)}
                   </Text>
                 </Text>
 
