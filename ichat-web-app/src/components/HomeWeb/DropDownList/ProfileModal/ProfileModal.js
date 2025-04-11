@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Modal, Avatar, Button, Input, Radio, Select } from "antd";
+import imageCompression from "browser-image-compression";
 import { EditOutlined, LeftOutlined, CloseOutlined } from "@ant-design/icons";
 import { CiEdit } from "react-icons/ci";
 import { useDispatch, useSelector } from "react-redux";
@@ -170,9 +171,10 @@ const ProfileModal = ({ visible, onClose, user: initialUser }) => {
   const [avatarImage, setAvatarImage] = useState(initialUser?.avatar_path);
   const [userModal, setUserModal] = useState(initialUser);
 
-  const dispatch = useDispatch();
+  const [compressedCoverFile, setCompressedCoverFile] = useState(null);
+const [compressedAvatarFile, setCompressedAvatarFile] = useState(null);
 
-  //   console.log("user from modal: ", user);
+  const dispatch = useDispatch();
 
   const hasChanges = () => {
     if (!userModal || !initialUser) return false;
@@ -199,51 +201,80 @@ const ProfileModal = ({ visible, onClose, user: initialUser }) => {
     );
   };
 
-  const handleCoverChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const imageUrl = URL.createObjectURL(file);
-      setCoverImage(imageUrl);
+  const handleCoverChange = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+  
+    const options = {
+      maxSizeMB: 0.4,
+      maxWidthOrHeight: 1200,
+      useWebWorker: true,
+    };
+  
+    try {
+      const compressedFile = await imageCompression(file, options);
+      const previewUrl = URL.createObjectURL(compressedFile);
+      setCoverImage(previewUrl);
+      setCompressedCoverFile(compressedFile); // lưu lại để upload
+    } catch (error) {
+      console.error("Lỗi khi nén ảnh bìa:", error);
     }
   };
+  
 
-  const handleAvatarChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const imageUrl = URL.createObjectURL(file);
-      setAvatarImage(imageUrl);
+  const handleAvatarChange = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+  
+    const options = {
+      maxSizeMB: 0.2,
+      maxWidthOrHeight: 600,
+      useWebWorker: true,
+    };
+  
+    try {
+      const compressedFile = await imageCompression(file, options);
+      const previewUrl = URL.createObjectURL(compressedFile);
+      setAvatarImage(previewUrl);
+      setCompressedAvatarFile(compressedFile); // lưu lại để upload
+    } catch (error) {
+      console.error("Lỗi khi nén ảnh avatar:", error);
     }
   };
+  
 
   const handleUpdateUserData = async () => {
     if (!hasChanges()) {
-      alert("Bạn chưa thay đổi thông tin nào.");
       return;
     }
-
+  
     const formData = new FormData();
     formData.append("full_name", userModal.full_name);
     formData.append("gender", userModal.gender);
     const dobDate = new Date(userModal.dob);
-
-    console.log(dobDate.toDateString());
-
     formData.append("dob", dobDate.toISOString());
-
-    const avatarInput = document.getElementById("avatar-upload");
-    const avatarFile = avatarInput?.files?.[0];
-
-    const coverInput = document.getElementById("cover-upload");
-    const coverFile = coverInput?.files?.[0];
-
-    if (avatarFile) {
-      formData.append("avatar", avatarFile);
+  
+    // Ưu tiên file đã nén
+    if (compressedAvatarFile) {
+      formData.append("avatar", compressedAvatarFile);
+    } else {
+      const avatarInput = document.getElementById("avatar-upload");
+      const avatarFile = avatarInput?.files?.[0];
+      if (avatarFile) {
+        formData.append("avatar", avatarFile);
+      }
     }
-
-    if (coverFile) {
-      formData.append("cover", coverFile);
+  
+    if (compressedCoverFile) {
+      formData.append("cover", compressedCoverFile);
+    } else {
+      const coverInput = document.getElementById("cover-upload");
+      const coverFile = coverInput?.files?.[0];
+      if (coverFile) {
+        formData.append("cover", coverFile);
+      }
     }
-
+  
     try {
       const action = await dispatch(
         updateUser({ userId: userModal.id, formData })
@@ -261,7 +292,7 @@ const ProfileModal = ({ visible, onClose, user: initialUser }) => {
       alert("Lỗi kết nối server!");
     }
   };
-
+  
   const handleUserUpdated = (updatedUser) => {
     setUserModal((prevUser) => ({
       ...prevUser,

@@ -17,7 +17,7 @@ const ChatWindow = ({ user }) => {
     const { messages, status, chatMessages, chatStatus } = useSelector(
         (state) => state.messages
     );
-    console.log("Messages:", messages);
+   
 
     const [userListFromState, setUserListFromState] = useState([]);
     const [selectedUser, setSelectedUser] = useState(null);
