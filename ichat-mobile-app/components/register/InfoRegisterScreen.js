@@ -233,7 +233,7 @@ const InfoRegisterScreen = ({ navigation, route }) => {
             <View style={{ position: "absolute", bottom: -150 }}>
               <Text
                 style={styles.question}
-                onPress={() => alert("Những câu hỏi thường gặp")}
+                onPress={() => Alert.alert("Những câu hỏi thường gặp")}
               >
                 Những câu hỏi thường gặp
               </Text>

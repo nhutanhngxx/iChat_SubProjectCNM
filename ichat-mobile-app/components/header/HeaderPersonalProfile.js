@@ -31,8 +31,14 @@ const HeaderMessages = () => {
     <View style={styles.headerContainer}>
       {/* Nút Setting mở modal */}
       <TouchableOpacity
-        // style={{ position: "absolute", paddingTop: 60, paddingRight: 15 }}
         onPress={() => setModalVisible(true)}
+        style={{
+          position: "absolute",
+          top: 50,
+          right: 20,
+          zIndex: 10,
+          elevation: 10,
+        }}
       >
         <Image
           source={require("../../assets/icons/setting.png")}
@@ -119,12 +125,13 @@ export default HeaderMessages;
 
 const styles = StyleSheet.create({
   headerContainer: {
-    flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-end",
     width: "100%",
-    height: 50,
-    paddingRight: 10,
+    height: 80,
+    padding: 10,
     justifyContent: "flex-end",
+    backgroundColor: "transparent",
+    position: "absolute",
   },
   icon: {
     width: 25,

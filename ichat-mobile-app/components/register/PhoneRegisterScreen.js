@@ -62,11 +62,11 @@ const RegisterScreen = () => {
   };
 
   const handleLoginWithFacebook = () => {
-    alert("Login with Facebook");
+    Alert.alert("Login with Facebook");
   };
 
   const handleLoginWithGoogle = () => {
-    alert("Login with Facebook");
+    Alert.alert("Login with Facebook");
   };
 
   const handleLogin = () => {

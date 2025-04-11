@@ -144,7 +144,7 @@ router.put("/change-password", async (req, res) => {
   }
 });
 
-router.delete("/auth/delete-account", async (req, res) => {
+router.delete("/delete-account", async (req, res) => {
   const { userId, password } = req.body;
 
   if (!userId || !password) {

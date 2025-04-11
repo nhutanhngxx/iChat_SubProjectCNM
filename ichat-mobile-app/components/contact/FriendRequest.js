@@ -9,6 +9,7 @@ import {
   FlatList,
   View,
   StyleSheet,
+  Alert,
 } from "react-native";
 import { IconButton } from "react-native-paper";
 import { StatusBar } from "expo-status-bar";
@@ -36,7 +37,7 @@ const RequestRecieve = () => {
 
   // Xem thông tin của người gửi lời mời kết bạn
   const handleViewProfile = (item) => {
-    alert("View profile of: " + item.full_name);
+    Alert.alert("Xem thông tin", item.full_name);
   };
 
   // Chấp nhận lời mời kết bạn
@@ -45,7 +46,11 @@ const RequestRecieve = () => {
       (request) => request.id !== item.id
     );
     setListRequest(newListRequest);
-    alert("Accept request from: " + item.full_name);
+    Alert.alert(
+      "Chấp nhận lời mời kết bạn",
+      `Bạn đã chấp nhận lời mời kết bạn từ ${item.full_name}`,
+      [{ text: "OK" }]
+    );
   };
 
   // Từ chối lời mời kết bạn
@@ -54,7 +59,11 @@ const RequestRecieve = () => {
       (request) => request.id !== item.id
     );
     setListRequest(newListRequest);
-    alert("Decline request from: " + item.full_name);
+    Alert.alert(
+      "Từ chối lời mời kết bạn",
+      `Bạn đã từ chối lời mời kết bạn từ ${item.full_name}`,
+      [{ text: "OK" }]
+    );
   };
 
   // Hiển thị danh sách lời mời kết bạn
@@ -129,7 +138,7 @@ const RequestSend = () => {
 
   // Xem thông tin của người nhận lời mời kết bạn
   const handleViewProfile = (item) => {
-    alert("View profile of: " + item.full_name);
+    Alert.alert("Xem thông tin", item.full_name);
   };
 
   // Thu hồi lời mời kết bạn (có thể hiện modal xác nhận)
@@ -138,7 +147,11 @@ const RequestSend = () => {
       (request) => request.id !== item.id
     );
     setListRequest(newListRequest);
-    alert("Recall request to: " + item.full_name);
+    Alert.alert(
+      "Thu hồi lời mời kết bạn",
+      `Bạn đã thu hồi lời mời kết bạn từ ${item.full_name}`,
+      [{ text: "OK" }]
+    );
   };
 
   // Hiển thị danh sách lời mời kết bạn
@@ -197,7 +210,11 @@ const FriendRequest = () => {
   };
 
   const handleOpenSettingRequest = () => {
-    alert("Open setting request");
+    Alert.alert(
+      "Cài đặt lời mời kết bạn",
+      "Chức năng này chưa được phát triển",
+      [{ text: "OK" }]
+    );
   };
 
   return (

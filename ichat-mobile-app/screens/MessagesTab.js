@@ -115,11 +115,7 @@ const MessagesTab = () => {
   return (
     <View style={styles.container}>
       <StatusBar hidden={false} style="light" />
-      <View
-        style={{ paddingTop: 40, backgroundColor: "rgba(47, 128, 237, 0.3)" }}
-      >
-        <HeaderMessages />
-      </View>
+      <HeaderMessages />
       <View style={{ flexDirection: "row", alignItems: "center" }}>
         <View style={{ width: "50%" }}>
           <Tab
@@ -164,6 +160,7 @@ const MessagesTab = () => {
           </TouchableOpacity>
         </View>
       </View>
+
       <TabView value={index} onChange={setIndex} animationType="spring">
         <TabView.Item
           style={{
@@ -186,6 +183,7 @@ const MessagesTab = () => {
           <OtherMessages />
         </TabView.Item>
       </TabView>
+
       {/* Modal Card */}
       <Modal
         transparent={true}
@@ -243,9 +241,18 @@ const MessagesTab = () => {
           </View>
         </TouchableOpacity>
       </Modal>
+
       {/* Modal Tags - Bottom Sheet */}
-      <Modal transparent={true} visible={modalTags} animationType="none">
-        <View style={styles.overlay}>
+      <Modal
+        transparent={true}
+        visible={modalTags}
+        animationType="none"
+        onRequestClose={() => setModalTags(false)}
+      >
+        <TouchableOpacity
+          style={styles.overlay}
+          onPress={() => setModalTags(false)}
+        >
           <Animated.View
             style={[styles.tagsModal, { transform: [{ translateY }] }]}
           >
@@ -302,7 +309,7 @@ const MessagesTab = () => {
               )}
             />
           </Animated.View>
-        </View>
+        </TouchableOpacity>
       </Modal>
       {/* Modal thêm tag */}
       <Modal transparent={true} visible={modalAddTag}>

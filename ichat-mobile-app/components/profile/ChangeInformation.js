@@ -8,6 +8,7 @@ import {
   StyleSheet,
   Platform,
   ActivityIndicator,
+  Alert,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import RadioGroup from "react-native-radio-buttons-group";
@@ -17,8 +18,10 @@ import { Modal } from "react-native";
 import axios from "axios";
 import * as ImagePicker from "expo-image-picker";
 import * as FileSystem from "expo-file-system";
+import { StatusBar } from "expo-status-bar";
 
 import editIcon from "../../assets/icons/edit.png";
+import goBackIcon from "../../assets/icons/go-back.png";
 
 const ChangeInformation = () => {
   const navigation = useNavigation();
@@ -53,7 +56,7 @@ const ChangeInformation = () => {
     }
   };
 
-  const API_iChat = "http://192.168.1.6:5001";
+  const API_iChat = "http://192.168.1.85:5001";
 
   const parseDate = (dateString) => {
     if (!dateString || typeof dateString !== "string") return new Date();
@@ -113,7 +116,7 @@ const ChangeInformation = () => {
   // Validation trước khi gửi
   const validateInput = () => {
     if (!fullName.trim()) {
-      alert("Vui lòng nhập họ tên đầy đủ.");
+      Alert.alert("Vui lòng nhập họ tên đầy đủ.");
       return false;
     }
     return true;
@@ -137,7 +140,7 @@ const ChangeInformation = () => {
         // Kiểm tra thông tin ảnh
         const fileInfo = await FileSystem.getInfoAsync(selectedImage);
         if (!fileInfo.exists) {
-          alert("Ảnh không tồn tại!");
+          Alert.alert("Ảnh không tồn tại!");
           return;
         }
 
@@ -186,20 +189,20 @@ const ChangeInformation = () => {
         // Cập nhật context
         await setUser(updatedUser);
 
-        alert("Cập nhật thông tin thành công!");
+        Alert.alert("Cập nhật thông tin thành công!");
         navigation.goBack();
       } else {
-        alert(result.message || "Có lỗi xảy ra khi cập nhật thông tin.");
+        Alert.alert(result.message || "Có lỗi xảy ra khi cập nhật thông tin.");
       }
     } catch (error) {
       console.error("Lỗi khi gọi API:", error);
       if (error.response) {
         console.log("Response data:", error.response.data);
-        alert(
+        Alert.alert(
           error.response.data.message || "Có lỗi xảy ra khi cập nhật thông tin."
         );
       } else {
-        alert("Lỗi kết nối server. Vui lòng thử lại sau.");
+        Alert.alert("Lỗi kết nối server. Vui lòng thử lại sau.");
       }
     } finally {
       setLoading(false);
@@ -207,27 +210,31 @@ const ChangeInformation = () => {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#fff", paddingTop: 40 }}>
+    <View style={{ flex: 1, backgroundColor: "#fff" }}>
+      <StatusBar style="light" />
       <View
         style={{
-          backgroundColor: "#fff",
-          paddingRight: 10,
-          paddingTop: 5,
+          width: "100%",
+          height: 90,
+          justifyContent: "space-between",
           flexDirection: "row",
-          alignItems: "center",
-          gap: 10,
-          height: 50,
+          alignItems: "flex-end",
+          backgroundColor: "#3083F9",
+          padding: 10,
         }}
       >
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        <TouchableOpacity
+          style={{ flexDirection: "row", alignItems: "center", gap: 5 }}
+          onPress={() => navigation.goBack()}
+        >
           <Image
-            source={require("../../assets/icons/go-back.png")}
-            style={{ width: 25, height: 25 }}
+            source={goBackIcon}
+            style={{ width: 25, height: 25, tintColor: "#fff" }}
           />
+          <Text style={{ color: "#fff", fontSize: 18, fontWeight: "bold" }}>
+            Chỉnh sửa thông tin
+          </Text>
         </TouchableOpacity>
-        <Text style={{ fontSize: 20, fontWeight: "bold" }}>
-          Chỉnh sửa thông tin
-        </Text>
       </View>
 
       <View

@@ -28,27 +28,40 @@ const maskPhoneNumber = (phone) => {
   return phone.slice(0, 5) + "***" + phone.slice(-3);
 };
 
+const formatPhoneNumber = (phone) => {
+  if (!phone) return null;
+  const cleaned = phone.replace(/\s+/g, "");
+  if (cleaned.startsWith("+84")) return cleaned;
+  if (cleaned.startsWith("0")) return "+84" + cleaned.slice(1);
+  if (cleaned.startsWith("84")) return "+84" + cleaned.slice(2);
+  return "+84" + cleaned;
+};
+
 const ChangePhoneNumber = () => {
   const navigation = useNavigation();
-  const { user } = useContext(UserContext);
-  const API_iChat = "http://192.168.1.6:5001";
-  const [phone, setPhone] = useState("");
+  const { user, setUser } = useContext(UserContext);
+  const API_iChat = "http://192.168.1.85:5001";
   const recaptchaVerifier = useRef(null);
   const [verificationId, setVerificationId] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [newPhone, setNewPhone] = useState("");
   const [otp, setOtp] = useState("");
   const [step, setStep] = useState(1); // 1: Nhập sđt mới, 2: Nhập OTP
+  const [formattedNewPhone, setFormattedNewPhone] = useState("");
 
   const handleRequestOTP = async () => {
-    if (!newPhone || newPhone.length < 9) {
-      Alert.alert("Lỗi", "Vui lòng nhập số điện thoại hợp lệ.");
-      return;
-    }
+    const formatted = formatPhoneNumber(newPhone);
+    setFormattedNewPhone(formatted); // Lưu lại số điện thoại đã định dạng
+
+    console.log("Formatted New Phone: ", formatted);
+    console.log("User phone: ", user.phone);
 
     try {
       setIsLoading(true);
-      const result = await authService.sendOTP(newPhone, recaptchaVerifier);
+      const result = await authService.sendOTPWithoutCheck(
+        user.phone,
+        recaptchaVerifier
+      );
       if (result.status === "ok") {
         Alert.alert("Thành công", "Mã OTP đã được gửi.");
         setVerificationId(result.verificationId);
@@ -69,24 +82,25 @@ const ChangePhoneNumber = () => {
       return;
     }
 
+    if (!formattedNewPhone) {
+      Alert.alert("Lỗi", "Vui lòng nhập số điện thoại hợp lệ.");
+      return;
+    }
+
     try {
       setIsLoading(true);
 
       const result = await authService.validateOTP(
-        newPhone,
+        user.phone,
         otp,
         verificationId
       );
 
       if (result.status === "ok") {
         navigation.navigate("ProfileInformation");
-        const phoneNumber = result.data.user.phoneNumber;
-
-        await axios.put(`${API_iChat}/auth/update-phone`, {
-          userId: user.id,
-          newPhone: phoneNumber,
-        });
+        await authService.changePhone(user.id, formattedNewPhone);
       }
+      setUser({ ...user, phone: formattedNewPhone });
     } catch (error) {
       console.error("Xác thực OTP lỗi:", error);
       Alert.alert("Lỗi", "Đã xảy ra lỗi khi xác thực.");
@@ -235,7 +249,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff" },
   header: {
     width: "100%",
-    height: 80,
+    height: 90,
     justifyContent: "space-between",
     flexDirection: "row",
     alignItems: "flex-end",

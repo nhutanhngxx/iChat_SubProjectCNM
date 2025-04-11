@@ -2,10 +2,19 @@ import { apiService } from "./api";
 import { auth } from "../config/firebase";
 import { PhoneAuthProvider, signInWithCredential } from "firebase/auth";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios from "axios";
+
+const formatPhoneNumber = (phone) => {
+  if (!phone) return null;
+  const cleaned = phone.replace(/\s+/g, "");
+  if (cleaned.startsWith("+84")) return cleaned;
+  if (cleaned.startsWith("0")) return "+84" + cleaned.slice(1);
+  if (cleaned.startsWith("84")) return "+84" + cleaned.slice(2);
+  return "+84" + cleaned;
+};
 
 const PREFIX = "auth";
 const authService = {
-  // Đăng nhập
   login: async ({ phone, password }) => {
     try {
       const formattedPhone = phone.startsWith("0")
@@ -34,7 +43,6 @@ const authService = {
     }
   },
 
-  // Đăng xuất
   logout: async (userId) => {
     try {
       await apiService.post(`/logout`, { userId });
@@ -46,6 +54,31 @@ const authService = {
         status: "error",
         message:
           error.response?.data?.message || "Không thể đăng xuất tài khoản",
+      };
+    }
+  },
+
+  sendOTPWithoutCheck: async (phone, recaptchaVerifier) => {
+    try {
+      phone = formatPhoneNumber(phone);
+      console.log("Formatted phone:", phone);
+
+      const phoneProvider = new PhoneAuthProvider(auth);
+      const verificationId = await phoneProvider.verifyPhoneNumber(
+        phone,
+        recaptchaVerifier.current
+      );
+
+      return {
+        status: "ok",
+        verificationId: verificationId,
+        phoneNumber: phone,
+      };
+    } catch (error) {
+      console.log("OTP Error:", error);
+      return {
+        status: "error",
+        message: "Không thể gửi mã OTP",
       };
     }
   },
@@ -103,6 +136,7 @@ const authService = {
       };
     }
   },
+
   validateOTP: async (phone, otp, verificationId) => {
     try {
       if (!phone || !otp) {
@@ -145,6 +179,7 @@ const authService = {
       };
     }
   },
+
   register: async (tempToken, phone, password, fullName, dob, gender) => {
     try {
       if (!tempToken || !phone || !password || !fullName || !dob || !gender) {
@@ -153,7 +188,7 @@ const authService = {
           message: "Thiếu thông tin đăng ký",
         };
       }
-      const response = await apiService.post(`/${PREFIX}/register`, {
+      const response = await c.post(`/${PREFIX}/register`, {
         tempToken,
         phone,
         password,
@@ -230,6 +265,19 @@ const authService = {
   changePhoneNumber: async ({}) => {},
 
   changeInformation: async ({}) => {},
+
+  changePhone: async (userId, newPhone) => {
+    try {
+      const response = await apiService.put(`/${PREFIX}/update-phone`, {
+        userId,
+        newPhone,
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Lỗi khi cập nhật số điện thoại:", error);
+      throw error;
+    }
+  },
 };
 
 export default authService;

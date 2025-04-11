@@ -9,6 +9,7 @@ import {
   Image,
   FlatList,
   SafeAreaView,
+  Alert,
 } from "react-native";
 import { Avatar } from "@rneui/themed";
 import { Checkbox } from "react-native-paper";
@@ -74,7 +75,7 @@ const ModalCreateGroup = ({ isVisible, onClose }) => {
   }, [groupList, groupName]);
 
   const handleCreateGroup = () => {
-    alert(
+    Alert.alert(
       `Tạo nhóm ${groupName} thành công!` +
         "\n" +
         "Danh sách thành viên: " +

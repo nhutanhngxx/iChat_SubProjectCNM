@@ -60,7 +60,7 @@ const AccountSecurity = () => {
                   text: "Xóa",
                   style: "destructive",
                   onPress: () => {
-                    alert("Tính năng này hiện chưa khả dụng");
+                    Alert.alert("Tính năng này hiện chưa khả dụng");
                     // Xử lý xóa tài khoản ở đây
                   },
                 },
