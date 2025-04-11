@@ -257,7 +257,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "rgba(47, 128, 237, 0.3)",
-    paddingTop: 40,
   },
   createPostContainer: {
     padding: 10,

@@ -8,15 +8,13 @@ import {
   TouchableOpacity,
   Image,
   Alert,
-  ActivityIndicator,
 } from "react-native";
 import { Tab, TabView } from "@rneui/themed";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { UserContext } from "../../context/UserContext";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { NetworkInfo } from "react-native-network-info";
 import { StatusBar } from "expo-status-bar";
+import { getHostIP } from "../../services/api";
 
 const SearchScreen = () => {
   const route = useRoute();
@@ -24,7 +22,8 @@ const SearchScreen = () => {
   const searchInputRef = useRef(null);
   const { user } = useContext(UserContext);
 
-  const API_iChat = "http://192.168.110.158:5001/api";
+  const ipAdr = getHostIP();
+  const API_iChat = `http://${ipAdr}:5001`;
 
   const handleOpenChatting = async (selectedMessage) => {
     // Xác định ID của người đang chat với user
@@ -129,10 +128,14 @@ const SearchScreen = () => {
   };
 
   // Xóa 1 item khỏi lịch sử tìm kiếm
-  const removeSearchItem = (index) => {
-    setHistorySearch((prevHistory) =>
-      prevHistory.filter((_, i) => i !== index)
-    );
+  const removeSearchItem = async (indexToRemove) => {
+    try {
+      const newHistory = historySearch.filter((_, i) => i !== indexToRemove);
+      await AsyncStorage.setItem("searchHistory", JSON.stringify(newHistory));
+      setHistorySearch(newHistory);
+    } catch (error) {
+      console.error("Lỗi xóa 1 item khỏi lịch sử:", error);
+    }
   };
 
   // Xử lý tìm kiếm tự động khi searchText thay đổi
@@ -162,22 +165,27 @@ const SearchScreen = () => {
   // Hàm gọi API tìm kiếm
   const handleSearch = async () => {
     setIsLoading(true);
+    let finalSearchQuery = searchText.trim();
+    if (/^\d+$/.test(finalSearchQuery)) {
+      finalSearchQuery = finalSearchQuery.startsWith("0")
+        ? finalSearchQuery.replace(/^0/, "+84")
+        : `+84${finalSearchQuery}`;
+    }
     try {
       const [usersResponse, messagesResponse, groupsResponse] =
         await Promise.all([
-          axios.get(`${API_iChat}/users?search=${searchText}`),
+          axios.get(
+            `${API_iChat}/users?search=${encodeURIComponent(finalSearchQuery)}`
+          ),
           axios.get(`${API_iChat}/messages?search=${searchText}`),
           axios.get(`${API_iChat}/groups?search=${searchText}`),
         ]);
-
       setSearchUsers(
         usersResponse.data.status === "ok" ? usersResponse.data.users : []
       );
-
       setSearchMessages(
         messagesResponse.data.status === "ok" ? messagesResponse.data.data : [] // Kiểm tra đúng key response
       );
-
       setSearchGroups(
         groupsResponse.data.status === "ok" ? groupsResponse.data.data : []
       );
@@ -228,71 +236,70 @@ const SearchScreen = () => {
   }, []);
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#0AA2F8", paddingTop: 40 }}>
+    <View style={{ flex: 1, backgroundColor: "#0AA2F8" }}>
       <StatusBar hidden={false} style="light" />
       <View
         style={{
           flexDirection: "row",
-          alignItems: "center",
+          alignItems: "flex-end",
           width: "100%",
-          height: 50,
-          // backgroundColor: "#0AA2F8",
-          paddingHorizontal: 10,
-          // backgroundColor: "black",
+          padding: 10,
+          height: 90,
         }}
       >
-        <TouchableOpacity
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-          }}
-          onPress={() => navigation.goBack()}
-        >
-          <Image
-            source={require("../../assets/icons/go-back.png")}
-            style={{
-              width: 25,
-              height: 25,
-              tintColor: "white",
-            }}
-          />
-        </TouchableOpacity>
-
         <View
           style={{
-            flex: 1,
             flexDirection: "row",
             alignItems: "center",
-            backgroundColor: "white",
-            borderRadius: 5,
-            marginLeft: 5,
           }}
         >
-          <TextInput
-            ref={searchInputRef}
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Image
+              source={require("../../assets/icons/go-back.png")}
+              style={{
+                width: 25,
+                height: 25,
+                tintColor: "white",
+              }}
+            />
+          </TouchableOpacity>
+
+          <View
             style={{
               flex: 1,
-              fontSize: 15,
-              paddingHorizontal: 10,
-              height: 35,
-              paddingLeft: 10,
+              flexDirection: "row",
+              alignItems: "center",
+              backgroundColor: "white",
+              borderRadius: 5,
+              marginLeft: 5,
             }}
-            placeholder="Tìm kiếm"
-            value={searchText}
-            onChangeText={setSearchText}
-            onSubmitEditing={() => {
-              saveSearchHistory(searchText);
-              setSearchText("");
-            }}
-          />
-          {searchText.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchText("")}>
-              <Image
-                source={require("../../assets/icons/close.png")}
-                style={{ width: 20, height: 20, marginRight: 5 }}
-              />
-            </TouchableOpacity>
-          )}
+          >
+            <TextInput
+              ref={searchInputRef}
+              style={{
+                flex: 1,
+                fontSize: 15,
+                paddingHorizontal: 10,
+                textAlignVertical: "center",
+                height: 30,
+              }}
+              placeholder="Tìm kiếm"
+              value={searchText}
+              onChangeText={setSearchText}
+              onSubmitEditing={() => {
+                saveSearchHistory(searchText);
+                setSearchText("");
+              }}
+            />
+            {searchText.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchText("")}>
+                <Image
+                  source={require("../../assets/icons/close.png")}
+                  style={{ width: 20, height: 20, marginRight: 5 }}
+                />
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
       </View>
 

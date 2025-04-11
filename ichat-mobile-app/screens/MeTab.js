@@ -39,12 +39,27 @@ const MeTab = () => {
     <View style={styles.container}>
       <StatusBar style="dark" />
       <HeaderPersonalProfile />
+      {/* <TouchableOpacity
+        style={{
+          position: "absolute",
+          top: 50,
+          right: 20,
+          zIndex: 10,
+          elevation: 10,
+        }}
+        onPress={() => Alert.alert("Chức năng này chưa được phát triển")}
+      >
+        <Image
+          source={require("../assets/icons/setting.png")}
+          style={{ height: 25, width: 25 }}
+        />
+      </TouchableOpacity> */}
       <View style={styles.headerBackground} />
       {/* Tài khoản */}
       <View style={styles.profileContainer}>
         {userData ? (
           <>
-            <TouchableOpacity>
+            <View>
               <Image
                 source={
                   compressedAvatar
@@ -53,7 +68,7 @@ const MeTab = () => {
                 }
                 style={styles.avatar}
               />
-            </TouchableOpacity>
+            </View>
             <Text style={styles.name}>{userData.full_name}</Text>
             <Text style={styles.updateText}>Cập nhật tiểu sử</Text>
           </>
@@ -113,7 +128,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "white",
-    paddingTop: 30,
   },
   headerBackground: {
     height: 200,

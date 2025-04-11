@@ -1,15 +1,89 @@
-import api from "./api";
+import { apiService } from "./api";
+
+const PREFIX = "messages";
 
 const messageService = {
+  // Lấy danh sách tin nhắn của một người dùng
+  getMessagesByUserId: async (userId) => {
+    try {
+      if (userId) {
+        const response = await apiService.get(`/${PREFIX}/${userId}`);
+        if (response.data.status === "ok") {
+          return response.data.data;
+        }
+      } else return;
+    } catch (error) {
+      console.log("Message Service Error: ", error);
+      return [];
+    }
+  },
+
+  // Lấy danh sách tin nhắn của một nhóm
   getMessagesByGroupId: async (chatId) => {
     try {
       if (chatId) {
-        const response = await api.get(`/messages/${chatId}`);
+        const response = await apiService.get(`/${PREFIX}/${chatId}`);
         if (response.data.status === "ok") return response.data.data;
       } else return;
     } catch (error) {
       console.log("Message Service Error: ", error);
       return [];
+    }
+  },
+
+  // Lấy danh sách tin nhắn cá nhân 1-1
+  getPrivateMessages: async ({ userId, chatId }) => {
+    try {
+      const response = await apiService.get(`/${PREFIX}/${userId}/${chatId}`);
+      if (response.data.status === "ok") return response.data.data;
+      else return;
+    } catch (error) {
+      console.log("Message Service Error: ", error);
+      return [];
+    }
+  },
+
+  // Update trạng thái tin nhắn đã đọc
+  updateMessagesViewedStatus: async ({ receiverId, senderId }) => {
+    try {
+      const response = await apiService.put(`/${PREFIX}/viewed`, {
+        receiverId,
+        senderId,
+      });
+      return response;
+    } catch (error) {
+      console.log("Message Service Error: ", error);
+    }
+  },
+
+  // Gửi tin nhắn
+  sendMessage: async (message) => {},
+
+  // Thu hồi tin nhắn
+  recallMessage: async (messageId) => {},
+
+  // Xóa tin nhắn giữa 2 người
+  deleteChatHistory: async (userId, chatId) => {
+    try {
+      const response = await apiService.delete(
+        `/${PREFIX}/${userId}/${chatId}`
+      );
+      if (response.data.status === "ok")
+        return {
+          status: response.data.status,
+          message: response.data.message,
+        };
+      else
+        return {
+          status: response.data.status,
+          message: response.data.message,
+        };
+    } catch (error) {
+      console.log("Không thể xóa lịch sử trò chuyện: ", error);
+      return {
+        status: "error",
+        message: "Không thể xóa lịch sử trò chuyện",
+      };
     }
   },
 };

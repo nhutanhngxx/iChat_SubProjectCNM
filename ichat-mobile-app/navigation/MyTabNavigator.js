@@ -63,7 +63,7 @@ function MyTabBar({ state, descriptors, navigation }) {
               style={{
                 width: 24,
                 height: 24,
-                tintColor: isFocused ? undefined : "gray",
+                tintColor: isFocused ? "#2F80ED" : "gray",
               }}
             />
             <Text

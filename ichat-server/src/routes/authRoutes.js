@@ -17,4 +17,5 @@ router.put("/update-phone", AuthController.updatePhone);
 router.delete("/delete-account", AuthController.deleteAccount);
 router.post("/confirm-phone", AuthController.confirmPhone);
 router.post("/verify-otp", AuthController.verifyOtp);
+router.post("/verify-password", AuthController.verifyPassword);
 module.exports = router;

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import {
   Text,
   View,
@@ -9,33 +9,13 @@ import {
   Image,
   FlatList,
   SafeAreaView,
+  Alert,
 } from "react-native";
-import { Appbar, Button, Checkbox } from "react-native-paper";
+import { Avatar } from "@rneui/themed";
+import { Checkbox } from "react-native-paper";
 import { StatusBar } from "expo-status-bar";
-
-const friendList = [
-  {
-    id: "1",
-    name: "Nguyễn Nhựt Anh",
-    lastMessage: "[Hình ảnh]",
-    time: "1 phút trước",
-    avatar: require("../../assets/images/avatars/avatar1.png"),
-  },
-  {
-    id: "2",
-    name: "Trần Minh Quân",
-    lastMessage: "Xin chào!",
-    time: "5 phút trước",
-    avatar: require("../../assets/images/avatars/avatar2.png"),
-  },
-  {
-    id: "3",
-    name: "Lê Phương Thảo",
-    lastMessage: "Bạn khỏe không?",
-    time: "10 phút trước",
-    avatar: require("../../assets/images/avatars/avatar3.png"),
-  },
-];
+import friendService from "../../services/friendService";
+import { UserContext } from "../../context/UserContext";
 
 const ModalCreateGroup = ({ isVisible, onClose }) => {
   const [groupList, setGroupList] = useState([]);
@@ -43,7 +23,22 @@ const ModalCreateGroup = ({ isVisible, onClose }) => {
   const [isDisabled, setIsDisabled] = useState(true);
   const [groupName, setGroupName] = useState("");
   const [searchText, setSearchText] = useState("");
+  const [friendList, setFriendList] = useState([]);
   const [displayedFriendList, setDisplayedFriendList] = useState(friendList);
+  const { user } = useContext(UserContext);
+
+  // Lấy danh sách bạn bè
+  useEffect(() => {
+    if (!user?.id) return;
+    const fetchFriendList = async () => {
+      const friends = await friendService.getFriendListByUserId(user.id);
+      setFriendList(friends);
+      setDisplayedFriendList(friends);
+    };
+    fetchFriendList();
+    const interval = setInterval(fetchFriendList, 1000);
+    return () => clearInterval(interval);
+  }, [user?.id]);
 
   const handleToggleFriend = (friend) => {
     // Kiểm tra xem friend đã có trong groupList chưa
@@ -80,7 +75,7 @@ const ModalCreateGroup = ({ isVisible, onClose }) => {
   }, [groupList, groupName]);
 
   const handleCreateGroup = () => {
-    alert(
+    Alert.alert(
       `Tạo nhóm ${groupName} thành công!` +
         "\n" +
         "Danh sách thành viên: " +
@@ -101,8 +96,10 @@ const ModalCreateGroup = ({ isVisible, onClose }) => {
       onPress={() => handleToggleFriend(item)}
     >
       <View style={styles.item_leftSide}>
-        <Image source={item.avatar} style={{ width: 50, height: 50 }} />
-        <Text style={{ fontWeight: "500", fontSize: 16 }}>{item.name}</Text>
+        <Avatar size={50} rounded source={{ uri: item.avatar_path }} />
+        <Text style={{ fontWeight: "500", fontSize: 16 }}>
+          {item.full_name}
+        </Text>
       </View>
       <TouchableOpacity onPress={() => handleToggleFriend(item)}>
         <Checkbox

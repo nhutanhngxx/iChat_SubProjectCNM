@@ -14,7 +14,7 @@ import {
 } from "react-native";
 import { CheckBox } from "@rneui/themed";
 import CustomButton from "../common/CustomButton";
-import RegisterService from "../../services/registerService";
+import authService from "../../services/authService";
 import { useNavigation } from "@react-navigation/native";
 import { FirebaseRecaptchaVerifierModal } from "expo-firebase-recaptcha";
 import { firebaseConfig } from "../../config/firebase";
@@ -39,7 +39,7 @@ const RegisterScreen = () => {
     }
     setIsLoading(true);
     try {
-      const result = await RegisterService.sendOTP(phone, recaptchaVerifier);
+      const result = await authService.sendOTP(phone, recaptchaVerifier);
 
       if (result.status === "ok")
         navigation.navigate("EnterOTP", {
@@ -62,11 +62,11 @@ const RegisterScreen = () => {
   };
 
   const handleLoginWithFacebook = () => {
-    alert("Login with Facebook");
+    Alert.alert("Tính năng đang được phát triển!");
   };
 
   const handleLoginWithGoogle = () => {
-    alert("Login with Facebook");
+    Alert.alert("Tính năng đang được phát triển!");
   };
 
   const handleLogin = () => {
@@ -91,6 +91,7 @@ const RegisterScreen = () => {
             <Text style={{ fontSize: 10, opacity: 0.5, marginBottom: 40 }}>
               Tạo tài khoản mới
             </Text>
+
             {/* Input phone number */}
             <View style={styles.phoneInput}>
               <View style={styles.countryCode}>
@@ -180,7 +181,7 @@ const RegisterScreen = () => {
               <Text
                 style={[
                   styles.question,
-                  { color: "#0C098C", fontWeight: "bold" },
+                  { color: "#0C098C", fontWeight: "bold", opacity: 0.5 },
                 ]}
                 onPress={() => handleLogin()}
               >

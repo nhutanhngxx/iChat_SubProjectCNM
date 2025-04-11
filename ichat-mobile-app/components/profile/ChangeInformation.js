@@ -8,6 +8,7 @@ import {
   StyleSheet,
   Platform,
   ActivityIndicator,
+  Alert,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import RadioGroup from "react-native-radio-buttons-group";
@@ -15,16 +16,91 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { UserContext } from "../../context/UserContext";
 import { Modal } from "react-native";
 import axios from "axios";
+import * as ImagePicker from "expo-image-picker";
+import * as FileSystem from "expo-file-system";
+import { StatusBar } from "expo-status-bar";
 
 import editIcon from "../../assets/icons/edit.png";
+import goBackIcon from "../../assets/icons/go-back.png";
+import { getHostIP } from "../../services/api";
 
 const ChangeInformation = () => {
   const navigation = useNavigation();
   const { user, setUser } = useContext(UserContext);
 
-  const API_iChat = "http://192.168.110.158:5001/api";
+  const [selectedImage, setSelectedImage] = useState(null);
+  // Hàm chọn ảnh từ thư viện
+  const pickImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert(
+        "Quyền bị từ chối",
+        "Vui lòng cấp quyền truy cập thư viện ảnh trong cài đặt."
+      );
+      return;
+    }
 
-  const [dob, setDob] = useState(user?.dob ? new Date(user.dob) : new Date());
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 0.5,
+      });
+
+      if (!result.canceled && result.assets.length > 0) {
+        setSelectedImage(result.assets[0].uri);
+      }
+    } catch (err) {
+      console.error("Lỗi khi chọn ảnh:", err);
+      Alert.alert("Lỗi", "Đã xảy ra lỗi khi chọn ảnh.");
+    }
+  };
+
+  const ipAdr = getHostIP();
+  const API_iChat = `http://${ipAdr}:5001/api`;
+
+  const parseDate = (dateString) => {
+    if (!dateString || typeof dateString !== "string") return new Date();
+
+    // Nếu là ISO (dob)
+    const isoDate = new Date(dateString);
+    if (!isNaN(isoDate.getTime())) {
+      isoDate.setHours(12, 0, 0, 0);
+      return isoDate;
+    }
+
+    // Nếu là dd/MM/yyyy (dobFormatted)
+    const parts = dateString.split("/");
+    if (parts.length === 3) {
+      const [day, month, year] = parts.map(Number);
+      if (
+        !isNaN(day) &&
+        !isNaN(month) &&
+        !isNaN(year) &&
+        day >= 1 &&
+        day <= 31 &&
+        month >= 1 &&
+        month <= 12 &&
+        year >= 1900
+      ) {
+        const date = new Date(year, month - 1, day);
+        date.setHours(12, 0, 0, 0);
+        return date;
+      }
+    }
+
+    return new Date(); // Fallback nếu format không đúng
+  };
+
+  const initialDob = user?.dobFormatted
+    ? parseDate(user.dobFormatted)
+    : user?.dob
+    ? parseDate(user.dob)
+    : new Date();
+
+  const [dob, setDob] = useState(initialDob);
+
   const [showPicker, setShowPicker] = useState(false);
   const [fullName, setFullName] = useState(user?.full_name || "");
   const [selectedId, setSelectedId] = useState(
@@ -42,7 +118,7 @@ const ChangeInformation = () => {
   // Validation trước khi gửi
   const validateInput = () => {
     if (!fullName.trim()) {
-      alert("Vui lòng nhập họ tên đầy đủ.");
+      Alert.alert("Vui lòng nhập họ tên đầy đủ.");
       return false;
     }
     return true;
@@ -54,67 +130,118 @@ const ChangeInformation = () => {
 
     setLoading(true);
     try {
-      const updatedData = {
-        full_name: fullName.trim(),
-        gender: radioButtons.find((rb) => rb.id === selectedId)?.value,
-        dob: dob.toISOString().split("T")[0],
-      };
+      const formData = new FormData();
+      formData.append("full_name", fullName.trim());
+      formData.append(
+        "gender",
+        radioButtons.find((rb) => rb.id === selectedId)?.value
+      );
+      formData.append("dob", dob.toISOString().split("T")[0]);
+
+      if (selectedImage) {
+        // Kiểm tra thông tin ảnh
+        const fileInfo = await FileSystem.getInfoAsync(selectedImage);
+        if (!fileInfo.exists) {
+          Alert.alert("Ảnh không tồn tại!");
+          return;
+        }
+
+        // Lấy tên file từ uri
+        const filename = selectedImage.split("/").pop();
+        const match = /\.(\w+)$/.exec(filename ?? "");
+        const ext = match ? match[1] : "jpg";
+        const mimeType = `image/${ext}`;
+
+        // Thêm ảnh vào FormData
+        formData.append("avatar", {
+          uri: selectedImage,
+          name: filename ?? `avatar.${ext}`,
+          type: mimeType,
+        });
+      }
+
+      console.log("FormData:", formData);
 
       const response = await axios.put(
-        `${API_iChat}/update/${user.id}`,
-        updatedData,
+        `${API_iChat}/users/update/${user.id}`,
+        formData,
         {
           headers: {
-            "Content-Type": "application/json",
-            // Nếu cần token: "Authorization": `Bearer ${user.token}`,
+            "Content-Type": "multipart/form-data",
           },
         }
       );
+      console.log("Response:", response.data);
 
       const result = response.data;
       if (result.success) {
-        setUser({ ...user, ...result.data });
-        alert("Cập nhật thông tin thành công!");
+        console.log("API trả về dữ liệu:", result.data);
+
+        // Đảm bảo cập nhật đầy đủ thông tin user
+        const updatedUser = {
+          ...user,
+          full_name: fullName.trim(),
+          gender: radioButtons.find((rb) => rb.id === selectedId)?.value,
+          dob: dob.toISOString().split("T")[0],
+          dobFormatted: `${dob.getDate().toString().padStart(2, "0")}/${(
+            dob.getMonth() + 1
+          )
+            .toString()
+            .padStart(2, "0")}/${dob.getFullYear()}`,
+          avatar_path: result.data.avatar_path || user.avatar_path,
+        };
+
+        console.log("User sau khi cập nhật:", updatedUser);
+
+        // Cập nhật context
+        await setUser(updatedUser);
+
+        Alert.alert("Cập nhật thông tin thành công!");
         navigation.goBack();
       } else {
-        alert(result.message || "Có lỗi xảy ra khi cập nhật thông tin.");
+        Alert.alert(result.message || "Có lỗi xảy ra khi cập nhật thông tin.");
       }
     } catch (error) {
       console.error("Lỗi khi gọi API:", error);
       if (error.response) {
-        alert(
+        console.log("Response data:", error.response.data);
+        Alert.alert(
           error.response.data.message || "Có lỗi xảy ra khi cập nhật thông tin."
         );
       } else {
-        alert("Lỗi kết nối server. Vui lòng thử lại sau.");
+        Alert.alert("Lỗi kết nối server. Vui lòng thử lại sau.");
       }
     } finally {
-      setLoading(false); // Tắt loading
+      setLoading(false);
     }
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#fff", paddingTop: 40 }}>
+    <View style={{ flex: 1, backgroundColor: "#fff" }}>
+      <StatusBar style="light" />
       <View
         style={{
-          backgroundColor: "#fff",
-          paddingRight: 10,
-          paddingTop: 5,
+          width: "100%",
+          height: 90,
+          justifyContent: "space-between",
           flexDirection: "row",
-          alignItems: "center",
-          gap: 10,
-          height: 50,
+          alignItems: "flex-end",
+          backgroundColor: "#3083F9",
+          padding: 10,
         }}
       >
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        <TouchableOpacity
+          style={{ flexDirection: "row", alignItems: "center", gap: 5 }}
+          onPress={() => navigation.goBack()}
+        >
           <Image
-            source={require("../../assets/icons/go-back.png")}
-            style={{ width: 25, height: 25 }}
+            source={goBackIcon}
+            style={{ width: 25, height: 25, tintColor: "#fff" }}
           />
+          <Text style={{ color: "#fff", fontSize: 18, fontWeight: "bold" }}>
+            Chỉnh sửa thông tin
+          </Text>
         </TouchableOpacity>
-        <Text style={{ fontSize: 20, fontWeight: "bold" }}>
-          Chỉnh sửa thông tin
-        </Text>
       </View>
 
       <View
@@ -124,12 +251,12 @@ const ChangeInformation = () => {
           padding: 20,
         }}
       >
-        <View style={{ height: 100 }}>
+        <TouchableOpacity style={{ height: 100 }} onPress={() => pickImage()}>
           <Image
-            source={{ uri: user.avatar_path }}
+            source={{ uri: selectedImage || user.avatar_path }}
             style={{ height: 100, width: 100, borderRadius: 10 }}
           />
-        </View>
+        </TouchableOpacity>
         <View
           style={{ justifyContent: "space-between", width: "65%", gap: 20 }}
         >
@@ -152,7 +279,11 @@ const ChangeInformation = () => {
             >
               <TextInput
                 style={styles.value}
-                value={dob.toISOString().split("T")[0]}
+                value={`${dob.getDate().toString().padStart(2, "0")}/${(
+                  dob.getMonth() + 1
+                )
+                  .toString()
+                  .padStart(2, "0")}/${dob.getFullYear()}`}
                 editable={false}
               />
               {!showPicker && (

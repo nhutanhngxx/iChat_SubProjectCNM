@@ -1,7 +1,11 @@
-  import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-  import {auth, RecaptchaVerifier,signInWithPhoneNumber} from "../../firebase/config"; // Import firebase auth and RecaptchaVerifier
-  import axios from "axios";
-  const API_URL = `http://${window.location.hostname}:5001/api/`;
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import {
+  auth,
+  RecaptchaVerifier,
+  signInWithPhoneNumber,
+} from "../../firebase/config"; // Import firebase auth and RecaptchaVerifier
+import axios from "axios";
+const API_URL = `http://${window.location.hostname}:5001/api/`;
 // Định nghĩa action async để đăng nhập
 export const loginUser = createAsyncThunk(
   "auth/loginUser",
@@ -56,225 +60,244 @@ export const logoutUser = createAsyncThunk(
   }
 );
 
-  // Action async để xác thực người dùng với token
-  export const authenticateWithToken = createAsyncThunk(
-    "auth/authenticateWithToken",
-    async (_, { rejectWithValue }) => {
-      try {
-        const token = localStorage.getItem("token");
-        const response = await fetch(`${API_URL}auth/me`, {
-          method: "GET",
-          headers: {
-            "Authorization": `Bearer ${token}`,
+// Action async để xác thực người dùng với token
+export const authenticateWithToken = createAsyncThunk(
+  "auth/authenticateWithToken",
+  async (_, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${API_URL}auth/me`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Token không hợp lệ");
+      }
+
+      // Lưu user vào localStorage
+      localStorage.setItem("user", JSON.stringify(data.user));
+
+      return { user: data.user, token };
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+export const checkExistedPhone = createAsyncThunk(
+  "auth/checkExistedPhone",
+  async (phone, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${API_URL}auth/check-existed-phone`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Kiểm tra số điện thoại thất bại");
+      }
+
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+// CHangePassword
+export const changePassword = createAsyncThunk(
+  "auth/changePassword",
+  async ({ userId, currentPassword, newPassword }, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem("token");
+
+      const response = await fetch(`${API_URL}auth/change-password`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ userId, currentPassword, newPassword }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Đổi mật khẩu thất bại");
+      }
+
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+// Gửi OTP bằng Firebase
+// export const sendOtpFirebase = createAsyncThunk(
+//   'auth/sendOtpFirebase',
+//   async (phoneNumber, { rejectWithValue }) => {
+//     try {
+//       // Clear any existing reCAPTCHA
+//       if (window.recaptchaVerifier) {
+//         try {
+//           window.recaptchaVerifier.clear();
+//         } catch (e) {
+//           console.error("Error clearing existing reCAPTCHA:", e);
+//         }
+//         window.recaptchaVerifier = null;
+//       }
+
+//       // Important: Ensure auth is properly initialized
+//       if (!auth || !auth.app) {
+//         throw new Error("Firebase auth is not properly initialized");
+//       }
+
+//       if(!window.recaptchaVerifier) {
+//       }
+//       // Create new reCAPTCHA verifier
+//       window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+//         size: 'invisible',
+//         callback: () => {
+//           console.log("reCAPTCHA verified");
+//         }
+//       });
+
+//       const appVerifier = window.recaptchaVerifier;
+//       const confirmationResult = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
+//       window.confirmationResult = confirmationResult;
+
+//       return confirmationResult.verificationId;
+//     } catch (error) {
+//       console.error("Firebase OTP error:", error);
+//       return rejectWithValue(error.message || "Failed to send OTP");
+//     }
+//   }
+// );
+export const sendOtpFirebase = createAsyncThunk(
+  "auth/sendOtpFirebase",
+  async (phoneNumber, { rejectWithValue }) => {
+    try {
+      // 2. Clean up any existing reCAPTCHA
+      if (window.recaptchaVerifier) {
+        try {
+          window.recaptchaVerifier.clear();
+        } catch (e) {
+          console.error("Error clearing existing reCAPTCHA:", e);
+        }
+        window.recaptchaVerifier = null;
+      }
+
+      // 3. Ensure container exists and create it if it doesn't
+      let recaptchaContainer = document.getElementById("recaptcha-container");
+      if (!recaptchaContainer) {
+        console.log("Creating recaptcha container dynamically");
+        recaptchaContainer = document.createElement("div");
+        recaptchaContainer.id = "recaptcha-container";
+        document.body.appendChild(recaptchaContainer);
+      } else {
+        // Clear existing content
+        recaptchaContainer.innerHTML = "";
+      }
+
+      // 4. Ensure auth is properly initialized
+      if (!auth || !auth.app) {
+        throw new Error("Firebase auth is not properly initialized");
+      }
+
+      // 5. Add a small delay to ensure DOM is ready
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // 6. Create new reCAPTCHA verifier with proper error handling
+      console.log("Creating reCAPTCHA verifier");
+      window.recaptchaVerifier = new RecaptchaVerifier(
+        auth,
+        "recaptcha-container",
+        {
+          size: "invisible",
+          callback: () => {
+            console.log("reCAPTCHA verified successfully");
           },
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.message || "Token không hợp lệ");
-        }
-
-        // Lưu user vào localStorage
-        localStorage.setItem("user", JSON.stringify(data.user));
-
-        return { user: data.user, token };
-      } catch (error) {
-        return rejectWithValue(error.message);
-      }
-    }
-  );
-  export const checkExistedPhone = createAsyncThunk(
-    "auth/checkExistedPhone",
-    async (phone, { rejectWithValue }) => {
-      try {
-        const response = await fetch(`${API_URL}auth/check-existed-phone`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ phone }),
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.message || "Kiểm tra số điện thoại thất bại");
-        }
-
-        return data;
-      } catch (error) {
-        return rejectWithValue(error.message);
-      }
-    }
-  );
-
-  // CHangePassword
-  export const changePassword = createAsyncThunk(
-    "auth/changePassword",
-    async ({ userId, currentPassword, newPassword }, { rejectWithValue }) => {
-      try {
-        const token = localStorage.getItem("token");    
-
-        const response = await fetch(`${API_URL}auth/change-password`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`,
+          "expired-callback": () => {
+            console.log("reCAPTCHA expired");
           },
-          body: JSON.stringify({ userId, currentPassword, newPassword }),
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.message || "Đổi mật khẩu thất bại");
         }
+      );
 
-        return data;
-      } catch (error) {
-        return rejectWithValue(error.message);
-      }
-    }
-  );
-  // Gửi OTP bằng Firebase
-  // export const sendOtpFirebase = createAsyncThunk(
-  //   'auth/sendOtpFirebase',
-  //   async (phoneNumber, { rejectWithValue }) => {
-  //     try {
-  //       // Clear any existing reCAPTCHA
-  //       if (window.recaptchaVerifier) {
-  //         try {
-  //           window.recaptchaVerifier.clear();
-  //         } catch (e) {
-  //           console.error("Error clearing existing reCAPTCHA:", e);
-  //         }
-  //         window.recaptchaVerifier = null;
-  //       }
-    
-  //       // Important: Ensure auth is properly initialized
-  //       if (!auth || !auth.app) {
-  //         throw new Error("Firebase auth is not properly initialized");
-  //       }
+      // 7. Send verification code
+      console.log("Sending verification code to:", phoneNumber);
+      const appVerifier = window.recaptchaVerifier;
 
-  //       if(!window.recaptchaVerifier) {
-  //       }
-  //       // Create new reCAPTCHA verifier
-  //       window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-  //         size: 'invisible',
-  //         callback: () => {
-  //           console.log("reCAPTCHA verified");
-  //         }
-  //       });
-        
-  //       const appVerifier = window.recaptchaVerifier;
-  //       const confirmationResult = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
-  //       window.confirmationResult = confirmationResult;
-
-  //       return confirmationResult.verificationId;
-  //     } catch (error) {
-  //       console.error("Firebase OTP error:", error);
-  //       return rejectWithValue(error.message || "Failed to send OTP");
-  //     }
-  //   }
-  // );
-  export const sendOtpFirebase = createAsyncThunk(
-    'auth/sendOtpFirebase',
-    async (phoneNumber, { rejectWithValue }) => {
       try {
-               // 2. Clean up any existing reCAPTCHA
+        const confirmationResult = await signInWithPhoneNumber(
+          auth,
+          phoneNumber,
+          appVerifier
+        );
+        window.confirmationResult = confirmationResult;
+        return confirmationResult.verificationId;
+      } catch (signInError) {
+        console.error("Error sending verification code:", signInError);
+
+        // Clean up if verification fails
         if (window.recaptchaVerifier) {
           try {
             window.recaptchaVerifier.clear();
           } catch (e) {
-            console.error("Error clearing existing reCAPTCHA:", e);
+            console.error("Error clearing reCAPTCHA after signIn error:", e);
           }
           window.recaptchaVerifier = null;
         }
-        
-        // 3. Ensure container exists and create it if it doesn't
-        let recaptchaContainer = document.getElementById('recaptcha-container');
-        if (!recaptchaContainer) {
-          console.log("Creating recaptcha container dynamically");
-          recaptchaContainer = document.createElement('div');
-          recaptchaContainer.id = 'recaptcha-container';
-          document.body.appendChild(recaptchaContainer);
-        } else {
-          // Clear existing content
-          recaptchaContainer.innerHTML = '';
-        }
-        
-        // 4. Ensure auth is properly initialized
-        if (!auth || !auth.app) {
-          throw new Error("Firebase auth is not properly initialized");
-        }
-        
-        // 5. Add a small delay to ensure DOM is ready
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-        // 6. Create new reCAPTCHA verifier with proper error handling
-        console.log("Creating reCAPTCHA verifier");
-        window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-          size: 'invisible',
-          callback: () => {
-            console.log("reCAPTCHA verified successfully");
-          },
-          'expired-callback': () => {
-            console.log("reCAPTCHA expired");
-          }
-        });
-        
-        // 7. Send verification code
-        console.log("Sending verification code to:", phoneNumber);
-        const appVerifier = window.recaptchaVerifier;
-        
-        try {
-          const confirmationResult = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
-          window.confirmationResult = confirmationResult;
-          return confirmationResult.verificationId;
-        } catch (signInError) {
-          console.error("Error sending verification code:", signInError);
-          
-          // Clean up if verification fails
-          if (window.recaptchaVerifier) {
-            try {
-              window.recaptchaVerifier.clear();
-            } catch (e) {
-              console.error("Error clearing reCAPTCHA after signIn error:", e);
-            }
-            window.recaptchaVerifier = null;
-          }
-          
-          throw signInError;
-        }
-      } catch (error) {
-        console.error("Firebase OTP error:", error);
-        return rejectWithValue(error.message || "Failed to send OTP");
+
+        throw signInError;
       }
+    } catch (error) {
+      console.error("Firebase OTP error:", error);
+      return rejectWithValue(error.message || "Failed to send OTP");
     }
-  );
-  
-  export const verifyOtpFirebase = createAsyncThunk('auth/verifyOtpFirebase', async (otp, thunkAPI) => {
+  }
+);
+
+export const verifyOtpFirebase = createAsyncThunk(
+  "auth/verifyOtpFirebase",
+  async (otp, thunkAPI) => {
     try {
       const confirmationResult = window.confirmationResult;
-      if (!confirmationResult) throw new Error('Không có kết quả xác thực');
+      if (!confirmationResult) throw new Error("Không có kết quả xác thực");
       await confirmationResult.confirm(otp);
       return { verified: true };
     } catch (error) {
       return thunkAPI.rejectWithValue(error.message);
     }
-  });
+  }
+);
 
 // Đặt lại mật khẩu
-export const resetPassword = createAsyncThunk('auth/resetPassword', async ({ phone, newPassword }, thunkAPI) => {
-  try {
-    const response = await axios.post(`${API_URL}auth/reset-password`, { phone, newPassword });
-    return response.data;
-  } catch (error) {
-    return thunkAPI.rejectWithValue(error.response.data.message || 'Đặt lại mật khẩu thất bại');
+export const resetPassword = createAsyncThunk(
+  "auth/resetPassword",
+  async ({ phone, newPassword }, thunkAPI) => {
+    try {
+      const response = await axios.post(`${API_URL}auth/reset-password`, {
+        phone,
+        newPassword,
+      });
+      return response.data;
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response.data.message || "Đặt lại mật khẩu thất bại"
+      );
+    }
   }
-});
+);
 // Đăng ký
 export const registerUser = createAsyncThunk(
-  'auth/registerUser',
+  "auth/registerUser",
   async ({ phone, password, fullName, dob, gender }, { rejectWithValue }) => {
     try {
       // Lấy ra Firebase user sau khi đã xác minh OTP thành công
@@ -389,7 +412,8 @@ const authSlice = createSlice({
         state.user = null;
       })
       .addCase(checkExistedPhone.pending, (state) => {
-        if (!state.phoneCheck) state.phoneCheck = { loading: false, exists: false, error: null };
+        if (!state.phoneCheck)
+          state.phoneCheck = { loading: false, exists: false, error: null };
         state.phoneCheck.loading = true;
         state.phoneCheck.error = null;
         state.phoneCheck.exists = false;
@@ -400,11 +424,9 @@ const authSlice = createSlice({
       })
       .addCase(checkExistedPhone.rejected, (state, action) => {
         state.phoneCheck.loading = false;
-      
+
         // Nếu lỗi là "số đã tồn tại", thì exists = true
-        if (
-          action.payload === "Số điện thoại này đã được đăng ký."
-        ) {
+        if (action.payload === "Số điện thoại này đã được đăng ký.") {
           state.phoneCheck.exists = true;
         } else {
           state.phoneCheck.error = action.payload;
@@ -465,8 +487,6 @@ const authSlice = createSlice({
         state.error = action.payload;
         state.isRegistered = false;
       });
-      
-
   },
 });
 export const { setUser } = authSlice.actions;
