@@ -22,8 +22,10 @@ import {
   signInWithCredential,
   getAuth,
 } from "firebase/auth";
+import { getHostIP } from "../../services/api";
 
-const API_iChat = "http://192.168.1.85:5001";
+const ipAdr = getHostIP();
+const API_iChat = `http://${ipAdr}:5001`;
 
 const ForgotPasswordScreen = ({ navigation }) => {
   const [step, setStep] = useState(1);

@@ -62,11 +62,11 @@ const RegisterScreen = () => {
   };
 
   const handleLoginWithFacebook = () => {
-    Alert.alert("Login with Facebook");
+    Alert.alert("Tính năng đang được phát triển!");
   };
 
   const handleLoginWithGoogle = () => {
-    Alert.alert("Login with Facebook");
+    Alert.alert("Tính năng đang được phát triển!");
   };
 
   const handleLogin = () => {

@@ -2,7 +2,6 @@ import { apiService } from "./api";
 import { auth } from "../config/firebase";
 import { PhoneAuthProvider, signInWithCredential } from "firebase/auth";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import axios from "axios";
 
 const formatPhoneNumber = (phone) => {
   if (!phone) return null;
@@ -188,7 +187,7 @@ const authService = {
           message: "Thiếu thông tin đăng ký",
         };
       }
-      const response = await c.post(`/${PREFIX}/register`, {
+      const response = await apiService.post(`/${PREFIX}/register`, {
         tempToken,
         phone,
         password,

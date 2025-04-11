@@ -19,9 +19,11 @@ import qrIcon from "../../assets/icons/qr.png";
 import { StatusBar } from "expo-status-bar";
 import { UserContext } from "../../context/UserContext";
 import axios from "axios";
+import { getHostIP } from "../../services/api";
 
 const AddFriend = () => {
-  const API_iChat = "http://192.168.1.85:5001";
+  const ipAdr = getHostIP();
+  const API_iChat = `http://${ipAdr}:5001`;
   const { user } = useContext(UserContext);
   const [countryCode, setCountryCode] = useState("+84");
   const [phoneNumber, setPhoneNumber] = useState("");

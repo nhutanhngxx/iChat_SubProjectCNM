@@ -260,6 +260,7 @@ router.post("/register", async (req, res) => {
     full_name: fullName,
     dob,
     gender,
+    avatar_path: "https://i.ibb.co/7Njf5HW0/avt.jpg",
   });
   res
     .status(201)

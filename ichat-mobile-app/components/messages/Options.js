@@ -17,6 +17,7 @@ import HeaderOption from "../header/HeaderOption";
 import userService from "../../services/userService";
 import groupService from "../../services/groupService";
 import messageService from "../../services/messageService";
+import { getHostIP } from "../../services/api";
 
 const Option = ({ route }) => {
   const navigation = useNavigation();
@@ -57,7 +58,8 @@ const Option = ({ route }) => {
     }
   }, [user?.id, id]);
 
-  const API_iChat = "http://192.168.1.85:5001";
+  const ipAdr = getHostIP();
+  const API_iChat = `http://${ipAdr}:5001`;
 
   useEffect(() => {
     console.log("avatar: ", avatar);

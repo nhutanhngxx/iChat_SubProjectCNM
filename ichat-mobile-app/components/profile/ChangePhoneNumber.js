@@ -22,6 +22,7 @@ import { StatusBar } from "expo-status-bar";
 import { FirebaseRecaptchaVerifierModal } from "expo-firebase-recaptcha";
 import { firebaseConfig } from "../../config/firebase";
 import authService from "../../services/authService";
+import { getHostIP } from "../../services/api";
 
 const maskPhoneNumber = (phone) => {
   if (!phone || phone.length < 10) return phone;
@@ -40,7 +41,8 @@ const formatPhoneNumber = (phone) => {
 const ChangePhoneNumber = () => {
   const navigation = useNavigation();
   const { user, setUser } = useContext(UserContext);
-  const API_iChat = "http://192.168.1.85:5001";
+  const ipAdr = getHostIP();
+  const API_iChat = `http://${ipAdr}:5001`;
   const recaptchaVerifier = useRef(null);
   const [verificationId, setVerificationId] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -205,7 +207,9 @@ const ChangePhoneNumber = () => {
               <>
                 <Text style={styles.label}>
                   Mã xác thực đã được gửi đến số:{" "}
-                  <Text style={{ fontWeight: "400" }}>{newPhone}</Text>
+                  <Text style={{ fontWeight: "400" }}>
+                    {maskPhoneNumber(user?.phone)}
+                  </Text>
                 </Text>
 
                 <View style={styles.inputGroup}>

@@ -29,6 +29,8 @@ import messageService from "../../services/messageService";
 import groupService from "../../services/groupService";
 import MessageInputBar from "../../components/messages/MessageInputBar";
 
+import { getHostIP } from "../../services/api";
+
 const Chatting = ({ route }) => {
   const navigation = useNavigation();
   const { user } = useContext(UserContext);
@@ -42,7 +44,8 @@ const Chatting = ({ route }) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [groupMembers, setGroupMembers] = useState([]);
 
-  const API_iChat = "http://192.168.1.85:5001";
+  const ipAdr = getHostIP();
+  const API_iChat = `http://${ipAdr}:5001`;
 
   // Hàm chọn ảnh từ thư viện
   const pickImage = async () => {
