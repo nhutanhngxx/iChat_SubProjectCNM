@@ -1,5 +1,6 @@
 const User = require("../schemas/UserDetails");
 const bcrypt = require("bcryptjs");
+const mongoose = require("mongoose");
 
 const authModel = {
   // Kiểm tra số điện thoại đã tồn tại hay chưa

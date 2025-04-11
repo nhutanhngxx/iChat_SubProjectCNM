@@ -1,6 +1,6 @@
 const User = require("../schemas/UserDetails");
 const jwt = require("jsonwebtoken");
-
+const mongoose = require("mongoose");
 
 // Hàm xử lý cập nhật user
 const updateInfoUser = async (userId, updateData) => {
