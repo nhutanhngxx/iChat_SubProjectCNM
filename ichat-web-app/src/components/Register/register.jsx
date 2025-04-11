@@ -5,6 +5,7 @@ import { parsePhoneNumberFromString } from "libphonenumber-js";
 import { useDispatch } from "react-redux";
 import { checkExistedPhone, sendOtpFirebase, verifyOtpFirebase, registerUser } from "../../redux/slices/authSlice";
 import { auth } from "../../firebase/config";
+import { RecaptchaVerifier } from "firebase/auth"; // Import directly from firebase/auth
 
 const RegisterModal = ({ visible, onClose, onRegister }) => {
     const dispatch = useDispatch();
@@ -26,29 +27,68 @@ const RegisterModal = ({ visible, onClose, onRegister }) => {
     const recaptchaVerifierRef = useRef(null);
 
     // Khởi tạo và làm mới reCAPTCHA
+    // const initializeRecaptcha = () => {
+    //     try {
+    //         // Clear previous instance if exists
+    //         if (window.recaptchaVerifier) {
+    //             window.recaptchaVerifier.clear();
+    //             window.recaptchaVerifier = null;
+    //         }
+
+    //         // Make sure container exists
+    //         const container = document.getElementById('recaptcha-container');
+    //         if (!container) {
+    //             console.error('Recaptcha container not found');
+    //             return;
+    //         }
+
+    //         // Create new instance
+    //         window.recaptchaVerifier = new RecaptchaVerifier(
+    //             'recaptcha-container',
+    //             {
+    //                 size: 'invisible',
+    //                 callback: () => console.log('reCAPTCHA verified')
+    //             },
+    //             auth
+    //         );
+
+    //         recaptchaVerifierRef.current = window.recaptchaVerifier;
+    //         console.log('RecaptchaVerifier initialized successfully');
+    //     } catch (error) {
+    //         console.error('Error initializing RecaptchaVerifier:', error);
+    //     }
+    // };
+    // Update your initializeRecaptcha function:
     const initializeRecaptcha = () => {
-        if (!window.recaptchaVerifier) {
-            window.recaptchaVerifier = new auth.RecaptchaVerifier(
-                "recaptcha-container",
+        try {
+            // Clear previous instance if exists
+            if (window.recaptchaVerifier) {
+                try {
+                    window.recaptchaVerifier.clear();
+                } catch (err) {
+                    console.error("Error clearing reCAPTCHA:", err);
+                }
+                window.recaptchaVerifier = null;
+            }
+
+            // Import directly where needed - this is key to fixing the issue
+            const { RecaptchaVerifier } = require("firebase/auth");
+
+            // Create new instance with auth as third parameter
+            window.recaptchaVerifier = new RecaptchaVerifier(
+                'recaptcha-container',
                 {
-                    size: "invisible", // Hoặc "normal" nếu bạn muốn hiển thị reCAPTCHA
-                    callback: () => {
-                        // reCAPTCHA đã được xác minh, có thể gửi OTP
-                    },
-                    "expired-callback": () => {
-                        console.log("reCAPTCHA expired, resetting...");
-                        window.recaptchaVerifier.render().then((widgetId) => {
-                            window.recaptchaWidgetId = widgetId;
-                        });
-                    },
+                    size: 'invisible',
+                    callback: () => console.log('reCAPTCHA verified')
                 },
-                auth
+                auth // Make sure auth is properly imported at the top
             );
-            window.recaptchaVerifier.render().then((widgetId) => {
-                window.recaptchaWidgetId = widgetId;
-            });
+
+            recaptchaVerifierRef.current = window.recaptchaVerifier;
+            console.log('RecaptchaVerifier initialized successfully');
+        } catch (error) {
+            console.error('Error initializing RecaptchaVerifier:', error);
         }
-        recaptchaVerifierRef.current = window.recaptchaVerifier;
     };
 
     // Đếm ngược cho OTP
@@ -265,6 +305,7 @@ const RegisterModal = ({ visible, onClose, onRegister }) => {
             }
         };
     }, []);
+
 
     if (!visible) return null;
 

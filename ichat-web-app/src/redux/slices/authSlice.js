@@ -180,12 +180,7 @@ export const logoutUser = createAsyncThunk(
     'auth/sendOtpFirebase',
     async (phoneNumber, { rejectWithValue }) => {
       try {
-        // 1. Ensure phone number format
-        if (!phoneNumber.startsWith('+')) {
-          phoneNumber = '+' + phoneNumber;
-        }
-        
-        // 2. Clean up any existing reCAPTCHA
+               // 2. Clean up any existing reCAPTCHA
         if (window.recaptchaVerifier) {
           try {
             window.recaptchaVerifier.clear();

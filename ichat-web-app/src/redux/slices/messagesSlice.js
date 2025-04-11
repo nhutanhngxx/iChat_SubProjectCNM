@@ -13,7 +13,7 @@ export const fetchMessages = createAsyncThunk(
       throw new Error("Failed to fetch messages", data.message);
     }
     return data.data;
-  }
+  } 
 );
 
 // Lấy tin nhắn giữa sender và receiver
