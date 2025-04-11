@@ -12,6 +12,8 @@ import { Modal, Spinner } from "react-bootstrap";
 import LoginWithQR from "./LoginWithQR"
 import RegisterModal from "../Register/register.jsx";
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
+import ForgotPasswordModal from "../ForgetPassword/ForgotPasswordModal.jsx"
+import { parsePhoneNumberFromString } from "libphonenumber-js";
 
 
 export default function LoginWithPass() {
@@ -27,12 +29,14 @@ export default function LoginWithPass() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const [countryCode, setCountryCode] = useState("+84");
+  const [countryCode, setCountryCode] = useState("VN");
   const [isPhoneValid, setIsPhoneValid] = useState(false);
   const [phoneError, setPhoneError] = useState("Số điện thoại không hợp lệ");
 
   // Open Register
   const [showRegister, setShowRegister] = useState(false);
+  // Open Forgot Password
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
   const validVnPrefixes = [
     "032", "033", "034", "035", "036", "037", "038", "039", // Viettel
     "070", "076", "077", "078", "079", "089", "090", "093", // Mobifone
@@ -48,7 +52,8 @@ export default function LoginWithPass() {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      await dispatch(loginUser({ phone, password })).unwrap(); // unwrap để lấy dữ liệu từ createAsyncThunk
+      const phoneNumber = parsePhoneNumberFromString(phone, countryCode);
+      await dispatch(loginUser({ phone: phoneNumber.number, password })).unwrap(); // unwrap để lấy dữ liệu từ createAsyncThunk
       if (token || localStorage.getItem("token")) {
         navigate("/home");
       }
@@ -57,28 +62,6 @@ export default function LoginWithPass() {
     }
   };
 
-  // Khai báo state mới để lưu lỗi nhập số điện thoại
-
-  // const handleChange = (e) => {
-  //   let value = e.target.value;
-
-  //   // Chỉ cho phép nhập số
-  //   if (!/^\d*$/.test(value)) return;
-
-  //   // Giới hạn tối đa 10 số
-  //   if (value.length > 10) return;
-
-  //   setPhone(value);
-
-  //   // Kiểm tra điều kiện hợp lệ ngay khi nhập
-  //   if (!/^0\d{0,9}$/.test(value)) {
-  //     setPhoneError("Số điện thoại phải bắt đầu bằng 0");
-  //   } else if (value.length < 10) {
-  //     setPhoneError("Số điện thoại phải có đúng 10 số");
-  //   } else {
-  //     setPhoneError(""); // Hợp lệ
-  //   }
-  // };
 
   const validatePhone = (value) => {
     const isVietnam = countryCode === "+84";
@@ -99,9 +82,13 @@ export default function LoginWithPass() {
         return "Số Việt Nam phải bắt đầu bằng 0";
       }
 
-      const prefix = value.substring(0, 3);
-      if (!validVnPrefixes.includes(prefix)) {
-        return "Đầu số Việt Nam không hợp lệ";
+      // const prefix = value.substring(0, 3);
+      // if (!validVnPrefixes.includes(prefix)) {
+      //   return "Đầu số Việt Nam không hợp lệ";
+      // }
+      const phoneNumber = parsePhoneNumberFromString(value, countryCode);
+      if (!phoneNumber || !phoneNumber.isValid()) {
+        return "Số điện thoại không hợp lệ";
       }
     } else {
       if (value.length < 6) return "Số điện thoại quá ngắn";
@@ -111,40 +98,8 @@ export default function LoginWithPass() {
     return ""; // ✅ Hợp lệ
   };
 
-  // const handleChange = (e) => {
-  //   let value = e.target.value;
-
-  //   // Chỉ cho nhập số
-  //   if (!/^\d*$/.test(value)) return;
-
-  //   setPhone(value);
-
-  //   let isValid = false;
-
-  //   // Validate theo từng quốc gia
-  //   switch (countryCode) {
-  //     case "+84": // Việt Nam
-  //       isValid = /^0\d{9}$/.test(value);
-  //       break;
-  //     case "+1": // US/Canada
-  //       isValid = /^\d{10}$/.test(value);
-  //       break;
-  //     case "+44": // UK
-  //       isValid = /^7\d{9}$/.test(value);
-  //       break;
-  //     case "+91": // Ấn Độ
-  //       isValid = /^[6-9]\d{9}$/.test(value);
-  //       break;
-  //     default:
-  //       isValid = value.length > 5; // fallback
-  //       break;
-  //   }
-
-  //   setIsPhoneValid(isValid);
-  //   setPhoneError(isValid ? "" : "Số điện thoại không hợp lệ");
-  // };
   const handleChange = (e) => {
-    const value = e.target.value;
+    const value = e.target.value.replace(/\D/g, ""); // Chỉ cho phép nhập số
     setPhone(value);
     const error = validatePhone(value);
     setPhoneError(error);
@@ -213,17 +168,7 @@ export default function LoginWithPass() {
                   <MdPhoneAndroid className="icon" />
                 </div>
                 <div className="country-code-wrapper">
-                  {/* <select
-                    className="country-code"
-                    value={countryCode}
-                    onChange={(e) => setCountryCode(e.target.value)}
-                  >
-                    <option value="+84">+84</option>
-                    <option value="+1">+1</option>
-                    <option value="+44">+44</option>
-                    <option value="+91">+91</option>
-                  </select> */}
-                  <select value={countryCode} onChange={(e) => {
+                  {/* <select value={countryCode} onChange={(e) => {
                     setCountryCode(e.target.value);
                     setPhoneError(validatePhone(phone)); // Revalidate khi đổi mã quốc gia
                   }}
@@ -235,26 +180,19 @@ export default function LoginWithPass() {
                     <option value="+44">+44 (Anh)</option>
                     <option value="+91">+91 (Ấn Độ)</option>
                     <option value="+81">+81 (Nhật)</option>
+                  </select> */}
+                  <select value={countryCode} onChange={(e) => setCountryCode(e.target.value)} style={{ width: "30px", border: "none", }}>
+                    <option value="VN">+84 (VN)</option>
+                    <option value="US">+1 (US)</option>
+                    <option value="KR">+82 (KR)</option>
+                    <option value="JP">+81 (JP)</option>
+                    <option value="CN">+86 (CN)</option>
                   </select>
                   <div className="icons">
                     <FaCaretDown className="icon" />
                   </div>
                 </div>
-                {/* <input
-                  type="text"
-                  className={`input-field ${error ? "error" : ""}`}
-                  placeholder="Nhập số điện thoại"
-                  value={phone}
-                  // onChange={(e) => setPhone(e.target.value)}
-                  onChange={handleChange}
-                /> */}
-                {/* <input
-                  type="text"
-                  className={`input-field ${phone ? (isPhoneValid ? "valid" : "invalid") : ""}`}
-                  placeholder="Nhập số điện thoại"
-                  value={phone}
-                  onChange={handleChange}
-                /> */}
+
                 <input
                   type="text"
                   value={phone}
@@ -334,10 +272,13 @@ export default function LoginWithPass() {
             </div>
 
             <div className="container-body-link">
-              <button style={{}}>Quên mật khẩu?</button>
+              <button style={{}} onClick={() => setShowForgotPassword(true)} >Quên mật khẩu?</button>
               <button onClick={() => setShowRegister(true)}>
                 Đăng ký ngay
               </button>
+              <ForgotPasswordModal
+                visible={showForgotPassword} onClose={() => setShowForgotPassword(false)}
+              />
               <RegisterModal
                 visible={showRegister} onClose={() => setShowRegister(false)}
               // onRegister={handleRegister}

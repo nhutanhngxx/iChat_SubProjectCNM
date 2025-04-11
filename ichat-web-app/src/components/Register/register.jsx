@@ -8,6 +8,7 @@ import { auth, RecaptchaVerifier, signInWithPhoneNumber } from "../../firebase/c
 import { PhoneAuthProvider, signInWithCredential } from "firebase/auth";
 
 
+
 const RegisterModal = ({ visible, onClose, onRegister }) => {
     const dispatch = useDispatch();
 

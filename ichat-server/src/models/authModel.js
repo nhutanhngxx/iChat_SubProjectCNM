@@ -71,6 +71,38 @@ const authModel = {
       };
     }
   },
+  resetPassword: async (phone, newPassword) => {
+    if (!newPassword || newPassword.length < 6) {
+      return {
+        status: "error",
+        message: "Mật khẩu phải có ít nhất 6 ký tự.",
+      };
+    }
+
+    try {
+      const user = await User.findOne({ phone });
+
+      if (!user) {
+        return {
+          status: "error",
+          message: "Không tìm thấy người dùng.",
+        };
+      }
+
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      user.password = hashedPassword;
+
+      await user.save();
+
+      return {
+        status: "ok",
+        message:
+          "Nếu số điện thoại tồn tại, bạn sẽ nhận được thông báo thay đổi mật khẩu.",
+      };
+    } catch (error) {
+      return { status: "error", message: error.message };
+    }
+  },
 };
 
 module.exports = authModel;

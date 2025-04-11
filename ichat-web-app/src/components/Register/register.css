@@ -1,43 +1,59 @@
 /* Overlay nền mờ */
 .modal-overlay {
-    position: fixed;
+    /* position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100vh;
     background-color: rgba(0, 0, 0, 0.6); /* mờ nhẹ */
-    display: flex;
+    /* display: flex;
     justify-content: center;
     align-items: center;
+    z-index: 999; */ 
+    position: fixed;
+    inset: 0 !important; /* thay cho top: 0; left: 0; width: 100%; height: 100vh */
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
     z-index: 999;
-
   }
   
   /* Hộp đăng ký */
   .modal {
-
+    position: fixed;
     padding: 30px 40px;
     border-radius: 20px;
     width: 100%;
     max-width: 450px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-    animation: slideInFromRight 0.4s ease-out;
     font-family: 'Segoe UI', sans-serif;
-    transform: translateX(0); /* để browser biết vị trí gốc */
-    will-change: transform; /* Hint browser: sắp transform nè */
+    box-sizing: border-box;
+    animation: slideInToCenter 0.4s ease-out forwards;
+    background-color: white;
+    z-index: 1000;
+  
+    /* Gốc ban đầu */
+    top: 0;
+    left: 0;
+    transform: translate(0, 0);
+  }
+    
+  @keyframes slideInToCenter {
+    0% {
+      opacity: 0;
+      top: 0;
+      left: 0;
+      transform: translate(0, 0);
+    }
+    100% {
+      opacity: 1;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
   }
   
-  /* Hiệu ứng xuất hiện từ phải qua */
-  @keyframes slideInFromRight {
-    from {
-      opacity: 1;
-      transform: translate3d(500px, 0, 0); /* 3D transform ổn định hơn */
-    }
-    to {
-      opacity: 1;
-      transform: translate3d(0, 0, 0);
-    }
-  }
   
   .modal h2 {
     margin-bottom: 50px;

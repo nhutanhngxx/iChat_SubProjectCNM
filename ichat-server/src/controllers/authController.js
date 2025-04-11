@@ -282,4 +282,19 @@ authController.changePassword = async (req, res) => {
     return res.status(500).json({ status: "error", message: error.message });
   }
 };
+authController.resetPassword = async (req, res) => {
+  const { phone, newPassword } = req.body;
+
+  try {
+    const result = await authModel.resetPassword(phone, newPassword);
+
+    if (result.status === "error") {
+      return res.status(400).json({ status: "error", message: result.message });
+    }
+
+    return res.status(200).json(result);
+  } catch (error) {
+    return res.status(500).json({ status: "error", message: error.message });
+  }
+};
 module.exports = authController;

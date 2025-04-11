@@ -12,5 +12,5 @@ router.post("/qr-login", AuthController.qrLogin); // Đăng nhập bằng QR cod
 router.post("/confirm-login", AuthController.confirmLogin); // Xác nhận đăng nhập bằng QR code
 router.get("/me", AuthController.getMe); // Lấy thông tin người dùng hiện tại
 router.put("/change-password", AuthController.changePassword); // Đổi mật khẩu
-
+router.post("/reset-password", AuthController.resetPassword); // Đặt lại mật khẩu
 module.exports = router;

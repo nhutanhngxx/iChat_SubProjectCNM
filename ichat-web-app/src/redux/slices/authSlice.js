@@ -1,4 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import {auth, RecaptchaVerifier,signInWithPhoneNumber} from "../../firebase/config"; // Import firebase auth and RecaptchaVerifier
+import axios from "axios";
 const API_URL = `http://${window.location.hostname}:5001/api/`;
 // Định nghĩa action async để đăng nhập
 export const loginUser = createAsyncThunk(
@@ -133,7 +135,90 @@ export const changePassword = createAsyncThunk(
     }
   }
 );
+// Gửi OTP bằng Firebase
+// export const sendOtpFirebase = createAsyncThunk('auth/sendOtpFirebase', async (phone, thunkAPI) => {
+//   try {
+//     if (!window.recaptchaVerifier) {
+//       window.recaptchaVerifier = new RecaptchaVerifier(
+//         'recaptcha-container', // id của thẻ div bạn tạo
+//         {
+//           size: 'invisible',
+//           callback: (response) => {
+//             console.log("reCAPTCHA solved", response);
+//           },
+//         },
+//         auth
+//       );
+//     }
+//     const appVerifier = window.recaptchaVerifier;
+//     const confirmationResult = await signInWithPhoneNumber(auth, phone, appVerifier);
+//     window.confirmationResult = confirmationResult;
+//     return { success: true };
+//   } catch (error) {
+//     return thunkAPI.rejectWithValue(error.message);
+//   }
+// });
+// In your authSlice.js
+export const sendOtpFirebase = createAsyncThunk(
+  'auth/sendOtpFirebase',
+  async (phoneNumber, { rejectWithValue }) => {
+    try {
+      // Clear any existing reCAPTCHA
+      if (window.recaptchaVerifier) {
+        try {
+          window.recaptchaVerifier.clear();
+        } catch (e) {
+          console.error("Error clearing existing reCAPTCHA:", e);
+        }
+        window.recaptchaVerifier = null;
+      }
 
+      // Important: Ensure auth is properly initialized
+      if (!auth || !auth.app) {
+        throw new Error("Firebase auth is not properly initialized");
+      }
+
+      // Create new reCAPTCHA verifier
+      window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+        size: 'invisible',
+        callback: () => {
+          console.log("reCAPTCHA verified");
+        }
+      });
+
+      const appVerifier = window.recaptchaVerifier;
+      const confirmationResult = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
+      window.confirmationResult = confirmationResult;
+
+      return confirmationResult.verificationId;
+    } catch (error) {
+      console.error("Firebase OTP error:", error);
+      return rejectWithValue(error.message || "Failed to send OTP");
+    }
+  }
+);
+
+// Xác minh OTP
+export const verifyOtpFirebase = createAsyncThunk('auth/verifyOtpFirebase', async (otp, thunkAPI) => {
+  try {
+    const confirmationResult = window.confirmationResult;
+    if (!confirmationResult) throw new Error('Không có kết quả xác thực');
+    await confirmationResult.confirm(otp);
+    return { verified: true };
+  } catch (error) {
+    return thunkAPI.rejectWithValue(error.message);
+  }
+});
+
+// Đặt lại mật khẩu
+export const resetPassword = createAsyncThunk('auth/resetPassword', async ({ phone, newPassword }, thunkAPI) => {
+  try {
+    const response = await axios.post(`${API_URL}auth/reset-password`, { phone, newPassword });
+    return response.data;
+  } catch (error) {
+    return thunkAPI.rejectWithValue(error.response.data.message || 'Đặt lại mật khẩu thất bại');
+  }
+});
 
 const authSlice = createSlice({
   name: "auth",
@@ -148,6 +233,9 @@ const authSlice = createSlice({
       error: null,
     },
     successMessage: null,
+    otpSent: false,
+    otpVerified: false,
+    passwordResetSuccess: false,
   },
   reducers: {
     clearAuthError(state) {
@@ -238,7 +326,32 @@ const authSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
+      .addCase(sendOtpFirebase.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(sendOtpFirebase.fulfilled, (state) => {
+        state.loading = false;
+        state.otpSent = true;
+      })
+      .addCase(sendOtpFirebase.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
 
+      .addCase(verifyOtpFirebase.fulfilled, (state) => {
+        state.otpVerified = true;
+      })
+      .addCase(verifyOtpFirebase.rejected, (state, action) => {
+        state.error = action.payload;
+      })
+
+      .addCase(resetPassword.fulfilled, (state) => {
+        state.passwordResetSuccess = true;
+      })
+      .addCase(resetPassword.rejected, (state, action) => {
+        state.error = action.payload;
+      });
       
 
   },
