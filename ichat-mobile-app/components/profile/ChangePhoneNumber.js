@@ -190,7 +190,6 @@ const ChangePhoneNumber = () => {
 
                 <TouchableOpacity
                   style={[styles.button, isLoading && { opacity: 0.6 }]}
-                  // onPress={() => setStep(2)}
                   onPress={() => handleVerifyPassword(user?.phone, password)}
                   disabled={isLoading}
                 >

@@ -15,7 +15,6 @@ const UpdateProfileModal = ({ visible, onClose, user, onUpdateSuccess }) => {
   const [day, setDay] = useState("");
   const [month, setMonth] = useState("");
   const [year, setYear] = useState("");
-  
 
   // Thêm state để lưu giá trị ban đầu
   const [initialValues, setInitialValues] = useState({
@@ -23,7 +22,7 @@ const UpdateProfileModal = ({ visible, onClose, user, onUpdateSuccess }) => {
     gender: user?.gender,
     day: "",
     month: "",
-    year: ""
+    year: "",
   });
 
   useEffect(() => {
@@ -32,18 +31,18 @@ const UpdateProfileModal = ({ visible, onClose, user, onUpdateSuccess }) => {
       const newDay = formatDate.getDate();
       const newMonth = formatDate.getMonth() + 1;
       const newYear = formatDate.getFullYear();
-      
+
       setDay(newDay);
       setMonth(newMonth);
       setYear(newYear);
-      
+
       // Cập nhật giá trị ban đầu
       setInitialValues({
         fullName: user.full_name,
         gender: user.gender,
         day: newDay,
         month: newMonth,
-        year: newYear
+        year: newYear,
       });
     }
   }, [user?.dob]);
@@ -151,11 +150,11 @@ const UpdateProfileModal = ({ visible, onClose, user, onUpdateSuccess }) => {
 
         <div className="modal-footer">
           <Button onClick={onClose}>Hủy</Button>
-          <Button 
-            type="primary" 
+          <Button
+            type="primary"
             onClick={handleUpdateUser}
             disabled={!hasChanges()} // Vô hiệu hóa nút khi không có thay đổi
-            className={!hasChanges() ? 'button-disabled' : ''} // Thêm class để style
+            className={!hasChanges() ? "button-disabled" : ""} // Thêm class để style
           >
             Cập nhật
           </Button>
@@ -167,13 +166,13 @@ const UpdateProfileModal = ({ visible, onClose, user, onUpdateSuccess }) => {
 
 // Modal chính hiển thị thông tin người dùng
 const ProfileModal = ({ visible, onClose, user: initialUser }) => {
-//   const [isUpdateMode, setIsUpdateMode] = useState(false);
-//   const [coverImage, setCoverImage] = useState(initialUser?.cover_path);
-//   const [avatarImage, setAvatarImage] = useState(initialUser?.avatar_path);
-//   const [userModal, setUserModal] = useState(initialUser || {});
-//   const [compressedCoverFile, setCompressedCoverFile] = useState(null);
-// const [compressedAvatarFile, setCompressedAvatarFile] = useState(null);
-const [isUpdateMode, setIsUpdateMode] = useState(false);
+  //   const [isUpdateMode, setIsUpdateMode] = useState(false);
+  //   const [coverImage, setCoverImage] = useState(initialUser?.cover_path);
+  //   const [avatarImage, setAvatarImage] = useState(initialUser?.avatar_path);
+  //   const [userModal, setUserModal] = useState(initialUser || {});
+  //   const [compressedCoverFile, setCompressedCoverFile] = useState(null);
+  // const [compressedAvatarFile, setCompressedAvatarFile] = useState(null);
+  const [isUpdateMode, setIsUpdateMode] = useState(false);
   const [coverImage, setCoverImage] = useState(null);
   const [avatarImage, setAvatarImage] = useState(null);
   const [userModal, setUserModal] = useState(initialUser);
@@ -183,24 +182,23 @@ const [isUpdateMode, setIsUpdateMode] = useState(false);
   console.log("User mới đã cập nhật trong profile modal: ", initialUser);
 
   const dispatch = useDispatch();
-// Update useEffect to handle initialization and cleanup
-useEffect(() => {
-  if (initialUser?.id) {
-    setUserModal(initialUser);
-    setCoverImage(initialUser.cover_path);
-    setAvatarImage(initialUser.avatar_path);
-  } else {
-    // Reset state when user is null (e.g., during logout)
-    setUserModal({});
-    setCoverImage(null);
-    setAvatarImage(null);
-    setCompressedCoverFile(null);
-    setCompressedAvatarFile(null);
-    setIsUpdateMode(false);
-  }
-}, [initialUser]);
+  // Update useEffect to handle initialization and cleanup
+  useEffect(() => {
+    if (initialUser?.id) {
+      setUserModal(initialUser);
+      setCoverImage(initialUser.cover_path);
+      setAvatarImage(initialUser.avatar_path);
+    } else {
+      // Reset state when user is null (e.g., during logout)
+      setUserModal({});
+      setCoverImage(null);
+      setAvatarImage(null);
+      setCompressedCoverFile(null);
+      setCompressedAvatarFile(null);
+      setIsUpdateMode(false);
+    }
+  }, [initialUser]);
   const hasChanges = () => {
-
     if (!userModal || !initialUser) return false;
 
     const avatarInput = document.getElementById("avatar-upload");
@@ -229,13 +227,13 @@ useEffect(() => {
   const handleCoverChange = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
-  
+
     const options = {
       maxSizeMB: 0.4,
       maxWidthOrHeight: 1200,
       useWebWorker: true,
     };
-  
+
     try {
       const compressedFile = await imageCompression(file, options);
       const previewUrl = URL.createObjectURL(compressedFile);
@@ -245,18 +243,17 @@ useEffect(() => {
       console.error("Lỗi khi nén ảnh bìa:", error);
     }
   };
-  
 
   const handleAvatarChange = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
-  
+
     const options = {
       maxSizeMB: 0.2,
       maxWidthOrHeight: 600,
       useWebWorker: true,
     };
-  
+
     try {
       const compressedFile = await imageCompression(file, options);
       const previewUrl = URL.createObjectURL(compressedFile);
@@ -266,27 +263,25 @@ useEffect(() => {
       console.error("Lỗi khi nén ảnh avatar:", error);
     }
   };
-  
 
   const handleUpdateUserData = async () => {
-
     if (!hasChanges()) {
       return;
     }
 
-      // Check for valid user ID first
-  if (!userModal?.id) {
-    console.error("Missing userId");
-    alert("Lỗi: Không tìm thấy thông tin người dùng");
-    return;
-  }
-  
+    // Check for valid user ID first
+    if (!userModal?.id) {
+      console.error("Missing userId");
+      alert("Lỗi: Không tìm thấy thông tin người dùng");
+      return;
+    }
+
     const formData = new FormData();
     formData.append("full_name", userModal.full_name);
     formData.append("gender", userModal.gender);
     const dobDate = new Date(userModal.dob);
     formData.append("dob", dobDate.toISOString());
-  
+
     // Ưu tiên file đã nén
     if (compressedAvatarFile) {
       formData.append("avatar", compressedAvatarFile);
@@ -298,7 +293,7 @@ useEffect(() => {
       }
     }
     formData.append("cover", compressedCoverFile);
-  
+
     if (compressedCoverFile) {
       // formData.append("cover", compressedCoverFile);
     } else {
@@ -308,30 +303,31 @@ useEffect(() => {
         formData.append("cover", coverFile);
       }
     }
-  
+
     try {
-      
       const action = await dispatch(
         updateUser({ userId: userModal.id, formData })
       );
       if (updateUser.fulfilled.match(action)) {
-       // Cập nhật cả local state và redux store
-      const updatedUserData = action.payload;
-      dispatch(setUser({
-        ...userModal,
-        ...updatedUserData,
-        id: userModal.id,
-      }));
-      
-      // Cập nhật các state khác
-      setCoverImage(updatedUserData.cover_path);
-      setAvatarImage(updatedUserData.avatar_path);
-      setCompressedCoverFile(null);
-      setCompressedAvatarFile(null);
+        // Cập nhật cả local state và redux store
+        const updatedUserData = action.payload;
+        dispatch(
+          setUser({
+            ...userModal,
+            ...updatedUserData,
+            id: userModal.id,
+          })
+        );
 
-      alert("Cập nhật thành công!");
-     
-      onClose();
+        // Cập nhật các state khác
+        setCoverImage(updatedUserData.cover_path);
+        setAvatarImage(updatedUserData.avatar_path);
+        setCompressedCoverFile(null);
+        setCompressedAvatarFile(null);
+
+        alert("Cập nhật thành công!");
+
+        onClose();
       } else {
         alert(action.payload?.message || "Cập nhật thất bại");
       }
@@ -341,16 +337,16 @@ useEffect(() => {
     }
   };
   // Thêm useEffect để đồng bộ state khi initialUser thay đổi
-useEffect(() => {
-  if (initialUser?.id) {
-    setUserModal(initialUser);
-    setCoverImage(initialUser.cover_path);
-    setAvatarImage(initialUser.avatar_path);
-    setCompressedCoverFile(null);
-    setCompressedAvatarFile(null);
-  }
-}, [initialUser]);
-  
+  useEffect(() => {
+    if (initialUser?.id) {
+      setUserModal(initialUser);
+      setCoverImage(initialUser.cover_path);
+      setAvatarImage(initialUser.avatar_path);
+      setCompressedCoverFile(null);
+      setCompressedAvatarFile(null);
+    }
+  }, [initialUser]);
+
   const handleUserUpdated = (updatedUser) => {
     setUserModal((prevUser) => ({
       ...prevUser,
@@ -368,8 +364,7 @@ useEffect(() => {
       />
     );
   }
-  
-  
+
   return (
     <Modal
       title={
@@ -420,7 +415,6 @@ useEffect(() => {
               accept="image/jpeg,image/png,image/jpg"
               onChange={handleAvatarChange}
               style={{ display: "none" }}
-              
             />
           </div>
           <span className="profile-name">{userModal?.full_name || ""}</span>
@@ -459,8 +453,8 @@ useEffect(() => {
       </div>
 
       <div className="update-section">
-        <button 
-          className={`update-button ${!hasChanges() ? 'no-changes' : ''}`}
+        <button
+          className={`update-button ${!hasChanges() ? "no-changes" : ""}`}
           onClick={hasChanges() ? handleUpdateUserData : undefined}
         >
           <div>
