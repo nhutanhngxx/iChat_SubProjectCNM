@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 // import React, { useState } from "react";
 // import { Menu, Dropdown } from "antd";
 // import { UserOutlined } from "@ant-design/icons";
@@ -85,9 +84,6 @@
 
 // export default ProfileDropdown;
 import React, { useState,useEffect } from "react";
-=======
-import React, { useState } from "react";
->>>>>>> web
 import { Menu, Dropdown } from "antd";
 import { UserOutlined } from "@ant-design/icons";
 import "./Dropdown.css";

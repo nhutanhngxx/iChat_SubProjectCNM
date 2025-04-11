@@ -344,15 +344,12 @@ const authSlice = createSlice({
       state.phoneCheck.exists = false;
     }
   },
-<<<<<<< HEAD
   reducers: {
     setUser: (state, action) => {
       state.user = action.payload;
       localStorage.setItem("user", JSON.stringify(action.payload)); // cập nhật cả localStorage nếu cần
     },
   },
-=======
->>>>>>> web
   extraReducers: (builder) => {
     builder
       .addCase(logoutUser.pending, (state) => {
@@ -479,11 +476,8 @@ const authSlice = createSlice({
 
   },
 });
-<<<<<<< HEAD
 export const { setUser } = authSlice.actions;
-=======
 export const { clearAuthError, clearPhoneCheckStatus,resetSuccessMessage  } = authSlice.actions;
 
->>>>>>> web
 
 export default authSlice.reducer;

@@ -9,16 +9,12 @@ import { loginUser } from "../../redux/slices/authSlice";
 import { useNavigate } from "react-router-dom";
 import "./LoginWithPass.css";
 import { Modal, Spinner } from "react-bootstrap";
-<<<<<<< HEAD
-import { setUserRedux } from "../../redux/slices/userSlide";
-=======
 import LoginWithQR from "./LoginWithQR"
 import RegisterModal from "../Register/register.jsx";
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import ForgotPasswordModal from "../ForgetPassword/ForgotPasswordModal.jsx"
 import { parsePhoneNumberFromString } from "libphonenumber-js";
 
->>>>>>> web
 
 export default function LoginWithPass() {
   // Khai báo state cho form đăng nhập
@@ -28,9 +24,6 @@ export default function LoginWithPass() {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  // Add this new state to track if loading should be visible
-  const [showLoading, setShowLoading] = useState(true);
-
 
   //  Lấy dữ liệu từ store
   const dispatch = useDispatch();
@@ -44,9 +37,17 @@ export default function LoginWithPass() {
   const [showRegister, setShowRegister] = useState(false);
   // Open Forgot Password
   const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const validVnPrefixes = [
+    "032", "033", "034", "035", "036", "037", "038", "039", // Viettel
+    "070", "076", "077", "078", "079", "089", "090", "093", // Mobifone
+    "081", "082", "083", "084", "085", "088", "091", "094", // Vinaphone
+    "056", "058", "092",                                     // Vietnamobile
+    "059", "099",                                            // Gmobile
+    "086", "096", "097", "098",                              // Viettel (cũ)
+  ];
 
   // Sửa lỗi khai báo `error` bị trùng
-  const { token, loading, error } = useSelector((state) => state.auth);
+  const { user, token, loading, error } = useSelector((state) => state.auth);
   //  Hàm xử lý đăng nhập
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -103,45 +104,8 @@ export default function LoginWithPass() {
     const error = validatePhone(value);
     setPhoneError(error);
   };
-<<<<<<< HEAD
-=======
   console.log("User:", user);
   console.log("Token:", token);
-  useEffect(() => {
-    // Khi mới vào trang, cho hiện loading tạm thời trong 2s
-    setShowLoading(true);
-    const timeoutId = setTimeout(() => {
-      setShowLoading(false);
-    }, 2000);
-
-    return () => clearTimeout(timeoutId);
-  }, []);
-
-  // Add this effect to handle the loading timeout
-  useEffect(() => {
-    let timeoutId;
-
-    if (loading) {
-      // When loading starts, show the loading indicator
-      setShowLoading(true);
-
-      // Set a timeout to hide it after 10 seconds
-      timeoutId = setTimeout(() => {
-        setShowLoading(false);
-      }, 10000); // 10 seconds
-    } else {
-      // When loading stops, hide the loading indicator
-      setShowLoading(false);
-    }
-
-    // Clean up the timeout when component unmounts or loading changes
-    return () => {
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-    };
-  }, [loading]);
->>>>>>> web
 
   return (
     <div className="container-login">
@@ -283,7 +247,7 @@ export default function LoginWithPass() {
                 {error}
               </p>
             )}
-            {showLoading && (
+            {loading && (
               // <p className="loading" style={{ marginLeft: "30px" }}>
               //   Đang xử lý...
               // </p>
@@ -302,8 +266,8 @@ export default function LoginWithPass() {
             )}
 
             <div className="container-body-button">
-              <button onClick={handleLogin} disabled={showLoading || phoneError !== ""}>
-                {showLoading ? "Đang đăng nhập..." : "Đăng nhập với mật khẩu"}
+              <button onClick={handleLogin} disabled={loading}>
+                {loading ? "Đang đăng nhập..." : "Đăng nhập với mật khẩu"}
               </button>
             </div>
 
