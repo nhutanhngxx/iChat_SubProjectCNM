@@ -14,13 +14,18 @@ import authService from "../../services/authService";
 
 const HeaderMessages = () => {
   const { user, setUser } = useContext(UserContext);
+  const API_iChat = "http://172.20.65.201:5001";
   const navigation = useNavigation();
   const [modalVisible, setModalVisible] = useState(false);
 
   const handleLogout = async () => {
     try {
-      // // Gửi yêu cầu cập nhật trạng thái thành "Offline"
-      authService.logout(user.id);
+      // Gửi yêu cầu cập nhật trạng thái thành "Offline"
+      await axios.post(`${API_iChat}/api/auth/logout`, { userId: user.id });
+      // Xóa thông tin người dùng trên máy
+      await AsyncStorage.removeItem("token");
+      await AsyncStorage.removeItem("user");
+      // Cập nhật Context API
       setUser(null);
     } catch (error) {
       console.error("Lỗi khi đăng xuất:", error);

@@ -27,6 +27,7 @@ const LoginScreen = ({ navigation }) => {
       Alert.alert("Lỗi", "Vui lòng nhập số điện thoại và mật khẩu!");
       return;
     }
+
     setLoading(true);
     try {
       const response = await authService.login({ phone, password });
