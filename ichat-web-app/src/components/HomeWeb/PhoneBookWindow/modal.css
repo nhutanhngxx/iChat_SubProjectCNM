@@ -23,11 +23,11 @@
 }
 .modal-confirm .modal-actions {
   display: flex;
-  justify-content: space-around;
+  justify-content: center;
   gap: 20px;
 }
 .modal-confirm .modal-actions button {
-  width: 40%;
+  width: 32%;
 }
 
 /* Overlay mờ phía sau modal */

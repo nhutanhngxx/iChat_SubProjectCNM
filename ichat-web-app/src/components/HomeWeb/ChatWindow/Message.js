@@ -1,31 +1,47 @@
-import React from "react";
-import { Avatar, Button } from "antd";
+import React,{useState} from "react";
+import { Avatar, Button,Modal } from "antd";
 import "./Message.css";
 
 import { LikeOutlined, CheckOutlined } from "@ant-design/icons";
 
-const Message = ({ message, selectedChat }) => {
+const Message = ({ message, selectedChat, isSender }) => {
+  // Mở ảnh
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleImageClick = () => {
+    setIsModalOpen(true);
+  };
+
+  const handleClose = () => {
+    setIsModalOpen(false);
+  };
   return (
-    <div className={`message ${message.type}`}>
-      {message.type === "received" && (
+    <div className={`message ${isSender ? "sent" : "received"}`}
+    >
+    
+      {!isSender && (
         <div className="avatar-message">
           <Avatar
             size={32}
-            src={`https://i.pravatar.cc/300?img=${selectedChat.id}`}
+            src={selectedChat.avatar_path}
             className="profile-avatar-message"
           />
         </div>
       )}
 
-      {message.image ? (
-        <div className="message-image-container">
+      {message.type==="image" ? (
+        <>
+        <div className="message-image-container" onClick={handleImageClick} style={{ cursor: "pointer" }}>
           <img
-            src={message.image}
+            src={message.content}
             alt="Message image"
             className="message-image"
           />
           <span className="image-hd">HD</span>
-          <span className="image-timestamp">{message.timestamp}</span>
+          <span className="image-timestamp">{new Date(message.timestamp).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}</span>
           {/* <div className="message-actions-preview">
             <Button size="small" icon={<LikeOutlined />} />
             <Button
@@ -36,7 +52,32 @@ const Message = ({ message, selectedChat }) => {
               Đã gửi
             </Button>
           </div> */}
+           
         </div>
+        <Modal
+              open={isModalOpen}
+              footer={null}
+              onCancel={handleClose}
+              centered
+              width={500}
+              bodyStyle={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                padding: 0, // bỏ padding mặc định để ảnh nằm sát viền nếu muốn
+                height: "100%", // đảm bảo ảnh có thể nằm giữa chiều dọc
+                top: "30px", 
+              }}
+              style={{top: "30px"}} 
+            >
+              <img
+                src={message.content}
+                alt="Full-size image"
+                style={{ maxWidth: "100%", maxHeight: "80vh", borderRadius: "8px" }}
+              />
+</Modal>
+
+        </>
       ) : message.file ? (
         <div className="message-file-container">
           <div className="file-content">
@@ -60,9 +101,18 @@ const Message = ({ message, selectedChat }) => {
           </div> */}
         </div>
       ) : (
-        <div className="message-content">
-          <p>{message.text}</p>
-          <span className="timestamp">{message.timestamp}</span>
+        <div className="message-content" 
+        style={{
+          backgroundColor: isSender ? "#e6f7ff" : "#fff",
+        }}
+        >
+          <p>{message.content}</p>
+          <span className="timestamp">
+            {new Date(message.timestamp).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </span>
         </div>
       )}
     </div>

@@ -9,24 +9,19 @@ import {
   Modal,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { UserContext } from "../../context/UserContext";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import axios from "axios";
+import { UserContext } from "../../config/context/UserContext";
+import authService from "../../services/authService";
 
 const HeaderMessages = () => {
   const { user, setUser } = useContext(UserContext);
-  const API_iChat = "http://192.168.1.102:5001";
+  const API_iChat = "http://192.168.110.158:5001";
   const navigation = useNavigation();
   const [modalVisible, setModalVisible] = useState(false);
 
   const handleLogout = async () => {
     try {
-      // Gửi yêu cầu cập nhật trạng thái thành "Offline"
-      await axios.post(`${API_iChat}/logout`, { userId: user.id });
-      // Xóa thông tin người dùng trên máy
-      await AsyncStorage.removeItem("token");
-      await AsyncStorage.removeItem("user");
-      // Cập nhật Context API
+      // // Gửi yêu cầu cập nhật trạng thái thành "Offline"
+      authService.logout(user.id);
       setUser(null);
     } catch (error) {
       console.error("Lỗi khi đăng xuất:", error);
@@ -37,8 +32,14 @@ const HeaderMessages = () => {
     <View style={styles.headerContainer}>
       {/* Nút Setting mở modal */}
       <TouchableOpacity
-        // style={{ position: "absolute", paddingTop: 60, paddingRight: 15 }}
         onPress={() => setModalVisible(true)}
+        style={{
+          position: "absolute",
+          top: 50,
+          right: 20,
+          zIndex: 10,
+          elevation: 10,
+        }}
       >
         <Image
           source={require("../../assets/icons/setting.png")}
@@ -59,7 +60,9 @@ const HeaderMessages = () => {
               style={styles.option}
               onPress={() => {
                 setModalVisible(false);
-                navigation.navigate("ProfileInformation");
+                setTimeout(() => {
+                  navigation.navigate("ProfileInformation");
+                }, 100);
               }}
             >
               <Image
@@ -74,7 +77,9 @@ const HeaderMessages = () => {
               style={styles.option}
               onPress={() => {
                 setModalVisible(false);
-                navigation.navigate("AccountSecurity");
+                setTimeout(() => {
+                  navigation.navigate("AccountSecurity");
+                }, 100);
               }}
             >
               <Image
@@ -88,8 +93,10 @@ const HeaderMessages = () => {
             <TouchableOpacity
               style={styles.option}
               onPress={() => {
-                handleLogout(); // Đăng xuất
-                setModalVisible(false); // Tắt modal
+                setModalVisible(false);
+                setTimeout(() => {
+                  handleLogout();
+                }, 100);
               }}
             >
               <Image
@@ -119,12 +126,13 @@ export default HeaderMessages;
 
 const styles = StyleSheet.create({
   headerContainer: {
-    flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-end",
     width: "100%",
-    height: 50,
-    paddingRight: 10,
+    height: 80,
+    padding: 10,
     justifyContent: "flex-end",
+    backgroundColor: "transparent",
+    position: "absolute",
   },
   icon: {
     width: 25,

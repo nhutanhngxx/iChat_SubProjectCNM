@@ -1,7 +1,7 @@
 .book-window {
   display: flex;
   height: 100vh;
-  background-image: url("https://i.ibb.co/v471Jbbx/bgApp.png");
+  background-image: url("https://i.ibb.co/p6FPMSqT/new-background.png");
   background-size: cover; /* Để ảnh phủ toàn bộ background */
   background-position: center; /* Căn giữa ảnh */
   background-repeat: no-repeat; /* Không lặp lại ảnh */
@@ -12,7 +12,7 @@
 /* Sidebar */
 .sidebar {
   flex: 3;
-  background-image: url("https://i.ibb.co/v471Jbbx/bgApp.png");
+  background-image: url("https://i.ibb.co/p6FPMSqT/new-background.png");
   background-size: cover; /* Để ảnh phủ toàn bộ background */
   background-position: center; /* Căn giữa ảnh */
   background-repeat: no-repeat; /* Không lặp lại ảnh */
@@ -72,9 +72,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
-  padding-top: 10px;
+  width: 21px;
+  height: 21px;
+  /* padding-top: 10px; */
   font-size: 20px; /* Điều chỉnh kích thước icon nếu cần */
 }
 .menu .menu-item span {
@@ -107,14 +107,15 @@
   align-items: center;
 }
 .content-header .icons {
-  width: 20px;
-  height: 20px;
+  width: 21px;
+  height: 21px;
   margin-right: 10px;
+  margin-bottom: 7px;
 }
 
 .content-body {
   flex: 1; /* Phần còn lại (80%) */
-  background-image: url("https://i.ibb.co/v471Jbbx/bgApp.png");
+  background-image: url("https://i.ibb.co/p6FPMSqT/new-background.png");
   background-size: cover; /* Để ảnh phủ toàn bộ background */
   background-position: center; /* Căn giữa ảnh */
   background-repeat: no-repeat; /* Không lặp lại ảnh */

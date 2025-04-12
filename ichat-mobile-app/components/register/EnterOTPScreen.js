@@ -14,7 +14,7 @@ import {
   Image,
 } from "react-native";
 import CustomButton from "../common/CustomButton";
-import RegisterService from "../../services/registerService";
+import authService from "../../services/authService";
 import { ActivityIndicator } from "react-native";
 import { Appbar } from "react-native-paper";
 
@@ -31,11 +31,7 @@ const EnterOTPScreen = ({ navigation, route }) => {
 
     setIsLoading(true);
     try {
-      const result = await RegisterService.validateOTP(
-        phone,
-        otp,
-        verificationId
-      );
+      const result = await authService.validateOTP(phone, otp, verificationId);
 
       if (result.status === "error") {
         Alert.alert("Lỗi", result.message);

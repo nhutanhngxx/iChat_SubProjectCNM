@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Input } from "antd";
 import {
   SearchOutlined,
@@ -6,8 +6,17 @@ import {
   UsergroupAddOutlined,
 } from "@ant-design/icons";
 import "./SearchBar.css";
+import AddFriend from "../ChatWindow/AddFriend";
 
 const SearchBar = ({ onFocus }) => {
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const showModal = () => {
+    setIsModalVisible(true);
+  };
+
+  const handleClose = () => {
+    setIsModalVisible(false);
+  };
   return (
     <div className="search-container">
       <Input
@@ -17,7 +26,9 @@ const SearchBar = ({ onFocus }) => {
         onFocus={onFocus}
       />
       <div className="icons">
-        <UserOutlined className="user-icon" />
+        <UserOutlined className="user-icon" onClick={showModal} />
+        <AddFriend visible={isModalVisible} onClose={handleClose} />
+
         <UsergroupAddOutlined className="group-icon" />
       </div>
     </div>

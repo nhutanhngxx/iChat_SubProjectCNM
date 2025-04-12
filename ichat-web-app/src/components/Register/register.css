@@ -1,0 +1,187 @@
+/* Overlay nền mờ */
+.modal-overlay {
+    /* position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.6); /* mờ nhẹ */
+    /* display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 999; */ 
+    position: fixed;
+    inset: 0 !important; /* thay cho top: 0; left: 0; width: 100%; height: 100vh */
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    z-index: 999;
+  }
+  
+  /* Hộp đăng ký */
+  .modal {
+    position: fixed;
+    padding: 30px 40px;
+    border-radius: 20px;
+    width: 100%;
+    max-width: 450px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    font-family: 'Segoe UI', sans-serif;
+    box-sizing: border-box;
+    animation: slideInToCenter 0.4s ease-out forwards;
+    background-color: white;
+    z-index: 1000;
+  
+    /* Gốc ban đầu */
+    top: 0;
+    left: 0;
+    transform: translate(0, 0);
+  }
+    
+  @keyframes slideInToCenter {
+    0% {
+      opacity: 0;
+      top: 0;
+      left: 0;
+      transform: translate(0, 0);
+    }
+    100% {
+      opacity: 1;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+  }
+  
+  
+  .modal h2 {
+    margin-bottom: 50px;
+    font-size: 28px;
+    color: #2c3e50;
+    text-align: center;
+  }
+  
+  /* Input chung */
+  .modal input,
+  .modal select {
+    width: 100%;
+    padding: 12px 14px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 12px;
+    font-size: 15px;
+    transition: 0.3s;
+  }
+  
+  .modal input:focus,
+  .modal select:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 8px rgba(0, 123, 255, 0.2);
+  }
+  
+  /* Nút */
+  .modal-buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+  }
+  
+  .modal button {
+    padding: 10px 24px;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+  
+  .modal .cancel {
+    background-color: #e74c3c;
+    color: white;
+  }
+  
+  .modal .confirm {
+    background-color: #3498db;
+    color: white;
+  }
+  
+  .modal .cancel:hover {
+    background-color: #c0392b;
+  }
+  
+  .modal .confirm:hover {
+    background-color: #2980b9;
+  }
+  
+  /* Responsive cho mobile */
+  @media (max-width: 500px) {
+    .modal {
+      padding: 20px 25px;
+      width: 90%;
+    }
+  
+    .modal h2 {
+      font-size: 22px;
+    }
+  }
+.otp-container {
+  display: flex;
+  gap: 5px;
+  justify-content: center;
+  margin-bottom: 30px;
+  }
+.otp-container input {
+  width: 50px;
+  height: 50px;
+  font-size: 24px;
+  text-align: center;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  transition: border-color 0.3s ease;
+}
+.handleNextStep{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+  border: 1px solid #aca9a9 !important;
+  width: 60% !important;
+  padding: 10px 20px !important;
+  align-items: center;
+  align-self: center;
+
+}
+.modal-buttons{
+  display: flex;
+  justify-content: space-evenly;
+  margin-top: 20px;
+}
+.modal-buttons button{
+  border: none !important;
+  background-color: #ffffff !important;
+  padding: 0px !important;
+
+}
+.modal-buttons button:hover{
+  background-color: #13ecec !important;
+  color: #ffffff !important;
+}
+.modal-buttons .cancel-modal{
+  /* nổi lên */
+  background-color: #d8d3d3 !important;
+  color: #000000 !important;
+  position: absolute;
+  right: 0px;
+  top: 0px;
+  width: 30px !important;
+  padding: 5px 5px !important;
+  border-radius: 20px 0px 0 20px  !important;
+}
+
+.modal-buttons .back-modal{
+  padding: 5px 5px !important;
+  border-radius: 50px 0px 0 50px !important;
+  background-color: #d8d3d3 !important;
+}

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import TextareaAutosize from "@mui/material/TextareaAutosize";
 import {
   SmileOutlined,
@@ -25,9 +25,10 @@ import {
 } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import "./MessageInput.css";
-import EmojiPicker from "emoji-picker-react";
 import Picker from "emoji-picker-react";
-import { set } from "lodash";
+import GifPicker from "./GifPicker";
+import { RiExpandDiagonalLine } from "react-icons/ri";
+import ConversationDetails from "./ConversationDetails";
 
 // Dữ liệu mẫu cho danh sách bạn bè
 const mockContacts = [
@@ -53,6 +54,10 @@ const MessageInput = ({
   handleSendMessage,
   onImageUpload,
   onFileUpload,
+  handleShowConversationSymbol,
+  showPickerFromMessArea,
+  isExpanded,
+  showConversation,
 }) => {
   const [selectedImage, setSelectedImage] = useState(null); // State để lưu ảnh đã chọn
   const [selectedFile, setSelectedFile] = useState(null); // State để lưu file đã chọn
@@ -62,15 +67,38 @@ const MessageInput = ({
   const [activeCategory, setActiveCategory] = useState("Khách hàng"); // State cho tab hiện tại
 
   // Emoji picker
-  const [chosenEmoji, setChosenEmoji] = useState(null);
   const [showPicker, setShowPicker] = useState(false);
   const [showPickerRight, setShowPickerRight] = useState(false);
+  const [selectedGif, setSelectedGif] = useState(null);
+  const [activeTab, setActiveTab] = useState("emoji");
   // const [inputMessage, setInputMessage] = useState("");
   // Mở picker ở trên hoặc bên phải
   const handleShowPickerTop = () => {
+    if (isExpanded) return;
     setShowPicker((prev) => !prev);
     setShowPickerRight(false);
   };
+  //Chạy lại khi mở picker trong tt hộp thoại từ messArea để đóng picker
+  const renderCount = useRef(0); // Biến cờ để kiểm tra lần chạy đầu tiên
+  useEffect(() => {
+    renderCount.current += 1;
+    console.log("Render count:", renderCount.current);
+
+    if (renderCount.current === 1) {
+      setShowPicker(false);
+      console.log("Lần 1: setShowPicker(false)");
+      return;
+    }
+
+    if (renderCount.current === 2) {
+      console.log("Lần 2: Không làm gì cả");
+      return;
+    }
+    // Chỉ chạy khi renderCount > 2
+    setShowPicker(showPickerFromMessArea);
+    console.log("showPickerFromMessArea: " + showPickerFromMessArea);
+  }, [showPickerFromMessArea]);
+
   const handleShowPickerRight = () => {
     setShowPickerRight((prev) => !prev);
     setShowPicker(false);
@@ -232,6 +260,7 @@ const MessageInput = ({
       </div>
     </div>
   );
+  //
 
   return (
     <div className="message-input-container">
@@ -239,19 +268,45 @@ const MessageInput = ({
       <div className="message-toolbar">
         <div style={{ bottom: "102px", position: "absolute", left: "0px" }}>
           {showPicker && (
-            <Picker
-              // onEmojiClick={(event, emojiObject) =>
-              //   onEmojiClick(event, emojiObject)
-              // } // Truyền cả event và emojiObject vào hàm
-              onEmojiClick={onEmojiClick} // Truyền hàm onEmojiClick đúng cách
-            />
+            <div className="picker-container">
+              <div className="tabs">
+                <button
+                  className={activeTab === "emoji" ? "active" : ""}
+                  onClick={() => setActiveTab("emoji")}
+                >
+                  Emoji
+                </button>
+                <button
+                  className={activeTab === "gif" ? "active" : ""}
+                  onClick={() => setActiveTab("gif")}
+                >
+                  GIF
+                </button>
+                <button
+                  className="expand-icon"
+                  onClick={handleShowConversationSymbol}
+                >
+                  <RiExpandDiagonalLine />
+                </button>
+              </div>
+              <div className="picker-content">
+                {activeTab === "emoji" ? (
+                  <Picker
+                    onEmojiClick={onEmojiClick}
+                    className="emoji-picker"
+                    style={{ width: "310px" }}
+                  />
+                ) : (
+                  <GifPicker
+                    onSelect={setSelectedGif}
+                    onImageUpload={onImageUpload}
+                  />
+                )}
+              </div>
+            </div>
           )}
         </div>
-        <SmileOutlined
-          className="toolbar-icon"
-          // onClick={() => setShowPicker((prev) => !prev)}
-          onClick={handleShowPickerTop}
-        />
+        <SmileOutlined className="toolbar-icon" onClick={handleShowPickerTop} />
         <label htmlFor="image-upload" className="toolbar-icon">
           <input
             type="file"
@@ -277,15 +332,6 @@ const MessageInput = ({
           className="toolbar-icon"
           onClick={() => setIsModalOpen(true)} // Mở modal trực tiếp khi nhấp
         />
-        {/* <Popover
-          content={moreContent}
-          title={null}
-          trigger="click"
-          placement="topRight"
-          overlayClassName="more-popover"
-        >
-          <MoreOutlined className="toolbar-icon" />
-        </Popover> */}
       </div>
 
       <div style={{ display: "inline-flex" }}>
@@ -323,14 +369,45 @@ const MessageInput = ({
             // onClick={() => setShowPickerRight((prev) => !prev)}
             onClick={handleShowPickerRight}
           />
-          <div style={{ bottom: "37px", position: "absolute", right: "45px" }}>
+          <div
+            style={{
+              bottom: "37px",
+              position: "absolute",
+              right: showConversation ? "-265px" : "50px",
+              zIndex: "1000",
+            }}
+          >
             {showPickerRight && (
-              <Picker
-                // onEmojiClick={(event, emojiObject) =>
-                //   onEmojiClick(event, emojiObject)
-                // } // Truyền cả event và emojiObject vào hàm
-                onEmojiClick={onEmojiClick} // Truyền hàm onEmojiClick đúng cách
-              />
+              <div className="picker-container">
+                <div className="tabs">
+                  <button
+                    className={activeTab === "emoji" ? "active" : ""}
+                    onClick={() => setActiveTab("emoji")}
+                  >
+                    Emoji
+                  </button>
+                  <button
+                    className={activeTab === "gif" ? "active" : ""}
+                    onClick={() => setActiveTab("gif")}
+                  >
+                    GIF
+                  </button>
+                </div>
+                <div className="picker-content">
+                  {activeTab === "emoji" ? (
+                    <Picker
+                      onEmojiClick={onEmojiClick}
+                      className="emoji-picker"
+                      style={{ width: "310px" }}
+                    />
+                  ) : (
+                    <GifPicker
+                      onSelect={setSelectedGif}
+                      onImageUpload={onImageUpload}
+                    />
+                  )}
+                </div>
+              </div>
             )}
           </div>
           {inputMessage || selectedImage || selectedFile ? (
