@@ -14,7 +14,7 @@ import { useNavigation } from "@react-navigation/native";
 import * as MediaLibrary from "expo-media-library";
 import Slider from "@react-native-community/slider";
 import { StatusBar } from "expo-status-bar";
-import { UserContext } from "../../context/UserContext";
+import { UserContext } from "../../config/context/UserContext";
 import { getHostIP } from "../../services/api";
 
 export default function CameraFunction() {

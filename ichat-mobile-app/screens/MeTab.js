@@ -10,7 +10,7 @@ import {
 } from "react-native";
 
 import HeaderPersonalProfile from "../components/header/HeaderPersonalProfile";
-import { UserContext } from "../context/UserContext";
+import { UserContext } from "../config/context/UserContext";
 import * as ImageManipulator from "expo-image-manipulator"; // Thư viện nén ảnh
 import { StatusBar } from "expo-status-bar";
 

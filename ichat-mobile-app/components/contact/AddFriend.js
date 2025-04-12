@@ -17,7 +17,7 @@ import downIcon from "../../assets/icons/down.png";
 import searchIcon from "../../assets/icons/search.png";
 import qrIcon from "../../assets/icons/qr.png";
 import { StatusBar } from "expo-status-bar";
-import { UserContext } from "../../context/UserContext";
+import { UserContext } from "../../config/context/UserContext";
 import axios from "axios";
 import { getHostIP } from "../../services/api";
 

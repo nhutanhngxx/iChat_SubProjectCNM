@@ -1,6 +1,6 @@
 import { useContext } from "react";
 import { createStackNavigator } from "@react-navigation/stack";
-import { UserContext } from "../context/UserContext";
+import { UserContext } from "../config/context/UserContext";
 
 import MyTabs from "./MyTabNavigator";
 import LauncherScreen from "../screens/LauncherScreen";

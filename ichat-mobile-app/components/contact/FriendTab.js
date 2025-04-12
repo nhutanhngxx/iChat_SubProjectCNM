@@ -11,7 +11,7 @@ import {
   Alert,
 } from "react-native";
 import { Dimensions } from "react-native";
-import { UserContext } from "../../context/UserContext";
+import { UserContext } from "../../config/context/UserContext";
 import friendService from "../../services/friendService";
 
 const FriendTab = () => {

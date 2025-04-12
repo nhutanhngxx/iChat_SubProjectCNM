@@ -12,7 +12,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
-import { UserContext } from "../../context/UserContext";
+import { UserContext } from "../../config/context/UserContext";
 import goBackIcon from "../../assets/icons/go-back.png";
 import { useNavigation } from "@react-navigation/native";
 import axios from "axios";

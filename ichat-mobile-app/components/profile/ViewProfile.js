@@ -3,7 +3,7 @@ import { Text, View, Image, TouchableOpacity, StyleSheet } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 
 import HeaderViewProfile from "../header/HeaderViewProfile";
-import { UserContext } from "../../context/UserContext";
+import { UserContext } from "../../config/context/UserContext";
 
 const ViewProfile = ({ route }) => {
   const navigation = useNavigation();

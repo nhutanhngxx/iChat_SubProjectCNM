@@ -8,7 +8,7 @@ import {
   FlatList,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { UserContext } from "../../context/UserContext";
+import { UserContext } from "../../config/context/UserContext";
 import groupService from "../../services/groupService";
 import userService from "../../services/userService";
 import messageService from "../../services/messageService";

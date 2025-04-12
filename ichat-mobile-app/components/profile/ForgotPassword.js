@@ -36,9 +36,9 @@ const ForgotPasswordScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
   const recaptchaVerifier = useRef(null);
 
-  const handleSendOTP = async () => {
+  const handleSendOTP = async (phone) => {
     if (!phone.trim()) {
-      Alert.alert("Lỗi", "Vui lòng nhập số điện thoại");
+      Alert.alert("Thông báo", "Vui lòng nhập số điện thoại");
       return;
     }
 
@@ -79,7 +79,7 @@ const ForgotPasswordScreen = ({ navigation }) => {
 
   const handleVerifyOTP = async () => {
     if (!otp.trim()) {
-      Alert.alert("Lỗi", "Vui lòng nhập mã OTP");
+      Alert.alert("Thông báo", "Vui lòng nhập mã OTP");
       return;
     }
     try {
@@ -88,10 +88,10 @@ const ForgotPasswordScreen = ({ navigation }) => {
       if (result.status === "ok") {
         setStep(3);
       } else {
-        Alert.alert("Lỗi", "Mã OTP không đúng.");
+        // Alert.alert("Lỗi", "Mã OTP không đúng.");
       }
     } catch (error) {
-      Alert.alert("Lỗi", "Xác minh OTP thất bại.");
+      Alert.alert("Thông báo", "Xác minh OTP thất bại.");
     } finally {
       setLoading(false);
     }
@@ -99,7 +99,7 @@ const ForgotPasswordScreen = ({ navigation }) => {
 
   const handleResetPassword = async () => {
     if (!newPassword.trim()) {
-      Alert.alert("Lỗi", "Vui lòng nhập mật khẩu mới");
+      Alert.alert("Thông báo", "Vui lòng nhập mật khẩu mới");
       return;
     }
 
@@ -113,17 +113,14 @@ const ForgotPasswordScreen = ({ navigation }) => {
         phone: formattedPhone,
         newPassword,
       });
-      Alert.alert(
-        "Thành công",
-        "Mật khẩu đã được thay đổi. Hãy đăng nhập lại."
-      );
+      Alert.alert("Chúc mừng", "Mật khẩu đã được thay đổi. Hãy đăng nhập lại.");
       navigation.goBack();
     } catch (error) {
       console.log(
         "Lỗi khi đổi mật khẩu:",
         error?.response?.data || error.message
       );
-      Alert.alert("Lỗi", "Không thể đặt lại mật khẩu.");
+      Alert.alert("Thông báo", "Không thể đặt lại mật khẩu.");
     } finally {
       setLoading(false);
     }
@@ -153,7 +150,7 @@ const ForgotPasswordScreen = ({ navigation }) => {
 
             <TouchableOpacity
               style={[styles.button, loading && { opacity: 0.6 }]}
-              onPress={handleSendOTP}
+              onPress={() => handleSendOTP(phone)}
               disabled={loading}
             >
               <Text style={styles.buttonText}>

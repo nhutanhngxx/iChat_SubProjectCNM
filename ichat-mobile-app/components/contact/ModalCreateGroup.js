@@ -15,7 +15,7 @@ import { Avatar } from "@rneui/themed";
 import { Checkbox } from "react-native-paper";
 import { StatusBar } from "expo-status-bar";
 import friendService from "../../services/friendService";
-import { UserContext } from "../../context/UserContext";
+import { UserContext } from "../../config/context/UserContext";
 
 const ModalCreateGroup = ({ isVisible, onClose }) => {
   const [groupList, setGroupList] = useState([]);

@@ -11,7 +11,7 @@ import {
 import { Dimensions } from "react-native";
 import ModalCreateGroup from "./ModalCreateGroup";
 import { useNavigation } from "@react-navigation/native";
-import { UserContext } from "../../context/UserContext";
+import { UserContext } from "../../config/context/UserContext";
 import { Avatar } from "@rneui/themed";
 import groupService from "../../services/groupService";
 

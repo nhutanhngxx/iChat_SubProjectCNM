@@ -95,15 +95,15 @@ const authService = {
   },
 
   checkExistedPhone: async (phone) => {
-    if (!phone) {
-      return {
-        result: true,
-        message: "Vui lòng nhập số điện thoại",
-      };
-    }
+    // if (!phone) {
+    //   return {
+    //     result: false,
+    //     message: "Vui lòng nhập số điện thoại",
+    //   };
+    // }
     try {
       const response = await apiService.post(`/${PREFIX}/check-existed-phone`, {
-        phone,
+        phone: formatPhoneNumber(phone),
       });
 
       if (response.data.status === "error") {

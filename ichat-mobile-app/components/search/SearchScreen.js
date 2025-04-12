@@ -12,7 +12,7 @@ import {
 import { Tab, TabView } from "@rneui/themed";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { UserContext } from "../../context/UserContext";
+import { UserContext } from "../../config/context/UserContext";
 import { StatusBar } from "expo-status-bar";
 import { getHostIP } from "../../services/api";
 

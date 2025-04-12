@@ -11,7 +11,7 @@ import {
 import { StatusBar } from "expo-status-bar";
 
 import { useNavigation } from "@react-navigation/native";
-import { UserContext } from "../../context/UserContext";
+import { UserContext } from "../../config/context/UserContext";
 
 import HeaderOption from "../header/HeaderOption";
 import userService from "../../services/userService";

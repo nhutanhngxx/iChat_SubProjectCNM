@@ -15,7 +15,7 @@ import { IconButton } from "react-native-paper";
 import { StatusBar } from "expo-status-bar";
 import settingIcon from "../../assets/icons/setting.png";
 
-import { UserContext } from "../../context/UserContext";
+import { UserContext } from "../../config/context/UserContext";
 import friendService from "../../services/friendService";
 
 // Tab "Đã nhận"

@@ -13,7 +13,7 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import RadioGroup from "react-native-radio-buttons-group";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { UserContext } from "../../context/UserContext";
+import { UserContext } from "../../config/context/UserContext";
 import { Modal } from "react-native";
 import axios from "axios";
 import * as ImagePicker from "expo-image-picker";
