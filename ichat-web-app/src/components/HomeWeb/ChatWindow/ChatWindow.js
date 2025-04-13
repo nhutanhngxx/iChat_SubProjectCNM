@@ -6,109 +6,108 @@ import MessageArea from "./MessageArea";
 import ComponentLeft from "./ComponentLeft";
 import { useDispatch, useSelector } from "react-redux";
 import {
-    fetchMessages,
-    fetchChatMessages,
+  fetchMessages,
+  fetchChatMessages,
 } from "../../../redux/slices/messagesSlice";
 import "./ChatWindow.css";
 
 const ChatWindow = ({ user }) => {
-    // Load ttin nhan tu Backend
-    const dispatch = useDispatch();
-    const { messages, status, chatMessages, chatStatus } = useSelector(
-        (state) => state.messages
-    );
-   
+  // Load ttin nhan tu Backend
+  const dispatch = useDispatch();
+  const { messages, status, chatMessages, chatStatus } = useSelector(
+    (state) => state.messages
+  );
 
-    const [userListFromState, setUserListFromState] = useState([]);
-    const [selectedUser, setSelectedUser] = useState(null);
+  const [userListFromState, setUserListFromState] = useState([]);
+  const [selectedUser, setSelectedUser] = useState(null);
 
-    const senderId = user.id || ""; // ID mặc định
-    useEffect(() => {
-        dispatch(fetchMessages(senderId)); // Fetch danh sách người nhận
-    }, [dispatch, senderId]);
+  const senderId = user.id || ""; // ID mặc định
+  useEffect(() => {
+    dispatch(fetchMessages(senderId)); // Fetch danh sách người nhận
+  }, [dispatch, senderId]);
 
-    useEffect(() => {
-        if (messages && messages.length > 0) {
-            // Chuyển đổi `messages` thành danh sách user phù hợp
-            const formattedUsers = messages.map((msg) => ({
-                id: msg.receiver_id,
-                name: msg.name,
-                lastMessage: msg.lastMessage,
-                timestamp: msg.timestamp,
-                unread: msg.unread || 0,
-                user_status: msg.user_status || "Offline",
-                type: msg.type || "text",
-                avatar_path: msg.avatar_path || "https://default-avatar.com/avatar.jpg",
-                priority: "priority",
-            }));
+  useEffect(() => {
+    if (messages && messages.length > 0) {
+      // Chuyển đổi `messages` thành danh sách user phù hợp
+      const formattedUsers = messages.map((msg) => ({
+        id: msg.receiver_id,
+        name: msg.name,
+        lastMessage: msg.lastMessage,
+        timestamp: msg.timestamp,
+        unread: 0,
+        user_status: msg.user_status || "Offline",
+        type: msg.type || "text",
+        avatar_path: msg.avatar_path || "https://default-avatar.com/avatar.jpg",
+        priority: "priority",
+        isLastMessageFromMe: msg.isLastMessageFromMe || false,
+      }));
 
-            setUserListFromState(formattedUsers);
-            console.log("formattedUsers", formattedUsers);
-        }
-    }, [messages]);
-    // // Lấy tin nhắn giữa sender và receiver
-    // Khi chọn một user, lọc tin nhắn giữa senderId và receiverId
-    // useEffect(() => {
-    //     if (messages && messages.length > 0) {
-    //       const updatedUsers = messages.map((msg) => ({
-    //         id: msg.receiver_id,
-    //         name: msg.name,
-    //         lastMessage: msg.lastMessage,
-    //         timestamp: msg.timestamp,
-    //         unread: msg.unread || 0,
-    //         user_status: msg.user_status || "Offline",
-    //         avatar_path: msg.avatar_path || "https://default-avatar.com/avatar.jpg",
-    //       }));
-      
-    //       setUserListFromState((prevUsers) => {
-    //         const mergedUsers = [...prevUsers];
-      
-    //         updatedUsers.forEach((newUser) => {
-    //           const index = mergedUsers.findIndex((u) => u.id === newUser.id);
-    //           if (index === -1) {
-    //             mergedUsers.unshift(newUser);
-    //           } else {
-    //             mergedUsers[index] = newUser; // Cập nhật tin nhắn mới nhất
-    //           }
-    //         });
-      
-    //         return mergedUsers;
-    //       });
-    //     }
-    //   }, [messages]);
+      setUserListFromState(formattedUsers);
+      console.log("formattedUsers", formattedUsers);
+    }
+  }, [messages]);
+  // // Lấy tin nhắn giữa sender và receiver
+  // Khi chọn một user, lọc tin nhắn giữa senderId và receiverId
+  // useEffect(() => {
+  //     if (messages && messages.length > 0) {
+  //       const updatedUsers = messages.map((msg) => ({
+  //         id: msg.receiver_id,
+  //         name: msg.name,
+  //         lastMessage: msg.lastMessage,
+  //         timestamp: msg.timestamp,
+  //         unread: msg.unread || 0,
+  //         user_status: msg.user_status || "Offline",
+  //         avatar_path: msg.avatar_path || "https://default-avatar.com/avatar.jpg",
+  //       }));
 
-    useEffect(() => {
-        if (selectedUser) {
-            dispatch(fetchChatMessages({ senderId, receiverId: selectedUser.id })); // Fetch tin nhắn giữa sender và receiver
-        }
-    }, [dispatch, senderId, selectedUser]);
-    // Hàm callback để cập nhật messages
-    const handleUpdateMessages = (newMessage) => {
-        // Cập nhật messages ở đây (ví dụ: dispatch action hoặc cập nhật state)
-        // dispatch(someActionToUpdateMessages(newMessage));
-    };
+  //       setUserListFromState((prevUsers) => {
+  //         const mergedUsers = [...prevUsers];
 
-    return ( <
-        Layout className = "chat-window" >
-        <ComponentLeft
-         userList = { userListFromState }
-        setUserList = { setUserListFromState }
-        onSelectUser = { setSelectedUser }
+  //         updatedUsers.forEach((newUser) => {
+  //           const index = mergedUsers.findIndex((u) => u.id === newUser.id);
+  //           if (index === -1) {
+  //             mergedUsers.unshift(newUser);
+  //           } else {
+  //             mergedUsers[index] = newUser; // Cập nhật tin nhắn mới nhất
+  //           }
+  //         });
+
+  //         return mergedUsers;
+  //       });
+  //     }
+  //   }, [messages]);
+
+  useEffect(() => {
+    if (selectedUser) {
+      dispatch(fetchChatMessages({ senderId, receiverId: selectedUser.id })); // Fetch tin nhắn giữa sender và receiver
+    }
+  }, [dispatch, senderId, selectedUser]);
+  // Hàm callback để cập nhật messages
+  const handleUpdateMessages = (newMessage) => {
+    // Cập nhật messages ở đây (ví dụ: dispatch action hoặc cập nhật state)
+    // dispatch(someActionToUpdateMessages(newMessage));
+  };
+
+  return (
+    <Layout className="chat-window">
+      <ComponentLeft
+        userList={userListFromState}
+        setUserList={setUserListFromState}
+        onSelectUser={setSelectedUser}
+      />
+      {/* Hiển thị màn hình chat hoặc màn hình chào */}{" "}
+      {selectedUser ? (
+        <MessageArea
+          selectedChat={selectedUser}
+          messages={chatMessages}
+          onUpdateMessages={handleUpdateMessages} // Truyền hàm callback
+          user={user}
         />
-
-        { /* Hiển thị màn hình chat hoặc màn hình chào */ } {
-            selectedUser ? ( <
-                MessageArea selectedChat = { selectedUser }
-                messages = { chatMessages }
-                onUpdateMessages = { handleUpdateMessages } // Truyền hàm callback
-                user = { user }
-                />
-            ) : ( <
-                HelloWindow / >
-            )
-        } 
-        </Layout>
-    )
+      ) : (
+        <HelloWindow />
+      )}
+    </Layout>
+  );
 };
 
 export default ChatWindow;

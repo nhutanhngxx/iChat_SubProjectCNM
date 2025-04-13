@@ -101,6 +101,8 @@ dayjs.extend(localizedFormat);
 // Component ChatItem: Render từng mục trong danh sách chat
 const ChatItem = ({ item, onSelectUser, onPin }) => {
   const [isClicked, setIsClicked] = useState(false);
+  console.log("Item từ componetnLeft",item);
+  console.log(typeof item.isLastMessageFromMe, item.isLastMessageFromMe);
 
   // Tính thời gian từ timestamp
   const formatTime = (timestamp) => {
@@ -162,9 +164,16 @@ const ChatItem = ({ item, onSelectUser, onPin }) => {
               {item.type === "video" && <VideoCameraOutlined />}
               {item.type === "audio" && <PhoneOutlined />}
               {item.type === "notification" && <NotificationOutlined />}
-              {(item.lastMessage?.length > 10
+              {/* {(item.lastMessage?.length > 10
                 ? `${item.lastMessage.slice(0, 30)}...`
-                : item.lastMessage) || "Tin nhắn trống"}
+                : item.lastMessage) || "Tin nhắn trống"} */}
+                {`${item.isLastMessageFromMe === true ? "Bạn: " : `${item.name}: `}${
+                    item.lastMessage?.length > 30
+                      ? item.lastMessage.slice(0, 30) + "..."
+                      : item.lastMessage || "Tin nhắn trống"
+                  }`}
+
+
             </span>
           </Col>
           <Col>

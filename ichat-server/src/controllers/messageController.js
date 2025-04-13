@@ -606,7 +606,7 @@ const MessageController = {
         content: req.body.content,
         type: req.body.type,
         chat_type: req.body.chat_type,
-        file: req.file,
+        file: req.file || null,
       });
 
       res.status(201).json({
@@ -742,69 +742,73 @@ const MessageController = {
               { sender_id: new mongoose.Types.ObjectId(senderId) },
               { receiver_id: new mongoose.Types.ObjectId(senderId) },
             ],
-          }, // Lọc tin nhắn mà người dùng là người gửi hoặc người nhận
+          },
         },
-        {
-          $sort: { timestamp: -1 }, // Sắp xếp theo thời gian gần nhất
-        },
+        { $sort: { timestamp: -1 } },
         {
           $group: {
             _id: {
-              // Nhóm theo cặp người gửi và người nhận
               $cond: [
-                { $eq: ["$sender_id", new mongoose.Types.ObjectId(senderId)] },
-                // Nếu người dùng hiện tại là người gửi, thì nhóm theo receiver_id
-                "$receiver_id",
-                // Ngược lại nhóm theo sender_id (vì người dùng là receiver)
-                "$sender_id",
+                { $lt: ["$sender_id", "$receiver_id"] },
+                { sender: "$sender_id", receiver: "$receiver_id" },
+                { sender: "$receiver_id", receiver: "$sender_id" },
               ],
             },
-            lastMessage: { $first: "$content" }, // Lấy nội dung tin nhắn gần nhất
-            timestamp: { $first: "$timestamp" }, // Lấy thời gian tin nhắn gần nhất
-            status: { $first: "$status" }, // Trạng thái tin nhắn gần nhất
-            type: { $first: "$type" }, // Loại tin nhắn
-            // Thêm trường để xác định ai là người gửi tin nhắn cuối
+            lastMessage: { $first: "$content" },
+            timestamp: { $first: "$timestamp" },
+            status: { $first: "$status" },
+            type: { $first: "$type" },
             lastMessageSender: { $first: "$sender_id" },
           },
         },
         {
+          $match: {
+            $or: [
+              { "_id.sender": new mongoose.Types.ObjectId(senderId) },
+              { "_id.receiver": new mongoose.Types.ObjectId(senderId) },
+            ],
+          },
+        },
+        {
+          $addFields: {
+            otherUserId: {
+              $cond: [
+                { $eq: ["$_id.sender", new mongoose.Types.ObjectId(senderId)] },
+                "$_id.receiver",
+                "$_id.sender",
+              ],
+            },
+          },
+        },
+        {
           $lookup: {
-            from: "UserInfo", // Bảng UserInfo
-            localField: "_id",
+            from: "UserInfo",
+            localField: "otherUserId",
             foreignField: "_id",
             as: "receiverInfo",
           },
         },
-        {
-          $unwind: "$receiverInfo", // Giải nén thông tin người nhận
-        },
+        { $unwind: "$receiverInfo" },
         {
           $lookup: {
-            from: "Message", // Lấy tin nhắn chưa đọc
+            from: "Message",
             let: {
-              receiverId: "$_id",
-              senderId: new mongoose.Types.ObjectId(senderId),
+              otherId: "$otherUserId",
+              me: new mongoose.Types.ObjectId(senderId),
             },
             pipeline: [
               {
                 $match: {
                   $expr: {
                     $and: [
-                      {
-                        $eq: [
-                          "$receiver_id",
-                          new mongoose.Types.ObjectId(senderId),
-                        ],
-                      }, // Chỉ lấy tin nhắn gửi đến người dùng hiện tại
-                      { $eq: ["$sender_id", "$$receiverId"] }, // Từ người đang chat với
-                      { $ne: ["$status", "Viewed"] }, // Chưa đọc
+                      { $eq: ["$receiver_id", "$$me"] },
+                      { $eq: ["$sender_id", "$$otherId"] },
+                      { $ne: ["$status", "Viewed"] },
                     ],
                   },
                 },
               },
-              {
-                $count: "unread", // Đếm số lượng tin nhắn chưa đọc
-              },
+              { $count: "unread" },
             ],
             as: "unreadMessages",
           },
@@ -813,8 +817,7 @@ const MessageController = {
           $addFields: {
             unread: {
               $ifNull: [{ $arrayElemAt: ["$unreadMessages.unread", 0] }, 0],
-            }, // Nếu không có thì mặc định là 0
-            // Thêm trường xác định tin nhắn cuối cùng là từ mình hay người khác
+            },
             isLastMessageFromMe: {
               $eq: [
                 "$lastMessageSender",
@@ -832,12 +835,13 @@ const MessageController = {
             lastMessage: 1,
             timestamp: 1,
             status: 1,
-            user_status: "$receiverInfo.status", // Trạng thái online/offline của người nhận
+            user_status: "$receiverInfo.status",
             type: 1,
-            unread: 1, // Số lượng tin nhắn chưa đọc
-            isLastMessageFromMe: 1, // Tin nhắn cuối cùng có phải từ mình không
+            unread: 1,
+            isLastMessageFromMe: 1,
           },
         },
+        { $sort: { timestamp: -1 } },
       ]);
 
       res.status(200).json({ success: true, data: recentReceivers });
@@ -845,6 +849,7 @@ const MessageController = {
       res.status(500).json({ success: false, message: error.message });
     }
   },
+
   replyToMessage: async (req, res) => {
     try {
       const { sender_id, receiver_id, content, type, chat_type, reply_to } =
