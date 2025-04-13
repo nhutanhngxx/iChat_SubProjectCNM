@@ -32,7 +32,6 @@ try {
 }
 
 // Tắt reCAPTCHA trong môi trường development
-
 auth.settings.appVerificationDisabledForTesting = true;
 
 export { firebaseConfig, auth, app };

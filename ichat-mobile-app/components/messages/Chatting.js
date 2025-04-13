@@ -10,30 +10,26 @@ import {
   View,
   Image,
   StyleSheet,
-  SafeAreaView,
   FlatList,
-  TextInput,
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
   Modal,
-  Keyboard,
-  TouchableWithoutFeedback,
   Pressable,
   Alert,
 } from "react-native";
-import { NetworkInfo } from "react-native-network-info";
 import * as ImagePicker from "expo-image-picker";
 import * as FileSystem from "expo-file-system";
 import { StatusBar } from "expo-status-bar";
 
 import { useNavigation } from "@react-navigation/native";
-import { UserContext } from "../../context/UserContext";
+import { UserContext } from "../../config/context/UserContext";
 import axios from "axios";
 import messageService from "../../services/messageService";
 import groupService from "../../services/groupService";
-
 import MessageInputBar from "../../components/messages/MessageInputBar";
+
+import { getHostIP } from "../../services/api";
 
 const Chatting = ({ route }) => {
   const navigation = useNavigation();
@@ -48,7 +44,8 @@ const Chatting = ({ route }) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [groupMembers, setGroupMembers] = useState([]);
 
-  const API_iChat = "http://172.20.68.107:5001";
+  const ipAdr = getHostIP();
+  const API_iChat = `http://${ipAdr}:5001`;
 
   // Hàm chọn ảnh từ thư viện
   const pickImage = async () => {
@@ -137,19 +134,17 @@ const Chatting = ({ route }) => {
       fetchMessages();
       const interval = setInterval(fetchMessages, 1000);
       return () => clearInterval(interval);
-      // }
     }, [user, chat]);
   } else {
     useEffect(() => {
       if (chat?.id && user?.id) {
         const fetchMessages = async () => {
           try {
-            const response = await axios.get(
-              `${API_iChat}/messages/${user.id}/${chat.id}`
-            );
-            if (response.data.status === "ok") {
-              setMessages(response.data.data);
-            }
+            const response = await messageService.getPrivateMessages({
+              userId: user.id,
+              chatId: chat.id,
+            });
+            setMessages(response);
           } catch (error) {
             console.error("Lỗi khi lấy tin nhắn:", error);
           }
@@ -180,13 +175,6 @@ const Chatting = ({ route }) => {
       });
     };
   }, []);
-
-  // Cuộn xuống cuối khi có tin nhắn mới ngay lập tức
-  // useEffect(() => {
-  //   if (flatListRef.current && messages.length > 0) {
-  //     flatListRef.current.scrollToEnd({ animated: false });
-  //   }
-  // }, [messages]);
 
   const sendMessage = async () => {
     try {
@@ -257,57 +245,65 @@ const Chatting = ({ route }) => {
   return (
     <View style={styles.container}>
       <StatusBar style="dark" />
+
       {/* Header của Chatting */}
       <View style={styles.chatHeader}>
-        <View style={{ flexDirection: "row", alignItems: "center" }}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Image
-              source={require("../../assets/icons/go-back.png")}
-              style={{ width: 25, height: 25 }}
-            />
-          </TouchableOpacity>
-
-          <View style={{ marginLeft: 10, gap: 2 }}>
-            <Text style={styles.name}>{chat.name}</Text>
-            <Text style={{ fontSize: 12, color: "gray" }}>
-              {chat.status === "Online" ? "Đang hoạt động" : "Ngoại tuyến"}
-            </Text>
-          </View>
-        </View>
         <View
           style={{
             flexDirection: "row",
             alignItems: "center",
-            gap: 15,
-            paddingRight: 10,
           }}
         >
-          <TouchableOpacity>
-            <Image
-              source={require("../../assets/icons/phone-call.png")}
-              style={styles.iconsInHeader}
-            />
-          </TouchableOpacity>
-          <TouchableOpacity>
-            <Image
-              source={require("../../assets/icons/video.png")}
-              style={{ width: 25, height: 25 }}
-            />
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() =>
-              navigation.navigate("Option", {
-                id: chat.id,
-                name: chat.name,
-                avatar: chat.avatar,
-              })
-            }
+          <View style={{ flexDirection: "row", alignItems: "center", flex: 1 }}>
+            <TouchableOpacity onPress={() => navigation.goBack()}>
+              <Image
+                source={require("../../assets/icons/go-back.png")}
+                style={{ width: 25, height: 25 }}
+              />
+            </TouchableOpacity>
+
+            <View style={{ marginLeft: 10, gap: 2 }}>
+              <Text style={styles.name}>{chat.name}</Text>
+              <Text style={{ fontSize: 12, color: "gray" }}>
+                {chat.status === "Online" ? "Đang hoạt động" : "Ngoại tuyến"}
+              </Text>
+            </View>
+          </View>
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 15,
+              paddingRight: 10,
+            }}
           >
-            <Image
-              source={require("../../assets/icons/option.png")}
-              style={styles.iconsInHeader}
-            />
-          </TouchableOpacity>
+            <TouchableOpacity>
+              <Image
+                source={require("../../assets/icons/phone-call.png")}
+                style={styles.iconsInHeader}
+              />
+            </TouchableOpacity>
+            <TouchableOpacity>
+              <Image
+                source={require("../../assets/icons/video.png")}
+                style={{ width: 25, height: 25 }}
+              />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => {
+                navigation.navigate("Option", {
+                  id: chat.id,
+                  name: chat.name,
+                  avatar: chat.avatar,
+                });
+              }}
+            >
+              <Image
+                source={require("../../assets/icons/option.png")}
+                style={styles.iconsInHeader}
+              />
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
 
@@ -315,7 +311,6 @@ const Chatting = ({ route }) => {
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        // keyboardVerticalOffset={Platform.OS === "ios" ? 50 : 0} // Khóa lại vì lỗi đẩy Thanh soạn tin nhắn
       >
         <FlatList
           ref={flatListRef}
@@ -417,8 +412,7 @@ const Chatting = ({ route }) => {
           contentContainerStyle={styles.messagesContainer}
           onContentSizeChange={() =>
             flatListRef.current?.scrollToEnd({ animated: true })
-          } // Cuộn khi nội dung thay đổi
-          // onLayout={() => flatListRef.current?.scrollToEnd({ animated: true })} // Cuộn tin nhắn mới nhất
+          }
         />
 
         {/* Modal Thao Tác Tin Nhắn */}
@@ -601,14 +595,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "white",
-    paddingTop: 40,
     paddingBottom: 10,
   },
   chatHeader: {
     flexDirection: "row",
-    alignItems: "center",
-    paddingBottom: 10,
-    height: 50,
+    alignItems: "flex-end",
+    padding: 10,
+    height: 90,
     justifyContent: "space-between",
     backgroundColor: "white",
   },

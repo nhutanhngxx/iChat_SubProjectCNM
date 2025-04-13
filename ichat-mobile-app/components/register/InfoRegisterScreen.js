@@ -20,7 +20,7 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import CustomButton from "../common/CustomButton";
 import editIcon from "../../assets/icons/edit.png";
 import { RadioGroup } from "react-native-radio-buttons-group";
-import registerService from "../../services/registerService";
+import authService from "../../services/authService";
 import { ActivityIndicator } from "react-native";
 import { Appbar } from "react-native-paper";
 
@@ -41,7 +41,7 @@ const InfoRegisterScreen = ({ navigation, route }) => {
     setIsLoading(true);
     try {
       const genderValue = radioButtons.find((item) => item.id === gender).value;
-      const response = await registerService.register(
+      const response = await authService.register(
         tempToken,
         phone,
         password,
@@ -165,6 +165,36 @@ const InfoRegisterScreen = ({ navigation, route }) => {
                   )}
                 </TouchableOpacity>
               </View>
+              {showPicker && (
+                <Modal transparent={true} animationType="fade">
+                  <View style={styles.modalContainer}>
+                    <View style={styles.pickerContainer}>
+                      <DateTimePicker
+                        value={dob}
+                        mode="date"
+                        display="spinner" // Hiển thị giao diện có nút OK trên iOS
+                        onChange={(event, selectedDate) => {
+                          if (Platform.OS === "android") {
+                            setShowPicker(false); // Android đóng ngay sau khi chọn
+                          }
+                          if (dob) {
+                            setDob(selectedDate);
+                          }
+                        }}
+                      />
+                      {/* Chỉ hiển thị nút "OK" trên iOS */}
+                      {Platform.OS === "ios" && (
+                        <TouchableOpacity
+                          onPress={() => setShowPicker(false)}
+                          style={styles.okButton}
+                        >
+                          <Text style={styles.doneText}>OK</Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  </View>
+                </Modal>
+              )}
 
               {/* Giới tính */}
               <View style={styles.item}>
@@ -198,42 +228,12 @@ const InfoRegisterScreen = ({ navigation, route }) => {
                   />
                 )}
               </View>
-              {showPicker && (
-                <Modal transparent={true} animationType="fade">
-                  <View style={styles.modalContainer}>
-                    <View style={styles.pickerContainer}>
-                      <DateTimePicker
-                        value={dob}
-                        mode="date"
-                        display="spinner" // Hiển thị giao diện có nút OK trên iOS
-                        onChange={(event, selectedDate) => {
-                          if (Platform.OS === "android") {
-                            setShowPicker(false); // Android đóng ngay sau khi chọn
-                          }
-                          if (dob) {
-                            setDob(selectedDate);
-                          }
-                        }}
-                      />
-                      {/* Chỉ hiển thị nút "OK" trên iOS */}
-                      {Platform.OS === "ios" && (
-                        <TouchableOpacity
-                          onPress={() => setShowPicker(false)}
-                          style={styles.okButton}
-                        >
-                          <Text style={styles.doneText}>OK</Text>
-                        </TouchableOpacity>
-                      )}
-                    </View>
-                  </View>
-                </Modal>
-              )}
             </View>
 
             <View style={{ position: "absolute", bottom: -150 }}>
               <Text
                 style={styles.question}
-                onPress={() => alert("Những câu hỏi thường gặp")}
+                onPress={() => Alert.alert("Những câu hỏi thường gặp")}
               >
                 Những câu hỏi thường gặp
               </Text>

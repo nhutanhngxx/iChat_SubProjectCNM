@@ -7,12 +7,11 @@ import {
   TouchableOpacity,
   FlatList,
 } from "react-native";
-import { NetworkInfo } from "react-native-network-info";
 import { useNavigation } from "@react-navigation/native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { UserContext } from "../../context/UserContext";
-import axios from "axios";
+import { UserContext } from "../../config/context/UserContext";
 import groupService from "../../services/groupService";
+import userService from "../../services/userService";
+import messageService from "../../services/messageService";
 
 // Tính thời gian
 import dayjs from "dayjs";
@@ -26,69 +25,30 @@ const getTimeAgo = (timestamp) => {
   return dayjs(timestamp).fromNow(); // Hiển thị "x phút trước"
 };
 
-const Other = () => {
+const Priority = () => {
   const navigation = useNavigation();
   const { user } = useContext(UserContext);
   const [chatList, setChatList] = useState([]);
   const [groupList, setGroupList] = useState([]);
   const [allUser, setAllUser] = useState([]);
 
-  const API_iChat = "http://172.20.68.107:5001";
-
   // Gộp danh sách chat và group chat và sắp xếp theo thời gian tin nhắn cuối cùng
   const listChat = chatList.concat(groupList);
   listChat.sort((a, b) => b.lastMessageTime - a.lastMessageTime);
 
-  const fetchUsers = async () => {
-    try {
-      const response = await axios.get(`${API_iChat}/users`);
-
-      if (response.data.status === "ok" && Array.isArray(response.data.users)) {
-        setAllUser(response.data.users);
-      } else {
-        console.error("Lỗi: API trả về dữ liệu không hợp lệ", response.data);
-        setAllUser([]); // Gán rỗng nếu API lỗi
-      }
-    } catch (error) {
-      console.error("Error fetching users:", error);
-      setAllUser([]); // Gán rỗng nếu lỗi
-    }
-  };
-
   useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await userService.getAllUser();
+        if (response) {
+          setAllUser(response);
+        }
+      } catch (error) {
+        console.error("Lỗi khi lấy danh sách người dùng:", error);
+      }
+    };
     fetchUsers();
   }, []);
-
-  // Lấy danh sách group chat của người dùng
-  useEffect(() => {
-    if (!user?.id) return;
-    const fetchGroupList = async () => {
-      const groups = await groupService.getAllGroupsByUserId(user.id);
-      setGroupList(groups);
-    };
-    fetchGroupList();
-    const interval = setInterval(fetchGroupList, 1000);
-    return () => clearInterval(interval);
-  }, [user?.id]);
-
-  useEffect(() => {
-    if (allUser.length === 0 || !user?.id) return;
-    fetchChatList();
-  }, [user, allUser]);
-
-  const fetchChatList = async () => {
-    try {
-      const response = await axios.get(`${API_iChat}/messages/${user.id}`);
-
-      if (response.data.status === "ok" && Array.isArray(response.data.data)) {
-        setChatList(formatChatList(response.data.data, allUser));
-      } else {
-        console.error("API không trả về dữ liệu hợp lệ:", response.data);
-      }
-    } catch (error) {
-      console.error("Lỗi khi lấy danh sách chat:", error);
-    }
-  };
 
   // Lọc lại dữ liệu tin nhắn theo từng người dùng
   const formatChatList = (messages, allUser) => {
@@ -119,11 +79,36 @@ const Other = () => {
         }
       } else return;
     });
-
     // return Array.from(chatMap.values());
     return Array.from(chatMap.values()).sort(
       (a, b) => b.lastMessageTime - a.lastMessageTime
     );
+  };
+
+  // Lấy danh sách group chat của người dùng
+  useEffect(() => {
+    if (!user?.id) return;
+    const fetchGroupList = async () => {
+      const groups = await groupService.getAllGroupsByUserId(user.id);
+      setGroupList(groups);
+    };
+    fetchGroupList();
+    const interval = setInterval(fetchGroupList, 1000);
+    return () => clearInterval(interval);
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (allUser.length === 0 || !user?.id) return;
+    fetchChatList();
+  }, [user, allUser]);
+
+  const fetchChatList = async () => {
+    try {
+      const response = await messageService.getMessagesByUserId(user.id);
+      setChatList(formatChatList(response, allUser));
+    } catch (error) {
+      console.error("Lỗi khi lấy danh sách chat:", error);
+    }
   };
 
   useEffect(() => {
@@ -144,11 +129,10 @@ const Other = () => {
   // Cập nhật tin nhắn thành "viewed" khi mở cuộc trò chuyện
   const markMessagesAsViewed = async (senderId) => {
     try {
-      const response = await axios.put(`${API_iChat}/messages/viewed`, {
+      const response = await messageService.updateMessagesViewedStatus({
         receiverId: user.id,
         senderId,
       });
-
       console.log(response.data.message);
     } catch (error) {
       console.error("Lỗi cập nhật trạng thái tin nhắn:", error);
@@ -247,4 +231,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Other;
+export default Priority;

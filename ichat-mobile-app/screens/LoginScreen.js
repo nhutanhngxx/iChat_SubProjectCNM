@@ -6,18 +6,15 @@ import {
   ImageBackground,
   TextInput,
   Alert,
-  ActivityIndicator,
   KeyboardAvoidingView,
   ScrollView,
   Platform,
   TouchableWithoutFeedback,
   Keyboard,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import axios from "axios";
 import CustomButton from "../components/common/CustomButton";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { UserContext } from "../context/UserContext";
+import { UserContext } from "../config/context/UserContext";
+import authService from "../services/authService";
 
 const LoginScreen = ({ navigation }) => {
   const { setUser } = useContext(UserContext);
@@ -25,29 +22,30 @@ const LoginScreen = ({ navigation }) => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const API_iChat = "http://172.20.68.107:5001";
-
   const handleLogin = async () => {
     if (!phone.trim() || !password.trim()) {
-      Alert.alert("Lỗi", "Vui lòng nhập số điện thoại và mật khẩu!");
+      Alert.alert("Thông báo", "Vui lòng nhập số điện thoại và mật khẩu!");
       return;
     }
     setLoading(true);
     try {
-      const response = await axios.post(`${API_iChat}/login`, {
-        phone,
-        password,
-      });
-      const { accessToken, user } = response.data;
-      await AsyncStorage.setItem("token", accessToken);
-      await AsyncStorage.setItem("user", JSON.stringify(user));
-      setUser(user);
-      Alert.alert("Đăng nhập thành công!", `Chào mừng ${user.full_name}`);
+      const response = await authService.login({ phone, password });
+      const { user } = response;
+      if (user) {
+        setUser(user);
+        Alert.alert("Đăng nhập thành công!", `Chào mừng ${user?.full_name}`);
+      } else {
+        Alert.alert("Thông báo", "Sai số điện thoại hoặc mật khẩu!");
+      }
     } catch (error) {
       console.error("Login error:", error);
-      const errorMessage =
-        error.response?.data?.message || "Có lỗi xảy ra! Vui lòng thử lại.";
-      Alert.alert("Lỗi", errorMessage);
+      if (error.response?.status === 401) {
+        Alert.alert("Thông báo", "Số điện thoại hoặc mật khẩu không đúng!");
+      } else {
+        const errorMessage =
+          error.response?.data?.message || "Có lỗi xảy ra! Vui lòng thử lại.";
+        Alert.alert("Lỗi", errorMessage);
+      }
     } finally {
       setLoading(false);
     }
@@ -73,13 +71,19 @@ const LoginScreen = ({ navigation }) => {
                 Vui lòng nhập số điện thoại và mật khẩu để đăng nhập
               </Text>
 
-              <TextInput
-                style={styles.input}
-                placeholder="Số điện thoại"
-                keyboardType="phone-pad"
-                value={phone}
-                onChangeText={setPhone}
-              />
+              <View style={styles.phoneContainer}>
+                <View style={styles.prefixContainer}>
+                  <Text style={styles.prefixText}>+84</Text>
+                </View>
+                <TextInput
+                  style={styles.phoneInput}
+                  placeholder="Nhập số điện thoại"
+                  keyboardType="phone-pad"
+                  value={phone}
+                  onChangeText={setPhone}
+                  maxLength={10} // không tính +84
+                />
+              </View>
               <TextInput
                 style={styles.input}
                 placeholder="Mật khẩu"
@@ -88,7 +92,7 @@ const LoginScreen = ({ navigation }) => {
                 onChangeText={setPassword}
               />
               <Text
-                onPress={() => alert("Quên mật khẩu?")}
+                onPress={() => navigation.navigate("ForgotPassword")}
                 style={styles.forgotPassword}
               >
                 Quên mật khẩu?
@@ -99,12 +103,14 @@ const LoginScreen = ({ navigation }) => {
                 onPress={handleLogin}
                 backgroundColor={"#48A2FC"}
               />
-              <Text
-                style={styles.registerText}
-                onPress={() => navigation.navigate("Register")}
-              >
+              <Text style={styles.registerText}>
                 Bạn chưa có tài khoản?{" "}
-                <Text style={styles.register}>Đăng ký</Text>
+                <Text
+                  style={styles.register}
+                  onPress={() => navigation.navigate("Register")}
+                >
+                  Đăng ký ngay
+                </Text>
               </Text>
             </View>
           </ImageBackground>
@@ -119,6 +125,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 20,
+    flex: 1,
   },
   background: {
     flex: 1,
@@ -139,12 +146,12 @@ const styles = StyleSheet.create({
   input: {
     width: "100%",
     height: 50,
-    borderRadius: 10,
     paddingHorizontal: 15,
     marginBottom: 10,
     backgroundColor: 0,
     borderBottomWidth: 1,
     borderBottomColor: "gray",
+    fontSize: 18,
   },
   forgotPassword: {
     fontWeight: "bold",
@@ -152,16 +159,39 @@ const styles = StyleSheet.create({
     fontSize: 14,
     alignSelf: "flex-end",
     marginRight: 10,
-    marginBottom: 20,
+    marginVertical: 20,
+    opacity: 0.5,
   },
   registerText: {
     fontSize: 16,
     textAlign: "center",
     marginTop: 10,
+    position: "absolute",
+    bottom: 30,
   },
   register: {
     color: "#0C098C",
     fontWeight: "bold",
+    opacity: 0.5,
+  },
+  phoneContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    width: "100%",
+    borderBottomWidth: 1,
+    borderBottomColor: "gray",
+    marginBottom: 10,
+    height: 50,
+  },
+  prefixContainer: {
+    paddingHorizontal: 10,
+  },
+  prefixText: {
+    fontSize: 18,
+  },
+  phoneInput: {
+    flex: 1,
+    fontSize: 18,
   },
 });
 

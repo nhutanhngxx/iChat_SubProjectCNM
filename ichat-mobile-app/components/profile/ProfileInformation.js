@@ -1,13 +1,20 @@
 import React, { useState, useEffect, useContext } from "react";
 import { Text, View, Image, TouchableOpacity, StyleSheet } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { UserContext } from "../../context/UserContext";
+import { UserContext } from "../../config/context/UserContext";
+import { StatusBar } from "expo-status-bar";
 
 import avatar from "../../assets/images/avatars/avatar1.png";
+import goBackIcon from "../../assets/icons/go-back.png";
 
 const ProfileInformation = () => {
   const navigation = useNavigation();
   const { user } = useContext(UserContext);
+
+  const maskPhoneNumber = (phone) => {
+    if (!phone || phone.length < 10) return phone;
+    return phone.slice(0, 5) + "***" + phone.slice(-3);
+  };
 
   useEffect(() => {
     console.log("User từ Context:", user);
@@ -28,26 +35,33 @@ const ProfileInformation = () => {
     };
   }, []);
   return (
-    <View style={{ flex: 1, backgroundColor: "#fff", paddingTop: 40 }}>
+    <View style={{ flex: 1, backgroundColor: "#fff" }}>
+      <StatusBar style="light" />
+
+      {/* Header */}
       <View
         style={{
-          backgroundColor: "#fff",
+          width: "100%",
+          height: 90,
+          justifyContent: "space-between",
           flexDirection: "row",
-          alignItems: "center",
-          gap: 10,
-          height: 50,
-          paddingHorizontal: 5,
+          alignItems: "flex-end",
+          backgroundColor: "#3083F9",
+          padding: 10,
         }}
       >
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        <TouchableOpacity
+          style={{ flexDirection: "row", alignItems: "center", gap: 5 }}
+          onPress={() => navigation.goBack()}
+        >
           <Image
-            source={require("../../assets/icons/go-back.png")}
-            style={{ width: 25, height: 25 }}
+            source={goBackIcon}
+            style={{ width: 25, height: 25, tintColor: "#fff" }}
           />
+          <Text style={{ color: "#fff", fontSize: 18, fontWeight: "bold" }}>
+            Thông tin cá nhân
+          </Text>
         </TouchableOpacity>
-        <Text style={{ fontSize: 20, fontWeight: "bold" }}>
-          Thông tin cá nhân
-        </Text>
       </View>
 
       {/* Avatar */}
@@ -98,7 +112,7 @@ const ProfileInformation = () => {
         </View>
         <View style={styles.container}>
           <Text style={styles.title}>Số điện thoại</Text>
-          <Text style={styles.value}>{user.phone}</Text>
+          <Text style={styles.value}>{maskPhoneNumber(user.phone)}</Text>
         </View>
         {/* Button chức năng */}
         <View

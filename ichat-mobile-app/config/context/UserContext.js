@@ -4,8 +4,23 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 export const UserContext = createContext();
 
 export const UserProvider = ({ children }) => {
-  const [user, setUserState] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [userState, setUserState] = useState(null);
+
+  // Tạo hàm setUser để vừa cập nhật state, vừa lưu vào AsyncStorage
+  const setUser = async (newUser) => {
+    try {
+      setUserState(newUser); // cập nhật state trong context
+      if (newUser) {
+        // Chỉ lưu khi newUser không null
+        await AsyncStorage.setItem("user", JSON.stringify(newUser)); // lưu vào AsyncStorage
+      } else {
+        await AsyncStorage.removeItem("user");
+      }
+    } catch (error) {
+      console.error("Lỗi khi lưu user vào AsyncStorage:", error);
+    }
+  };
 
   useEffect(() => {
     const loadUser = async () => {
@@ -23,23 +38,9 @@ export const UserProvider = ({ children }) => {
     loadUser();
   }, []);
 
-  // Hàm cập nhật user và lưu vào AsyncStorage
-  const setUser = async (newUser) => {
-    try {
-      setUserState(newUser);
-      await AsyncStorage.setItem("user", JSON.stringify(newUser));
-    } catch (error) {
-      console.error("Lỗi khi lưu user:", error);
-    }
-  };
-
-  if (isLoading) {
-    return null; // hoặc splash/loading screen
-  }
-
   return (
-    <UserContext.Provider value={{ user, setUser }}>
-      {children}
+    <UserContext.Provider value={{ user: userState, setUser, isLoading }}>
+      {!isLoading && children}
     </UserContext.Provider>
   );
 };

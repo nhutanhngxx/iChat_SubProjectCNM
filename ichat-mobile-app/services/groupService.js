@@ -1,12 +1,10 @@
-import api from "./api";
+import { apiService } from "./api";
 import messageService from "./messageService";
-import userService from "./userService";
 
 // Tính thời gian
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import "dayjs/locale/vi"; // Tiếng việt nè
-import { get } from "react-native/Libraries/TurboModule/TurboModuleRegistry";
 
 dayjs.extend(relativeTime);
 dayjs.locale("vi");
@@ -49,25 +47,30 @@ const formatGroupList = async (groups) => {
   });
 };
 
+const PREFIX = "groups";
 const groupService = {
   getAllGroupsByUserId: async (userId) => {
     try {
-      const response = await api.get(`/groups/${userId}`);
-      return formatGroupList(response.data);
+      const response = await apiService.get(`/${PREFIX}/${userId}`);
+      return formatGroupList(response.data.data);
     } catch (error) {
-      console.log("Group Service Error: ", error);
+      // console.log("Group Service Error: ", error);
       return [];
     }
   },
   getGroupMembers: async (groupId) => {
     try {
-      const members = await api.get(`/groups/${groupId}/members`);
+      const members = await apiService.get(`/${PREFIX}/${groupId}/members`);
       return members.data.data;
     } catch (error) {
       console.log("Group Service Error: ", error);
       return [];
     }
   },
+
+  getGroupById: async (groupId) => {},
+
+  createGroup: async () => {},
 };
 
 export default groupService;
