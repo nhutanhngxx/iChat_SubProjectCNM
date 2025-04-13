@@ -26,43 +26,49 @@ const SearchScreen = () => {
   const ipAdr = getHostIP();
   const API_iChat = `http://${ipAdr}:5001/api`;
 
-  const handleOpenChatting = async (selectedMessage) => {
-    // Xác định ID của người đang chat với user
-    const isSender = selectedMessage.sender_id === user.id;
-    const chatPartnerId = isSender
-      ? selectedMessage.receiver_id
-      : selectedMessage.sender_id;
-
+  const handleOpenChatting = async (selectedItem) => {
     try {
-      // Gọi API lấy danh sách users
-      const response = await axios.get(`${API_iChat}/users`);
+      let chatPartnerId, chatPartnerName, chatPartnerAvatar, messageId;
 
-      if (response.data.status === "ok") {
-        // Tìm người dùng trong danh sách theo chatPartnerId
-        const chatPartner = response.data.users.find(
-          (user) => user.id === chatPartnerId
-        );
+      if (selectedItem.content) {
+        // Kết quả là tin nhắn
+        const isSender = selectedItem.sender_id === user.id;
+        chatPartnerId = isSender
+          ? selectedItem.receiver_id
+          : selectedItem.sender_id;
+        messageId = selectedItem.id; // Lưu ID tin nhắn để cuộn đến nếu cần
 
-        // Lấy tên và avatar của người đang chat cùng
-        const chatPartnerName = chatPartner
-          ? chatPartner.full_name
-          : "Người ẩn danh";
-
-        const chatPartnerAvatar =
+        // Lấy thông tin người dùng từ danh sách users đã tải
+        const chatPartner = users.find((u) => u.id === chatPartnerId);
+        chatPartnerName = chatPartner ? chatPartner.full_name : "Người ẩn danh";
+        chatPartnerAvatar =
           chatPartner?.avatar_path ||
-          "https://i.ibb.co/9k8sPRMx/best-seller.png"; // Avatar mặc định nếu không có
-
-        const chat = {
-          messages: [], // Có thể gọi API để lấy tin nhắn nếu cần
-          id: chatPartnerId,
-          name: chatPartnerName,
-          avatar: chatPartnerAvatar,
-          chatType: chatPartner?.full_name ? "private" : "group",
-        };
-        navigation.navigate("Chatting", { chat });
+          "https://i.ibb.co/9k8sPRMx/best-seller.png";
+      } else {
+        // Kết quả là tài khoản
+        chatPartnerId = selectedItem.id;
+        chatPartnerName = selectedItem.full_name || "Người ẩn danh";
+        chatPartnerAvatar =
+          selectedItem.avatar_path ||
+          "https://i.ibb.co/9k8sPRMx/best-seller.png";
       }
+
+      const chat = {
+        id: chatPartnerId,
+        name: chatPartnerName,
+        avatar: { uri: chatPartnerAvatar },
+        chatType: "private",
+        messageId: messageId || null,
+      };
+
+      // Điều hướng đến tab Messages trong TabNavigator
+      navigation.navigate("Home", {
+        screen: "Messages",
+        params: { selectedChat: chat },
+      });
     } catch (error) {
-      console.error("Lỗi khi lấy danh sách người dùng:", error);
+      console.error("Lỗi khi xử lý mở cuộc trò chuyện:", error);
+      Alert.alert("Lỗi", "Không thể mở cuộc trò chuyện. Vui lòng thử lại.");
     }
   };
 
@@ -432,14 +438,6 @@ const SearchScreen = () => {
         <TabView.Item
           style={{ width: "100%", padding: 10, backgroundColor: "white" }}
         >
-          {/* Hiển thị loading khi đang tìm kiếm */}
-          {/* {isLoading && (
-            <ActivityIndicator
-              size="large"
-              color="#0AA2F8"
-              style={{ marginTop: 10 }}
-            />
-          )} */}
           <FlatList
             data={[...searchMessages, ...searchUsers, ...searchGroups]}
             renderItem={({ item }) =>
@@ -460,9 +458,7 @@ const SearchScreen = () => {
                 >
                   <Image
                     source={{
-                      uri:
-                        item.sender_id?.avatar_path ||
-                        "https://picsum.photos/200",
+                      uri: item.avatar_path || item.sender_id?.avatar_path,
                     }}
                     style={{
                       width: 50,
@@ -494,9 +490,7 @@ const SearchScreen = () => {
                 >
                   <Image
                     source={{
-                      uri:
-                        item.sender_id?.avatar_path ||
-                        "https://picsum.photos/200",
+                      uri: item.sender_id?.avatar_path || item.avatar_path,
                     }}
                     style={{
                       width: 50,
@@ -541,9 +535,7 @@ const SearchScreen = () => {
                 >
                   <Image
                     source={{
-                      uri:
-                        item.sender_id?.avatar_path ||
-                        "https://picsum.photos/200",
+                      uri: item.sender_id?.avatar_path || item.avatar_path,
                     }}
                     style={{
                       width: 50,
@@ -577,6 +569,7 @@ const SearchScreen = () => {
             </Text>
           )}
         </TabView.Item>
+
         {/* Tab "Tài khoản" */}
         <TabView.Item
           style={{ width: "100%", padding: 10, backgroundColor: "white" }}
@@ -599,9 +592,7 @@ const SearchScreen = () => {
                 >
                   <Image
                     source={{
-                      uri:
-                        item.sender_id?.avatar_path ||
-                        "https://picsum.photos/200",
+                      uri: item.sender_id?.avatar_path || item.avatar_path,
                     }}
                     style={{
                       width: 50,

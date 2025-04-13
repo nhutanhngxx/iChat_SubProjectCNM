@@ -7,30 +7,32 @@ import {
   TouchableOpacity,
   FlatList,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import { UserContext } from "../../config/context/UserContext";
 import groupService from "../../services/groupService";
 import userService from "../../services/userService";
 import messageService from "../../services/messageService";
-
-// Tính thời gian
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
-import "dayjs/locale/vi"; // Tiếng việt nè
+import "dayjs/locale/vi";
 
 dayjs.extend(relativeTime);
 dayjs.locale("vi");
 
 const getTimeAgo = (timestamp) => {
-  return dayjs(timestamp).fromNow(); // Hiển thị "x phút trước"
+  return dayjs(timestamp).fromNow();
 };
 
 const Priority = () => {
   const navigation = useNavigation();
+  const route = useRoute();
   const { user } = useContext(UserContext);
   const [chatList, setChatList] = useState([]);
   const [groupList, setGroupList] = useState([]);
   const [allUser, setAllUser] = useState([]);
+
+  // Nhận selectedChat từ SearchScreen
+  const selectedChat = route.params?.selectedChat;
 
   // Gộp danh sách chat và group chat và sắp xếp theo thời gian tin nhắn cuối cùng
   const listChat = chatList.concat(groupList);
@@ -75,14 +77,12 @@ const Priority = () => {
             lastMessageTime: lastMessageTime,
             time: timeDiff,
             avatar: { uri: avatarPath },
+            chatType: "private",
           });
         }
-      } else return;
+      }
     });
-    // return Array.from(chatMap.values());
-    return Array.from(chatMap.values()).sort(
-      (a, b) => b.lastMessageTime - a.lastMessageTime
-    );
+    return Array.from(chatMap.values());
   };
 
   // Lấy danh sách group chat của người dùng
@@ -97,19 +97,37 @@ const Priority = () => {
     return () => clearInterval(interval);
   }, [user?.id]);
 
-  useEffect(() => {
-    if (allUser.length === 0 || !user?.id) return;
-    fetchChatList();
-  }, [user, allUser]);
-
   const fetchChatList = async () => {
     try {
       const response = await messageService.getMessagesByUserId(user.id);
-      setChatList(formatChatList(response, allUser));
+      let formattedChats = formatChatList(response, allUser);
+
+      // Nếu có selectedChat và nó không tồn tại trong chatList, thêm vào
+      if (
+        selectedChat &&
+        !formattedChats.some((chat) => chat.id === selectedChat.id)
+      ) {
+        formattedChats = [
+          {
+            ...selectedChat,
+            lastMessage: "", // Không có tin nhắn gần đây
+            lastMessageTime: Date.now(), // Sử dụng thời gian hiện tại để xếp đầu
+            time: getTimeAgo(Date.now()),
+          },
+          ...formattedChats,
+        ];
+      }
+
+      setChatList(formattedChats);
     } catch (error) {
       console.error("Lỗi khi lấy danh sách chat:", error);
     }
   };
+
+  useEffect(() => {
+    if (allUser.length === 0 || !user?.id) return;
+    fetchChatList();
+  }, [user, allUser]);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -117,14 +135,21 @@ const Priority = () => {
     // Gọi fetch lần đầu tiên
     fetchChatList();
 
-    // Thiết lập interval để fetch tin nhắn mới mỗi 5 giây
-    const interval = setInterval(() => {
-      fetchChatList();
-    }, 1000);
+    // Thiết lập interval để fetch tin nhắn mới mỗi 1 giây
+    const interval = setInterval(fetchChatList, 1000);
 
     // Cleanup interval khi component unmount
     return () => clearInterval(interval);
   }, [user, allUser]);
+
+  // Tự động mở Chatting nếu có selectedChat
+  useEffect(() => {
+    if (selectedChat) {
+      handleOpenChatting(selectedChat);
+      // Xóa selectedChat khỏi route params để tránh mở lại
+      navigation.setParams({ selectedChat: undefined });
+    }
+  }, [selectedChat]);
 
   // Cập nhật tin nhắn thành "viewed" khi mở cuộc trò chuyện
   const markMessagesAsViewed = async (senderId) => {
@@ -167,7 +192,7 @@ const Priority = () => {
 
   return (
     <View style={styles.wrapper}>
-      {chatList.length === 0 ? (
+      {listChat.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyText}>
             Hiện không có cuộc trò chuyện nào.
@@ -177,9 +202,7 @@ const Priority = () => {
         <FlatList
           data={listChat}
           keyExtractor={(item) => item.id.toString()}
-          renderItem={({ item }) => {
-            return renderItem({ item });
-          }}
+          renderItem={({ item }) => renderItem({ item })}
           showsVerticalScrollIndicator={true}
           keyboardShouldPersistTaps="handled"
         />
