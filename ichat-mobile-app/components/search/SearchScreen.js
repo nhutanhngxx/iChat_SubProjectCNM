@@ -31,21 +31,21 @@ const SearchScreen = () => {
       let chatPartnerId, chatPartnerName, chatPartnerAvatar, messageId;
 
       if (selectedItem.content) {
-        // Kết quả là tin nhắn
+        // Search result is a message
         const isSender = selectedItem.sender_id === user.id;
         chatPartnerId = isSender
           ? selectedItem.receiver_id
           : selectedItem.sender_id;
-        messageId = selectedItem.id; // Lưu ID tin nhắn để cuộn đến nếu cần
+        messageId = selectedItem.id; // Store message ID for scrolling
 
-        // Lấy thông tin người dùng từ danh sách users đã tải
+        // Get user info from the loaded users list
         const chatPartner = users.find((u) => u.id === chatPartnerId);
         chatPartnerName = chatPartner ? chatPartner.full_name : "Người ẩn danh";
         chatPartnerAvatar =
           chatPartner?.avatar_path ||
           "https://i.ibb.co/9k8sPRMx/best-seller.png";
       } else {
-        // Kết quả là tài khoản
+        // Search result is a user
         chatPartnerId = selectedItem.id;
         chatPartnerName = selectedItem.full_name || "Người ẩn danh";
         chatPartnerAvatar =
@@ -58,17 +58,17 @@ const SearchScreen = () => {
         name: chatPartnerName,
         avatar: { uri: chatPartnerAvatar },
         chatType: "private",
-        messageId: messageId || null,
+        messageId: messageId || null, // Pass messageId for messages
       };
 
-      // Điều hướng đến tab Messages trong TabNavigator
+      // Navigate to the Messages screen in TabNavigator
       navigation.navigate("Home", {
         screen: "Messages",
         params: { selectedChat: chat },
       });
     } catch (error) {
-      console.error("Lỗi khi xử lý mở cuộc trò chuyện:", error);
-      Alert.alert("Lỗi", "Không thể mở cuộc trò chuyện. Vui lòng thử lại.");
+      console.error("Error opening chat:", error);
+      Alert.alert("Error", "Unable to open chat. Please try again.");
     }
   };
 

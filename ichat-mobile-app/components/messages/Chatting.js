@@ -45,7 +45,7 @@ const Chatting = ({ route }) => {
   const [groupMembers, setGroupMembers] = useState([]);
 
   const ipAdr = getHostIP();
-  const API_iChat = `http://${ipAdr}:5001/api/messages`;
+  const API_iChat = `http://${ipAdr}:5001/api/messages/`;
 
   // Hàm chọn ảnh từ thư viện
   const pickImage = async () => {
@@ -156,8 +156,8 @@ const Chatting = ({ route }) => {
   }
 
   // Click vào để reply
-  const handleReply = (message) => {
-    setReplyMessage(message);
+  const handleReply = (selectedMessage) => {
+    setReplyMessage(selectedMessage);
     setModalVisible(false); // Ẩn modal sau khi chọn reply
   };
 
@@ -178,33 +178,24 @@ const Chatting = ({ route }) => {
 
   const sendMessage = async () => {
     try {
-      // Kiểm tra nếu là tin nhắn văn bản
-      if (inputMessage.trim()) {
-        const newMessage = {
-          sender_id: user.id,
-          receiver_id: chat.id,
-          content: inputMessage,
-          type: "text",
-          chat_type: chat?.chatType === "group" ? "group" : "private",
-        };
+      if (!inputMessage.trim() && !replyMessage) return;
 
-        const response = await axios.post(
-          `${API_iChat}/send-message`,
-          newMessage
-        );
-        if (response.status === 201) {
-          setMessages((prevMessages) => [
-            ...prevMessages,
-            response.data.data, // Thêm tin nhắn vào danh sách
-          ]);
-        } else {
-          throw new Error("Failed to send text message");
-        }
+      const newMessage = {
+        sender_id: user.id,
+        receiver_id: chat.id,
+        content: inputMessage.trim() || replyMessage.content,
+        type: "text",
+        chat_type: chat?.chatType === "group" ? "group" : "private",
+        reply_to: replyMessage?._id || null,
+      };
 
-        // Reset input message
-        setInputMessage("");
-      }
+      const apiEndpoint = replyMessage
+        ? `${API_iChat}/reply`
+        : `${API_iChat}/send-message`;
 
+      const response = await axios.post(apiEndpoint, newMessage);
+      setInputMessage("");
+      setReplyMessage(null);
       // Kiểm tra nếu có ảnh gửi kèm
       if (selectedImage) {
         const fileUri = selectedImage;
@@ -223,6 +214,7 @@ const Chatting = ({ route }) => {
           "chat_type",
           chat?.chatType === "group" ? "group" : "private"
         );
+        formData.append("reply_to", replyMessage ? replyMessage._id : null);
 
         const response = await axios.post(
           `${API_iChat}/send-message`,

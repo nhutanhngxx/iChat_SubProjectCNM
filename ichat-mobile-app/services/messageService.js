@@ -110,6 +110,16 @@ const messageService = {
       );
     }
   },
+
+  replyMessage: async (message) => {
+    try {
+      const response = await apiService.post(`/${PREFIX}/reply`, message);
+      return response.data;
+    } catch (error) {
+      console.log("Message Service Error: ", error);
+      return null;
+    }
+  },
 };
 
 export default messageService;
