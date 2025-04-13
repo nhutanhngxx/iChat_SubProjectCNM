@@ -11,10 +11,11 @@ router.use(cookieParser());
 const UserController = require("../controllers/userController");
 
 // Cập nhật thông tin User - thêm middleware xử lý upload
-router.put("/update/:id", 
+router.put(
+  "/update/:id",
   upload.fields([
     { name: "avatar", maxCount: 1 },
-    { name: "cover", maxCount: 1 }
+    { name: "cover", maxCount: 1 },
   ]),
   UserController.updateInfoUser
 );

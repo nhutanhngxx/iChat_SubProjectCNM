@@ -86,6 +86,30 @@ const messageService = {
       };
     }
   },
+
+  searchMessages: async (keyword, userId) => {
+    try {
+      if (!keyword || !userId) {
+        throw new Error("Từ khóa tìm kiếm và ID người dùng là bắt buộc");
+      }
+      const response = await apiService.get(`/${PREFIX}/search/${userId}`, {
+        params: { search: keyword },
+      });
+
+      if (response.data.status === "ok") {
+        return {
+          messages: response.data.messages || [],
+          message: response.data.message || "",
+        };
+      }
+      throw new Error(response.data.message || "Lỗi khi tìm kiếm tin nhắn");
+    } catch (error) {
+      console.log("Message Service Error: ", error);
+      throw new Error(
+        error.message || "Không thể tìm kiếm tin nhắn. Vui lòng thử lại."
+      );
+    }
+  },
 };
 
 export default messageService;

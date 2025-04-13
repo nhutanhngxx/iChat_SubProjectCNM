@@ -39,42 +39,16 @@ const MeTab = () => {
     <View style={styles.container}>
       <StatusBar style="dark" />
       <HeaderPersonalProfile />
-      {/* <TouchableOpacity
-        style={{
-          position: "absolute",
-          top: 50,
-          right: 20,
-          zIndex: 10,
-          elevation: 10,
-        }}
-        onPress={() => Alert.alert("Chức năng này chưa được phát triển")}
-      >
-        <Image
-          source={require("../assets/icons/setting.png")}
-          style={{ height: 25, width: 25 }}
-        />
-      </TouchableOpacity> */}
       <View style={styles.headerBackground} />
       {/* Tài khoản */}
       <View style={styles.profileContainer}>
-        {userData ? (
-          <>
-            <View>
-              <Image
-                source={
-                  compressedAvatar
-                    ? { uri: compressedAvatar }
-                    : require("../assets/icons/new-logo.png")
-                }
-                style={styles.avatar}
-              />
-            </View>
-            <Text style={styles.name}>{userData.full_name}</Text>
-            <Text style={styles.updateText}>Cập nhật tiểu sử</Text>
-          </>
-        ) : (
-          <Text style={styles.name}>Người dùng chưa đăng nhập</Text>
-        )}
+        <Image
+          source={user.avatar_path ? { uri: user.avatar_path } : avatar}
+          style={{ width: 200, height: 200, borderRadius: 1000 }}
+          onError={(e) => console.log("Lỗi khi tải ảnh:", e.nativeEvent.error)}
+        />
+        <Text style={styles.name}>{userData.full_name}</Text>
+        <Text style={styles.updateText}>Cập nhật tiểu sử</Text>
       </View>
 
       {/* Lọc nội dung đăng tải */}

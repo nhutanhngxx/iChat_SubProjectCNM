@@ -10,12 +10,11 @@ import {
   Alert,
 } from "react-native";
 import { Tab, TabView } from "@rneui/themed";
-import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { UserContext } from "../../config/context/UserContext";
 import { StatusBar } from "expo-status-bar";
 import { getHostIP } from "../../services/api";
-import { ActivityIndicator } from "react-native-paper";
+import messageService from "../../services/messageService";
 
 const SearchScreen = () => {
   const route = useRoute();
@@ -34,35 +33,41 @@ const SearchScreen = () => {
       : selectedMessage.sender_id;
 
     try {
-      // Gọi API lấy danh sách users
-      const response = await axios.get(`${API_iChat}/users`);
+      // Gọi API lấy thông tin người dùng
+      const response = await messageService.getPrivateMessages({
+        userId: user.id,
+        chatId: chatPartnerId,
+      });
 
-      if (response.data.status === "ok") {
-        // Tìm người dùng trong danh sách theo chatPartnerId
-        const chatPartner = response.data.users.find(
-          (user) => user.id === chatPartnerId
-        );
+      // Giả định API trả về danh sách tin nhắn, lấy thông tin người dùng từ sender_id/receiver_id
+      const chatPartner =
+        selectedMessage.sender_id === user.id
+          ? selectedMessage.receiver_id
+          : selectedMessage.sender_id;
 
-        // Lấy tên và avatar của người đang chat cùng
-        const chatPartnerName = chatPartner
-          ? chatPartner.full_name
-          : "Người ẩn danh";
+      // Lấy tên và avatar từ message (đã populate từ backend)
+      const chatPartnerName =
+        selectedMessage.sender_id === user.id
+          ? selectedMessage.receiver_id?.full_name || "Người ẩn danh"
+          : selectedMessage.sender_id?.full_name || "Người ẩn danh";
 
-        const chatPartnerAvatar =
-          chatPartner?.avatar_path ||
-          "https://i.ibb.co/9k8sPRMx/best-seller.png"; // Avatar mặc định nếu không có
+      const chatPartnerAvatar =
+        (selectedMessage.sender_id === user.id
+          ? selectedMessage.receiver_id?.avatar_path
+          : selectedMessage.sender_id?.avatar_path) ||
+        "https://i.ibb.co/9k8sPRMx/best-seller.png";
 
-        const chat = {
-          messages: [], // Có thể gọi API để lấy tin nhắn nếu cần
-          id: chatPartnerId,
-          name: chatPartnerName,
-          avatar: chatPartnerAvatar,
-          chatType: chatPartner?.full_name ? "private" : "group",
-        };
-        navigation.navigate("Chatting", { chat });
-      }
+      const chat = {
+        messages: response || [], // Tin nhắn từ API
+        id: chatPartnerId,
+        name: chatPartnerName,
+        avatar: chatPartnerAvatar,
+        chatType: selectedMessage.chat_type || "private",
+      };
+      navigation.navigate("Chatting", { chat });
     } catch (error) {
-      console.error("Lỗi khi lấy danh sách người dùng:", error);
+      console.error("Lỗi khi mở trò chuyện:", error);
+      Alert.alert("Lỗi", "Không thể mở trò chuyện. Vui lòng thử lại.");
     }
   };
 
@@ -74,16 +79,9 @@ const SearchScreen = () => {
 
   const [searchText, setSearchText] = useState("");
   const [index, setIndex] = useState(0);
-
-  // Lưu trữ lịch sử Tìm kiếm
-  const [indexSearch, setIndexSearch] = useState(0);
   const [historySearch, setHistorySearch] = useState([]);
-
   const [isLoading, setIsLoading] = useState(false);
-  const [searchUsers, setSearchUsers] = useState([]);
   const [searchMessages, setSearchMessages] = useState([]);
-  const [searchGroups, setSearchGroups] = useState([]);
-  const [users, setUsers] = useState([]);
 
   useEffect(() => {
     loadSearchHistory();
@@ -97,7 +95,7 @@ const SearchScreen = () => {
       let newHistory = existingHistory ? JSON.parse(existingHistory) : [];
       if (!newHistory.includes(text)) {
         newHistory.unshift(text);
-        if (newHistory.length > 10) newHistory.pop(); // Giới hạn lại lưu trữ
+        if (newHistory.length > 10) newHistory.pop();
       }
       await AsyncStorage.setItem("searchHistory", JSON.stringify(newHistory));
       setHistorySearch(newHistory);
@@ -106,7 +104,7 @@ const SearchScreen = () => {
     }
   };
 
-  // Hàm tải lịch sử tìm kiếm từ AsyncStorage
+  // Hàm tải lịch sử tìm kiếm
   const loadSearchHistory = async () => {
     try {
       const savedHistory = await AsyncStorage.getItem("searchHistory");
@@ -139,31 +137,7 @@ const SearchScreen = () => {
     }
   };
 
-  // Xử lý tìm kiếm tự động khi searchText thay đổi
-  useEffect(() => {
-    if (searchText.trim().length > 0) {
-      handleSearch();
-    } else {
-      setSearchUsers([]);
-      setSearchMessages([]);
-    }
-  }, [searchText]);
-
-  useEffect(() => {
-    if (searchText.trim().length === 0) {
-      setSearchUsers([]);
-      setSearchMessages([]);
-      return;
-    }
-
-    const delaySearch = setTimeout(() => {
-      handleSearch();
-    }, 500); // Chờ 500ms sau khi người dùng ngừng nhập
-
-    return () => clearTimeout(delaySearch); // Xóa timeout nếu user tiếp tục nhập
-  }, [searchText]);
-
-  // Hàm gọi API tìm kiếm
+  // Hàm tìm kiếm tin nhắn
   const handleSearch = async () => {
     if (!searchText || typeof searchText !== "string") {
       Alert.alert("Lỗi", "Vui lòng nhập nội dung tìm kiếm.");
@@ -171,90 +145,43 @@ const SearchScreen = () => {
     }
 
     setIsLoading(true);
-    let finalSearchQuery = searchText.trim();
-
-    console.log("Search query:", finalSearchQuery);
-
-    // Kiểm tra xem có phải là số điện thoại hay không
-    if (/^(\+)?\d+$/.test(finalSearchQuery)) {
-      if (finalSearchQuery.startsWith("0")) {
-        finalSearchQuery = finalSearchQuery.replace(/^0/, "+84"); // Thay thế 0 bằng +84
-      } else if (!finalSearchQuery.startsWith("+")) {
-        finalSearchQuery = `+84${finalSearchQuery}`; // Thêm +84 nếu không có
-      }
-    }
-
-    console.log("Final search query:", finalSearchQuery);
-
     try {
-      // Tìm kiếm người dùng, tin nhắn và nhóm
-      let usersResponse = { data: { users: [] } };
-      let messagesResponse = { data: { messages: [] } };
+      const { messages, message } = await messageService.searchMessages(
+        searchText.trim(),
+        user.id
+      );
 
-      try {
-        usersResponse = await axios.get(
-          `${API_iChat}/users?search=${encodeURIComponent(finalSearchQuery)}`
-        );
-      } catch (error) {
-        console.error("Lỗi tìm kiếm người dùng:", error);
-      }
+      setSearchMessages(messages);
 
-      try {
-        messagesResponse = await axios.get(
-          `${API_iChat}/messages/search/${user.id}?search=${finalSearchQuery}`
-        );
-      } catch (error) {
-        console.error("Lỗi tìm kiếm tin nhắn:", error);
-      }
-
-      if (usersResponse.error) {
-        setSearchUsers([]);
-      } else if (
-        usersResponse.data?.status === "ok" &&
-        Array.isArray(usersResponse.data.users)
-      ) {
-        setSearchUsers(usersResponse.data.users);
-      } else {
-        setSearchUsers([]);
-      }
-
-      if (
-        messagesResponse.data?.status === "ok" &&
-        Array.isArray(messagesResponse.data.messages)
-      ) {
-        setSearchMessages(messagesResponse.data.messages);
-      } else {
-        setSearchMessages([]);
+      if (!messages.length) {
+        Alert.alert("Thông báo", message || "Không tìm thấy tin nhắn nào.");
       }
     } catch (error) {
-      console.error("Lỗi tổng quát khi tìm kiếm:", error);
+      console.error("Lỗi khi tìm kiếm:", error);
+      Alert.alert(
+        "Lỗi",
+        error.message || "Không thể tìm kiếm. Vui lòng thử lại."
+      );
     } finally {
       setIsLoading(false);
     }
   };
 
-  const fetchUsers = async () => {
-    try {
-      const response = await axios.get(`${API_iChat}/users`);
-
-      if (response.data.status === "ok" && Array.isArray(response.data.users)) {
-        setUsers(response.data.users); // Cập nhật state users
-      } else {
-        console.error("Lỗi: API trả về dữ liệu không hợp lệ", response.data);
-        setUsers([]); // Gán rỗng nếu API lỗi
-      }
-    } catch (error) {
-      console.error("Error fetching users:", error);
-      setUsers([]); // Gán rỗng nếu lỗi
-    }
-  };
-
-  // Gọi fetchUsers khi component được mount
+  // Tự động tìm kiếm khi searchText thay đổi
   useEffect(() => {
-    fetchUsers();
-  }, []);
+    if (searchText.trim().length === 0) {
+      setSearchMessages([]);
+      return;
+    }
 
-  // Ẩn tabBar sau khi vào Screen Search
+    const delaySearch = setTimeout(() => {
+      handleSearch();
+    }, 500);
+
+    return () => clearTimeout(delaySearch);
+  }, [searchText]);
+
+  // Ẩn tabBar
   useEffect(() => {
     navigation.getParent()?.setOptions({ tabBarStyle: { display: "none" } });
     return () => {
@@ -317,12 +244,12 @@ const SearchScreen = () => {
                 textAlignVertical: "center",
                 height: 30,
               }}
-              placeholder="Tìm kiếm"
+              placeholder="Tìm kiếm tin nhắn"
               value={searchText}
               onChangeText={setSearchText}
               onSubmitEditing={() => {
                 saveSearchHistory(searchText);
-                setSearchText("");
+                handleSearch();
               }}
             />
             {searchText.length > 0 && (
@@ -337,15 +264,14 @@ const SearchScreen = () => {
         </View>
       </View>
 
-      {/* Tabs kết quả tìm kiếm */}
       {searchText && (
         <Tab
           value={index}
           onChange={setIndex}
           indicatorStyle={{
             backgroundColor: "skyblue",
-            width: "15%",
-            marginHorizontal: "9%",
+            width: "25%",
+            marginHorizontal: "12.5%",
           }}
         >
           <Tab.Item
@@ -354,10 +280,6 @@ const SearchScreen = () => {
           />
           <Tab.Item
             title="Tin nhắn"
-            titleStyle={{ fontSize: 16, fontWeight: "500", color: "white" }}
-          />
-          <Tab.Item
-            title="Tài khoản"
             titleStyle={{ fontSize: 16, fontWeight: "500", color: "white" }}
           />
         </Tab>
@@ -371,10 +293,9 @@ const SearchScreen = () => {
             <>
               <FlatList
                 data={historySearch}
-                keyExtractor={(item, indexSearch) => indexSearch.toString()}
-                renderItem={({ item }) => (
-                  <TouchableOpacity
-                    onPress={() => setSearchText(item)}
+                keyExtractor={(item, index) => index.toString()}
+                renderItem={({ item, index }) => (
+                  <View
                     style={{
                       flexDirection: "row",
                       alignItems: "center",
@@ -383,12 +304,9 @@ const SearchScreen = () => {
                       paddingHorizontal: 5,
                     }}
                   >
-                    {/* Tên lịch sử tìm kiếm */}
                     <TouchableOpacity onPress={() => setSearchText(item)}>
                       <Text style={{ fontSize: 16 }}>{item}</Text>
                     </TouchableOpacity>
-
-                    {/* Nút xóa */}
                     <TouchableOpacity
                       onPress={() => removeSearchItem(index)}
                       style={{
@@ -401,11 +319,9 @@ const SearchScreen = () => {
                         Xóa
                       </Text>
                     </TouchableOpacity>
-                  </TouchableOpacity>
+                  </View>
                 )}
               />
-
-              {/* Nút xóa lịch sử tìm kiếm */}
               <TouchableOpacity
                 onPress={clearSearchHistory}
                 style={{
@@ -428,97 +344,6 @@ const SearchScreen = () => {
         </View>
       )}
       <TabView value={index} onChange={setIndex} animationType="spring">
-        {/* Tab "Tất cả" */}
-        <TabView.Item
-          style={{ width: "100%", padding: 10, backgroundColor: "white" }}
-        >
-          {/* Hiển thị loading khi đang tìm kiếm */}
-          {/* {isLoading && (
-            <ActivityIndicator
-              size="large"
-              color="#0AA2F8"
-              style={{ marginTop: 10 }}
-            />
-          )} */}
-          <FlatList
-            data={[...searchMessages, ...searchUsers, ...searchGroups]}
-            renderItem={({ item }) =>
-              item.content ? (
-                // Tin nhắn
-                <TouchableOpacity
-                  key={item.id}
-                  onPress={() => handleOpenChatting(item)}
-                  style={{
-                    paddingVertical: 5,
-                    paddingHorizontal: 15,
-                    borderBottomWidth: 1,
-                    borderBottomColor: "#ddd",
-                    gap: 5,
-                    flexDirection: "row",
-                    alignItems: "center",
-                  }}
-                >
-                  <Image
-                    source={{
-                      uri:
-                        item.sender_id?.avatar_path ||
-                        "https://picsum.photos/200",
-                    }}
-                    style={{
-                      width: 50,
-                      height: 50,
-                      borderRadius: 25,
-                      marginRight: 10,
-                    }}
-                  />
-                  <View style={{ gap: 5 }}>
-                    <Text style={{ fontWeight: "bold", fontSize: 16 }}>
-                      {item.sender_id.full_name || "Unknown"}
-                    </Text>
-                    <Text>{item.content}</Text>
-                  </View>
-                </TouchableOpacity>
-              ) : (
-                // Tài khoản
-                <TouchableOpacity
-                  onPress={() => handleOpenChatting(item)}
-                  style={{
-                    paddingVertical: 5,
-                    paddingHorizontal: 15,
-                    borderBottomWidth: 1,
-                    borderBottomColor: "#ddd",
-                    gap: 5,
-                    flexDirection: "row",
-                    alignItems: "center",
-                  }}
-                >
-                  <Image
-                    source={{
-                      uri:
-                        item.sender_id?.avatar_path ||
-                        "https://picsum.photos/200",
-                    }}
-                    style={{
-                      width: 50,
-                      height: 50,
-                      borderRadius: 25,
-                      marginRight: 10,
-                    }}
-                  />
-                  <View>
-                    <Text style={{ fontSize: 16, fontWeight: "bold" }}>
-                      {item.full_name}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-              )
-            }
-            keyExtractor={(item, index) =>
-              item.id?.toString() || index.toString()
-            }
-          />
-        </TabView.Item>
-        {/* Tab "Tin nhắn" */}
         <TabView.Item
           style={{ width: "100%", padding: 10, backgroundColor: "white" }}
         >
@@ -542,7 +367,9 @@ const SearchScreen = () => {
                   <Image
                     source={{
                       uri:
-                        item.sender_id?.avatar_path ||
+                        (item.sender_id._id === user.id
+                          ? item.receiver_id?.avatar_path
+                          : item.sender_id?.avatar_path) ||
                         "https://picsum.photos/200",
                     }}
                     style={{
@@ -554,14 +381,16 @@ const SearchScreen = () => {
                   />
                   <View style={{ gap: 5 }}>
                     <Text style={{ fontWeight: "bold", fontSize: 16 }}>
-                      {item.sender_id.full_name || "Unknown"}
+                      {item.sender_id._id === user.id
+                        ? item.receiver_id?.full_name || "Unknown"
+                        : item.sender_id?.full_name || "Unknown"}
                     </Text>
                     <Text>{item.content}</Text>
                   </View>
                 </TouchableOpacity>
               )}
               keyExtractor={(item, index) =>
-                item.id?.toString() || index.toString()
+                item._id?.toString() || index.toString()
               }
             />
           ) : (
@@ -577,15 +406,16 @@ const SearchScreen = () => {
             </Text>
           )}
         </TabView.Item>
-        {/* Tab "Tài khoản" */}
         <TabView.Item
           style={{ width: "100%", padding: 10, backgroundColor: "white" }}
         >
-          {searchUsers.length > 0 ? (
+          {searchMessages.length > 0 ? (
             <FlatList
-              data={searchUsers}
+              data={searchMessages}
+              showsVerticalScrollIndicator={false}
               renderItem={({ item }) => (
                 <TouchableOpacity
+                  onPress={() => handleOpenChatting(item)}
                   style={{
                     paddingVertical: 5,
                     paddingHorizontal: 15,
@@ -595,12 +425,13 @@ const SearchScreen = () => {
                     flexDirection: "row",
                     alignItems: "center",
                   }}
-                  // onPress={() => handleOpenChatting(item)}
                 >
                   <Image
                     source={{
                       uri:
-                        item.sender_id?.avatar_path ||
+                        (item.sender_id._id === user.id
+                          ? item.receiver_id?.avatar_path
+                          : item.sender_id?.avatar_path) ||
                         "https://picsum.photos/200",
                     }}
                     style={{
@@ -608,19 +439,20 @@ const SearchScreen = () => {
                       height: 50,
                       borderRadius: 25,
                       marginRight: 10,
-                      alignItems: "center",
                     }}
                   />
-                  <View>
-                    <Text style={{ fontSize: 16, fontWeight: "bold" }}>
-                      {item.full_name}
+                  <View style={{ gap: 5 }}>
+                    <Text style={{ fontWeight: "bold", fontSize: 16 }}>
+                      {item.sender_id._id === user.id
+                        ? item.receiver_id?.full_name || "Unknown"
+                        : item.sender_id?.full_name || "Unknown"}
                     </Text>
-                    {/* <Text style={{ color: "gray" }}>{item.phone}</Text> */}
+                    <Text>{item.content}</Text>
                   </View>
                 </TouchableOpacity>
               )}
               keyExtractor={(item, index) =>
-                item.id?.toString() || index.toString()
+                item._id?.toString() || index.toString()
               }
             />
           ) : (
@@ -632,7 +464,7 @@ const SearchScreen = () => {
                 marginTop: 20,
               }}
             >
-              Không tìm thấy tài khoản phù hợp
+              Không tìm thấy tin nhắn phù hợp
             </Text>
           )}
         </TabView.Item>
