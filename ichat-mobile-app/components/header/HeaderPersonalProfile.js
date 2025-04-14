@@ -14,7 +14,6 @@ import authService from "../../services/authService";
 
 const HeaderMessages = () => {
   const { user, setUser } = useContext(UserContext);
-  const API_iChat = "http://192.168.110.158:5001";
   const navigation = useNavigation();
   const [modalVisible, setModalVisible] = useState(false);
 

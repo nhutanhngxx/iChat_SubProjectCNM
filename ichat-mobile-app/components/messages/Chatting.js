@@ -45,7 +45,7 @@ const Chatting = ({ route }) => {
   const [groupMembers, setGroupMembers] = useState([]);
 
   const ipAdr = getHostIP();
-  const API_iChat = `http://${ipAdr}:5001`;
+  const API_iChat = `http://${ipAdr}:5001/api/messages/`;
 
   // Hàm chọn ảnh từ thư viện
   const pickImage = async () => {
@@ -175,13 +175,6 @@ const Chatting = ({ route }) => {
       });
     };
   }, []);
-
-  // Cuộn xuống cuối khi có tin nhắn mới ngay lập tức
-  // useEffect(() => {
-  //   if (flatListRef.current && messages.length > 0) {
-  //     flatListRef.current.scrollToEnd({ animated: false });
-  //   }
-  // }, [messages]);
 
   const sendMessage = async () => {
     try {
@@ -419,8 +412,7 @@ const Chatting = ({ route }) => {
           contentContainerStyle={styles.messagesContainer}
           onContentSizeChange={() =>
             flatListRef.current?.scrollToEnd({ animated: true })
-          } // Cuộn khi nội dung thay đổi
-          // onLayout={() => flatListRef.current?.scrollToEnd({ animated: true })} // Cuộn tin nhắn mới nhất
+          }
         />
 
         {/* Modal Thao Tác Tin Nhắn */}

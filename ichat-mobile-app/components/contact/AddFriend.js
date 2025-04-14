@@ -23,7 +23,7 @@ import { getHostIP } from "../../services/api";
 
 const AddFriend = () => {
   const ipAdr = getHostIP();
-  const API_iChat = `http://${ipAdr}:5001`;
+  const API_iChat = `http://${ipAdr}:5001/api`;
   const { user } = useContext(UserContext);
   const [countryCode, setCountryCode] = useState("+84");
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -33,6 +33,7 @@ const AddFriend = () => {
   const fetchUsers = async () => {
     try {
       const response = await axios.get(`${API_iChat}/users`);
+      console.log("Response:", response.data);
 
       if (response.data.status === "ok" && Array.isArray(response.data.users)) {
         setUsers(response.data.users); // Cập nhật state users
@@ -58,10 +59,10 @@ const AddFriend = () => {
         `${API_iChat}/users?search=${encodedPhone}`
       );
 
-      console.log("Response:", response.data);
+      console.log(("Response tìm kiếm:", response.data));
 
       if (response.data.status === "ok" && response.data) {
-        const foundUser = response.data.users?.[0]; // Lấy người dùng đầu tiên từ danh sách
+        const foundUser = response.data.users?.[0];
         console.log("Found user:", foundUser);
 
         navigation.navigate(
