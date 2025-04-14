@@ -63,7 +63,7 @@ const HeaderContactTab = () => {
             }
             placeholder="Tìm kiếm"
             placeholderTextColor={"gray"}
-            editable={true}
+            editable={false}
           ></TextInput>
         </View>
 

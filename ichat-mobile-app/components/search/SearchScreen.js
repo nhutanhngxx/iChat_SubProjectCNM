@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Image,
   Alert,
+  Platform,
 } from "react-native";
 import { Tab, TabView } from "@rneui/themed";
 import axios from "axios";
@@ -273,13 +274,23 @@ const SearchScreen = () => {
     <View style={{ flex: 1, backgroundColor: "#0AA2F8" }}>
       <StatusBar hidden={false} style="light" />
       <View
-        style={{
-          flexDirection: "row",
-          alignItems: "flex-end",
-          width: "100%",
-          padding: 10,
-          height: 90,
-        }}
+        style={
+          Platform.OS === "ios"
+            ? {
+                flexDirection: "row",
+                alignItems: "flex-end",
+                width: "100%",
+                padding: 10,
+                height: 90,
+              }
+            : {
+                flexDirection: "row",
+                alignItems: "flex-end",
+                width: "100%",
+                paddingHorizontal: 10,
+                height: 80,
+              }
+        }
       >
         <View
           style={{
@@ -310,13 +321,23 @@ const SearchScreen = () => {
           >
             <TextInput
               ref={searchInputRef}
-              style={{
-                flex: 1,
-                fontSize: 15,
-                paddingHorizontal: 10,
-                textAlignVertical: "center",
-                height: 30,
-              }}
+              style={
+                Platform.OS === "ios"
+                  ? {
+                      flex: 1,
+                      fontSize: 15,
+                      paddingHorizontal: 10,
+                      textAlignVertical: "center",
+                      height: 30,
+                    }
+                  : {
+                      flex: 1,
+                      fontSize: 15,
+                      paddingHorizontal: 10,
+                      textAlignVertical: "center",
+                      height: 40,
+                    }
+              }
               placeholder="Tìm kiếm"
               value={searchText}
               onChangeText={setSearchText}
@@ -363,7 +384,17 @@ const SearchScreen = () => {
         </Tab>
       )}
       {!searchText && (
-        <View style={{ padding: 10, backgroundColor: "white" }}>
+        <View
+          style={
+            Platform.OS === "ios"
+              ? { padding: 10, backgroundColor: "white" }
+              : {
+                  padding: 10,
+                  marginTop: 10,
+                  backgroundColor: "white",
+                }
+          }
+        >
           <Text style={{ fontSize: 18, fontWeight: "bold", marginBottom: 10 }}>
             Lịch sử tìm kiếm
           </Text>
@@ -375,13 +406,23 @@ const SearchScreen = () => {
                 renderItem={({ item }) => (
                   <TouchableOpacity
                     onPress={() => setSearchText(item)}
-                    style={{
-                      flexDirection: "row",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      paddingVertical: 10,
-                      paddingHorizontal: 5,
-                    }}
+                    style={
+                      Platform.OS === "ios"
+                        ? {
+                            flexDirection: "row",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            paddingVertical: 10,
+                            paddingHorizontal: 5,
+                          }
+                        : {
+                            flexDirection: "row",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            paddingVertical: 5,
+                            paddingHorizontal: 5,
+                          }
+                    }
                   >
                     {/* Tên lịch sử tìm kiếm */}
                     <TouchableOpacity onPress={() => setSearchText(item)}>
