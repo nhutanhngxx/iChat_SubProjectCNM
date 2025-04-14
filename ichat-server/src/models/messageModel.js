@@ -6,6 +6,55 @@ const mongoose = require("mongoose");
 const { uploadFile } = require("../services/uploadImageToS3");
 
 const MessageModel = {
+  searchMessages: async (keyword, userId) => {
+    if (!keyword)
+      throw { status: 400, message: "Từ khóa tìm kiếm là bắt buộc" };
+    if (!userId) throw { status: 400, message: "ID người dùng là bắt buộc" };
+
+    try {
+      const query = {
+        $and: [
+          { content: { $regex: keyword, $options: "i" } }, // Tìm kiếm không phân biệt hoa thường
+          { content: { $ne: "Tin nhắn đã được thu hồi" } }, // Loại bỏ tin nhắn thu hồi
+          {
+            $or: [
+              // Tin nhắn cá nhân
+              {
+                chat_type: "private",
+                $or: [
+                  { sender_id: new mongoose.Types.ObjectId(userId) },
+                  { receiver_id: new mongoose.Types.ObjectId(userId) },
+                ],
+              },
+              // Tin nhắn nhóm
+              {
+                chat_type: "group",
+                receiver_id: {
+                  $in: await GroupChat.find({
+                    members: new mongoose.Types.ObjectId(userId),
+                  }).distinct("_id"),
+                },
+              },
+            ],
+          },
+        ],
+      };
+
+      const messages = await Messages.find(query)
+        .sort({ timestamp: -1 }) // Sắp xếp mới nhất trước
+        .populate("sender_id", "full_name avatar_path") // Lấy thông tin người gửi
+        .populate("receiver_id", "full_name avatar_path"); // Lấy thông tin người nhận hoặc nhóm
+
+      return messages;
+    } catch (error) {
+      console.error("Lỗi khi tìm kiếm tin nhắn:", error);
+      throw {
+        status: error.status || 500,
+        message: "Lỗi server khi tìm kiếm tin nhắn",
+      };
+    }
+  },
+
   uploadImage: async ({ sender_id, receiver_id, chat_type, file }) => {
     if (!file || !sender_id || !receiver_id || !chat_type) {
       throw { status: 400, message: "Thiếu dữ liệu" };

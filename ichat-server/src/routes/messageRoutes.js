@@ -47,7 +47,7 @@ router.get("/pinned/:chatId", MessageController.getPinnedMessages);
 router.post("/reply", MessageController.replyToMessage);
 
 // API tìm kiếm tin nhắn theo nội dung
-router.get("/search", MessageController.searchMessages);
+router.get("/search/:userId", MessageController.searchMessages);
 
 router.get("/message-cards/:userId", MessageController.getUserMessagesCards);
 
@@ -65,4 +65,5 @@ router.get("/:userId/:receiverId", MessageController.getPrivateMessages);
 
 // Xóa tất cả tin nhắn giữa người dùng đăng nhập và người nhận
 router.delete("/:userId/:receiverId", MessageController.deleteAllMessages);
+
 module.exports = router;
