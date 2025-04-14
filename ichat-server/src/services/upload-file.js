@@ -6,13 +6,20 @@ const randomString = (numberChar) => {
     .substring(2, numberChar + 2)}`;
 };
 
-const FILE_TYPE_MATCH = ["image/png", "image/jpeg", "image/jpg"];
-const MAX_SIZE = 1024 * 1024 * 5;
+const FILE_TYPE_MATCH = [
+  "image/png",
+  "image/jpeg",
+  "image/jpg",
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+];
+const MAX_SIZE = 1024 * 1024 * 10;
 
 const uploadFile = async (file) => {
   const filePath = `${randomString(4)}-${Date.now()}-${file.originalname}`;
   if (file.size > MAX_SIZE) {
-    throw new Error("Dung lượng file vượt quá 5MB!!!");
+    throw new Error("Dung lượng file vượt quá 10MB!!!");
   }
   if (FILE_TYPE_MATCH.includes(file.mimetype)) {
     const uploadParams = {

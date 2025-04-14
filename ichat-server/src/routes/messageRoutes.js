@@ -16,7 +16,10 @@ router.post(
 // Route để gửi tin nhắn (văn bản và hình ảnh)
 router.post(
   "/send-message",
-  upload.single("image"),
+  upload.fields([
+    { name: "image", maxCount: 1 },
+    { name: "file", maxCount: 1 },
+  ]),
   MessageController.sendMessage
 );
 

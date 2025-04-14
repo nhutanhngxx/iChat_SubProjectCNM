@@ -19,8 +19,10 @@ import {
   Alert,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
+import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from "expo-file-system";
 import { StatusBar } from "expo-status-bar";
+import * as Clipboard from "expo-clipboard";
 
 import { useNavigation } from "@react-navigation/native";
 import { UserContext } from "../../config/context/UserContext";
@@ -38,6 +40,7 @@ const Chatting = ({ route }) => {
   const flatListRef = useRef(null);
   const [inputMessage, setInputMessage] = useState("");
   const [selectedImage, setSelectedImage] = useState(null);
+  const [selectedFile, setSelectedFile] = useState(null);
   const [messages, setMessages] = useState([]);
   const [replyMessage, setReplyMessage] = useState(null);
   const [selectedMessage, setSelectedMessage] = useState(null);
@@ -46,6 +49,47 @@ const Chatting = ({ route }) => {
 
   const ipAdr = getHostIP();
   const API_iChat = `http://${ipAdr}:5001/api/messages/`;
+
+  const getFileNameFromUrl = (url) => {
+    // Tách URL theo dấu '/' và lấy phần cuối cùng
+    const fileName = url.split("/").pop();
+
+    // Tách tên file theo dấu '-'
+    const parts = fileName.split("-");
+
+    // Loại bỏ các phần không cần thiết (mã ID, timestamp)
+    parts.shift(); // Loại bỏ mã ID (như: "3fag")
+    parts.shift(); // Loại bỏ timestamp (như: "1744646086633")
+
+    // Nối lại các phần còn lại để lấy tên file đầy đủ
+    return parts.join("-");
+  };
+
+  // Hàm chọn tệp từ thiết bị
+  const pickFile = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: "*/*",
+        copyToCacheDirectory: true,
+      });
+
+      console.log("Đã chọn tệp:", result);
+
+      if (result.assets !== null) {
+        const file = {
+          uri: result.assets[0].uri,
+          name: result.assets[0].name,
+          type: result.assets[0].mimeType || "application/octet-stream",
+          size: result.assets[0].size,
+        };
+        setSelectedFile(file);
+        console.log("File: ", file);
+      }
+    } catch (err) {
+      console.error("Lỗi khi chọn tệp:", err);
+      Alert.alert("Lỗi", "Đã xảy ra lỗi khi chọn tệp.");
+    }
+  };
 
   // Hàm chọn ảnh từ thư viện
   const pickImage = async () => {
@@ -178,45 +222,64 @@ const Chatting = ({ route }) => {
 
   const sendMessage = async () => {
     try {
-      if (!inputMessage.trim() && !replyMessage) return;
+      // Gửi tin nhắn văn bản hoặc reply
+      if (inputMessage.trim() || replyMessage) {
+        const textMessage = {
+          sender_id: user.id,
+          receiver_id: chat.id,
+          content: inputMessage.trim() || replyMessage.content,
+          type: "text",
+          chat_type: chat?.chatType === "group" ? "group" : "private",
+          reply_to: replyMessage?._id || null,
+        };
 
-      const newMessage = {
-        sender_id: user.id,
-        receiver_id: chat.id,
-        content: inputMessage.trim() || replyMessage.content,
-        type: "text",
-        chat_type: chat?.chatType === "group" ? "group" : "private",
-        reply_to: replyMessage?._id || null,
-      };
+        const apiEndpoint = replyMessage
+          ? `${API_iChat}/reply`
+          : `${API_iChat}/send-message`;
 
-      const apiEndpoint = replyMessage
-        ? `${API_iChat}/reply`
-        : `${API_iChat}/send-message`;
+        const textResponse = await axios.post(apiEndpoint, textMessage);
+        setMessages((prev) => [...prev, textResponse.data.message]);
+        setInputMessage("");
+        setReplyMessage(null);
+      }
 
-      const response = await axios.post(apiEndpoint, newMessage);
-      setInputMessage("");
-      setReplyMessage(null);
-      // Kiểm tra nếu có ảnh gửi kèm
-      if (selectedImage) {
-        const fileUri = selectedImage;
-        await FileSystem.getInfoAsync(fileUri);
+      // Gửi hình ảnh hoặc file nếu có
+      if (selectedImage || selectedFile) {
         const formData = new FormData();
-        formData.append("image", {
-          uri: fileUri,
-          name: `photo-${Date.now()}.jpg`,
-          type: "image/jpeg",
-        });
+
+        if (selectedImage) {
+          formData.append("image", {
+            uri: selectedImage,
+            name: `photo-${Date.now()}.jpg`,
+            type: "image/jpeg",
+          });
+        }
+
+        if (selectedFile) {
+          formData.append("file", {
+            uri: selectedFile.uri,
+            name: selectedFile.name,
+            type: selectedFile.type,
+          });
+        }
 
         formData.append("sender_id", user.id);
         formData.append("receiver_id", chat.id);
-        formData.append("type", "image");
+        formData.append(
+          "type",
+          selectedImage && selectedFile
+            ? "media"
+            : selectedImage
+            ? "image"
+            : "file"
+        );
         formData.append(
           "chat_type",
           chat?.chatType === "group" ? "group" : "private"
         );
         formData.append("reply_to", replyMessage ? replyMessage._id : null);
 
-        const response = await axios.post(
+        const uploadResponse = await axios.post(
           `${API_iChat}/send-message`,
           formData,
           {
@@ -225,12 +288,21 @@ const Chatting = ({ route }) => {
             },
           }
         );
-        console.log("Image URL:", response.data.data.content);
+
+        if (uploadResponse.data.status === "error") {
+          throw new Error(uploadResponse.data.message);
+        }
+
+        if (uploadResponse.data.message) {
+          setMessages((prev) => [...prev, uploadResponse.data.message]);
+        }
+
         setSelectedImage(null);
+        setSelectedFile(null);
       }
     } catch (error) {
       console.error("Lỗi khi gửi tin nhắn:", error);
-      Alert.alert("Lỗi", "Không thể gửi tin nhắn hoặc tệp.");
+      Alert.alert("Lỗi", error.message || "Không thể gửi tin nhắn hoặc tệp.");
     }
   };
 
@@ -307,7 +379,8 @@ const Chatting = ({ route }) => {
         <FlatList
           ref={flatListRef}
           data={messages}
-          keyExtractor={(item) => item._id}
+          // keyExtractor={(item) => item._id}
+          keyExtractor={(item, index) => item._id?.toString() || `msg-${index}`}
           showsVerticalScrollIndicator={false}
           renderItem={({ item, index }) => {
             const isLastMessage = index === messages.length - 1;
@@ -332,6 +405,7 @@ const Chatting = ({ route }) => {
                     {getMemberName(item.sender_id)}
                   </Text>
                 )}
+
                 {/* Hiển thị tin nhắn Reply => Hiển thị tin nhắn gốc trước */}
                 {repliedMessage && (
                   <View style={styles.replyContainer}>
@@ -341,15 +415,39 @@ const Chatting = ({ route }) => {
                         : getMemberName(repliedMessage.sender_id)}
                       :
                     </Text>
-                    <Text
-                      style={styles.replyText}
-                      numberOfLines={1}
-                      ellipsizeMode="tail"
-                    >
-                      {repliedMessage.content}
-                    </Text>
+
+                    {repliedMessage.type === "text" && (
+                      <Text
+                        style={styles.replyText}
+                        numberOfLines={1}
+                        ellipsizeMode="tail"
+                      >
+                        {repliedMessage.content}
+                      </Text>
+                    )}
+
+                    {repliedMessage.type === "image" && (
+                      <Text style={styles.replyText}>[Hình ảnh]</Text>
+                    )}
+
+                    {repliedMessage.type === "file" && (
+                      <View style={styles.replyFileContainer}>
+                        <Image
+                          source={require("../../assets/icons/attachment.png")}
+                          style={styles.replyFileIcon}
+                        />
+                        <Text
+                          style={styles.replyFileName}
+                          numberOfLines={1}
+                          ellipsizeMode="tail"
+                        >
+                          {repliedMessage.fileName || "Tệp đính kèm"}
+                        </Text>
+                      </View>
+                    )}
                   </View>
                 )}
+
                 {item.type === "image" ? (
                   <TouchableOpacity
                     onPress={() =>
@@ -369,6 +467,25 @@ const Chatting = ({ route }) => {
                       resizeMode="cover"
                     />
                   </TouchableOpacity>
+                ) : item.type === "file" ? (
+                  <TouchableOpacity
+                    style={styles.fileContainer}
+                    onPress={() => {
+                      Alert.alert("Thông báo", "Hãy tải hoặc mở file về máy");
+                    }}
+                  >
+                    <Image
+                      source={require("../../assets/icons/attachment.png")}
+                      style={styles.fileIcon}
+                    />
+                    <Text
+                      style={styles.fileName}
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
+                    >
+                      {getFileNameFromUrl(item.content) || "Tệp đính kèm"}
+                    </Text>
+                  </TouchableOpacity>
                 ) : (
                   <Text
                     style={[
@@ -379,6 +496,7 @@ const Chatting = ({ route }) => {
                     {item.content}
                   </Text>
                 )}
+
                 {/* Hiển thị thời gian hh:mm gửi tin nhắn */}
                 {isLastMessage && (
                   <Text style={styles.timestamp}>
@@ -560,9 +678,50 @@ const Chatting = ({ route }) => {
         {/* Hiển thị tin nhắn gốc khi ĐANG TRẢ LỜI */}
         {replyMessage && (
           <View style={styles.replyPreview}>
-            <Text style={styles.replyPreviewText}>
-              Đang trả lời tin nhắn của {}: {replyMessage.content}
-            </Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.replyPreviewText}>
+                Đang trả lời tin nhắn của{" "}
+                {replyMessage.sender_id === user.id
+                  ? "Bạn"
+                  : getMemberName(replyMessage.sender_id)}
+                :
+              </Text>
+              {replyMessage.type === "text" && (
+                <Text
+                  style={styles.replyPreviewText}
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
+                  {replyMessage.content}
+                </Text>
+              )}
+              {replyMessage.type === "image" && (
+                <Image
+                  source={{ uri: replyMessage.content }}
+                  style={{
+                    width: 100,
+                    height: 100,
+                    borderRadius: 6,
+                    marginTop: 4,
+                  }}
+                />
+              )}
+              {replyMessage.type === "file" && (
+                <View style={styles.replyFileContainer}>
+                  <Image
+                    source={require("../../assets/icons/attachment.png")}
+                    style={styles.replyFileIcon}
+                  />
+                  <Text
+                    style={styles.replyFileName}
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                  >
+                    {replyMessage.fileName || "Tệp đính kèm"}
+                  </Text>
+                </View>
+              )}
+            </View>
             <TouchableOpacity onPress={() => setReplyMessage(null)}>
               <Text style={styles.cancelReply}>Hủy</Text>
             </TouchableOpacity>
@@ -575,8 +734,11 @@ const Chatting = ({ route }) => {
           setInputMessage={setInputMessage}
           selectedImage={selectedImage}
           setSelectedImage={setSelectedImage}
+          selectedFile={selectedFile}
+          setSelectedFile={setSelectedFile}
           sendMessage={sendMessage}
           pickImage={pickImage}
+          pickFile={pickFile}
         />
       </KeyboardAvoidingView>
     </View>
@@ -648,6 +810,21 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#555",
     fontStyle: "italic",
+  },
+  replyFileContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 4,
+  },
+  replyFileIcon: {
+    width: 16,
+    height: 16,
+    marginRight: 6,
+  },
+  replyFileName: {
+    fontSize: 13,
+    color: "#444",
+    flex: 1,
   },
   messageText: {
     fontSize: 16,
@@ -764,14 +941,31 @@ const styles = StyleSheet.create({
     height: 40,
   },
   recalledMessage: {
-    backgroundColor: "#f0f0f0", // Màu xám nhạt
+    backgroundColor: "#f0f0f0",
     borderStyle: "dashed",
     borderWidth: 1,
     borderColor: "#ccc",
   },
   recalledText: {
     fontStyle: "italic",
-    color: "#888", // Màu xám nhạt cho nội dung tin nhắn thu hồi
+    color: "#888",
+  },
+  fileContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#e6e6fa",
+    borderRadius: 8,
+    marginTop: 5,
+  },
+  fileIcon: {
+    width: 24,
+    height: 24,
+    marginRight: 8,
+  },
+  fileName: {
+    color: "#333",
+    fontSize: 14,
+    flexShrink: 1,
   },
 });
 

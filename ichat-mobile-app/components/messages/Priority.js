@@ -73,7 +73,12 @@ const Priority = () => {
           chatMap.set(chatUserId, {
             id: chatUserId,
             name: fullName,
-            lastMessage: msg.type === "image" ? "[Hình ảnh]" : msg.content,
+            lastMessage:
+              msg.type === "image"
+                ? "Hình ảnh"
+                : msg.type === "file"
+                ? "Tệp đính kèm"
+                : msg.content,
             lastMessageTime: lastMessageTime,
             time: timeDiff,
             avatar: { uri: avatarPath },

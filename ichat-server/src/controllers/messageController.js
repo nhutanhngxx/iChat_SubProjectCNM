@@ -30,13 +30,15 @@ const MessageController = {
 
   sendMessage: async (req, res) => {
     try {
+      const imageFile = req.files?.image?.[0] || null;
+      const docFile = req.files?.file?.[0] || null;
       const result = await MessageModel.sendMessage({
         sender_id: req.body.sender_id,
         receiver_id: req.body.receiver_id,
         content: req.body.content,
         type: req.body.type,
         chat_type: req.body.chat_type,
-        file: req.file,
+        file: imageFile || docFile,
       });
 
       res.status(201).json({
