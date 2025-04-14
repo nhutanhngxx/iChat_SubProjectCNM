@@ -139,47 +139,7 @@ export const changePassword = createAsyncThunk(
     }
   }
 );
-// Gửi OTP bằng Firebase
-// export const sendOtpFirebase = createAsyncThunk(
-//   'auth/sendOtpFirebase',
-//   async (phoneNumber, { rejectWithValue }) => {
-//     try {
-//       // Clear any existing reCAPTCHA
-//       if (window.recaptchaVerifier) {
-//         try {
-//           window.recaptchaVerifier.clear();
-//         } catch (e) {
-//           console.error("Error clearing existing reCAPTCHA:", e);
-//         }
-//         window.recaptchaVerifier = null;
-//       }
 
-//       // Important: Ensure auth is properly initialized
-//       if (!auth || !auth.app) {
-//         throw new Error("Firebase auth is not properly initialized");
-//       }
-
-//       if(!window.recaptchaVerifier) {
-//       }
-//       // Create new reCAPTCHA verifier
-//       window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-//         size: 'invisible',
-//         callback: () => {
-//           console.log("reCAPTCHA verified");
-//         }
-//       });
-
-//       const appVerifier = window.recaptchaVerifier;
-//       const confirmationResult = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
-//       window.confirmationResult = confirmationResult;
-
-//       return confirmationResult.verificationId;
-//     } catch (error) {
-//       console.error("Firebase OTP error:", error);
-//       return rejectWithValue(error.message || "Failed to send OTP");
-//     }
-//   }
-// );
 export const sendOtpFirebase = createAsyncThunk(
   "auth/sendOtpFirebase",
   async (phoneNumber, { rejectWithValue }) => {
@@ -490,7 +450,7 @@ const authSlice = createSlice({
   },
 });
 export const { setUser } = authSlice.actions;
-export const { clearAuthError, clearPhoneCheckStatus,resetSuccessMessage  } = authSlice.actions;
-
+export const { clearAuthError, clearPhoneCheckStatus, resetSuccessMessage } =
+  authSlice.actions;
 
 export default authSlice.reducer;

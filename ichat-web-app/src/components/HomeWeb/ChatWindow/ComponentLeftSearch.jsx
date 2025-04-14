@@ -892,7 +892,7 @@ const ComponentLeftSearch = ({ userList, onClose }) => {
       <SearchComponent
         searchText={searchText}
         setSearchText={setSearchText}
-        onClose={onClose}
+        onClose={onClose} 
       />
       {searchText === "" ? (
         <RecentlySearched
@@ -920,7 +920,7 @@ const ComponentLeftSearch = ({ userList, onClose }) => {
           setSelectedUser={setSelectedUser}
           messageDateRange={messageDateRange}
           setMessageDateRange={setMessageDateRange}
-          filteredSearchMessages={filteredSearchMessages}
+          // filteredSearchMessages={filteredSearchMessages}
 
         />
       )}
