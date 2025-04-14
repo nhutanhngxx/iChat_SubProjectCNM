@@ -1,6 +1,6 @@
 const UserModel = require("../models/userModel");
 const mongoose = require("mongoose");
-const { uploadFile } = require("../services/uploadImageToS3");
+const { uploadFile } = require("../services/upload-file");
 const User = require("../schemas/UserDetails");
 
 const UserController = {

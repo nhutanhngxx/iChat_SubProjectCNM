@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const multer = require("multer");
 const upload = multer({ storage: multer.memoryStorage() });
-const { uploadFile } = require("../services/uploadImageToS3");
+const { uploadFile } = require("../services/upload-file");
 
 require("dotenv").config();
 const cookieParser = require("cookie-parser");

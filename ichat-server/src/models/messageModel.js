@@ -3,7 +3,7 @@ const MessageCard = require("../schemas/MessageCard");
 const GroupChat = require("../schemas/GroupChat");
 const GroupMembers = require("../schemas/GroupMember");
 const mongoose = require("mongoose");
-const { uploadFile } = require("../services/uploadImageToS3");
+const { uploadFile } = require("../services/upload-file");
 
 const MessageModel = {
   searchMessages: async (keyword, userId) => {
