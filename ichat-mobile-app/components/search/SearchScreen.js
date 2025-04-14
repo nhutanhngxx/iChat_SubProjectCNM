@@ -522,7 +522,6 @@ const SearchScreen = () => {
               ) : (
                 // Tài khoản
                 <TouchableOpacity
-                  onPress={() => handleOpenChatting(item)}
                   style={{
                     paddingVertical: 5,
                     paddingHorizontal: 15,
@@ -531,26 +530,62 @@ const SearchScreen = () => {
                     gap: 5,
                     flexDirection: "row",
                     alignItems: "center",
+                    justifyContent: "space-between",
                   }}
+                  // onPress={() => handleOpenChatting(item)}
                 >
-                  <Image
-                    source={{
-                      uri:
-                        item.sender_id?.avatar_path ||
-                        "https://picsum.photos/200",
-                    }}
+                  <TouchableOpacity
+                    style={{ flexDirection: "row", alignItems: "center" }}
+                    onPress={() => handleOpenChatting(item)}
+                  >
+                    <Image
+                      source={{
+                        uri:
+                          item.sender_id?.avatar_path ||
+                          "https://picsum.photos/200",
+                      }}
+                      style={{
+                        width: 50,
+                        height: 50,
+                        borderRadius: 25,
+                        marginRight: 10,
+                        alignItems: "center",
+                      }}
+                    />
+                    <View>
+                      <Text style={{ fontSize: 16, fontWeight: "bold" }}>
+                        {item.full_name}
+                      </Text>
+                      {/* <Text style={{ color: "gray" }}>{item.phone}</Text> */}
+                    </View>
+                  </TouchableOpacity>
+                  <TouchableOpacity
                     style={{
-                      width: 50,
-                      height: 50,
-                      borderRadius: 25,
-                      marginRight: 10,
+                      backgroundColor: "#0AA2F8",
+                      borderRadius: 5,
+                      paddingVertical: 5,
+                      paddingHorizontal: 6,
+                      cursor: "pointer",
                     }}
-                  />
-                  <View>
-                    <Text style={{ fontSize: 16, fontWeight: "bold" }}>
-                      {item.full_name}
+                    onPress={() =>
+                      Alert.alert(
+                        "Kết bạn",
+                        "Bạn có muốn kết bạn với người này không?"
+                      )
+                    }
+                  >
+                    <Text style={{ color: "white", fontWeight: "medium" }}>
+                      <Image
+                        source={require("../../assets/icons/add-friend.png")}
+                        style={{
+                          width: 10,
+                          height: 10,
+                          tintColor: "white",
+                        }}
+                      />{" "}
+                      Thêm bạn bè
                     </Text>
-                  </View>
+                  </TouchableOpacity>
                 </TouchableOpacity>
               )
             }
@@ -635,29 +670,62 @@ const SearchScreen = () => {
                     gap: 5,
                     flexDirection: "row",
                     alignItems: "center",
+                    justifyContent: "space-between",
                   }}
                   // onPress={() => handleOpenChatting(item)}
                 >
-                  <Image
-                    source={{
-                      uri:
-                        item.sender_id?.avatar_path ||
-                        "https://picsum.photos/200",
-                    }}
+                  <TouchableOpacity
+                    style={{ flexDirection: "row", alignItems: "center" }}
+                    onPress={() => handleOpenChatting(item)}
+                  >
+                    <Image
+                      source={{
+                        uri:
+                          item.sender_id?.avatar_path ||
+                          "https://picsum.photos/200",
+                      }}
+                      style={{
+                        width: 50,
+                        height: 50,
+                        borderRadius: 25,
+                        marginRight: 10,
+                        alignItems: "center",
+                      }}
+                    />
+                    <View>
+                      <Text style={{ fontSize: 16, fontWeight: "bold" }}>
+                        {item.full_name}
+                      </Text>
+                      {/* <Text style={{ color: "gray" }}>{item.phone}</Text> */}
+                    </View>
+                  </TouchableOpacity>
+                  <TouchableOpacity
                     style={{
-                      width: 50,
-                      height: 50,
-                      borderRadius: 25,
-                      marginRight: 10,
-                      alignItems: "center",
+                      backgroundColor: "#0AA2F8",
+                      borderRadius: 5,
+                      paddingVertical: 5,
+                      paddingHorizontal: 6,
+                      cursor: "pointer",
                     }}
-                  />
-                  <View>
-                    <Text style={{ fontSize: 16, fontWeight: "bold" }}>
-                      {item.full_name}
+                    onPress={() =>
+                      Alert.alert(
+                        "Kết bạn",
+                        "Bạn có muốn kết bạn với người này không?"
+                      )
+                    }
+                  >
+                    <Text style={{ color: "white", fontWeight: "medium" }}>
+                      <Image
+                        source={require("../../assets/icons/add-friend.png")}
+                        style={{
+                          width: 10,
+                          height: 10,
+                          tintColor: "white",
+                        }}
+                      />{" "}
+                      Thêm bạn bè
                     </Text>
-                    {/* <Text style={{ color: "gray" }}>{item.phone}</Text> */}
-                  </View>
+                  </TouchableOpacity>
                 </TouchableOpacity>
               )}
               keyExtractor={(item, index) =>
