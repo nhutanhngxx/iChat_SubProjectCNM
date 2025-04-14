@@ -678,7 +678,6 @@ const SearchScreen = () => {
                   }}
                   // onPress={() => handleOpenChatting(item)}
                 >
-<<<<<<< HEAD
                   <TouchableOpacity
                     style={{ flexDirection: "row", alignItems: "center" }}
                     onPress={() => handleOpenChatting(item)}
@@ -711,19 +710,6 @@ const SearchScreen = () => {
                     sentRequests={sentRequests}
                     listFriend={listFriend}
                     onSendRequest={handleSendFriendRequest}
-=======
-                  <Image
-                    source={{
-                      uri: item.sender_id?.avatar_path || item.avatar_path,
-                    }}
-                    style={{
-                      width: 50,
-                      height: 50,
-                      borderRadius: 25,
-                      marginRight: 10,
-                      alignItems: "center",
-                    }}
->>>>>>> ef9750739a8c990e84c95f305bc9eb88ab6cce1f
                   />
                 </TouchableOpacity>
               )}
