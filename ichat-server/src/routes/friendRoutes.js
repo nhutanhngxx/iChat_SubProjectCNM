@@ -3,8 +3,23 @@ const router = express.Router();
 
 const FriendshipController = require("../controllers/friendController");
 
+// Danh sách bạn bè
+router.get("/:userId", FriendshipController.getFriendListByUserId);
+
+// Danh sách lời mời kết bạn đã gửi
+router.get("/sent-requests/:userId", FriendshipController.sentFriendRequests);
+
+// Danh sách lời mời kết bạn đã nhận
+router.get(
+  "/received-requests/:userId",
+  FriendshipController.receivedFriendRequests
+);
+
 // Gửi lời mời kết bạn
 router.post("/send-friend-request", FriendshipController.sendFriendRequest);
+
+// Từ chối lời mời kết bạn
+router.post("/reject-friend-request", FriendshipController.cancelFriendRequest);
 
 // Chấp nhận lời mời kết bạn
 router.post("/accept-friend-request", FriendshipController.acceptFriendRequest);

@@ -1,5 +1,12 @@
 import React from "react";
-import { Text, View, Image, TextInput, TouchableOpacity } from "react-native";
+import {
+  Text,
+  View,
+  Image,
+  TextInput,
+  TouchableOpacity,
+  Platform,
+} from "react-native";
 import { useNavigation } from "@react-navigation/native";
 
 const HeaderTimeline = () => {
@@ -32,17 +39,31 @@ const HeaderTimeline = () => {
           />
           <TextInput
             onPress={() => navigation.navigate("SearchScreen")}
-            style={{
-              fontSize: 15,
-              color: "#2F80ED",
-              flex: 1,
-              height: 30,
-              marginRight: 20,
-              paddingLeft: 10,
-              borderRadius: 5,
-              backgroundColor: "white",
-              textAlignVertical: "center",
-            }}
+            style={
+              Platform.OS === "ios"
+                ? {
+                    fontSize: 15,
+                    color: "#2F80ED",
+                    flex: 1,
+                    height: 30,
+                    marginRight: 20,
+                    paddingLeft: 10,
+                    borderRadius: 5,
+                    backgroundColor: "white",
+                    textAlignVertical: "center",
+                  }
+                : {
+                    fontSize: 15,
+                    color: "#2F80ED",
+                    flex: 1,
+                    height: 38,
+                    marginRight: 20,
+                    paddingLeft: 10,
+                    borderRadius: 5,
+                    backgroundColor: "white",
+                    textAlignVertical: "center",
+                  }
+            }
             placeholder="Tìm kiếm"
             placeholderTextColor={"gray"}
             editable={false}
