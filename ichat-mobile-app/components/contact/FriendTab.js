@@ -8,9 +8,10 @@ import {
   TouchableOpacity,
   FlatList,
   StyleSheet,
+  Alert,
 } from "react-native";
 import { Dimensions } from "react-native";
-import { UserContext } from "../../context/UserContext";
+import { UserContext } from "../../config/context/UserContext";
 import friendService from "../../services/friendService";
 
 const FriendTab = () => {
@@ -95,13 +96,13 @@ const FriendTab = () => {
       <View style={{ display: "flex", flexDirection: "row", gap: 10 }}>
         <TouchableOpacity
           style={styles.activeButton}
-          onPress={() => alert("Xem tất cả bạn bè")}
+          onPress={() => Alert.alert("Xem tất cả bạn bè")}
         >
           <Text style={styles.textActiveButton}>Tất cả</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.noActiveButton}
-          onPress={() => alert("Xem tất cả bạn bè đang hoạt động")}
+          onPress={() => Alert.alert("Xem tất cả bạn bè đang hoạt động")}
         >
           <Text>Đang hoạt động</Text>
         </TouchableOpacity>

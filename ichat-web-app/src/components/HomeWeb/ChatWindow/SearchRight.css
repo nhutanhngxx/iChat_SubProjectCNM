@@ -3,7 +3,7 @@
   max-width: 346px;
   width: 346px;
   background-color: aqua;
-  height: 100%;
+  max-height: 100vh;
 }
 .search-right-header-title {
   display: flex;
@@ -16,11 +16,15 @@
 .search-right-header-title p {
   margin-left: 20px;
   margin-bottom: 5px;
-  font-size: 18px;
+  font-size: 16px;
   cursor: pointer;
+  padding: 4px;
 }
 .search-right-header-title p:hover {
-  color: rgb(94, 216, 253);
+  color: rgb(255, 255, 255);
+  background-color: rgb(211, 211, 211);
+
+  border-radius: 50%;
 }
 .search-right-header {
   background: rgb(255, 255, 255);
@@ -79,20 +83,41 @@
   border: 1px solid rgb(199, 199, 199);
   border-radius: 5px;
   width: 35%;
+  color: rgb(122, 122, 122);
+  font-size: 14px;
 }
 .search-right-header-fillter button:hover {
   background-color: rgb(212, 212, 212);
 }
+
+.search-right-header-fillter button.text-blue {
+  color: #007896;
+}
 /* Modal mini người gửi */
 .mini-modal-sender {
   position: absolute;
-  background-color: rgb(238, 235, 235);
+  background-color: rgb(255, 255, 255);
   top: 170px;
-  right: 140px;
+  right: 34px;
   gap: 10px;
+  margin-top: 1px;
   display: flex;
   flex-direction: column;
-  padding: 10px;
+  padding: 10px 0px;
+  box-shadow: 0px 0px 5px 0px rgb(0 0 0 / 50%);
+  border-radius: 5px;
+  width: 220px;
+}
+.mini-modal-sender input {
+  border: none;
+  outline: none;
+  padding: 5px;
+  border-radius: 5px;
+  margin: 5px 8px;
+  background-color: rgb(223, 223, 223);
+}
+.mini-modal-sender input:focus {
+  border: 1px solid rgb(153, 218, 255);
 }
 .mini-modal-sender img {
   width: 30px;
@@ -102,14 +127,125 @@
 .mini-modal-sender-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
 }
 .mini-modal-sender-list-item {
   display: flex;
-  gap: 10px;
   align-items: center;
   cursor: pointer;
+  gap: 10px;
+  padding: 8px;
 }
 .mini-modal-sender-list-item:hover {
   background-color: rgb(212, 212, 212);
+}
+/* modal date fillter */
+.mini-modal-date {
+  position: absolute;
+  background-color: rgb(255, 255, 255);
+  top: 170px;
+  right: 20px;
+  gap: 10px;
+  margin-top: 1px;
+  display: flex;
+  flex-direction: column;
+  padding: 10px 0px;
+  box-shadow: 0px 0px 5px 0px rgb(0 0 0 / 50%);
+  border-radius: 5px;
+  width: 300px;
+}
+.mini-modal-date div:first-child {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+.mini-modal-date div:first-child p:first-child {
+  flex: 1;
+  text-align: left;
+  font-size: 18px;
+}
+.mini-modal-date div:first-child p:last-child {
+  flex: 1;
+  text-align: end;
+  font-size: 16px;
+}
+.mini-modal-date div:first-child:hover {
+  background-color: rgb(211, 211, 211);
+}
+.mini-modal-date div:last-child {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 5px 5px;
+  cursor: pointer;
+  margin: 0 5px;
+  border-top: 1px solid rgb(199, 199, 199);
+}
+.mini-modal-date div:last-child .beetween-date {
+  display: flex;
+  flex-direction: row;
+  margin-top: 8px;
+  gap: 10px;
+}
+.mini-modal-date div:last-child .beetween-date input {
+  width: 50%;
+  height: 35px;
+}
+.mini-modal-date div:last-child .mini-modal-date-button {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  margin-top: 20px;
+  font-weight: bold;
+  padding-top: 10px;
+}
+
+.mini-modal-date div:last-child .mini-modal-date-button button:last-child {
+  background-color: rgb(54, 155, 250);
+  color: white;
+}
+.mini-modal-date
+  div:last-child
+  .mini-modal-date-button
+  button:last-child:hover {
+  background-color: rgb(14, 130, 238);
+}
+.mini-modal-date-beetween {
+  position: absolute;
+  background-color: rgb(255, 255, 255);
+  width: 200px;
+  right: 300px;
+  box-shadow: 0px 0px 5px 0px rgb(0 0 0 / 50%);
+  border-radius: 5px;
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+}
+.mini-modal-date-beetween p {
+  cursor: pointer;
+  display: flex;
+  flex: 1;
+  justify-content: center;
+  width: 100%;
+  padding: 10px;
+}
+.mini-modal-date-beetween p:hover {
+  background-color: rgb(211, 211, 211);
+}
+/* content */
+.conttent-searchRight {
+  background-color: rgb(255, 255, 255);
+  overflow-y: auto;
+  height: 100%;
+}
+.conttent-searchRight .search-right-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+.conttent-searchRight .search-right-empty img {
+  width: 50%;
+  height: auto;
 }

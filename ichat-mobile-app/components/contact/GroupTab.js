@@ -6,11 +6,12 @@ import {
   TouchableOpacity,
   FlatList,
   StyleSheet,
+  Alert,
 } from "react-native";
 import { Dimensions } from "react-native";
 import ModalCreateGroup from "./ModalCreateGroup";
 import { useNavigation } from "@react-navigation/native";
-import { UserContext } from "../../context/UserContext";
+import { UserContext } from "../../config/context/UserContext";
 import { Avatar } from "@rneui/themed";
 import groupService from "../../services/groupService";
 
@@ -88,7 +89,7 @@ const GroupTab = () => {
 
         <TouchableOpacity
           style={styles.recentActive}
-          onPress={() => alert("Xem tất cả bạn bè đang hoạt động")}
+          onPress={() => Alert.alert("Xem tất cả bạn bè đang hoạt động")}
         >
           <Image
             source={require("../../assets/icons/sort.png")}

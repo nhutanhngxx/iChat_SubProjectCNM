@@ -12,7 +12,7 @@
 .blockList-contents,
 .quick-message-content {
   transition: transform 0.5s ease-in-out;
-  width: 100%;
+  width: 470px;
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -151,4 +151,38 @@
 .box-blockList p {
   width: 100%;
   text-align: center;
+}
+/* Định dạng khi hợp lệ */
+.input-valid {
+  border: 2px solid #28a745 !important; /* xanh lá */
+  outline: none !important;
+}
+
+/* Định dạng khi không hợp lệ */
+.input-invalid {
+  border: 2px solid #dc3545 !important; /* đỏ */
+  outline: none !important;
+}
+
+/* Tùy chọn: thêm hiệu ứng mượt khi đổi màu */
+input {
+  transition: border 0.2s ease-in-out !important;
+}
+
+.input-password-group {
+  position: relative !important;
+}
+
+.input-password-group input {
+  width: 100%;
+  padding-right: 30px;
+}
+
+.eye-icon {
+  position: absolute;
+  top: 35%;
+  right: 8px;
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: #666;
 }

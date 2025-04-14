@@ -14,8 +14,9 @@ const getHostIP = () => {
   try {
     // Lấy địa chỉ host từ manifest của Expo
     const debuggerHost =
-      Constants.manifest?.debuggerHost ||
-      Constants.manifest2?.extra?.expoGo?.debuggerHost;
+      Constants.expoConfig?.hostUri || // Expo SDK 48+
+      Constants.manifest2?.extra?.expoGo?.debuggerHost; // Expo SDK 46-47
+    // || Constants.manifest?.debuggerHost; // Phiên bản cũ (deprecated)
 
     if (debuggerHost) {
       // debuggerHost có dạng "192.168.x.x:19000", cần tách phần IP
@@ -32,13 +33,14 @@ const getHostIP = () => {
 
 // Tạo API instance
 const createApi = async () => {
-  const DEFAULT_IP = "172.20.70.188";
+  const DEFAULT_IP = "192.168.1.251";
   const PORT = 5001;
 
   const hostIP = getHostIP();
+  console.log("Host IP:", hostIP);
 
   const api = axios.create({
-    baseURL: `http://${hostIP || DEFAULT_IP}:${PORT}`,
+    baseURL: `http://${hostIP || DEFAULT_IP}:${PORT}/api`,
     // timeout: 10000, // Request sẽ bị hủy nếu quá x giây
     headers: { "Content-Type": "application/json" },
   });
