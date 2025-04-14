@@ -4,13 +4,96 @@ const Friendship = require("../schemas/Friendship");
 require("dotenv").config();
 
 const FriendshipController = {
+  // Lấy danh sách bạn bè của người dùng
+  getFriendListByUserId: async (req, res) => {
+    const { userId } = req.params;
+
+    try {
+      const friendships = await Friendship.find({
+        $or: [
+          { sender_id: userId, status: "accepted" },
+          { receiver_id: userId, status: "accepted" },
+        ],
+      });
+
+      const friendIds = friendships.map((friendship) =>
+        friendship.sender_id.toString() === userId
+          ? friendship.receiver_id
+          : friendship.sender_id
+      );
+
+      const friends = await User.find({ _id: { $in: friendIds } });
+
+      res.json({ status: "ok", friends });
+    } catch (error) {
+      res.status(500).json({ status: "error", message: error.message });
+    }
+  },
+
+  // Lấy danh sách lời mời kết bạn đã gửi
+  sentFriendRequests: async (req, res) => {
+    const { userId } = req.params;
+    try {
+      const friendRequests = await Friendship.find({
+        sender_id: userId,
+        status: "pending",
+      });
+      const receiverIds = friendRequests.map((request) => request.receiver_id);
+      const receivers = await User.find({ _id: { $in: receiverIds } });
+      const friendRequestsWithReceiverInfo = friendRequests.map((request) => {
+        const receiver = receivers.find(
+          (user) => user._id.toString() === request.receiver_id.toString()
+        );
+        return {
+          id: receiver._id,
+          full_name: receiver.full_name,
+          avatar_path: receiver.avatar_path,
+        };
+      });
+      res.json({
+        status: "ok",
+        friendRequests: friendRequestsWithReceiverInfo,
+      });
+    } catch (error) {
+      res.status(500).json({ status: "error", message: error.message });
+    }
+  },
+
+  // Lấy danh sách lời mời kết bạn đã nhận
+  receivedFriendRequests: async (req, res) => {
+    const { userId } = req.params;
+    try {
+      const friendRequests = await Friendship.find({
+        receiver_id: userId,
+        status: "pending",
+      });
+      const senderIds = friendRequests.map((request) => request.sender_id);
+      const senders = await User.find({ _id: { $in: senderIds } });
+      const friendRequestsWithSenderInfo = friendRequests.map((request) => {
+        const sender = senders.find(
+          (user) => user._id.toString() === request.sender_id.toString()
+        );
+        return {
+          id: sender._id,
+          full_name: sender.full_name,
+          avatar_path: sender.avatar_path,
+        };
+      });
+      res.json({ status: "ok", friendRequests: friendRequestsWithSenderInfo });
+    } catch (error) {
+      res.status(500).json({ status: "error", message: error.message });
+    }
+  },
+
   // Gửi lời mời kết bạn
   sendFriendRequest: async (req, res) => {
-    const { sender_id, receiver_id } = req.body;
+    const { senderId, receiverId } = req.body;
+    console.log("Sender ID: ", senderId);
+    console.log("Receiver ID: ", receiverId);
 
     try {
       // Kiểm tra nếu sender_id và receiver_id giống nhau
-      if (sender_id === receiver_id) {
+      if (senderId === receiverId) {
         return res.status(400).json({
           status: "error",
           message: "Không thể gửi lời mời kết bạn cho chính mình",
@@ -20,8 +103,8 @@ const FriendshipController = {
       // Kiểm tra nếu đã có mối quan hệ trước đó
       const existingFriendship = await Friendship.findOne({
         $or: [
-          { sender_id, receiver_id },
-          { sender_id: receiver_id, receiver_id: sender_id },
+          { sender_id: senderId, receiver_id: receiverId },
+          { sender_id: receiverId, receiver_id: senderId },
         ],
       });
 
@@ -45,8 +128,8 @@ const FriendshipController = {
 
       // Tạo mới lời mời kết bạn
       const newFriendship = await Friendship.create({
-        sender_id,
-        receiver_id,
+        sender_id: senderId,
+        receiver_id: receiverId,
         status: "pending",
       });
 
@@ -59,14 +142,15 @@ const FriendshipController = {
       res.status(500).json({ status: "error", message: error.message });
     }
   },
+
   // Chấp nhận lời mời kết bạn
   acceptFriendRequest: async (req, res) => {
-    const { sender_id, receiver_id } = req.body;
+    const { senderId, receiverId } = req.body;
 
     try {
       const friendship = await Friendship.findOne({
-        sender_id,
-        receiver_id,
+        sender_id: senderId,
+        receiver_id: receiverId,
         status: "pending",
       });
 
@@ -90,16 +174,14 @@ const FriendshipController = {
     }
   },
 
-  rejectFriendRequest: async (req, res) => {},
-
-  //   Hủy lời mời kết bạn
+  //  Từ chối / Hủy lời mời kết bạn
   cancelFriendRequest: async (req, res) => {
-    const { sender_id, receiver_id } = req.body;
+    const { senderId, receiverId } = req.body;
 
     try {
       const friendship = await Friendship.findOneAndDelete({
-        sender_id,
-        receiver_id,
+        sender_id: senderId,
+        receiver_id: receiverId,
         status: "pending",
       });
 

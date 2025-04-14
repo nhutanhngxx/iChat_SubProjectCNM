@@ -17,6 +17,8 @@ import { UserContext } from "../../config/context/UserContext";
 import { StatusBar } from "expo-status-bar";
 import { getHostIP } from "../../services/api";
 import { ActivityIndicator } from "react-native-paper";
+import friendService from "../../services/friendService";
+import FriendButton from "../common/FriendButton";
 
 const SearchScreen = () => {
   const route = useRoute();
@@ -85,6 +87,8 @@ const SearchScreen = () => {
   const [searchMessages, setSearchMessages] = useState([]);
   const [searchGroups, setSearchGroups] = useState([]);
   const [users, setUsers] = useState([]);
+  const [sentRequests, setSentRequests] = useState([]);
+  const [listFriend, setListFriend] = useState([]);
 
   useEffect(() => {
     loadSearchHistory();
@@ -137,6 +141,30 @@ const SearchScreen = () => {
       setHistorySearch(newHistory);
     } catch (error) {
       console.error("Lỗi xóa 1 item khỏi lịch sử:", error);
+    }
+  };
+
+  // Hàm xử lý gửi lời mời kết bạn
+  const handleSendFriendRequest = async (receiverId, full_name) => {
+    try {
+      const response = await friendService.sendFriendRequest({
+        senderId: user.id,
+        receiverId,
+      });
+      if (response.status === "ok") {
+        setSentRequests((prev) => [...prev, receiverId]);
+        Alert.alert("Thông báo", `Đã gửi lời mời kết bạn đến ${full_name}`, [
+          { text: "OK" },
+        ]);
+      } else {
+        Alert.alert(
+          "Thông báo",
+          response.message || "Không thể gửi lời mời kết bạn"
+        );
+      }
+    } catch (error) {
+      console.error("Lỗi gửi lời mời kết bạn:", error);
+      Alert.alert("Thông báo", "Đã xảy ra lỗi khi gửi lời mời kết bạn");
     }
   };
 
@@ -249,6 +277,28 @@ const SearchScreen = () => {
       setUsers([]); // Gán rỗng nếu lỗi
     }
   };
+
+  // Lấy danh sách bạn bè và lời mời kết bạn đã gửi
+  const fetchFriendRequests = async () => {
+    try {
+      const friendList = await friendService.getFriendListByUserId(user.id);
+      setListFriend(friendList);
+      const sentRequests = await friendService.getSentRequestsByUserId(user.id);
+      setSentRequests(sentRequests);
+    } catch (error) {
+      console.error("Error fetching friend requests:", error);
+      setSentRequests([]);
+      setFriendList([]);
+    }
+  };
+
+  // Gọi fetchFriendRequests khi component được mount
+  useEffect(() => {
+    fetchFriendRequests();
+  }, []);
+
+  console.log("Sent requests:", sentRequests);
+  console.log("List friend:", listFriend);
 
   // Gọi fetchUsers khi component được mount
   useEffect(() => {
@@ -532,7 +582,7 @@ const SearchScreen = () => {
                     alignItems: "center",
                     justifyContent: "space-between",
                   }}
-                  // onPress={() => handleOpenChatting(item)}
+                  onPress={() => handleOpenChatting(item)}
                 >
                   <TouchableOpacity
                     style={{ flexDirection: "row", alignItems: "center" }}
@@ -559,33 +609,14 @@ const SearchScreen = () => {
                       {/* <Text style={{ color: "gray" }}>{item.phone}</Text> */}
                     </View>
                   </TouchableOpacity>
-                  <TouchableOpacity
-                    style={{
-                      backgroundColor: "#0AA2F8",
-                      borderRadius: 5,
-                      paddingVertical: 5,
-                      paddingHorizontal: 6,
-                      cursor: "pointer",
-                    }}
-                    onPress={() =>
-                      Alert.alert(
-                        "Kết bạn",
-                        "Bạn có muốn kết bạn với người này không?"
-                      )
-                    }
-                  >
-                    <Text style={{ color: "white", fontWeight: "medium" }}>
-                      <Image
-                        source={require("../../assets/icons/add-friend.png")}
-                        style={{
-                          width: 10,
-                          height: 10,
-                          tintColor: "white",
-                        }}
-                      />{" "}
-                      Thêm bạn bè
-                    </Text>
-                  </TouchableOpacity>
+                  <FriendButton
+                    userId={user?.id}
+                    itemId={item.id}
+                    fullName={item.full_name}
+                    sentRequests={sentRequests}
+                    listFriend={listFriend}
+                    onSendRequest={handleSendFriendRequest}
+                  />
                 </TouchableOpacity>
               )
             }
@@ -699,33 +730,14 @@ const SearchScreen = () => {
                       {/* <Text style={{ color: "gray" }}>{item.phone}</Text> */}
                     </View>
                   </TouchableOpacity>
-                  <TouchableOpacity
-                    style={{
-                      backgroundColor: "#0AA2F8",
-                      borderRadius: 5,
-                      paddingVertical: 5,
-                      paddingHorizontal: 6,
-                      cursor: "pointer",
-                    }}
-                    onPress={() =>
-                      Alert.alert(
-                        "Kết bạn",
-                        "Bạn có muốn kết bạn với người này không?"
-                      )
-                    }
-                  >
-                    <Text style={{ color: "white", fontWeight: "medium" }}>
-                      <Image
-                        source={require("../../assets/icons/add-friend.png")}
-                        style={{
-                          width: 10,
-                          height: 10,
-                          tintColor: "white",
-                        }}
-                      />{" "}
-                      Thêm bạn bè
-                    </Text>
-                  </TouchableOpacity>
+                  <FriendButton
+                    userId={user?.id}
+                    itemId={item.id}
+                    fullName={item.full_name}
+                    sentRequests={sentRequests}
+                    listFriend={listFriend}
+                    onSendRequest={handleSendFriendRequest}
+                  />
                 </TouchableOpacity>
               )}
               keyExtractor={(item, index) =>
