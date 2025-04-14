@@ -5,6 +5,7 @@
   max-height: 80vh;
   padding: 0;
   overflow: hidden;
+  top: 35px;
 }
 
 .settings-container {

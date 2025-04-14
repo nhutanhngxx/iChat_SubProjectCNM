@@ -10,7 +10,7 @@ import {
 } from "react-native";
 
 import HeaderPersonalProfile from "../components/header/HeaderPersonalProfile";
-import { UserContext } from "../context/UserContext";
+import { UserContext } from "../config/context/UserContext";
 import * as ImageManipulator from "expo-image-manipulator"; // Thư viện nén ảnh
 import { StatusBar } from "expo-status-bar";
 
@@ -42,24 +42,13 @@ const MeTab = () => {
       <View style={styles.headerBackground} />
       {/* Tài khoản */}
       <View style={styles.profileContainer}>
-        {userData ? (
-          <>
-            <TouchableOpacity>
-              <Image
-                source={
-                  compressedAvatar
-                    ? { uri: compressedAvatar }
-                    : require("../assets/icons/new-logo.png")
-                }
-                style={styles.avatar}
-              />
-            </TouchableOpacity>
-            <Text style={styles.name}>{userData.full_name}</Text>
-            <Text style={styles.updateText}>Cập nhật tiểu sử</Text>
-          </>
-        ) : (
-          <Text style={styles.name}>Người dùng chưa đăng nhập</Text>
-        )}
+        <Image
+          source={user.avatar_path ? { uri: user.avatar_path } : avatar}
+          style={{ width: 200, height: 200, borderRadius: 1000 }}
+          onError={(e) => console.log("Lỗi khi tải ảnh:", e.nativeEvent.error)}
+        />
+        <Text style={styles.name}>{userData.full_name}</Text>
+        <Text style={styles.updateText}>Cập nhật tiểu sử</Text>
       </View>
 
       {/* Lọc nội dung đăng tải */}
@@ -113,7 +102,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "white",
-    paddingTop: 30,
   },
   headerBackground: {
     height: 200,

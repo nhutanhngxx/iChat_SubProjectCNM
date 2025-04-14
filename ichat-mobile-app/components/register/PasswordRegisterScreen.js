@@ -186,7 +186,7 @@ const PasswordRegisterScreen = ({ navigation, route }) => {
             <View style={{ marginTop: 30 }}>
               <Text
                 style={styles.question}
-                onPress={() => alert("Những câu hỏi thường gặp")}
+                onPress={() => Alert.alert("Những câu hỏi thường gặp")}
               >
                 Những câu hỏi thường gặp
               </Text>

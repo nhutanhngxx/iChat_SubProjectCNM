@@ -6,55 +6,57 @@ const HeaderContactTab = () => {
   return (
     <View
       style={{
-        height: 50,
+        height: 90,
         justifyContent: "space-between",
         flexDirection: "row",
-        alignItems: "center",
-        paddingHorizontal: 10,
+        alignItems: "flex-end",
+        padding: 10,
         width: "100%",
+        backgroundColor: "rgba(47, 128, 237, 0.3)",
       }}
     >
-      <View
-        style={{
-          flexDirection: "row",
-          gap: 15,
-          alignItems: "center",
-          height: 50,
-          flex: 1,
-        }}
-      >
-        <Image
-          source={require("../../assets/icons/search.png")}
-          style={{ width: 22, height: 22 }}
-        />
-        <TextInput
-          onPress={() => navigation.navigate("SearchScreen")}
+      <View style={{ flexDirection: "row", alignItems: "center" }}>
+        <View
           style={{
-            fontSize: 15,
-            color: "#2F80ED",
+            flexDirection: "row",
+            gap: 15,
+            alignItems: "center",
             flex: 1,
-            height: 35,
-            marginRight: 15,
-            paddingLeft: 10,
-            borderRadius: 5,
-            backgroundColor: "white",
-            textAlignVertical: "center",
           }}
-          placeholder="Tìm kiếm"
-          placeholderTextColor={"gray"}
-          editable={false}
-        ></TextInput>
-      </View>
+        >
+          <Image
+            source={require("../../assets/icons/search.png")}
+            style={{ width: 22, height: 22 }}
+          />
+          <TextInput
+            onPress={() => navigation.navigate("SearchScreen")}
+            style={{
+              fontSize: 15,
+              color: "#2F80ED",
+              flex: 1,
+              height: 30,
+              marginRight: 15,
+              paddingLeft: 10,
+              borderRadius: 5,
+              backgroundColor: "white",
+              textAlignVertical: "center",
+            }}
+            placeholder="Tìm kiếm"
+            placeholderTextColor={"gray"}
+            editable={false}
+          ></TextInput>
+        </View>
 
-      <TouchableOpacity
-        style={{ flexDirection: "row" }}
-        onPress={() => navigation.navigate("AddFriend")}
-      >
-        <Image
-          source={require("../../assets/icons/add-friend.png")}
-          style={{ width: 20, height: 20 }}
-        />
-      </TouchableOpacity>
+        <TouchableOpacity
+          style={{ flexDirection: "row" }}
+          onPress={() => navigation.navigate("AddFriend")}
+        >
+          <Image
+            source={require("../../assets/icons/add-friend.png")}
+            style={{ width: 20, height: 20 }}
+          />
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };

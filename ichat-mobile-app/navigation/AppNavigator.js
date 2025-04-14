@@ -1,6 +1,6 @@
 import { useContext } from "react";
 import { createStackNavigator } from "@react-navigation/stack";
-import { UserContext } from "../context/UserContext";
+import { UserContext } from "../config/context/UserContext";
 
 import MyTabs from "./MyTabNavigator";
 import LauncherScreen from "../screens/LauncherScreen";
@@ -22,6 +22,10 @@ import ChangeInformation from "../components/profile/ChangeInformation";
 import AddFriend from "../components/contact/AddFriend";
 import FriendRequest from "../components/contact/FriendRequest";
 import AccountSecurity from "../components/profile/AccountSecurity";
+import ChangePhoneNumber from "../components/profile/ChangePhoneNumber";
+import ViewProfile from "../components/profile/ViewProfile";
+import ForgotPasswordScreen from "../components/profile/ForgotPassword";
+import ChangePasswordScreen from "../components/profile/ChangePassword";
 
 const Stack = createStackNavigator();
 
@@ -32,40 +36,74 @@ export default function AppNavigator() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       {user ? (
         <>
-          <Stack.Screen name="Home" component={MyTabs} />
+          <Stack.Screen
+            name="Home"
+            component={MyTabs}
+            options={{ animation: "none" }}
+          />
           <Stack.Screen
             name="ProfileInformation"
             component={ProfileInformation}
+            options={{ animation: "none" }}
           />
+
           <Stack.Screen name="Chatting" component={Chatting} />
+          <Stack.Screen name="ViewProfile" component={ViewProfile} />
           <Stack.Screen name="QRScanner" component={QRScanner} />
           <Stack.Screen name="ViewImagePost" component={ViewImagePost} />
           <Stack.Screen name="ViewImageChat" component={ViewImageChat} />
           <Stack.Screen name="Option" component={Option} />
-          <Stack.Screen name="AddFriend" component={AddFriend} />
+          <Stack.Screen
+            name="AddFriend"
+            component={AddFriend}
+            options={{ animation: "none" }}
+          />
           <Stack.Screen name="FriendRequest" component={FriendRequest} />
           <Stack.Screen
             name="ChangeInformation"
             component={ChangeInformation}
+            options={{ animation: "none" }}
+          />
+          <Stack.Screen
+            name="ChangePassword"
+            component={ChangePasswordScreen}
+            options={{ animation: "none" }}
           />
           <Stack.Screen
             name="SearchScreen"
             component={SearchScreen}
             options={{ animation: "fade" }}
           />
-          <Stack.Screen name="AccountSecurity" component={AccountSecurity} />
+          <Stack.Screen
+            name="AccountSecurity"
+            component={AccountSecurity}
+            options={{ animation: "none" }}
+          />
+          <Stack.Screen
+            name="ChangePhoneNumber"
+            component={ChangePhoneNumber}
+            options={{ animation: "none" }}
+          />
         </>
       ) : (
         <>
-          <Stack.Screen name="Launcher" component={LauncherScreen} />
-          <Stack.Screen name="Register" component={PhoneRegisterScreen} />
+          <Stack.Screen
+            name="Launcher"
+            component={LauncherScreen}
+            options={{ animation: "none" }}
+          />
           <Stack.Screen name="Login" component={LoginScreen} />
+          <Stack.Screen name="Register" component={PhoneRegisterScreen} />
           <Stack.Screen name="EnterOTP" component={EnterOTPScreen} />
           <Stack.Screen
             name="PasswordRegister"
             component={PasswordRegisterScreen}
           />
           <Stack.Screen name="InfoRegister" component={InfoRegisterScreen} />
+          <Stack.Screen
+            name="ForgotPassword"
+            component={ForgotPasswordScreen}
+          />
         </>
       )}
     </Stack.Navigator>

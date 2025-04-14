@@ -1,6 +1,6 @@
 import { useNavigation } from "@react-navigation/native";
 import { Avatar, Tab, TabView } from "@rneui/themed";
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import {
   Text,
   SafeAreaView,
@@ -9,39 +9,35 @@ import {
   FlatList,
   View,
   StyleSheet,
+  Alert,
 } from "react-native";
 import { IconButton } from "react-native-paper";
 import { StatusBar } from "expo-status-bar";
-
 import settingIcon from "../../assets/icons/setting.png";
 
-const friendRequest = [
-  {
-    id: "1",
-    name: "Nguyễn Nhựt Anh",
-    avatar: require("../../assets/images/avatars/avatar1.png"),
-  },
-  {
-    id: "2",
-    name: "Trần Minh Quân",
-    avatar: require("../../assets/images/avatars/avatar2.png"),
-  },
-  {
-    id: "3",
-    name: "Lê Phương Thảo",
-    avatar: require("../../assets/images/avatars/avatar3.png"),
-  },
-];
+import { UserContext } from "../../config/context/UserContext";
+import friendService from "../../services/friendService";
 
+// Tab "Đã nhận"
 const RequestRecieve = () => {
   const [listRequest, setListRequest] = useState([]);
+  const { user } = useContext(UserContext);
+
+  // Lấy danh sách lời mời kết bạn đã nhận
   useEffect(() => {
-    setListRequest(listRequest);
-  }, []);
+    if (!user?.id) return;
+    const fetchFriendRequest = async () => {
+      const requests = await friendService.getReceivedRequestsByUserId(user.id);
+      setListRequest(requests);
+    };
+    fetchFriendRequest();
+    const interval = setInterval(fetchFriendRequest, 1000);
+    return () => clearInterval(interval);
+  }, [user?.id]);
 
   // Xem thông tin của người gửi lời mời kết bạn
   const handleViewProfile = (item) => {
-    alert("View profile of: " + item.name);
+    Alert.alert("Xem thông tin", item.full_name);
   };
 
   // Chấp nhận lời mời kết bạn
@@ -50,7 +46,11 @@ const RequestRecieve = () => {
       (request) => request.id !== item.id
     );
     setListRequest(newListRequest);
-    alert("Accept request from: " + item.name);
+    Alert.alert(
+      "Chấp nhận lời mời kết bạn",
+      `Bạn đã chấp nhận lời mời kết bạn từ ${item.full_name}`,
+      [{ text: "OK" }]
+    );
   };
 
   // Từ chối lời mời kết bạn
@@ -59,7 +59,11 @@ const RequestRecieve = () => {
       (request) => request.id !== item.id
     );
     setListRequest(newListRequest);
-    alert("Decline request from: " + item.name);
+    Alert.alert(
+      "Từ chối lời mời kết bạn",
+      `Bạn đã từ chối lời mời kết bạn từ ${item.full_name}`,
+      [{ text: "OK" }]
+    );
   };
 
   // Hiển thị danh sách lời mời kết bạn
@@ -67,10 +71,13 @@ const RequestRecieve = () => {
     <TouchableOpacity
       style={styles.item_container}
       onPress={() => handleViewProfile(item)}
+      key={item.id}
     >
       <View style={styles.item_leftSide}>
-        <Avatar size={50} rounded source={item.avatar} />
-        <Text style={{ fontWeight: "500", fontSize: 16 }}>{item.name}</Text>
+        <Avatar size={50} rounded source={{ uri: item.avatar_path }} />
+        <Text style={{ fontWeight: "500", fontSize: 16 }}>
+          {item.full_name}
+        </Text>
       </View>
       <View
         style={{
@@ -112,15 +119,26 @@ const RequestRecieve = () => {
   );
 };
 
+// Tab "Đã gửi"
 const RequestSend = () => {
   const [listRequest, setListRequest] = useState([]);
+  const { user } = useContext(UserContext);
+
+  // Lấy danh sách lời mời kết bạn đã gửi
   useEffect(() => {
-    setListRequest(friendRequest);
-  }, []);
+    if (!user?.id) return;
+    const fetchFriendRequest = async () => {
+      const requests = await friendService.getSentRequestsByUserId(user.id);
+      setListRequest(requests);
+    };
+    fetchFriendRequest();
+    const interval = setInterval(fetchFriendRequest, 1000);
+    return () => clearInterval(interval);
+  }, [user?.id]);
 
   // Xem thông tin của người nhận lời mời kết bạn
   const handleViewProfile = (item) => {
-    alert("View profile of: " + item.name);
+    Alert.alert("Xem thông tin", item.full_name);
   };
 
   // Thu hồi lời mời kết bạn (có thể hiện modal xác nhận)
@@ -129,7 +147,11 @@ const RequestSend = () => {
       (request) => request.id !== item.id
     );
     setListRequest(newListRequest);
-    alert("Recall request to: " + item.name);
+    Alert.alert(
+      "Thu hồi lời mời kết bạn",
+      `Bạn đã thu hồi lời mời kết bạn từ ${item.full_name}`,
+      [{ text: "OK" }]
+    );
   };
 
   // Hiển thị danh sách lời mời kết bạn
@@ -139,8 +161,10 @@ const RequestSend = () => {
       onPress={() => handleViewProfile(item)}
     >
       <View style={styles.item_leftSide}>
-        <Avatar size={50} rounded source={item.avatar} />
-        <Text style={{ fontWeight: "500", fontSize: 16 }}>{item.name}</Text>
+        <Avatar size={50} rounded source={{ uri: item.avatar_path }} />
+        <Text style={{ fontWeight: "500", fontSize: 16 }}>
+          {item.full_name}
+        </Text>
       </View>
       <TouchableOpacity
         style={{
@@ -186,7 +210,11 @@ const FriendRequest = () => {
   };
 
   const handleOpenSettingRequest = () => {
-    alert("Open setting request");
+    Alert.alert(
+      "Cài đặt lời mời kết bạn",
+      "Chức năng này chưa được phát triển",
+      [{ text: "OK" }]
+    );
   };
 
   return (

@@ -130,3 +130,56 @@
   margin-left: 8px;
   cursor: help; /* Con trỏ hỏi thông tin */
 }
+/* css cho tab sticker và emoji */
+.picker-container {
+  width: 330px;
+  height: 400px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background: white;
+  overflow: hidden;
+}
+
+.tabs {
+  display: flex;
+  justify-content: space-around;
+  background: #ffffff;
+  padding: 8px;
+}
+.tabs .expand-icon {
+  position: absolute;
+  right: 0;
+  top: 0px;
+  height: fit-content;
+  font-size: 20px;
+}
+.tabs .expand-icon:hover {
+  color: #0078ff;
+  cursor: pointer;
+}
+.tabs button {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+  transition: background 0.3s;
+  height: 100%;
+}
+
+.tabs button.active {
+  background: #ffffff;
+  border-bottom: 1px solid #0078ff;
+  color: #0078ff;
+}
+
+.picker-content {
+  max-height: 350px;
+  overflow-y: auto;
+  align-items: center;
+}
+.picker-content .emoji-picker {
+  width: 300px;
+}

@@ -1,23 +1,25 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { Text, View, Image, TouchableOpacity, StyleSheet } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 
 import HeaderViewProfile from "../header/HeaderViewProfile";
+import { UserContext } from "../../config/context/UserContext";
 
 const ViewProfile = ({ route }) => {
   const navigation = useNavigation();
   const { name, avatar } = route.params || {};
+  const { user } = useContext(UserContext);
   return (
-    <View style={{ flex: 1, backgroundColor: "#fff", paddingTop: 50 }}>
+    <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <HeaderViewProfile />
       <View
         style={{
-          height: 80,
+          height: 200,
           width: "100%",
           backgroundColor: "rgba(217, 217, 217, 0.5)",
         }}
       ></View>
-      <View style={{ alignItems: "center", gap: 10, top: -50 }}>
+      <View style={{ alignItems: "center", gap: 10, top: -100 }}>
         <Image
           source={typeof avatar === "string" ? { uri: avatar } : avatar}
           style={styles.avatar}
@@ -32,7 +34,7 @@ const ViewProfile = ({ route }) => {
 };
 
 const styles = StyleSheet.create({
-  avatar: { width: 100, height: 100, borderRadius: 50 },
+  avatar: { width: 200, height: 200, borderRadius: 100 },
 });
 
 export default ViewProfile;
