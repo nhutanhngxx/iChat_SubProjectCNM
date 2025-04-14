@@ -10,6 +10,7 @@ import {
   FlatList,
   SafeAreaView,
   Alert,
+  Platform,
 } from "react-native";
 import { Avatar } from "@rneui/themed";
 import { Checkbox } from "react-native-paper";
@@ -138,11 +139,14 @@ const ModalCreateGroup = ({ isVisible, onClose }) => {
         <StatusBar style="dark" />
         <View style={styles.modalView}>
           <SafeAreaView
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              gap: 10,
-            }}
+            style={
+              Platform.OS === "ios"
+                ? { flexDirection: "row", alignItems: "center", gap: 10 }
+                : {
+                    flexDirection: "row",
+                    alignItems: "flex-end",
+                  }
+            }
           >
             <TouchableOpacity onPress={onClose}>
               <Image
@@ -151,7 +155,13 @@ const ModalCreateGroup = ({ isVisible, onClose }) => {
               />
             </TouchableOpacity>
             <TouchableOpacity onPress={onClose}>
-              <Text style={{ fontWeight: "bold", fontSize: 20 }}>
+              <Text
+                style={{
+                  fontWeight: "bold",
+                  fontSize: 20,
+                  paddingTop: 10,
+                }}
+              >
                 Tạo nhóm mới
               </Text>
             </TouchableOpacity>
@@ -175,12 +185,25 @@ const ModalCreateGroup = ({ isVisible, onClose }) => {
             <TouchableOpacity>
               <Image
                 source={require("../../assets/icons/image.png")}
-                style={{ width: 40, height: 40 }}
+                style={
+                  Platform.OS === "ios"
+                    ? { width: 40, height: 40 }
+                    : { width: 30, height: 30 }
+                }
               />
             </TouchableOpacity>
             <TextInput
               placeholder="Đặt tên nhóm"
-              style={{ fontSize: 20, width: "100%" }}
+              style={
+                Platform.OS === "ios"
+                  ? { fontSize: 20, width: "80%", borderBottomWidth: 1 }
+                  : {
+                      fontSize: 16,
+                      width: "90%",
+                      height: 40,
+                      borderBottomWidth: 1,
+                    }
+              }
               value={groupName}
               onChangeText={setGroupName}
             />
@@ -188,16 +211,29 @@ const ModalCreateGroup = ({ isVisible, onClose }) => {
 
           {/* Input Search Friend To Add */}
           <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              marginTop: 15,
-              height: 50,
-              gap: 10,
-              padding: 10,
-              backgroundColor: "#fff5f5",
-              borderRadius: 10,
-            }}
+            style={
+              Platform.OS === "ios"
+                ? {
+                    flexDirection: "row",
+                    alignItems: "center",
+                    marginTop: 15,
+                    height: 50,
+                    gap: 10,
+                    padding: 10,
+                    backgroundColor: "#fff5f5",
+                    borderRadius: 10,
+                  }
+                : {
+                    flexDirection: "row",
+                    alignItems: "center",
+                    marginTop: 10,
+                    height: 40,
+                    gap: 10,
+                    padding: 10,
+                    backgroundColor: "#fff5f5",
+                    borderRadius: 10,
+                  }
+            }
           >
             <TouchableOpacity>
               <Image
@@ -207,7 +243,15 @@ const ModalCreateGroup = ({ isVisible, onClose }) => {
             </TouchableOpacity>
             <TextInput
               placeholder="Tìm kiếm bạn bè"
-              style={{ fontSize: 16, width: "100%" }}
+              style={
+                Platform.OS === "ios"
+                  ? { fontSize: 16, width: "100%" }
+                  : {
+                      fontSize: 16,
+                      width: "100%",
+                      height: 40,
+                    }
+              }
               value={searchText}
               onChangeText={handleSearchFriend}
             />
@@ -232,7 +276,7 @@ const ModalCreateGroup = ({ isVisible, onClose }) => {
                 ItemSeparatorComponent={() => <View style={{ width: 10 }} />}
               />
             </View>
-            <View style={{ paddingBottom: 20 }}>
+            <View style={Platform.OS === "ios" && { paddingBottom: 20 }}>
               <TouchableOpacity
                 disabled={isDisabled}
                 onPress={handleCreateGroup}
