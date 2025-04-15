@@ -117,7 +117,7 @@ const MessageController = {
       });
 
       res.json({
-        message: "Reaction added successfully",
+        message: "Update reaction cho tin nhắn thành công!",
         updatedMessage: result,
       });
     } catch (err) {
@@ -363,6 +363,7 @@ const MessageController = {
       res.status(500).json({ error: "Internal Server Error" });
     }
   },
+
   // Tạo MessageCard
   createMessageCard: async (req, res) => {
     try {
@@ -412,6 +413,36 @@ const MessageController = {
       res.status(500).json({ error: "Lỗi khi cập nhật trạng thái tin nhắn" });
     }
   },
+
+  // Update reaction cho tin nhắn
+  // addReactionToMessage: async (req, res) => {
+  //   try {
+  //     const { messageId } = req.params; // Lấy messageId từ params
+  //     const { userId, reactionType } = req.body; // Lấy userId và reactionType từ body
+
+  //     if (!messageId) {
+  //       return res.status(400).json({ error: "Thiếu messageId" });
+  //     }
+  //     if (!userId || !reactionType) {
+  //       return res
+  //         .status(400)
+  //         .json({ error: "Thiếu userId hoặc reactionType rồi!" });
+  //     }
+
+  //     const updatedMessage = await MessageModel.addReaction(
+  //       messageId,
+  //       userId,
+  //       reactionType
+  //     );
+
+  //     res.status(200).json({
+  //       message: "Cập nhật Reaction thành công!",
+  //       data: updatedMessage,
+  //     });
+  //   } catch (error) {
+  //     res.status(500).json({ error: error.message });
+  //   }
+  // },
 };
 
 module.exports = MessageController;

@@ -146,8 +146,9 @@ export default MessageInputBar;
 const styles = StyleSheet.create({
   wrapper: {
     paddingHorizontal: 10,
-    paddingVertical: 8,
+    paddingBottom: 25,
     backgroundColor: "#f9f9f9",
+    paddingTop: 10,
   },
   inputContainer: {
     flexDirection: "row",
