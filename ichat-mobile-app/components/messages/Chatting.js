@@ -35,24 +35,24 @@ import { getHostIP } from "../../services/api";
 
 const renderReactionIcons = (reactions) => {
   const icons = {
-    like: "👍",
-    love: "❤️",
-    haha: "😂",
-    wow: "😮",
-    sad: "😢",
-    angry: "😡",
+    like: require("../../assets/icons/emoji-like.png"),
+    love: require("../../assets/icons/emoji-love.png"),
+    haha: require("../../assets/icons/emoji-haha.png"),
+    wow: require("../../assets/icons/emoji-surprised.png"),
+    sad: require("../../assets/icons/emoji-cry.png"),
+    angry: require("../../assets/icons/emoji-angry.png"),
   };
 
-  // Đếm số lượng từng loại reaction
   const counts = reactions.reduce((acc, r) => {
     acc[r.reaction_type] = (acc[r.reaction_type] || 0) + 1;
     return acc;
   }, {});
+
   return (
     <View style={styles.reactionsWrapper}>
       {Object.entries(counts).map(([type, count]) => (
         <View key={type} style={styles.reactionItem}>
-          <Text style={styles.reactionIcon}>{icons[type]}</Text>
+          <Image source={icons[type]} style={{ width: 25, height: 25 }} />
         </View>
       ))}
     </View>
@@ -188,6 +188,38 @@ const Chatting = ({ route }) => {
       }
     } catch (error) {
       console.error("Lỗi khi thu hồi tin nhắn:", error);
+    } finally {
+      setModalVisible(false);
+    }
+  };
+
+  const handleReaction = async (reactionType) => {
+    console.log("Reaction type:", reactionType);
+    console.log("Selected message:", selectedMessage);
+    console.log("User ID:", user.id);
+
+    if (!selectedMessage) return;
+
+    try {
+      const response = await messageService.addReaction(
+        selectedMessage._id,
+        user.id,
+        reactionType
+      );
+
+      console.log("Reaction response:", response);
+
+      if (response?.updatedMessage) {
+        // Cập nhật lại toàn bộ object message theo kết quả từ server
+        setMessages((prevMessages) =>
+          prevMessages.map((msg) =>
+            msg._id === selectedMessage._id ? response.updatedMessage : msg
+          )
+        );
+      }
+    } catch (error) {
+      console.error("Lỗi khi gửi reaction:", error);
+      Alert.alert("Lỗi", "Không thể gửi reaction.");
     } finally {
       setModalVisible(false);
     }
@@ -594,31 +626,37 @@ const Chatting = ({ route }) => {
                     },
                   ]}
                 >
-                  <TouchableOpacity>
+                  <TouchableOpacity onPress={() => handleReaction("like")}>
+                    <Image
+                      source={require("../../assets/icons/emoji-like.png")}
+                      style={styles.iconEmoji}
+                    />
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => handleReaction("haha")}>
                     <Image
                       source={require("../../assets/icons/emoji-haha.png")}
                       style={styles.iconEmoji}
                     />
                   </TouchableOpacity>
-                  <TouchableOpacity>
+                  <TouchableOpacity onPress={() => handleReaction("love")}>
                     <Image
                       source={require("../../assets/icons/emoji-love.png")}
                       style={styles.iconEmoji}
                     />
                   </TouchableOpacity>
-                  <TouchableOpacity>
+                  <TouchableOpacity onPress={() => handleReaction("sad")}>
                     <Image
                       source={require("../../assets/icons/emoji-cry.png")}
                       style={styles.iconEmoji}
                     />
                   </TouchableOpacity>
-                  <TouchableOpacity>
+                  <TouchableOpacity onPress={() => handleReaction("wow")}>
                     <Image
                       source={require("../../assets/icons/emoji-surprised.png")}
                       style={styles.iconEmoji}
                     />
                   </TouchableOpacity>
-                  <TouchableOpacity>
+                  <TouchableOpacity onPress={() => handleReaction("angry")}>
                     <Image
                       source={require("../../assets/icons/emoji-angry.png")}
                       style={styles.iconEmoji}
@@ -1046,7 +1084,7 @@ const styles = StyleSheet.create({
     marginLeft: 3,
   },
   reactionIcon: {
-    fontSize: 25,
+    fontSize: 15,
   },
   statusWrapper: {
     alignSelf: "flex-end",

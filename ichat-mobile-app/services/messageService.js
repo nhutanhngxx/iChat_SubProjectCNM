@@ -120,6 +120,23 @@ const messageService = {
       return null;
     }
   },
+
+  // Thả reaction cho tin nhắn
+  addReaction: async (messageId, userId, reactionType) => {
+    try {
+      const response = await apiService.post(
+        `/${PREFIX}/${messageId}/reactions`,
+        {
+          user_id: userId,
+          reaction_type: reactionType,
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.log("Lỗi thả reaction tin nhắn ở Message Service: ", error);
+      return null;
+    }
+  },
 };
 
 export default messageService;
