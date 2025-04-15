@@ -55,7 +55,10 @@ const friendService = {
       return response.data;
     } catch (error) {
       console.log("Không thể gửi lời mời kết bạn: ", error);
-      return { status: "error", message: "Đã xảy ra lỗi" };
+      return {
+        status: "error",
+        message: "Đã xảy ra lỗi khi gửi lời mời kết bạn",
+      };
     }
   },
 

@@ -577,16 +577,35 @@ const SearchScreen = () => {
                   }}
                   onPress={() => handleOpenChatting(item)}
                 >
-                  <Image
-                    source={{
-                      uri: item.sender_id?.avatar_path || item.avatar_path,
-                    }}
-                    style={{
-                      width: 50,
-                      height: 50,
-                      borderRadius: 25,
-                      marginRight: 10,
-                    }}
+                  <TouchableOpacity
+                    style={{ flexDirection: "row", alignItems: "center" }}
+                    onPress={() => handleOpenChatting(item)}
+                  >
+                    <Image
+                      source={{
+                        uri: item.sender_id?.avatar_path || item.avatar_path,
+                      }}
+                      style={{
+                        width: 50,
+                        height: 50,
+                        borderRadius: 25,
+                        marginRight: 10,
+                        alignItems: "center",
+                      }}
+                    />
+                    <View>
+                      <Text style={{ fontSize: 16, fontWeight: "bold" }}>
+                        {item.full_name}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                  <FriendButton
+                    userId={user?.id}
+                    itemId={item.id}
+                    fullName={item.full_name}
+                    sentRequests={sentRequests}
+                    listFriend={listFriend}
+                    onSendRequest={handleSendFriendRequest}
                   />
                 </TouchableOpacity>
               )
@@ -681,9 +700,7 @@ const SearchScreen = () => {
                   >
                     <Image
                       source={{
-                        uri:
-                          item.sender_id?.avatar_path ||
-                          "https://picsum.photos/200",
+                        uri: item.sender_id?.avatar_path || item.avatar_path,
                       }}
                       style={{
                         width: 50,
@@ -697,7 +714,6 @@ const SearchScreen = () => {
                       <Text style={{ fontSize: 16, fontWeight: "bold" }}>
                         {item.full_name}
                       </Text>
-                      {/* <Text style={{ color: "gray" }}>{item.phone}</Text> */}
                     </View>
                   </TouchableOpacity>
                   <FriendButton

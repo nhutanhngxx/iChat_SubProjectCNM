@@ -26,9 +26,13 @@ const Option = ({ route }) => {
   const [receiverInfo, setReceiverInfo] = useState(null); // Thông tin người nhận
   const [sharedGroups, setSharedGroups] = useState([]); // Danh sách nhóm chung giữa 2 người
 
+  console.log("ID người nhận:", id);
+
   useEffect(() => {
     const fetchReceiverInfo = async () => {
       const res = await userService.getUserById(id);
+      console.log(res);
+
       if (res.status === "ok") {
         setReceiverInfo(res.user);
         console.log("Người đang chat:", res.user);
@@ -59,7 +63,7 @@ const Option = ({ route }) => {
   }, [user?.id, id]);
 
   const ipAdr = getHostIP();
-  const API_iChat = `http://${ipAdr}:5001`;
+  const API_iChat = `http://${ipAdr}:5001/api`;
 
   useEffect(() => {
     console.log("avatar: ", avatar);
