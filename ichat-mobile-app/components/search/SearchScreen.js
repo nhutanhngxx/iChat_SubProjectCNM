@@ -96,6 +96,10 @@ const SearchScreen = () => {
   const [users, setUsers] = useState([]);
   const [sentRequests, setSentRequests] = useState([]);
   const [listFriend, setListFriend] = useState([]);
+  const handleResultPress = (item) => {
+    saveSearchHistory(searchText); // Lưu lại từ khoá đã dùng
+    navigateToDetail(item); // Điều hướng đến trang chi tiết
+  };
 
   useEffect(() => {
     loadSearchHistory();
@@ -428,7 +432,6 @@ const SearchScreen = () => {
               onChangeText={setSearchText}
               onSubmitEditing={() => {
                 saveSearchHistory(searchText);
-                setSearchText("");
               }}
             />
             {searchText.length > 0 && (
