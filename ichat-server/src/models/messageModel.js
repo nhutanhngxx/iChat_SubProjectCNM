@@ -246,6 +246,32 @@ const MessageModel = {
       is_pinned: true,
     });
   },
+
+  forwardMessage: async (messageId, receiverId, currentUserId) => {
+    const message = await Messages.findById(messageId);
+    if (!message) {
+      throw { status: 404, message: "Không tìm thấy tin nhắn để chuyển tiếp" };
+    }
+
+    // Không cho phép gửi tin nhắn cho chính mình
+    if (receiverId.toString() === currentUserId.toString()) {
+      throw {
+        status: 400,
+        message: "Không thể chuyển tiếp tin nhắn cho chính mình",
+      };
+    }
+
+    const newMessage = new Messages({
+      sender_id: currentUserId,
+      receiver_id,
+      content: message.content,
+      type: message.type,
+      chat_type: message.chat_type,
+    });
+
+    await newMessage.save();
+    return newMessage;
+  },
 };
 
 module.exports = MessageModel;

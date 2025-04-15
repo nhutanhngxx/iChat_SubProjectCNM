@@ -423,6 +423,53 @@ const MessageController = {
       res.status(500).json({ error: "Lỗi khi cập nhật trạng thái tin nhắn" });
     }
   },
+
+  // Chuyển tiếp tin nhắn
+  forwardMessage: async (req, res) => {
+    try {
+      const { messageId, receiverId, currentUserId } = req.body;
+
+      if (!messageId || !receiverId || !currentUserId) {
+        return res
+          .status(400)
+          .json({ error: "Thiếu messageId, receiverId hoặc currentUserId" });
+      }
+
+      // Không cho phép gửi cho chính mình
+      if (currentUserId.toString() === receiverId.toString()) {
+        return res
+          .status(400)
+          .json({ error: "Không thể chuyển tiếp tin nhắn cho chính mình" });
+      }
+
+      // Tìm tin nhắn gốc
+      const originalMessage = await Messages.findById(messageId);
+
+      if (!originalMessage) {
+        return res.status(404).json({ error: "Tin nhắn không tồn tại" });
+      }
+
+      // Tạo tin nhắn mới
+      const newMessage = new Messages({
+        sender_id: currentUserId, // Người đang đăng nhập là người gửi mới
+        receiver_id: receiverId,
+        content: originalMessage.content,
+        type: originalMessage.type,
+        chat_type: originalMessage.chat_type,
+        status: "sent",
+      });
+
+      await newMessage.save();
+
+      res.status(201).json({
+        message: "Tin nhắn đã được chuyển tiếp thành công",
+        data: newMessage,
+      });
+    } catch (error) {
+      console.error("Lỗi khi chuyển tiếp tin nhắn:", error);
+      res.status(500).json({ error: "Lỗi khi chuyển tiếp tin nhắn" });
+    }
+  },
 };
 
 module.exports = MessageController;
