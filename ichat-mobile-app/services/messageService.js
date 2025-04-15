@@ -147,6 +147,21 @@ const messageService = {
       return null;
     }
   },
+
+  // Chuyển tiếp tin nhắn
+  forwardMessage: async (messageId, userId, chatId) => {
+    try {
+      const response = await apiService.post(`/${PREFIX}/forward`, {
+        message_id: messageId,
+        user_id: userId,
+        chat_id: chatId,
+      });
+      return response.data;
+    } catch (error) {
+      console.log("Lỗi chuyển tiếp tin nhắn ở Message Service: ", error);
+      return null;
+    }
+  },
 };
 
 export default messageService;
