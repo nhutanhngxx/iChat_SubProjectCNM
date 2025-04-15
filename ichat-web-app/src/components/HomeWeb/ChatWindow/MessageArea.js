@@ -810,7 +810,7 @@ const MessageArea = ({ selectedChat, user }) => {
       // Only process if message involves current user
       if (message.sender_id === user.id || message.receiver_id === user.id) {
         dispatch(updateMessages(message));
-        // Limit other dispatch calls to avoid performance issues
+        dispatch(fetchMessages(user.id)); // Cập nhật danh sách người nhận gần nhất
       }
     };
 
