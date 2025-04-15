@@ -161,9 +161,19 @@ const MessageModel = {
     });
   },
 
-  recallMessage: async (messageId) => {
+  recallMessage: async (messageId, userId) => {
     const message = await Messages.findById(messageId);
-    if (!message) throw { status: 404, message: "Message not found" };
+    if (!message) {
+      throw { status: 404, message: "Không tìm thấy tin nhắn cần thu hồi!" };
+    }
+
+    // Kiểm tra xem người gửi tin nhắn có phải là người đang đăng nhập không
+    if (message.sender_id.toString() !== userId.toString()) {
+      throw {
+        status: 403,
+        message: "Chỉ có thể thu hồi tin nhắn của chính mình thui!",
+      };
+    }
 
     message.type = "text";
     message.content = "Tin nhắn đã được thu hồi";
@@ -236,38 +246,6 @@ const MessageModel = {
       is_pinned: true,
     });
   },
-
-  // Update reaction cho tin nhắn
-  // addReaction: async (messageId, userId, reactionType) => {
-  //   const message = await Messages.findById(messageId);
-  //   if (!message)
-  //     throw { status: 404, message: "Không tìm thấy tin nhắn này nha má!" };
-
-  //   // Tìm vị trí của reaction (nếu có) dựa trên user_id và reaction_type
-  //   const reactionIndex = message.reactions.findIndex(
-  //     (reaction) =>
-  //       reaction.user_id.toString() === userId.toString() &&
-  //       reaction.reaction_type === reactionType
-  //   );
-
-  //   console.log("Vị trí của react tìm thấy: ", reactionIndex);
-
-  //   if (reactionIndex !== -1) {
-  //     // Nếu reaction đã có và giống với reactionType, xóa reaction đó
-  //     message.reactions.splice(reactionIndex, 1);
-  //   } else {
-  //     // Nếu chưa có reactionType, thêm mới reaction
-  //     message.reactions.push({
-  //       user_id: userId,
-  //       reaction_type: reactionType,
-  //       timestamp: new Date(),
-  //     });
-  //   }
-
-  //   // Lưu lại tin nhắn với các reaction đã cập nhật
-  //   await message.save();
-  //   return message;
-  // },
 };
 
 module.exports = MessageModel;

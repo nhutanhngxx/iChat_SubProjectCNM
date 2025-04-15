@@ -60,7 +60,17 @@ const messageService = {
   sendMessage: async (message) => {},
 
   // Thu hồi tin nhắn
-  recallMessage: async (messageId) => {},
+  recallMessage: async (messageId, userId) => {
+    try {
+      const response = await apiService.put(`/${PREFIX}/recall/${messageId}`, {
+        userId,
+      });
+      return response.data;
+    } catch (error) {
+      console.log("Message Service Error: ", error);
+      return null;
+    }
+  },
 
   // Xóa tin nhắn giữa 2 người
   deleteChatHistory: async (userId, chatId) => {

@@ -172,7 +172,15 @@ const Chatting = ({ route }) => {
 
     try {
       const response = await axios.put(
-        `${API_iChat}/recall/${selectedMessage._id}`
+        `${API_iChat}/recall/${selectedMessage._id}`,
+        {
+          userId: user.id,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
       );
 
       if (response.data?.status === "ok") {
@@ -187,7 +195,8 @@ const Chatting = ({ route }) => {
         console.error("Thu hồi tin nhắn thất bại:", response.data);
       }
     } catch (error) {
-      console.error("Lỗi khi thu hồi tin nhắn:", error);
+      // console.error("Lỗi khi thu hồi tin nhắn:", error);
+      Alert.alert("Thông báo", "Tin nhắn này không thể thu hồi.");
     } finally {
       setModalVisible(false);
     }
