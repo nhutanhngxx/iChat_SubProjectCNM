@@ -19,6 +19,7 @@ import { getHostIP } from "../../services/api";
 import { ActivityIndicator } from "react-native-paper";
 import friendService from "../../services/friendService";
 import FriendButton from "../common/FriendButton";
+import userService from "../../services/userService";
 
 const SearchScreen = () => {
   const route = useRoute();
@@ -151,17 +152,33 @@ const SearchScreen = () => {
   };
 
   // Hàm xử lý gửi lời mời kết bạn
-  const handleSendFriendRequest = async (receiverId, full_name) => {
+  const handleSendFriendRequest = async (receiverId) => {
     try {
       const response = await friendService.sendFriendRequest({
         senderId: user.id,
         receiverId,
       });
       if (response.status === "ok") {
-        setSentRequests((prev) => [...prev, receiverId]);
-        Alert.alert("Thông báo", `Đã gửi lời mời kết bạn đến ${full_name}`, [
-          { text: "OK" },
-        ]);
+        // Tìm kiếm người dùng vừa được gửi lời mời kết bạn
+        const user = await userService.getUserById(receiverId);
+
+        if (!user) {
+          Alert.alert("Thông báo", "Không tìm thấy người dùng này");
+          return;
+        } else {
+          const newSentRequest = {
+            id: user.id,
+            full_name: user.full_name,
+            avatar_path: user.avatar_path,
+          };
+
+          setSentRequests((prev) => [...prev, newSentRequest]);
+          Alert.alert(
+            "Thông báo",
+            `Đã gửi lời mời kết bạn đến ${user.full_name}`,
+            [{ text: "OK" }]
+          );
+        }
       } else {
         Alert.alert(
           "Thông báo",
@@ -172,6 +189,18 @@ const SearchScreen = () => {
       console.error("Lỗi gửi lời mời kết bạn:", error);
       Alert.alert("Thông báo", "Đã xảy ra lỗi khi gửi lời mời kết bạn");
     }
+  };
+
+  // Hàm xử lý hủy lời mời kết bạn
+  const handleCancelFriendRequest = (itemId) => {
+    setSentRequests((prev) =>
+      prev.filter((req) => req.id !== itemId && req._id !== itemId)
+    );
+  };
+
+  // Hàm xử lý làm mới danh sách bạn bè và lời mời kết bạn
+  const refreshFriendRequests = () => {
+    fetchFriendRequests();
   };
 
   // Xử lý tìm kiếm tự động khi searchText thay đổi
@@ -606,6 +635,8 @@ const SearchScreen = () => {
                     sentRequests={sentRequests}
                     listFriend={listFriend}
                     onSendRequest={handleSendFriendRequest}
+                    onCancelRequest={handleCancelFriendRequest}
+                    refreshRequests={refreshFriendRequests}
                   />
                 </TouchableOpacity>
               )
@@ -723,6 +754,8 @@ const SearchScreen = () => {
                     sentRequests={sentRequests}
                     listFriend={listFriend}
                     onSendRequest={handleSendFriendRequest}
+                    onCancelRequest={handleCancelFriendRequest}
+                    refreshRequests={refreshFriendRequests}
                   />
                 </TouchableOpacity>
               )}

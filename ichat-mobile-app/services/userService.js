@@ -5,7 +5,12 @@ const userService = {
   getUserById: async (userId) => {
     try {
       const response = await apiService.get(`/${PREFIX}/${userId}`);
-      return response.data;
+      if (response.data.status === "error") {
+        return null;
+      }
+      if (response.data.status === "ok") {
+        return response.data.user;
+      }
     } catch (error) {
       console.error(
         "Lỗi: Không thể lấy được thông tin người dùng từ User Service:",
@@ -18,7 +23,12 @@ const userService = {
   getAllUser: async () => {
     try {
       const response = await apiService.get(`/${PREFIX}/`);
-      return response.data.users;
+      if (response.data.status === "error") {
+        return [];
+      }
+      if (response.data.status === "ok") {
+        return response.data.users;
+      }
     } catch (error) {
       console.log(
         "Lỗi: Không thể lấy được danh sách người dùng từ User Service: ",

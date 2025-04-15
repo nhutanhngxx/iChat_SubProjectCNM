@@ -88,8 +88,6 @@ const FriendshipController = {
   // Gửi lời mời kết bạn
   sendFriendRequest: async (req, res) => {
     const { senderId, receiverId } = req.body;
-    console.log("Sender ID: ", senderId);
-    console.log("Receiver ID: ", receiverId);
 
     try {
       // Kiểm tra nếu sender_id và receiver_id giống nhau
