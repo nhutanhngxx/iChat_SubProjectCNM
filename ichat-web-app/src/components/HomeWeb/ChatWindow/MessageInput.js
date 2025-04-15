@@ -116,16 +116,11 @@ const MessageInput = ({
   const handleImageUpload = (event) => {
     const file = event.target.files[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const imageUrl = e.target.result; // Lưu URL của ảnh (base64)
-        setSelectedImage(imageUrl);
-        onImageUpload(imageUrl); // Truyền ảnh lên MessageArea
-        message.success("Ảnh đã được tải lên thành công!");
-      };
-      reader.readAsDataURL(file);
+      // setSelectedImage(URL.createObjectURL(file)); // preview ảnh
+      onImageUpload(file); // truyền file gốc, không phải base64
+      message.success("Ảnh đã được tải lên thành công!");
     }
-    // Reset input để có thể chọn lại cùng file
+
     event.target.value = null;
   };
 

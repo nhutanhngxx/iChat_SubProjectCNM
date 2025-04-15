@@ -13,16 +13,14 @@ export const fetchMessages = createAsyncThunk(
       throw new Error("Failed to fetch messages", data.message);
     }
     return data.data;
-  } 
+  }
 );
 
 // Lấy tin nhắn giữa sender và receiver
 export const fetchChatMessages = createAsyncThunk(
   "messages/fetchChatMessages",
   async ({ senderId, receiverId }) => {
-    const response = await fetch(
-      `${API_URL}${senderId}/${receiverId}`
-    );
+    const response = await fetch(`${API_URL}${senderId}/${receiverId}`);
     const data = await response.json();
     return data.data;
   }
@@ -51,6 +49,47 @@ export const sendMessage = createAsyncThunk(
     }
   }
 );
+// Gửi ảnh
+export const sendImageMessage = createAsyncThunk(
+  "messages/sendImageMessage",
+  async ({ sender_id, receiver_id, image }, { rejectWithValue }) => {
+    try {
+      const formData = new FormData();
+      formData.append("sender_id", sender_id);
+      formData.append("receiver_id", receiver_id);
+      formData.append("content", ""); // server sẽ tự xử lý content từ file
+      formData.append("type", "image");
+      formData.append("chat_type", "private");
+
+      // formData.append("image", {
+      //   uri: image.uri,
+      //   type: image.type || "image/jpeg",
+      //   name: image.fileName || `image-${Date.now()}.jpg`,
+      // });
+      formData.append("file", image); // đơn giản là File gốc từ input
+      console.log("formData", formData);
+      const response = await fetch(`${API_URL}send-message`, {
+        method: "POST",
+        body: formData,
+        // headers: {
+        //   "Content-Type": "multipart/form-data",
+        // },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error("Error data send image:", errorData);
+
+        return rejectWithValue(errorData);
+      }
+
+      return await response.json();
+    } catch (err) {
+      console.error("Error sending image:", err);
+      return rejectWithValue({ message: "Network Error" });
+    }
+  }
+);
 
 const messagesSlice = createSlice({
   name: "messages",
@@ -63,9 +102,25 @@ const messagesSlice = createSlice({
   },
   reducers: {
     // Thêm reducer để cập nhật tin nhắn
+    // updateMessages: (state, action) => {
+    //   const newMessage = action.payload;
+    //   state.chatMessages.push(newMessage); // Thêm tin nhắn mới vào danh sách chatMessages
+    // },
     updateMessages: (state, action) => {
       const newMessage = action.payload;
-      state.chatMessages.push(newMessage); // Thêm tin nhắn mới vào danh sách chatMessages
+
+      // Check if message with same ID already exists in state
+      const messageExists = state.chatMessages.some(
+        (msg) => msg._id === newMessage._id
+      );
+
+      // Only add if it doesn't exist
+      if (!messageExists) {
+        state.chatMessages.push(newMessage);
+        console.log("Added new message to state:", newMessage._id);
+      } else {
+        console.log("Prevented duplicate message:", newMessage._id);
+      }
     },
   },
   extraReducers: (builder) => {
@@ -96,10 +151,6 @@ const messagesSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      // .addCase(sendMessage.fulfilled, (state, action) => {
-      //   state.loading = false;
-      //   state.messages.push(action.payload.data);
-      // })
       .addCase(sendMessage.fulfilled, (state, action) => {
         const newMessage = action.payload.data;
 
@@ -127,6 +178,28 @@ const messagesSlice = createSlice({
       .addCase(sendMessage.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload.error;
+      })
+      .addCase(sendImageMessage.fulfilled, (state, action) => {
+        const newMessage = action.payload.data;
+
+        const existingReceiver = state.messages.find(
+          (msg) => msg.receiver_id === newMessage.receiver_id
+        );
+
+        if (!existingReceiver) {
+          state.messages.unshift({
+            receiver_id: newMessage.receiver_id,
+            name: newMessage.receiver_name || "Người nhận mới",
+            lastMessage: newMessage.content,
+            timestamp: new Date().toISOString(),
+            unread: 1,
+            user_status: "Online",
+          });
+        } else {
+          existingReceiver.lastMessage = newMessage.content;
+          existingReceiver.timestamp = new Date().toISOString();
+          existingReceiver.unread += 1;
+        }
       });
   },
 });

@@ -28,6 +28,7 @@ import {
   sendMessage,
   fetchMessages,
   updateMessages,
+  sendImageMessage,
 } from "../../../redux/slices/messagesSlice";
 import Message from "./Message";
 import MessageInput from "./MessageInput";
@@ -693,44 +694,88 @@ const MessageArea = ({ selectedChat, user }) => {
       }
     }
   };
-  const handleImageUpload = (imageUrl) => {
+  const handleImageUpload = async (imageFile) => {
     if (selectedChat) {
-      const newMessage = {
-        id: messages.length + 1,
-        text: "",
-        sender: "You",
-        timestamp: new Date().toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-        type: "sent",
-        image: imageUrl,
-      };
-      setMessages([...messages, newMessage]);
+      try {
+        const result = await dispatch(
+          sendImageMessage({
+            sender_id: user?.id,
+            receiver_id: selectedChat?.id,
+            image: imageFile, // là file thật
+          })
+        ).unwrap();
+
+        const sentMessage = result.data;
+
+        const userIds = [user.id, selectedChat.id].sort();
+        const roomId = `chat_${userIds[0]}_${userIds[1]}`;
+
+        socket.emit("send-message", {
+          ...sentMessage,
+          chatId: roomId,
+        });
+
+        dispatch(fetchMessages(user?.id));
+      } catch (err) {
+        console.error("Lỗi gửi ảnh:", err);
+      }
     }
   };
 
-  const handleFileUpload = (file) => {
+  // const handleFileUpload = (file) => {
+  //   if (selectedChat) {
+  //     const newMessage = {
+  //       id: messages.length + 1,
+  //       text: "",
+  //       sender: "You",
+  //       timestamp: new Date().toLocaleTimeString([], {
+  //         hour: "2-digit",
+  //         minute: "2-digit",
+  //       }),
+  //       type: "sent",
+  //       file: {
+  //         name: file.name,
+  //         size: `${(file.size / 1024).toFixed(2)} KB`,
+  //         type: file.type || "application/octet-stream",
+  //       },
+  //     };
+  //     setMessages([...messages, newMessage]);
+  //   }
+  // };
+  // Tự động cuộn xuống cuối khi có tin nhắn mới
+  const handleFileUpload = async (fileUrl, fileName, fileSize, fileType) => {
     if (selectedChat) {
       const newMessage = {
-        id: messages.length + 1,
-        text: "",
-        sender: "You",
-        timestamp: new Date().toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-        type: "sent",
-        file: {
-          name: file.name,
-          size: `${(file.size / 1024).toFixed(2)} KB`,
-          type: file.type || "application/octet-stream",
+        sender_id: user?.id,
+        receiver_id: selectedChat?.id,
+        content: fileUrl,
+        type: "file",
+        chat_type: "private",
+        file_metadata: {
+          name: fileName,
+          size: fileSize,
+          type: fileType,
         },
       };
-      setMessages([...messages, newMessage]);
+
+      try {
+        const response = await dispatch(sendMessage(newMessage)).unwrap();
+        const sentMessage = response.data;
+
+        const userIds = [user.id, selectedChat.id].sort();
+        const roomId = `chat_${userIds[0]}_${userIds[1]}`;
+
+        socket.emit("send-message", {
+          ...sentMessage,
+          chatId: roomId,
+        });
+
+        dispatch(fetchMessages(user?.id));
+      } catch (error) {
+        console.log("Error sending file message:", error);
+      }
     }
   };
-  // Tự động cuộn xuống cuối khi có tin nhắn mới
   useEffect(() => {
     if (messageEndRef.current) {
       messageEndRef.current.scrollIntoView({ behavior: "smooth" });
