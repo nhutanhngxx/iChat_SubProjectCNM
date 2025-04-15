@@ -8,17 +8,21 @@ import "./index.css"; // Import CSS
 import FriendList from "./FriendList";
 import GroupList from "./GroupList";
 import RequestList from "./RequestList";
-
+import SearchComponent from "../ChatWindow/SearchComponent";
 const PhoneBookWindow = () => {
   const [activeTab, setActiveTab] = useState("friends");
+  const [searchText, setSearchText] = useState("");
 
   return (
     <div className="book-window">
       {/* Sidebar */}
-      <div className="sidebar">
+      <div
+        className="sidebar"
+        style={{ width: "364px", flex: "none", height: "60px" }}
+      >
         {/* Search */}
-        <div className="search">
-          <input type="text" placeholder="Tìm Kiếm"></input>
+        <div className="search" style={{ paddingBottom: "0", margin: "0" }}>
+          {/* <input type="text" placeholder="Tìm Kiếm"></input>
           <div className="button-icons-group">
             <button>
               <BsPersonAdd className="text-gray-600 mr-2 icons" />
@@ -26,7 +30,11 @@ const PhoneBookWindow = () => {
             <button>
               <FaUserFriends className="text-gray-600 mr-2 icons" />
             </button>
-          </div>
+          </div> */}
+          <SearchComponent
+            searchText={searchText}
+            setSearchText={setSearchText}
+          />
         </div>
         <div className="menu">
           <div

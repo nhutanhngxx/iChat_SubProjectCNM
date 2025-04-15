@@ -23,13 +23,20 @@ import {
   CloseOutlined,
 } from "@ant-design/icons";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchChatMessages,sendMessage,fetchMessages,updateMessages } from "../../../redux/slices/messagesSlice";
+import {
+  fetchChatMessages,
+  sendMessage,
+  fetchMessages,
+  updateMessages,
+  sendImageMessage,
+} from "../../../redux/slices/messagesSlice";
 import Message from "./Message";
 import MessageInput from "./MessageInput";
 import ConversationDetails from "./ConversationDetails";
 import SearchRight from "./SearchRight";
 import { set } from "lodash";
 import "./MessageArea.css";
+import socket from "../../services/socket";
 
 const { Header, Content } = Layout;
 
@@ -598,7 +605,7 @@ const MessageArea = ({ selectedChat, user }) => {
   // Lấy dữ liệu tin nhắn từ Redux Store
   const dispatch = useDispatch();
   const chatMessages = useSelector((state) => state.messages.chatMessages);
-  
+
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState("");
   // Hiển thị thông tin hội thoại
@@ -650,31 +657,7 @@ const MessageArea = ({ selectedChat, user }) => {
   }, [dispatch, user?.id, selectedChat?.receiver_id]);
   console.log("Chat Messages in MessageArea", chatMessages);
 
-  // const handleSendMessage = (text = "") => {
-
-  //   if (
-  //     (text.trim() || messages.some((m) => m.image || m.file)) &&
-  //     selectedChat
-  //   ) {
-  //     const newMessage = {
-  //       sender_id: user?.id, // ID người gửi
-  //       receiver_id: selectedChat?.id, // ID người nhận
-  //       content: text || "",
-  //       type: "text", // Loại tin nhắn (text, image, file)
-  //       chat_type: "private",
-  //       // timestamp: new Date().toLocaleTimeString([], {
-  //       //   hour: "2-digit",
-  //       //   minute: "2-digit",
-  //       // }),
-  //       // type: "sent",
-  //       // image: messages.some((m) => m.image) ? null : undefined,
-  //       // file: messages.some((m) => m.file) ? null : undefined,
-  //     };
-  //     setMessages([...messages, newMessage]);
-  //     setInputMessage("");
-  //   }
-  // };
-  const handleSendMessage =async (text = "", image = null, file = null) => {
+  const handleSendMessage = async (text = "", image = null, file = null) => {
     if ((text.trim() || image || file) && selectedChat) {
       const newMessage = {
         sender_id: user?.id, // ID người gửi
@@ -684,63 +667,109 @@ const MessageArea = ({ selectedChat, user }) => {
         chat_type: "private",
       };
 
-     try {
-      // await dispatch(sendMessage(newMessage)).unwrap(); // Chờ gửi thành công
-      // await dispatch(fetchMessages(user?.id)); // Cập nhật danh sách người nhận
-      // dispatch(fetchChatMessages({ senderId: user.id, receiverId: selectedChat.receiver_id })); // Cập nhật tin nhắn giữa sender và receiver'
-      const response = await dispatch(sendMessage(newMessage)).unwrap(); // Chờ gửi thành công
+      try {
+        // await dispatch(sendMessage(newMessage)).unwrap(); // Chờ gửi thành công
+        // await dispatch(fetchMessages(user?.id)); // Cập nhật danh sách người nhận
+        // dispatch(fetchChatMessages({ senderId: user.id, receiverId: selectedChat.receiver_id })); // Cập nhật tin nhắn giữa sender và receiver'
+        const response = await dispatch(sendMessage(newMessage)).unwrap(); // Chờ gửi thành công
 
-      const sentMessage = response.data; // Tin nhắn vừa gửi
-      
-      // Cập nhật danh sách tin nhắn chatMessages ngay lập tức
-      dispatch(updateMessages(sentMessage));
+        const sentMessage = response.data; // Tin nhắn vừa gửi
+        // Gửi qua socket để bên kia nhận real-time
+        console.log("ChatId khi gửi tin nhắn", selectedChat?.id);
+        const userIds = [user.id, selectedChat.id].sort();
+        const roomId = `chat_${userIds[0]}_${userIds[1]}`;
 
-      // Cập nhật danh sách người nhận gần nhất
-      dispatch(fetchMessages(user?.id));
-     } catch (error) {
-      console.log("Error sending message:", error);
-      
-     }
+        socket.emit("send-message", {
+          ...sentMessage, // Tin nhắn vừa gửi
+          chatId: roomId, // ID phòng chat
+        });
+
+        // Cập nhật danh sách tin nhắn chatMessages ngay lập tức
+        // dispatch(updateMessages(sentMessage));
+
+        // Cập nhật danh sách người nhận gần nhất
+        dispatch(fetchMessages(user?.id));
+      } catch (error) {
+        console.log("Error sending message:", error);
+      }
     }
   };
-  const handleImageUpload = (imageUrl) => {
+  const handleImageUpload = async (imageFile) => {
     if (selectedChat) {
-      const newMessage = {
-        id: messages.length + 1,
-        text: "",
-        sender: "You",
-        timestamp: new Date().toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-        type: "sent",
-        image: imageUrl,
-      };
-      setMessages([...messages, newMessage]);
+      try {
+        const result = await dispatch(
+          sendImageMessage({
+            sender_id: user?.id,
+            receiver_id: selectedChat?.id,
+            image: imageFile, // là file thật
+          })
+        ).unwrap();
+
+        const sentMessage = result.data;
+
+        const userIds = [user.id, selectedChat.id].sort();
+        const roomId = `chat_${userIds[0]}_${userIds[1]}`;
+
+        socket.emit("send-message", {
+          ...sentMessage,
+          chatId: roomId,
+        });
+
+        dispatch(fetchMessages(user?.id));
+      } catch (err) {
+        console.error("Lỗi gửi ảnh:", err);
+      }
     }
   };
 
-  const handleFileUpload = (file) => {
-    if (selectedChat) {
-      const newMessage = {
-        id: messages.length + 1,
-        text: "",
-        sender: "You",
-        timestamp: new Date().toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-        type: "sent",
-        file: {
-          name: file.name,
-          size: `${(file.size / 1024).toFixed(2)} KB`,
-          type: file.type || "application/octet-stream",
-        },
-      };
-      setMessages([...messages, newMessage]);
-    }
-  };
+  // const handleFileUpload = (file) => {
+  //   if (selectedChat) {
+  //     const newMessage = {
+  //       id: messages.length + 1,
+  //       text: "",
+  //       sender: "You",
+  //       timestamp: new Date().toLocaleTimeString([], {
+  //         hour: "2-digit",
+  //         minute: "2-digit",
+  //       }),
+  //       type: "sent",
+  //       file: {
+  //         name: file.name,
+  //         size: `${(file.size / 1024).toFixed(2)} KB`,
+  //         type: file.type || "application/octet-stream",
+  //       },
+  //     };
+  //     setMessages([...messages, newMessage]);
+  //   }
+  // };
   // Tự động cuộn xuống cuối khi có tin nhắn mới
+  const handleFileUpload = async (file) => {
+    if (selectedChat) {
+      try {
+        const result = await dispatch(
+          sendImageMessage({
+            sender_id: user?.id,
+            receiver_id: selectedChat?.id,
+            image: file, // ✅ chính là file object
+          })
+        ).unwrap();
+
+        const sentMessage = result.data;
+
+        const userIds = [user.id, selectedChat.id].sort();
+        const roomId = `chat_${userIds[0]}_${userIds[1]}`;
+
+        socket.emit("send-message", {
+          ...sentMessage,
+          chatId: roomId,
+        });
+
+        dispatch(fetchMessages(user?.id)); // Optional
+      } catch (error) {
+        console.log("Error sending file message:", error);
+      }
+    }
+  };
   useEffect(() => {
     if (messageEndRef.current) {
       messageEndRef.current.scrollIntoView({ behavior: "smooth" });
@@ -754,6 +783,39 @@ const MessageArea = ({ selectedChat, user }) => {
       messageEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   };
+
+  // Kết nối socket và lắng nghe sự kiện nhận tin nhắn
+  useEffect(() => {
+    if (!selectedChat?.id || !user?.id) return;
+
+    // Create a consistent room ID regardless of who is sender/receiver
+    // Sort IDs to ensure same room name for both users
+    const userIds = [user.id, selectedChat.id].sort();
+    const roomId = `chat_${userIds[0]}_${userIds[1]}`;
+
+    console.log("Joining room:", roomId);
+
+    // Join the consistent room
+    socket.emit("join-room", roomId);
+
+    const handleReceiveMessage = (message) => {
+      console.log("Received message:", message);
+
+      // Only process if message involves current user
+      if (message.sender_id === user.id || message.receiver_id === user.id) {
+        dispatch(updateMessages(message));
+        dispatch(fetchMessages(user.id)); // Cập nhật danh sách người nhận gần nhất
+      }
+    };
+
+    socket.on("receive-message", handleReceiveMessage);
+
+    // IMPORTANT: Proper cleanup to prevent memory leaks
+    return () => {
+      console.log("Cleaning up socket listener");
+      socket.off("receive-message", handleReceiveMessage);
+    };
+  }, [selectedChat?.id, user?.id, dispatch]);
 
   if (!selectedChat) return null;
 
@@ -807,14 +869,13 @@ const MessageArea = ({ selectedChat, user }) => {
             {(chatMessages || []).map((message) => (
               <div>
                 <Message
-                key={message.id}
-                message={message}
-                selectedChat={selectedChat}
-                isSender={message.sender_id === user.id}
-                onClick={handleScrollToBottom} 
-
-              />
-              <div ref={messageEndRef} ></div>
+                  key={message.id}
+                  message={message}
+                  selectedChat={selectedChat}
+                  isSender={message.sender_id === user.id}
+                  onClick={handleScrollToBottom}
+                />
+                <div ref={messageEndRef}></div>
               </div>
             ))}
             {/* Phần tử ẩn để cuộn xuống */}

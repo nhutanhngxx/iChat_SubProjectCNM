@@ -8,6 +8,8 @@ const { Server } = require("socket.io");
 const routes = require("./src/routes/index"); // import routes từ index.js
 
 const socketHandler = require("./src/sockets/socketHandler");
+const initSocketMessage = require("./src/sockets/socketMessage");
+const socketFriend = require("./src/sockets/socketFriend");
 
 // Khởi tạo Express app và HTTP server
 const app = express();
@@ -74,7 +76,8 @@ app.use("/api", routes); // prefix cho các routes
 
 // Gọi socket handler để xử lý real-time
 socketHandler(io);
-
+initSocketMessage(io);
+socketFriend(io);
 // Khởi chạy server
 const PORT = process.env.PORT || 5001;
 server.listen(PORT, () => {

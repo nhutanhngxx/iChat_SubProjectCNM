@@ -125,6 +125,29 @@ const ConversationDetails = ({
   ];
 
   const visibleMedia = showAll ? fakeMedia : fakeMedia.slice(0, 8);
+  // Add this function in your ConversationDetails component
+  const handleGifSelect = async (gifUrl) => {
+    try {
+      // First, fetch the GIF data
+      const response = await fetch(gifUrl);
+      const gifBlob = await response.blob();
+
+      // Create a File object from the blob
+      const gifFile = new File([gifBlob], `gif_${Date.now()}.gif`, {
+        type: "image/gif",
+      });
+
+      // Use the existing onImageUpload function
+      onImageUpload(gifFile);
+
+      // Optionally close the picker
+      if (isExpanded) {
+        setActiveTab("info"); // Switch back to info tab
+      }
+    } catch (error) {
+      console.error("Error processing GIF:", error);
+    }
+  };
   //  Click emoji set vào input
   const onEmojiClick = (event) => {
     const emoji = event.emoji; // Lấy emoji từ thuộc tính `emoji` của event
@@ -170,10 +193,7 @@ const ConversationDetails = ({
           <div>
             <div className="chat-info-header">
               <div className="avatar">
-                <Avatar
-                  size={60}
-                  src={`${selectedChat.avatar_path}`}
-                />
+                <Avatar size={60} src={`${selectedChat.avatar_path}`} />
               </div>
               <h3>
                 {selectedChat.name}
@@ -211,18 +231,26 @@ const ConversationDetails = ({
               </div>
             </div>
             {/* Nhóm chung */}
-            <div style={{
-               marginTop: "0px",
-               backgroundColor:"#ffffff",
+            <div
+              style={{
+                marginTop: "0px",
+                backgroundColor: "#ffffff",
                 marginBottom: "20px",
                 boxShadow: "1px 1px 5px 1px #ddd",
                 padding: "10px",
                 display: "flex",
                 paddingLeft: "20px",
                 gap: "10px",
-            }}>
-              <MdOutlineGroup className="icon-group"  style={{fontSize:"20px"}}/>
-              <h3 style={{fontWeight:"400", color:"gray"}}> 4 Nhóm chung</h3>
+              }}
+            >
+              <MdOutlineGroup
+                className="icon-group"
+                style={{ fontSize: "20px" }}
+              />
+              <h3 style={{ fontWeight: "400", color: "gray" }}>
+                {" "}
+                4 Nhóm chung
+              </h3>
             </div>
             <div className="conversation-options">
               <div
@@ -386,8 +414,11 @@ const ConversationDetails = ({
                   />
                 ) : (
                   <GifPicker
-                    onSelect={(gifUrl) => setSelectedGif(gifUrl)}
-                    onImageUpload={onImageUpload}
+                    onSelect={(gifUrl) => {
+                      setSelectedGif(gifUrl);
+                      handleGifSelect(gifUrl);
+                    }}
+                    onImageUpload={() => {}} // Empty function to prevent error
                     style={{ width: "100%" }}
                   />
                 )}
@@ -403,10 +434,7 @@ const ConversationDetails = ({
               <h3>Đặt tên gợi nhớ</h3>
             </div>
             <div className="modal-set-nickname-body">
-              <img
-                src={`${selectedChat.avatar_path}`}
-                alt=""
-              />
+              <img src={`${selectedChat.avatar_path}`} alt="" />
               <p>
                 Hãy đặt tên cho <strong>{selectedChat.name} </strong>
                 một tên dễ nhớ.

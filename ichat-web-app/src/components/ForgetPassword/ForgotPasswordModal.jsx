@@ -287,7 +287,7 @@ const ForgotPasswordModal = ({ visible, onClose }) => {
                                 style={{
                                     position: "absolute",
                                     right: "50px",
-                                    top: "51%",
+                                    top: "48%",
                                     transform: "translateY(-50%)",
                                     cursor: "pointer",
                                 }}
@@ -307,7 +307,7 @@ const ForgotPasswordModal = ({ visible, onClose }) => {
                                 style={{
                                     position: "absolute",
                                     right: "50px",
-                                    top: "62%",
+                                    top: "58%",
                                     transform: "translateY(-50%)",
                                     cursor: "pointer",
                                 }}

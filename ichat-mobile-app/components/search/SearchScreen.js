@@ -600,7 +600,6 @@ const SearchScreen = () => {
                       <Text style={{ fontSize: 16, fontWeight: "bold" }}>
                         {item.full_name}
                       </Text>
-                      {/* <Text style={{ color: "gray" }}>{item.phone}</Text> */}
                     </View>
                   </TouchableOpacity>
                   <FriendButton
