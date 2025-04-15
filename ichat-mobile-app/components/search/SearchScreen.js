@@ -303,9 +303,6 @@ const SearchScreen = () => {
     fetchFriendRequests();
   }, []);
 
-  console.log("Sent requests:", sentRequests);
-  console.log("List friend:", listFriend);
-
   // Gọi fetchUsers khi component được mount
   useEffect(() => {
     fetchUsers();

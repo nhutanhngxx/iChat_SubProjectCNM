@@ -177,6 +177,8 @@ const FriendshipController = {
   //  Từ chối / Hủy lời mời kết bạn
   cancelFriendRequest: async (req, res) => {
     const { senderId, receiverId } = req.body;
+    console.log("Sender ID: ", senderId);
+    console.log("Receiver ID: ", receiverId);
 
     try {
       const friendship = await Friendship.findOneAndDelete({

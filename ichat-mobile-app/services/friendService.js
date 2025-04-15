@@ -60,13 +60,45 @@ const friendService = {
   },
 
   // Đồng ý lời mời kết bạn
-  acceptFriendRequest: async (requestId) => {},
+  acceptFriendRequest: async ({ senderId, receiverId }) => {
+    try {
+      const response = await apiService.post(
+        `/${PREFIX}/accept-friend-request`,
+        {
+          senderId,
+          receiverId,
+        }
+      );
+      if (response.data.status === "error") {
+        return { status: "error", message: response.data.message };
+      }
+      if (response.data.status === "ok") {
+        return { status: "ok", message: response.data.message };
+      }
+    } catch (error) {
+      console.log("Không thể chấp nhận lời mời kết bạn: ", error);
+      return { status: "error", message: "Đã xảy ra lỗi" };
+    }
+  },
 
-  // Từ chối lời mời kết bạn
-  rejectFriendRequest: async (requestId) => {},
-
-  // Hủy/thu hồi lời mời kết bạn
-  cancelFriendRequest: async (requestId) => {},
+  // Từ chối - Hủy/thu hồi lời mời kết bạn
+  cancelFriendRequest: async ({ senderId, receiverId }) => {
+    try {
+      const response = await apiService.post(
+        `/${PREFIX}/cancel-friend-request`,
+        { receiverId, senderId }
+      );
+      if (response.data.status === "error") {
+        return { status: "error", message: response.data.message };
+      }
+      if (response.data.status === "ok") {
+        return { status: "ok", message: response.data.message };
+      }
+    } catch (error) {
+      console.log("Không thể hủy lời mời kết bạn: ", error);
+      return { status: "error", message: "Đã xảy ra lỗi" };
+    }
+  },
 
   // Hủy kết bạn
   unfriendUser: async (friendId) => {},
