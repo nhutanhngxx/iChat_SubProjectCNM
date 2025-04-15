@@ -15,7 +15,6 @@ import ImageTab from "../messages/media/Image";
 import FileTab from "../messages/media/File";
 import LinkTab from "../messages/media/Link";
 import VoiceTab from "../messages/media/Voice";
-import { Colors } from "react-native/Libraries/NewAppScreen";
 
 const MediaStorage = () => {
   const [selectedFilter, setSelectedFilter] = useState("");

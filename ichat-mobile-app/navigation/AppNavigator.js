@@ -13,6 +13,7 @@ import InfoRegisterScreen from "../components/register/InfoRegisterScreen";
 
 import SearchScreen from "../components/search/SearchScreen";
 import Chatting from "../components/messages/Chatting";
+import MediaStorage from "../components/messages/MediaStorage";
 import QRScanner from "../components/camera/QRScannerScreen";
 import ProfileInformation from "../components/profile/ProfileInformation";
 import ViewImagePost from "../components/view/ViewImagePost";
@@ -48,6 +49,7 @@ export default function AppNavigator() {
           />
 
           <Stack.Screen name="Chatting" component={Chatting} />
+          <Stack.Screen name="MediaStorage" component={MediaStorage} />
           <Stack.Screen name="ViewProfile" component={ViewProfile} />
           <Stack.Screen name="QRScanner" component={QRScanner} />
           <Stack.Screen name="ViewImagePost" component={ViewImagePost} />

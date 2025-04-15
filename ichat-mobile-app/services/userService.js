@@ -4,10 +4,13 @@ const PREFIX = "users";
 const userService = {
   getUserById: async (userId) => {
     try {
-      const response = await apiService.get(`/${PREFIX}/users/${userId}`);
+      const response = await apiService.get(`/${PREFIX}/${userId}`);
       return response.data;
     } catch (error) {
-      console.log("User Service Error: ", error);
+      console.error(
+        "Lỗi: Không thể lấy được thông tin người dùng từ User Service:",
+        error
+      );
       return null;
     }
   },
@@ -17,7 +20,10 @@ const userService = {
       const response = await apiService.get(`/${PREFIX}/`);
       return response.data.users;
     } catch (error) {
-      console.log("User Service Error: ", error);
+      console.log(
+        "Lỗi: Không thể lấy được danh sách người dùng từ User Service: ",
+        error
+      );
       return [];
     }
   },
