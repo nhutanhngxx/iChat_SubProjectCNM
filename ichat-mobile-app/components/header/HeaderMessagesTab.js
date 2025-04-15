@@ -8,6 +8,7 @@ import {
   Modal,
   SafeAreaView,
   Alert,
+  Platform,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 
@@ -68,17 +69,31 @@ const HeaderMessages = () => {
           />
           <TextInput
             onPress={() => navigation.navigate("SearchScreen")}
-            style={{
-              fontSize: 15,
-              color: "#2F80ED",
-              flex: 1,
-              marginRight: 20,
-              paddingLeft: 10,
-              borderRadius: 5,
-              backgroundColor: "white",
-              textAlignVertical: "center",
-              height: 30,
-            }}
+            style={
+              Platform.OS === "ios"
+                ? {
+                    fontSize: 15,
+                    color: "#2F80ED",
+                    flex: 1,
+                    marginRight: 20,
+                    paddingLeft: 10,
+                    borderRadius: 5,
+                    backgroundColor: "white",
+                    textAlignVertical: "center",
+                    height: 30,
+                  }
+                : {
+                    fontSize: 15,
+                    color: "#2F80ED",
+                    flex: 1,
+                    marginRight: 20,
+                    paddingLeft: 10,
+                    borderRadius: 5,
+                    backgroundColor: "white",
+                    textAlignVertical: "center",
+                    height: 38,
+                  }
+            }
             placeholder="Tìm kiếm"
             placeholderTextColor={"gray"}
             editable={false}

@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Image,
   Alert,
+  Platform,
 } from "react-native";
 import { Tab, TabView } from "@rneui/themed";
 import axios from "axios";
@@ -16,6 +17,8 @@ import { UserContext } from "../../config/context/UserContext";
 import { StatusBar } from "expo-status-bar";
 import { getHostIP } from "../../services/api";
 import { ActivityIndicator } from "react-native-paper";
+import friendService from "../../services/friendService";
+import FriendButton from "../common/FriendButton";
 
 const SearchScreen = () => {
   const route = useRoute();
@@ -90,6 +93,8 @@ const SearchScreen = () => {
   const [searchMessages, setSearchMessages] = useState([]);
   const [searchGroups, setSearchGroups] = useState([]);
   const [users, setUsers] = useState([]);
+  const [sentRequests, setSentRequests] = useState([]);
+  const [listFriend, setListFriend] = useState([]);
 
   useEffect(() => {
     loadSearchHistory();
@@ -142,6 +147,30 @@ const SearchScreen = () => {
       setHistorySearch(newHistory);
     } catch (error) {
       console.error("Lỗi xóa 1 item khỏi lịch sử:", error);
+    }
+  };
+
+  // Hàm xử lý gửi lời mời kết bạn
+  const handleSendFriendRequest = async (receiverId, full_name) => {
+    try {
+      const response = await friendService.sendFriendRequest({
+        senderId: user.id,
+        receiverId,
+      });
+      if (response.status === "ok") {
+        setSentRequests((prev) => [...prev, receiverId]);
+        Alert.alert("Thông báo", `Đã gửi lời mời kết bạn đến ${full_name}`, [
+          { text: "OK" },
+        ]);
+      } else {
+        Alert.alert(
+          "Thông báo",
+          response.message || "Không thể gửi lời mời kết bạn"
+        );
+      }
+    } catch (error) {
+      console.error("Lỗi gửi lời mời kết bạn:", error);
+      Alert.alert("Thông báo", "Đã xảy ra lỗi khi gửi lời mời kết bạn");
     }
   };
 
@@ -255,6 +284,28 @@ const SearchScreen = () => {
     }
   };
 
+  // Lấy danh sách bạn bè và lời mời kết bạn đã gửi
+  const fetchFriendRequests = async () => {
+    try {
+      const friendList = await friendService.getFriendListByUserId(user.id);
+      setListFriend(friendList);
+      const sentRequests = await friendService.getSentRequestsByUserId(user.id);
+      setSentRequests(sentRequests);
+    } catch (error) {
+      console.error("Error fetching friend requests:", error);
+      setSentRequests([]);
+      setFriendList([]);
+    }
+  };
+
+  // Gọi fetchFriendRequests khi component được mount
+  useEffect(() => {
+    fetchFriendRequests();
+  }, []);
+
+  console.log("Sent requests:", sentRequests);
+  console.log("List friend:", listFriend);
+
   // Gọi fetchUsers khi component được mount
   useEffect(() => {
     fetchUsers();
@@ -279,13 +330,23 @@ const SearchScreen = () => {
     <View style={{ flex: 1, backgroundColor: "#0AA2F8" }}>
       <StatusBar hidden={false} style="light" />
       <View
-        style={{
-          flexDirection: "row",
-          alignItems: "flex-end",
-          width: "100%",
-          padding: 10,
-          height: 90,
-        }}
+        style={
+          Platform.OS === "ios"
+            ? {
+                flexDirection: "row",
+                alignItems: "flex-end",
+                width: "100%",
+                padding: 10,
+                height: 90,
+              }
+            : {
+                flexDirection: "row",
+                alignItems: "flex-end",
+                width: "100%",
+                paddingHorizontal: 10,
+                height: 80,
+              }
+        }
       >
         <View
           style={{
@@ -316,13 +377,23 @@ const SearchScreen = () => {
           >
             <TextInput
               ref={searchInputRef}
-              style={{
-                flex: 1,
-                fontSize: 15,
-                paddingHorizontal: 10,
-                textAlignVertical: "center",
-                height: 30,
-              }}
+              style={
+                Platform.OS === "ios"
+                  ? {
+                      flex: 1,
+                      fontSize: 15,
+                      paddingHorizontal: 10,
+                      textAlignVertical: "center",
+                      height: 30,
+                    }
+                  : {
+                      flex: 1,
+                      fontSize: 15,
+                      paddingHorizontal: 10,
+                      textAlignVertical: "center",
+                      height: 40,
+                    }
+              }
               placeholder="Tìm kiếm"
               value={searchText}
               onChangeText={setSearchText}
@@ -369,7 +440,17 @@ const SearchScreen = () => {
         </Tab>
       )}
       {!searchText && (
-        <View style={{ padding: 10, backgroundColor: "white" }}>
+        <View
+          style={
+            Platform.OS === "ios"
+              ? { padding: 10, backgroundColor: "white" }
+              : {
+                  padding: 10,
+                  marginTop: 10,
+                  backgroundColor: "white",
+                }
+          }
+        >
           <Text style={{ fontSize: 18, fontWeight: "bold", marginBottom: 10 }}>
             Lịch sử tìm kiếm
           </Text>
@@ -381,13 +462,23 @@ const SearchScreen = () => {
                 renderItem={({ item }) => (
                   <TouchableOpacity
                     onPress={() => setSearchText(item)}
-                    style={{
-                      flexDirection: "row",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      paddingVertical: 10,
-                      paddingHorizontal: 5,
-                    }}
+                    style={
+                      Platform.OS === "ios"
+                        ? {
+                            flexDirection: "row",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            paddingVertical: 10,
+                            paddingHorizontal: 5,
+                          }
+                        : {
+                            flexDirection: "row",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            paddingVertical: 5,
+                            paddingHorizontal: 5,
+                          }
+                    }
                   >
                     {/* Tên lịch sử tìm kiếm */}
                     <TouchableOpacity onPress={() => setSearchText(item)}>
@@ -477,7 +568,6 @@ const SearchScreen = () => {
               ) : (
                 // Tài khoản
                 <TouchableOpacity
-                  onPress={() => handleOpenChatting(item)}
                   style={{
                     paddingVertical: 5,
                     paddingHorizontal: 15,
@@ -486,8 +576,44 @@ const SearchScreen = () => {
                     gap: 5,
                     flexDirection: "row",
                     alignItems: "center",
+                    justifyContent: "space-between",
                   }}
+                  onPress={() => handleOpenChatting(item)}
                 >
+                  <TouchableOpacity
+                    style={{ flexDirection: "row", alignItems: "center" }}
+                    onPress={() => handleOpenChatting(item)}
+                  >
+                    <Image
+                      source={{
+                        uri:
+                          item.sender_id?.avatar_path ||
+                          "https://picsum.photos/200",
+                      }}
+                      style={{
+                        width: 50,
+                        height: 50,
+                        borderRadius: 25,
+                        marginRight: 10,
+                        alignItems: "center",
+                      }}
+                    />
+                    <View>
+                      <Text style={{ fontSize: 16, fontWeight: "bold" }}>
+                        {item.full_name}
+                      </Text>
+                      {/* <Text style={{ color: "gray" }}>{item.phone}</Text> */}
+                    </View>
+                  </TouchableOpacity>
+                  <FriendButton
+                    userId={user?.id}
+                    itemId={item.id}
+                    fullName={item.full_name}
+                    sentRequests={sentRequests}
+                    listFriend={listFriend}
+                    onSendRequest={handleSendFriendRequest}
+                  />
+                  >
                   <Image
                     source={{
                       uri: item.sender_id?.avatar_path || item.avatar_path,
@@ -587,9 +713,44 @@ const SearchScreen = () => {
                     gap: 5,
                     flexDirection: "row",
                     alignItems: "center",
+                    justifyContent: "space-between",
                   }}
                   // onPress={() => handleOpenChatting(item)}
                 >
+                  <TouchableOpacity
+                    style={{ flexDirection: "row", alignItems: "center" }}
+                    onPress={() => handleOpenChatting(item)}
+                  >
+                    <Image
+                      source={{
+                        uri:
+                          item.sender_id?.avatar_path ||
+                          "https://picsum.photos/200",
+                      }}
+                      style={{
+                        width: 50,
+                        height: 50,
+                        borderRadius: 25,
+                        marginRight: 10,
+                        alignItems: "center",
+                      }}
+                    />
+                    <View>
+                      <Text style={{ fontSize: 16, fontWeight: "bold" }}>
+                        {item.full_name}
+                      </Text>
+                      {/* <Text style={{ color: "gray" }}>{item.phone}</Text> */}
+                    </View>
+                  </TouchableOpacity>
+                  <FriendButton
+                    userId={user?.id}
+                    itemId={item.id}
+                    fullName={item.full_name}
+                    sentRequests={sentRequests}
+                    listFriend={listFriend}
+                    onSendRequest={handleSendFriendRequest}
+                  />
+                  >
                   <Image
                     source={{
                       uri: item.sender_id?.avatar_path || item.avatar_path,
