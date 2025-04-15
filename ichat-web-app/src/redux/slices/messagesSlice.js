@@ -58,14 +58,14 @@ export const sendImageMessage = createAsyncThunk(
       formData.append("sender_id", sender_id);
       formData.append("receiver_id", receiver_id);
       formData.append("content", ""); // server sẽ tự xử lý content từ file
-      formData.append("type", "image");
+      // Tự động xác định type
+      const mimeType = image.type;
+      const isImage = mimeType.startsWith("image/");
+      const fileType = isImage ? "image" : "file";
+
+      formData.append("type", fileType);
       formData.append("chat_type", "private");
 
-      // formData.append("image", {
-      //   uri: image.uri,
-      //   type: image.type || "image/jpeg",
-      //   name: image.fileName || `image-${Date.now()}.jpg`,
-      // });
       formData.append("file", image); // đơn giản là File gốc từ input
       console.log("formData", formData);
       const response = await fetch(`${API_URL}send-message`, {
@@ -101,11 +101,6 @@ const messagesSlice = createSlice({
     error: null,
   },
   reducers: {
-    // Thêm reducer để cập nhật tin nhắn
-    // updateMessages: (state, action) => {
-    //   const newMessage = action.payload;
-    //   state.chatMessages.push(newMessage); // Thêm tin nhắn mới vào danh sách chatMessages
-    // },
     updateMessages: (state, action) => {
       const newMessage = action.payload;
 

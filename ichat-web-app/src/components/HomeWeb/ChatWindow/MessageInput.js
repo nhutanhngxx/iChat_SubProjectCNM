@@ -128,7 +128,7 @@ const MessageInput = ({
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
     if (file) {
-      setSelectedFile(file); // Lưu file object
+      // setSelectedFile(file); // Lưu file object
       onFileUpload(file); // Truyền file lên MessageArea
       message.success(`File "${file.name}" đã được tải lên thành công!`);
     }

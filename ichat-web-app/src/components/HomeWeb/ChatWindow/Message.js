@@ -20,74 +20,85 @@ const Message = ({ message, selectedChat, isSender }) => {
     extension: "",
     size: "",
   });
-  // Hàm lấy thông tin file từ URL
   // useEffect(() => {
-  //   const fetchFileInfo = async () => {
+  //   const fetchFileInfo = () => {
   //     try {
-  //       const url = message.content;
-  //       const fileName = decodeURIComponent(url.split("/").pop());
+  //       const fileUrl = message.content;
+  //       const fileName = decodeURIComponent(fileUrl.split("/").pop()); // Lấy tên file cuối URL
   //       const fileExtension = fileName.split(".").pop();
-
-  //       // Gửi HEAD request để lấy metadata (bao gồm size)
-  //       const response = await fetch(url, { method: "HEAD" });
-  //       const sizeInBytes = response.headers.get("content-length");
-
-  //       const size = formatBytes(sizeInBytes);
+  //       const parts = fileName.split("-");
+  //       const originalName = parts.slice(2).join("-"); // Bỏ random + timestamp
 
   //       setFileInfo({
-  //         name: fileName,
+  //         name: originalName,
   //         extension: fileExtension,
-  //         size,
+  //         size: "Không xác định (CORS bị chặn)", // fallback
   //       });
   //     } catch (error) {
-  //       console.error("Lỗi khi lấy thông tin file:", error);
+  //       console.error("Lỗi khi xử lý file:", error);
   //     }
   //   };
 
   //   fetchFileInfo();
   // }, [message.content]);
   useEffect(() => {
-    const fetchFileInfo = () => {
+    const fetchFileInfo = async () => {
       try {
-        const url = message.content;
-        const fileName = decodeURIComponent(url.split("/").pop());
+        const fileUrl = message.content;
+        const fileName = decodeURIComponent(fileUrl.split("/").pop());
         const fileExtension = fileName.split(".").pop();
+        const parts = fileName.split("-");
+        const originalName = parts.slice(2).join("-");
+
+        // HEAD request để lấy metadata
+        const response = await fetch(fileUrl, { method: "HEAD" });
+
+        const sizeHeader = response.headers.get("Content-Length");
 
         setFileInfo({
-          name: fileName,
+          name: originalName,
           extension: fileExtension,
-          size: "Không xác định (CORS bị chặn)", // fallback
+          size: sizeHeader
+            ? formatBytes(Number(sizeHeader))
+            : "Không rõ dung lượng",
         });
       } catch (error) {
         console.error("Lỗi khi xử lý file:", error);
+        setFileInfo({
+          name: "Không xác định",
+          extension: "unknown",
+          size: "Không xác định (CORS bị chặn?)",
+        });
       }
     };
 
-    fetchFileInfo();
-  }, [message.content]);
-
+    if (message.type === "file") {
+      fetchFileInfo();
+    }
+  }, [message]);
   const formatBytes = (bytes) => {
     if (!bytes) return "Không rõ dung lượng";
     const sizes = ["Bytes", "KB", "MB", "GB", "TB"];
     const i = Math.floor(Math.log(bytes) / Math.log(1024));
     return `${parseFloat((bytes / Math.pow(1024, i)).toFixed(2))} ${sizes[i]}`;
   };
-  // const handleDownload = async () => {
-  //   const response = await fetch(message.content);
-  //   const blob = await response.blob();
 
-  //   const link = document.createElement("a");
-  //   link.href = window.URL.createObjectURL(blob);
-  //   link.download = fileInfo.name;
-  //   link.click();
-  // };
-  const handleDownload = () => {
-    const link = document.createElement("a");
-    link.href = message.content;
-    link.setAttribute("download", fileInfo.name); // tên file khi tải về
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const handleDownload = async () => {
+    try {
+      const response = await fetch(message.content);
+      const blob = await response.blob();
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = fileInfo.name || "file_tai_ve";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Lỗi khi tải file:", error);
+    }
   };
 
   return (
@@ -164,17 +175,14 @@ const Message = ({ message, selectedChat, isSender }) => {
           <div className="file-content">
             <span className="file-icon">📄</span> {/* Biểu tượng file Excel */}
             <div className="file-info">
-              <span className="file-name">
-                {/* {decodeURIComponent(message.content.split("/").pop())} */}
-                {fileInfo.name}
-              </span>
+              <span className="file-name">{fileInfo.name}</span>
               {/* <span className="file-size">{message.content.size}</span> */}
               {/* Nếu có size thì hiển thị */}
               <span className="file-type">
                 Loại file: {fileInfo.extension.toUpperCase()}
               </span>
               <span className="file-size">Dung lượng: {fileInfo.size}</span>
-              <span className="file-cloud">Đã có trên Cloud</span>
+              {/* <span className="file-cloud">Đã có trên Cloud</span> */}
             </div>
             <button onClick={handleDownload} className="download-button">
               📥 Tải về

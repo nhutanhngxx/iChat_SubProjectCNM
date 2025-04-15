@@ -743,24 +743,18 @@ const MessageArea = ({ selectedChat, user }) => {
   //   }
   // };
   // Tự động cuộn xuống cuối khi có tin nhắn mới
-  const handleFileUpload = async (fileUrl, fileName, fileSize, fileType) => {
+  const handleFileUpload = async (file) => {
     if (selectedChat) {
-      const newMessage = {
-        sender_id: user?.id,
-        receiver_id: selectedChat?.id,
-        content: fileUrl,
-        type: "file",
-        chat_type: "private",
-        file_metadata: {
-          name: fileName,
-          size: fileSize,
-          type: fileType,
-        },
-      };
-
       try {
-        const response = await dispatch(sendMessage(newMessage)).unwrap();
-        const sentMessage = response.data;
+        const result = await dispatch(
+          sendImageMessage({
+            sender_id: user?.id,
+            receiver_id: selectedChat?.id,
+            image: file, // ✅ chính là file object
+          })
+        ).unwrap();
+
+        const sentMessage = result.data;
 
         const userIds = [user.id, selectedChat.id].sort();
         const roomId = `chat_${userIds[0]}_${userIds[1]}`;
@@ -770,7 +764,7 @@ const MessageArea = ({ selectedChat, user }) => {
           chatId: roomId,
         });
 
-        dispatch(fetchMessages(user?.id));
+        dispatch(fetchMessages(user?.id)); // Optional
       } catch (error) {
         console.log("Error sending file message:", error);
       }
