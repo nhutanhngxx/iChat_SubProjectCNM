@@ -164,14 +164,16 @@ const ChatItem = ({ item, onSelectUser, onPin }) => {
               {item.type === "video" && <VideoCameraOutlined />}
               {item.type === "audio" && <PhoneOutlined />}
               {item.type === "notification" && <NotificationOutlined />}
-              {/* {(item.lastMessage?.length > 10
-                ? `${item.lastMessage.slice(0, 30)}...`
-                : item.lastMessage) || "Tin nhắn trống"} */}
-                {`${item.isLastMessageFromMe === true ? "Bạn: " : `${item.name}: `}${
-                    item.lastMessage?.length > 30
-                      ? item.lastMessage.slice(0, 30) + "..."
-                      : item.lastMessage || "Tin nhắn trống"
-                  }`}
+              {`${item.isLastMessageFromMe === true ? "Bạn: " : `${item.name}: `}${
+                item.type === "image"
+                  ? "Đã gửi một ảnh"
+                  : item.type === "file"
+                  ? "Đã gửi một tệp tin"
+                  : item.lastMessage?.length > 30
+                  ? item.lastMessage.slice(0, 30) + "..."
+                  : item.lastMessage || "Tin nhắn trống"
+                }`}
+
 
 
             </span>

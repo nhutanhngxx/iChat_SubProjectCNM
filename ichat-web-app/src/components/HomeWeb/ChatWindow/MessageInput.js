@@ -73,6 +73,8 @@ const MessageInput = ({
   const [activeTab, setActiveTab] = useState("emoji");
   // const [inputMessage, setInputMessage] = useState("");
   // Mở picker ở trên hoặc bên phải
+  const pickerContainerRef = useRef(null);
+  const pickerRightContainerRef = useRef(null);
   const handleShowPickerTop = () => {
     if (isExpanded) return;
     setShowPicker((prev) => !prev);
@@ -116,16 +118,11 @@ const MessageInput = ({
   const handleImageUpload = (event) => {
     const file = event.target.files[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const imageUrl = e.target.result; // Lưu URL của ảnh (base64)
-        setSelectedImage(imageUrl);
-        onImageUpload(imageUrl); // Truyền ảnh lên MessageArea
-        message.success("Ảnh đã được tải lên thành công!");
-      };
-      reader.readAsDataURL(file);
+      // setSelectedImage(URL.createObjectURL(file)); // preview ảnh
+      onImageUpload(file); // truyền file gốc, không phải base64
+      message.success("Ảnh đã được tải lên thành công!");
     }
-    // Reset input để có thể chọn lại cùng file
+
     event.target.value = null;
   };
 
@@ -133,7 +130,7 @@ const MessageInput = ({
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
     if (file) {
-      setSelectedFile(file); // Lưu file object
+      // setSelectedFile(file); // Lưu file object
       onFileUpload(file); // Truyền file lên MessageArea
       message.success(`File "${file.name}" đã được tải lên thành công!`);
     }
@@ -143,16 +140,19 @@ const MessageInput = ({
 
   // Hàm gửi tin nhắn (bao gồm gửi ảnh hoặc file nếu có)
   const handleSend = () => {
-    if (inputMessage.trim() || selectedImage || selectedFile) {
+    if (inputMessage.trim() || selectedImage || selectedFile || selectedGif) {
+      if (selectedGif) {
+        console.log("Gửi GIF:", selectedGif);
+      }
       if (selectedImage) {
         console.log("Gửi ảnh:", selectedImage);
-        // Thêm logic gửi ảnh đến server (nếu cần)
       }
       if (selectedFile) {
         console.log("Gửi file:", selectedFile.name);
-        // Thêm logic gửi file đến server (nếu cần)
       }
+
       handleSendMessage(inputMessage); // Gửi tin nhắn văn bản nếu có
+      setSelectedGif(null); // Reset GIF sau khi gửi
       setSelectedImage(null); // Reset ảnh sau khi gửi
       setSelectedFile(null); // Reset file sau khi gửi
       setInputMessage(""); // Reset tin nhắn văn bản
@@ -260,15 +260,64 @@ const MessageInput = ({
       </div>
     </div>
   );
-  //
 
+  const handleGifSelect = async (gifUrl) => {
+    try {
+      // First, fetch the GIF data as a blob
+      const response = await fetch(gifUrl);
+      if (!response.ok) throw new Error("Failed to fetch GIF");
+      const gifBlob = await response.blob();
+
+      // Create a proper File object with a meaningful name
+      const filename = `gif_${new Date().getTime()}.gif`;
+      const gifFile = new File([gifBlob], filename, { type: "image/gif" });
+
+      // Now process it through your existing image handler
+      onImageUpload(gifFile);
+      message.success("GIF đã được chọn thành công!");
+    } catch (error) {
+      console.error("Error processing GIF:", error);
+      message.error("Không thể tải GIF, vui lòng thử lại!");
+    }
+  };
+  useEffect(() => {
+    function handleClickOutside(event) {
+      // Check for left picker
+      if (
+        showPicker &&
+        pickerContainerRef.current &&
+        !pickerContainerRef.current.contains(event.target)
+      ) {
+        setShowPicker(false);
+      }
+
+      // Check for right picker
+      if (
+        showPickerRight &&
+        pickerRightContainerRef.current &&
+        !pickerRightContainerRef.current.contains(event.target)
+      ) {
+        setShowPickerRight(false);
+      }
+    }
+
+    // Add event listener when either picker is showing
+    if (showPicker || showPickerRight) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    // Clean up event listener
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showPicker, showPickerRight]); // Depend on both states
   return (
     <div className="message-input-container">
       {/* Thanh công cụ trên */}
       <div className="message-toolbar">
         <div style={{ bottom: "102px", position: "absolute", left: "0px" }}>
           {showPicker && (
-            <div className="picker-container">
+            <div className="picker-container" ref={pickerContainerRef}>
               <div className="tabs">
                 <button
                   className={activeTab === "emoji" ? "active" : ""}
@@ -299,7 +348,8 @@ const MessageInput = ({
                 ) : (
                   <GifPicker
                     onSelect={setSelectedGif}
-                    onImageUpload={onImageUpload}
+                    onImageUpload={handleGifSelect}
+                    onClose={() => setShowPicker(false)} // Add this line
                   />
                 )}
               </div>
@@ -378,7 +428,7 @@ const MessageInput = ({
             }}
           >
             {showPickerRight && (
-              <div className="picker-container">
+              <div className="picker-container" ref={pickerRightContainerRef}>
                 <div className="tabs">
                   <button
                     className={activeTab === "emoji" ? "active" : ""}
@@ -403,7 +453,8 @@ const MessageInput = ({
                   ) : (
                     <GifPicker
                       onSelect={setSelectedGif}
-                      onImageUpload={onImageUpload}
+                      onImageUpload={handleGifSelect}
+                      onClose={() => setShowPickerRight(false)} // Add this line
                     />
                   )}
                 </div>
