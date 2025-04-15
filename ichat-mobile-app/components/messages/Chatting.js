@@ -33,6 +33,32 @@ import MessageInputBar from "../../components/messages/MessageInputBar";
 
 import { getHostIP } from "../../services/api";
 
+const renderReactionIcons = (reactions) => {
+  const icons = {
+    like: "👍",
+    love: "❤️",
+    haha: "😂",
+    wow: "😮",
+    sad: "😢",
+    angry: "😡",
+  };
+
+  // Đếm số lượng từng loại reaction
+  const counts = reactions.reduce((acc, r) => {
+    acc[r.reaction_type] = (acc[r.reaction_type] || 0) + 1;
+    return acc;
+  }, {});
+  return (
+    <View style={styles.reactionsWrapper}>
+      {Object.entries(counts).map(([type, count]) => (
+        <View key={type} style={styles.reactionItem}>
+          <Text style={styles.reactionIcon}>{icons[type]}</Text>
+        </View>
+      ))}
+    </View>
+  );
+};
+
 const Chatting = ({ route }) => {
   const navigation = useNavigation();
   const { user } = useContext(UserContext);
@@ -390,133 +416,157 @@ const Chatting = ({ route }) => {
               ? messages.find((msg) => msg._id === item.reply_to)
               : null;
             return (
-              <TouchableOpacity
-                onLongPress={() => handleLongPress(item)}
-                style={[
-                  styles.message,
-                  item.sender_id === user.id
-                    ? styles.myMessage
-                    : styles.theirMessage,
-                ]}
-              >
-                {/* Tên người gửi */}
-                {!isMyMessage && chat.chatType === "group" && (
-                  <Text style={styles.replySender}>
-                    {getMemberName(item.sender_id)}
-                  </Text>
-                )}
-
-                {/* Hiển thị tin nhắn Reply => Hiển thị tin nhắn gốc trước */}
-                {repliedMessage && (
-                  <View style={styles.replyContainer}>
+              <View>
+                <TouchableOpacity
+                  onLongPress={() => handleLongPress(item)}
+                  style={[
+                    styles.message,
+                    item.sender_id === user.id
+                      ? styles.myMessage
+                      : styles.theirMessage,
+                  ]}
+                >
+                  {/* Tên người gửi */}
+                  {!isMyMessage && chat.chatType === "group" && (
                     <Text style={styles.replySender}>
-                      {repliedMessage.sender_id === user.id
-                        ? "Bạn"
-                        : getMemberName(repliedMessage.sender_id)}
-                      :
+                      {getMemberName(item.sender_id)}
                     </Text>
+                  )}
 
-                    {repliedMessage.type === "text" && (
-                      <Text
-                        style={styles.replyText}
-                        numberOfLines={1}
-                        ellipsizeMode="tail"
-                      >
-                        {repliedMessage.content}
+                  {/* Hiển thị tin nhắn Reply => Hiển thị tin nhắn gốc trước */}
+                  {repliedMessage && (
+                    <View style={styles.replyContainer}>
+                      <Text style={styles.replySender}>
+                        {repliedMessage.sender_id === user.id
+                          ? "Bạn"
+                          : getMemberName(repliedMessage.sender_id)}
+                        :
                       </Text>
-                    )}
 
-                    {repliedMessage.type === "image" && (
-                      <Text style={styles.replyText}>[Hình ảnh]</Text>
-                    )}
-
-                    {repliedMessage.type === "file" && (
-                      <View style={styles.replyFileContainer}>
-                        <Image
-                          source={require("../../assets/icons/attachment.png")}
-                          style={styles.replyFileIcon}
-                        />
+                      {repliedMessage.type === "text" && (
                         <Text
-                          style={styles.replyFileName}
+                          style={styles.replyText}
                           numberOfLines={1}
                           ellipsizeMode="tail"
                         >
-                          {repliedMessage.fileName || "Tệp đính kèm"}
+                          {repliedMessage.content}
                         </Text>
-                      </View>
-                    )}
-                  </View>
-                )}
+                      )}
 
-                {item.type === "image" ? (
-                  <TouchableOpacity
-                    onPress={() =>
-                      navigation.navigate("ViewImageChat", {
-                        imageUrl: item.content,
-                      })
-                    }
-                  >
-                    <Image
-                      source={{ uri: item.content }}
-                      style={{
-                        width: 200,
-                        height: 200,
-                        borderRadius: 10,
-                        marginTop: 5,
-                      }}
-                      resizeMode="cover"
-                    />
-                  </TouchableOpacity>
-                ) : item.type === "file" ? (
-                  <TouchableOpacity
-                    style={styles.fileContainer}
-                    onPress={() => {
-                      Alert.alert("Thông báo", "Hãy tải hoặc mở file về máy");
-                    }}
-                  >
-                    <Image
-                      source={require("../../assets/icons/attachment.png")}
-                      style={styles.fileIcon}
-                    />
-                    <Text
-                      style={styles.fileName}
-                      numberOfLines={1}
-                      ellipsizeMode="tail"
+                      {repliedMessage.type === "image" && (
+                        <Text style={styles.replyText}>[Hình ảnh]</Text>
+                      )}
+
+                      {repliedMessage.type === "file" && (
+                        <View style={styles.replyFileContainer}>
+                          <Image
+                            source={require("../../assets/icons/attachment.png")}
+                            style={styles.replyFileIcon}
+                          />
+                          <Text
+                            style={styles.replyFileName}
+                            numberOfLines={1}
+                            ellipsizeMode="tail"
+                          >
+                            {repliedMessage.fileName || "Tệp đính kèm"}
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+                  )}
+
+                  {item.type === "image" ? (
+                    <TouchableOpacity
+                      onPress={() =>
+                        navigation.navigate("ViewImageChat", {
+                          imageUrl: item.content,
+                        })
+                      }
                     >
-                      {getFileNameFromUrl(item.content) || "Tệp đính kèm"}
+                      <Image
+                        source={{ uri: item.content }}
+                        style={{
+                          width: 200,
+                          height: 200,
+                          borderRadius: 10,
+                          marginTop: 5,
+                        }}
+                        resizeMode="cover"
+                      />
+                    </TouchableOpacity>
+                  ) : item.type === "file" ? (
+                    <TouchableOpacity
+                      style={styles.fileContainer}
+                      onPress={() => {
+                        Alert.alert("Thông báo", "Hãy tải hoặc mở file về máy");
+                      }}
+                    >
+                      <Image
+                        source={require("../../assets/icons/attachment.png")}
+                        style={styles.fileIcon}
+                      />
+                      <Text
+                        style={styles.fileName}
+                        numberOfLines={1}
+                        ellipsizeMode="tail"
+                      >
+                        {getFileNameFromUrl(item.content) || "Tệp đính kèm"}
+                      </Text>
+                    </TouchableOpacity>
+                  ) : (
+                    <Text
+                      style={[
+                        styles.messageText,
+                        isRecalled && styles.recalledText,
+                      ]}
+                    >
+                      {item.content}
                     </Text>
-                  </TouchableOpacity>
-                ) : (
-                  <Text
-                    style={[
-                      styles.messageText,
-                      isRecalled && styles.recalledText,
-                    ]}
-                  >
-                    {item.content}
-                  </Text>
-                )}
+                  )}
 
-                {/* Hiển thị thời gian hh:mm gửi tin nhắn */}
-                {isLastMessage && (
-                  <Text style={styles.timestamp}>
-                    {new Date(item.timestamp).toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </Text>
-                )}
+                  {/* Hiển thị thời gian hh:mm gửi tin nhắn */}
+                  {isLastMessage && (
+                    <Text style={styles.timestamp}>
+                      {new Date(item.timestamp).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </Text>
+                  )}
+
+                  {/* Hiển thị reactions */}
+                  {item.reactions.length > 0 && (
+                    <View
+                      style={[
+                        styles.reactionsContainer,
+                        isMyMessage
+                          ? styles.reactionsRight
+                          : styles.reactionsLeft,
+                      ]}
+                    >
+                      <TouchableOpacity
+                        style={styles.reactionsWrapper}
+                        onPress={() => Alert.alert("Đã thả react")}
+                      >
+                        {renderReactionIcons(item.reactions)}
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                </TouchableOpacity>
+
                 {/* Hiển thị trạng thái của tin nhắn: Đã gửi, Đã nhận, Đã xem */}
                 {isLastMessage && item.sender_id === user.id && (
-                  <Text style={styles.status}>
-                    {item.status === "sent"
-                      ? "Đã gửi"
-                      : item.status === "received"
-                      ? "Đã nhận"
-                      : "Đã xem"}
-                  </Text>
+                  <View style={styles.statusWrapper}>
+                    <Text style={styles.statusText}>
+                      {item.status === "sent"
+                        ? "Đã gửi"
+                        : item.status === "received"
+                        ? "Đã nhận"
+                        : "Đã xem"}
+                    </Text>
+                  </View>
                 )}
-              </TouchableOpacity>
+              </View>
             );
           }}
           contentContainerStyle={styles.messagesContainer}
@@ -749,7 +799,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "white",
-    paddingBottom: 10,
   },
   chatHeader: {
     flexDirection: "row",
@@ -966,6 +1015,52 @@ const styles = StyleSheet.create({
     color: "#333",
     fontSize: 14,
     flexShrink: 1,
+  },
+  reactionsContainer: {
+    position: "absolute",
+    bottom: -16,
+    marginBottom: 5,
+    marginRight: 3,
+    zIndex: 10,
+    elevation: 5,
+  },
+  reactionsLeft: {
+    left: 5,
+    alignSelf: "flex-start",
+  },
+  reactionsRight: {
+    right: 5,
+    alignSelf: "flex-end",
+  },
+  reactionsWrapper: {
+    flexDirection: "row",
+    backgroundColor: "#f0f0f0",
+    borderRadius: 16,
+    paddingVertical: 2,
+    paddingHorizontal: 5,
+    elevation: 2,
+  },
+  reactionItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginLeft: 3,
+  },
+  reactionIcon: {
+    fontSize: 25,
+  },
+  statusWrapper: {
+    alignSelf: "flex-end",
+    backgroundColor: "#eee",
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    marginTop: 10,
+    marginRight: 4,
+  },
+
+  statusText: {
+    fontSize: 14,
+    color: "#555",
   },
 });
 
