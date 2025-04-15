@@ -2,6 +2,7 @@ import { apiService } from "./api";
 
 const PREFIX = "friendships";
 const friendService = {
+  // Lấy danh sách bạn bè của người dùng
   getFriendListByUserId: async (userId) => {
     try {
       const response = await apiService.get(`/${PREFIX}/${userId}`);
@@ -12,6 +13,7 @@ const friendService = {
     }
   },
 
+  // Lấy danh sách lời mời kết bạn đã gửi đến người dùng
   getReceivedRequestsByUserId: async (userId) => {
     try {
       const response = await apiService.get(
@@ -24,6 +26,7 @@ const friendService = {
     }
   },
 
+  // Lấy danh sách lời mời kết bạn đã gửi đi của người dùng
   getSentRequestsByUserId: async (userId) => {
     try {
       const response = await apiService.get(
@@ -36,6 +39,7 @@ const friendService = {
     }
   },
 
+  // Gửi lời mời kết bạn
   sendFriendRequest: async ({ senderId, receiverId }) => {
     try {
       const response = await apiService.post(`/${PREFIX}/send-friend-request`, {
@@ -55,18 +59,25 @@ const friendService = {
     }
   },
 
+  // Đồng ý lời mời kết bạn
   acceptFriendRequest: async (requestId) => {},
 
+  // Từ chối lời mời kết bạn
   rejectFriendRequest: async (requestId) => {},
 
+  // Hủy/thu hồi lời mời kết bạn
   cancelFriendRequest: async (requestId) => {},
 
+  // Hủy kết bạn
   unfriendUser: async (friendId) => {},
 
+  // Chặn người dùng
   blockUser: async (userId) => {},
 
+  // Hủy chặn người dùng
   unblockUser: async (userId) => {},
 
+  // Lấy danh sách người dùng bị chặn
   getBlockedUsersByUserId: async (userId) => {},
 };
 
