@@ -17,7 +17,7 @@ import HeaderOption from "../header/HeaderOption";
 import userService from "../../services/userService";
 import groupService from "../../services/groupService";
 import messageService from "../../services/messageService";
-import { getHostIP } from "../../services/api";
+import friendService from "../../services/friendService";
 
 const Option = ({ route }) => {
   const navigation = useNavigation();
@@ -67,7 +67,7 @@ const Option = ({ route }) => {
   }, []);
 
   // Xóa tất cả tin nhắn giữa 2 người
-  const deleteChatHistory = async () => {
+  const handleDeleteChatHistory = async () => {
     Alert.alert(
       "Thông báo",
       "Bạn có chắc chắn muốn xóa lịch sử trò chuyện không?",
@@ -100,21 +100,35 @@ const Option = ({ route }) => {
   };
 
   // Hủy kết bạn
-  const handleUnfriend = async () => {
+  const handleUnfriend = async (unfriendUserId) => {
     Alert.alert("Thông báo", "Bạn có chắc chắn muốn hủy kết bạn không?", [
       { text: "Hủy" },
       {
         text: "Đồng ý",
         onPress: async () => {
-          console.log("ID người dùng:", user?.id);
-          console.log("ID người nhận:", id);
+          try {
+            const response = await friendService.unfriendUser({
+              userId: user.id,
+              friendId: unfriendUserId,
+            });
+            if (response.status === "ok") {
+              Alert.alert("Thông báo", response.message, [
+                { text: "OK", onPress: () => navigation.navigate("Home") },
+              ]);
+            }
+            if (response.status === "error") {
+              Alert.alert("Thông báo", response.message);
+            }
+          } catch (error) {
+            console.error("Lỗi khi hủy kết bạn:", error);
+          }
         },
       },
     ]);
   };
 
   // Chặn người dùng: hủy kết bạn và chuyển status thành blocked
-  const hnadleBlockUser = async (blockedUserId) => {
+  const handleBlockUser = async (blockedUserId) => {
     Alert.alert("Thông báo", "Bạn sẽ hủy kết bạn và chặn người dùng này!", [
       { text: "Hủy" },
       {
@@ -262,7 +276,7 @@ const Option = ({ route }) => {
           {/* 6 */}
           <TouchableOpacity
             style={styles.component}
-            onPress={() => handleUnfriend()}
+            onPress={() => handleUnfriend(id)}
           >
             <Image
               source={require("../../assets/icons/delete-friend.png")}
@@ -273,7 +287,7 @@ const Option = ({ route }) => {
           {/* 7 */}
           <TouchableOpacity
             style={styles.component}
-            onPress={deleteChatHistory}
+            onPress={handleDeleteChatHistory}
           >
             <Image
               source={require("../../assets/icons/delete.png")}
@@ -284,7 +298,7 @@ const Option = ({ route }) => {
           {/* 8 */}
           <TouchableOpacity
             style={styles.component}
-            onPress={() => hnadleBlockUser(id)}
+            onPress={() => handleBlockUser(id)}
           >
             <Image
               source={require("../../assets/icons/details.png")}

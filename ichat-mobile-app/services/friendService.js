@@ -104,7 +104,25 @@ const friendService = {
   },
 
   // Hủy kết bạn
-  unfriendUser: async (friendId) => {},
+  unfriendUser: async ({ userId, friendId }) => {
+    console.log("unfriendUser", { userId, friendId });
+
+    try {
+      const response = await apiService.post(`/${PREFIX}/unfriend`, {
+        user_id: userId,
+        friend_id: friendId,
+      });
+      if (response.data.status === "error") {
+        return { status: "error", message: response.data.message };
+      }
+      if (response.data.status === "ok") {
+        return { status: "ok", message: response.data.message };
+      }
+    } catch (error) {
+      console.log("Không thể hủy kết bạn: ", error);
+      return { status: "error", message: "Đã xảy ra lỗi" };
+    }
+  },
 
   // Chặn người dùng
   blockUser: async (userId) => {},
