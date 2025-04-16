@@ -39,6 +39,7 @@ const MessageController = {
         type: req.body.type,
         chat_type: req.body.chat_type,
         file: imageFile || docFile,
+        reply_to: req.body.reply_to || null,
       });
 
       res.status(201).json({

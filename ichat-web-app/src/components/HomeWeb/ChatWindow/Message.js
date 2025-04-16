@@ -16,13 +16,21 @@ import {
   fetchMessages,
   updateMessages,
   handleSoftDelete,
+  replyToMessage,
 } from "../../../redux/slices/messagesSlice";
 import { useDispatch } from "react-redux";
 import socket from "../../services/socket";
 
 // import { LikeOutlined, CheckOutlined } from "@ant-design/icons";
 
-const Message = ({ message, allMessages, selectedChat, isSender, user }) => {
+const Message = ({
+  message,
+  allMessages,
+  selectedChat,
+  isSender,
+  user,
+  onReplyToMessage,
+}) => {
   // Mở ảnh
   const [isModalOpen, setIsModalOpen] = useState(false);
   // Thêm state
@@ -207,7 +215,23 @@ const Message = ({ message, allMessages, selectedChat, isSender, user }) => {
   // Handler functions for message actions
   const handleReply = () => {
     // Implement reply functionality
-    console.log("Reply to message:", message._id);
+    console.log("Reply to message:", message);
+    // try {
+    //   const key = "replyMessage";
+    //   antMessage.loading({ content: "Đang trả lời tin nhắn...", key });
+    //   // Call the replyToMessage action
+    //   const result = await dispatch(
+    //     replyToMessage({
+    //       sender_id: user._id || user.id,
+    //       receiver_id: message.receiver_id,
+    //       content,
+    //       type,
+    //       chat_type,
+    //       reply_to,
+    //     })
+    //   );
+    // } catch (error) {}
+    onReplyToMessage(message);
     closeContextMenu();
   };
 
@@ -312,11 +336,14 @@ const Message = ({ message, allMessages, selectedChat, isSender, user }) => {
 
     // Convert IDs to strings for comparison
     const replyIdStr = String(replyId);
+    console.log("Finding replied message:", replyIdStr);
 
     // First try exact match
     const exactMatch = allMessages.find(
       (msg) => String(msg._id) === replyIdStr
     );
+    console.log("Exact match found:", exactMatch);
+
     if (exactMatch) return exactMatch;
 
     // Log debugging info if not found
@@ -363,17 +390,52 @@ const Message = ({ message, allMessages, selectedChat, isSender, user }) => {
   //     socket.off("message-recalled", handleRecalledMessage);
   //   };
   // }, [selectedChat?.id, user?.id, dispatch]);
-  const RepliedMessage = ({ replyId }) => {
-    if (!replyId) return null;
+  const RepliedMessage = ({ reply }) => {
+    if (!reply) return null;
 
-    const repliedMessage = findRepliedMessage(replyId);
+    const repliedMessage = findRepliedMessage(reply);
     // if (!repliedMessage) return null;
+    if (!repliedMessage) {
+      // Return a fallback UI when the replied message can't be found
+      return (
+        <div
+          className="replied-message"
+          style={{ opacity: 0.5, position: "relative" }}
+        >
+          <div className="replied-content">
+            <p className="replied-text-not-found">
+              Tin nhắn đã bị xóa hoặc thu hồi
+            </p>
+          </div>
+        </div>
+      );
+    }
 
     return (
+      // <div
+      //   className="replied-message"
+      //   style={{ width: "fit-content", maxWidth: "80%" }}
+      // >
+      //   <div className="replied-content">
+      //     {repliedMessage.type === "text" ? (
+      //       <p className="replied-text">
+      //         Đã trả lời tin nhắn <br></br> {repliedMessage.content}
+      //       </p>
+      //     ) : repliedMessage.type === "image" ? (
+      //       <div className="replied-image">
+      //         <img src={repliedMessage.content} alt="replied" width="50" />
+      //       </div>
+      //     ) : repliedMessage.type === "file" ? (
+      //       <p className="replied-file">📄 File</p>
+      //     ) : (
+      //       <p>Unsupported reply type</p>
+      //     )}
+      //   </div>
+      // </div>
       <div className="replied-message">
         <div className="replied-content">
           {repliedMessage.type === "text" ? (
-            <p className="replied-text">💬 {repliedMessage.content}</p>
+            <p className="replied-text">{repliedMessage.content}</p>
           ) : repliedMessage.type === "image" ? (
             <div className="replied-image">
               <img src={repliedMessage.content} alt="replied" width="50" />
@@ -411,6 +473,7 @@ const Message = ({ message, allMessages, selectedChat, isSender, user }) => {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       ref={messageRef}
+      styles={{ display: "flex", flexDirection: "column" }}
     >
       {!isSender && (
         <div className="avatar-message">
@@ -422,8 +485,9 @@ const Message = ({ message, allMessages, selectedChat, isSender, user }) => {
         </div>
       )}
 
-      <>
-        <RepliedMessage reply={message.reply_to} />
+      <div className="message-column">
+        {/* <RepliedMessage reply={message.reply_to} /> */}
+        {message.reply_to && <RepliedMessage reply={message.reply_to} />}
         {message.type === "image" ? (
           <>
             <div
@@ -511,7 +575,7 @@ const Message = ({ message, allMessages, selectedChat, isSender, user }) => {
             </span>
           </div>
         )}
-      </>
+      </div>
 
       {/* Hover actions overlay */}
       {isHovered && (

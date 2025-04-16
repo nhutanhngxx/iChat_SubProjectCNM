@@ -29,6 +29,7 @@ import {
   fetchMessages,
   updateMessages,
   sendImageMessage,
+  replyToMessage,
 } from "../../../redux/slices/messagesSlice";
 import Message from "./Message";
 import MessageInput from "./MessageInput";
@@ -601,8 +602,6 @@ const CreateGroupModal = ({ visible, onCancel, onOk }) => {
 // };
 
 const MessageArea = ({ selectedChat, user }) => {
-  // Load tin nhắn từ Bacend
-  // Lấy dữ liệu tin nhắn từ Redux Store
   const dispatch = useDispatch();
   const chatMessages = useSelector((state) => state.messages.chatMessages);
 
@@ -614,7 +613,17 @@ const MessageArea = ({ selectedChat, user }) => {
   // Tự động cuộn xuống cuối khi có tin nhắn mới
   const messageEndRef = useRef(null);
   const [modalVisible, setModalVisible] = useState(false);
+  // Trả lời tin nhắn
+  const [replyingTo, setReplyingTo] = useState(null);
+  //  handler function
+  const handleReplyToMessage = (messageToReply) => {
+    setReplyingTo(messageToReply);
+  };
 
+  // this function to clear reply when needed
+  const clearReplyingTo = () => {
+    setReplyingTo(null);
+  };
   const handleShowSearchRight = () => {
     setShowSearchRight(!showSearchRight);
     setShowConversation(false);
@@ -657,14 +666,23 @@ const MessageArea = ({ selectedChat, user }) => {
   }, [dispatch, user?.id, selectedChat?.receiver_id]);
   console.log("Chat Messages in MessageArea", chatMessages);
 
-  const handleSendMessage = async (text = "", image = null, file = null) => {
+  const handleSendMessage = async (
+    text = "",
+    image = null,
+    file = null,
+    content,
+    replyToId = null // ID của tin nhắn được trả lời (nếu có)
+  ) => {
+    console.log("ReplyToId in MessageArea", replyToId);
+
     if ((text.trim() || image || file) && selectedChat) {
       const newMessage = {
         sender_id: user?.id, // ID người gửi
         receiver_id: selectedChat?.id, // ID người nhận
-        content: text || "",
+        content: text ? text : content || "",
         type: "text", // Loại tin nhắn (text, image, file)
         chat_type: "private",
+        ...(replyToId && { reply_to: replyToId }), // ID tin nhắn được trả lời (nếu có)
       };
 
       try {
@@ -783,6 +801,29 @@ const MessageArea = ({ selectedChat, user }) => {
       messageEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   };
+  useEffect(() => {
+    if (!selectedChat?.id || !user?.id) return;
+
+    // Fetch ALL messages, not just recent ones
+    const fetchAllMessages = async () => {
+      try {
+        // You might need to modify your API to support pagination or fetching all messages
+        const result = await dispatch(
+          fetchChatMessages({
+            senderId: user.id,
+            receiverId: selectedChat.id,
+            limit: 100, // Fetch more messages than needed to ensure replied messages are included
+          })
+        ).unwrap();
+
+        setMessages(result);
+      } catch (error) {
+        console.error("Error fetching messages:", error);
+      }
+    };
+
+    fetchAllMessages();
+  }, [selectedChat?.id, user?.id, dispatch]);
 
   // Kết nối socket và lắng nghe sự kiện nhận tin nhắn
   useEffect(() => {
@@ -888,6 +929,7 @@ const MessageArea = ({ selectedChat, user }) => {
                       isSender={message.sender_id === user.id}
                       onClick={handleScrollToBottom}
                       user={user}
+                      onReplyToMessage={handleReplyToMessage}
                     />
                   </React.Fragment>
                 ))
@@ -910,6 +952,8 @@ const MessageArea = ({ selectedChat, user }) => {
           showPickerFromMessArea={showPickerFromMessArea}
           isExpanded={isExpanded} // Truyền state isExpanded
           showConversation={showConversation} // Truyền showConversation
+          replyingTo={replyingTo} // Add this prop
+          clearReplyingTo={clearReplyingTo} // Add this prop
         />
       </Layout>
 

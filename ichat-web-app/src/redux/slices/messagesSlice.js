@@ -131,6 +131,44 @@ export const handleSoftDelete = createAsyncThunk(
     }
   }
 );
+// Trả lời tin nhắn
+export const replyToMessage = createAsyncThunk(
+  "messages/replyToMessage",
+  async (
+    { sender_id, receiver_id, content, type, chat_type, reply_to },
+    { rejectWithValue }
+  ) => {
+    try {
+      const response = await fetch(`${API_URL}reply`, {
+        method: "POST", // <- phải là POST vì controller dùng POST
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          sender_id,
+          receiver_id,
+          content,
+          type,
+          chat_type,
+          reply_to,
+        }),
+      });
+
+      const data = await response.json(); // <- để dùng trong reject nếu cần
+
+      if (!response.ok) {
+        return rejectWithValue(data);
+      }
+
+      return data; // => { message: "Reply sent successfully", newMessage }
+    } catch (error) {
+      return rejectWithValue({
+        error: "Network error",
+        details: error.message,
+      });
+    }
+  }
+);
 
 const messagesSlice = createSlice({
   name: "messages",
@@ -310,6 +348,17 @@ const messagesSlice = createSlice({
         state.chatStatus = "failed";
         state.error = action.payload?.error || action.error.message;
         console.error("Soft delete failed:", state.error);
+      })
+      .addCase(replyToMessage.pending, (state) => {
+        state.status = "loading";
+      })
+      .addCase(replyToMessage.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        state.chatMessages.push(action.payload.newMessage); // cập nhật danh sách tin nhắn
+      })
+      .addCase(replyToMessage.rejected, (state, action) => {
+        state.status = "failed";
+        state.error = action.payload?.error || "Something went wrong";
       });
   },
 });
