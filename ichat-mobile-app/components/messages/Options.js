@@ -134,8 +134,22 @@ const Option = ({ route }) => {
       {
         text: "Đồng ý",
         onPress: async () => {
-          console.log("ID người dùng:", user?.id);
-          console.log("ID người nhận:", blockedUserId);
+          try {
+            const response = await friendService.blockUser({
+              blockedUserId,
+              userId: user.id,
+            });
+            if (response.status === "ok") {
+              Alert.alert("Thông báo", response.message, [
+                { text: "OK", onPress: () => navigation.navigate("Home") },
+              ]);
+            }
+            if (response.status === "error") {
+              Alert.alert("Thông báo", response.message);
+            }
+          } catch (error) {
+            console.error("Lỗi khi chặn người dùng:", error);
+          }
         },
       },
     ]);

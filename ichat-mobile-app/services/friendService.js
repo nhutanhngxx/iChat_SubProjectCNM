@@ -125,7 +125,23 @@ const friendService = {
   },
 
   // Chặn người dùng
-  blockUser: async (userId) => {},
+  blockUser: async ({ blockedUserId, userId }) => {
+    try {
+      const response = await apiService.post(`/${PREFIX}/block-user`, {
+        blocked_id: blockedUserId,
+        blocker_id: userId,
+      });
+      if (response.data.status === "error") {
+        return { status: "error", message: response.data.message };
+      }
+      if (response.data.status === "ok") {
+        return { status: "ok", message: response.data.message };
+      }
+    } catch (error) {
+      console.log("Không thể chặn người dùng: ", error);
+      return { status: "error", message: "Đã xảy ra lỗi" };
+    }
+  },
 
   // Hủy chặn người dùng
   unblockUser: async (userId) => {},
