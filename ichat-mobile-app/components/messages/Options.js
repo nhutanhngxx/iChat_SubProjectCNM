@@ -20,26 +20,23 @@ import messageService from "../../services/messageService";
 import { getHostIP } from "../../services/api";
 
 const Option = ({ route }) => {
+  const API_iChat = `http://${getHostIP()}:5001/api`;
   const navigation = useNavigation();
   const { user } = useContext(UserContext); // Lấy thông tin người dùng từ context
   const { id, name, avatar } = route.params || {}; // Nhận id, name, avatar từ route.params
   const [receiverInfo, setReceiverInfo] = useState(null); // Thông tin người nhận
+  const [isGroup, setIsGroup] = useState(false);
   const [sharedGroups, setSharedGroups] = useState([]); // Danh sách nhóm chung giữa 2 người
 
-  console.log("ID người nhận:", id);
-
+  // Lấy thông tin Người đang nhắn tin
   useEffect(() => {
     const fetchReceiverInfo = async () => {
       const res = await userService.getUserById(id);
-      console.log(res);
-
-      if (res.status === "ok") {
-        setReceiverInfo(res.user);
-        console.log("Người đang chat:", res.user);
+      if (res !== null) {
+        setReceiverInfo(res);
       }
     };
-    if (id) fetchReceiverInfo();
-  }, [id]);
+  }, []);
 
   useEffect(() => {
     const fetchSharedGroups = async () => {
@@ -61,9 +58,6 @@ const Option = ({ route }) => {
       fetchSharedGroups();
     }
   }, [user?.id, id]);
-
-  const ipAdr = getHostIP();
-  const API_iChat = `http://${ipAdr}:5001/api`;
 
   useEffect(() => {
     console.log("avatar: ", avatar);
@@ -88,7 +82,7 @@ const Option = ({ route }) => {
 
   return (
     <View style={styles.container}>
-      <StatusBar hidden={false} />
+      <StatusBar style="light" />
       <HeaderOption />
       <View style={styles.profileContainer}>
         <Image
