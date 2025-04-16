@@ -412,6 +412,24 @@ const MessageController = {
       res.status(500).json({ error: "Lỗi khi cập nhật trạng thái tin nhắn" });
     }
   },
+  // Soft delete (ẩn tin nhắn khỏi user hiện tại)
+  softDeleteMessagesForUser: async (req, res) => {
+    const { userId, messageId } = req.body;
+
+    try {
+      const updatedMessages = await MessageModel.softDeleteMessagesForUser(
+        userId,
+        messageId
+      );
+      res.status(200).json({
+        message: "Messages hidden for user.",
+        data: updatedMessages, //
+      });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: "Failed to soft delete messages." });
+    }
+  },
 };
 
 module.exports = MessageController;

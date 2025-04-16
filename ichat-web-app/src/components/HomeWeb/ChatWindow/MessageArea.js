@@ -866,19 +866,36 @@ const MessageArea = ({ selectedChat, user }) => {
 
         <Content className="message-area-content">
           <div className="message-container">
-            {(chatMessages || []).map((message) => (
-              <div>
-                <Message
-                  key={message.id}
-                  message={message}
-                  selectedChat={selectedChat}
-                  isSender={message.sender_id === user.id}
-                  onClick={handleScrollToBottom}
-                />
-                <div ref={messageEndRef}></div>
-              </div>
-            ))}
-            {/* Phần tử ẩn để cuộn xuống */}
+            {Array.isArray(chatMessages) ? (
+              chatMessages
+                .filter((message) => {
+                  // Simple, direct comparison focusing on string IDs
+                  if (!Array.isArray(message.isdelete)) {
+                    return true; // Keep message if no isdelete array
+                  }
+
+                  // Don't show message if user ID is in the isdelete array
+                  return !message.isdelete.some(
+                    (id) => id === user.id || id === String(user.id)
+                  );
+                })
+                .map((message) => (
+                  <React.Fragment key={message._id || message.id}>
+                    <Message
+                      message={message}
+                      allMessages={messages}
+                      selectedChat={selectedChat}
+                      isSender={message.sender_id === user.id}
+                      onClick={handleScrollToBottom}
+                      user={user}
+                    />
+                  </React.Fragment>
+                ))
+            ) : (
+              <div className="no-messages">No messages to display</div>
+            )}
+
+            {/* Single scroll reference at the end */}
             <div ref={messageEndRef} />
           </div>
         </Content>

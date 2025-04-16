@@ -51,6 +51,11 @@ const messageSchema = new mongoose.Schema(
       ref: "Messages",
       default: null,
     },
+    isdelete: {
+      type: [mongoose.Schema.Types.ObjectId],
+      ref: "UserInfo",
+      default: [],
+    },
   },
   {
     collection: "Message",

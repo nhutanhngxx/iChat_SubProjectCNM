@@ -223,6 +223,21 @@ const MessageModel = {
       is_pinned: true,
     });
   },
+  // "Soft delete" - chỉ đánh dấu xóa cho user hiện tại
+  softDeleteMessagesForUser: async (userId, messageId) => {
+    // Cập nhật chỉ 1 tin nhắn duy nhất nếu chưa chứa userId trong isdelete
+    await Messages.updateOne(
+      { _id: messageId, isdelete: { $ne: userId } },
+      { $push: { isdelete: userId } }
+    );
+
+    // Trả về tin nhắn vừa cập nhật (nếu vẫn còn hiển thị cho user đó)
+    const message = await Messages.findOne({
+      _id: messageId,
+    });
+
+    return message; // hoặc return null nếu user đã xóa
+  },
 };
 
 module.exports = MessageModel;

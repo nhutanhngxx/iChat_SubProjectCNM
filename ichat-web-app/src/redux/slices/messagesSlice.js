@@ -90,6 +90,47 @@ export const sendImageMessage = createAsyncThunk(
     }
   }
 );
+// Thu hồi tin nhắn
+export const recallToMessage = createAsyncThunk(
+  "messages/recallToMessage",
+  async (messageId) => {
+    const response = await fetch(`${API_URL}recall/${messageId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    if (!response.ok) {
+      throw new Error("Failed to recall message");
+    }
+    return messageId;
+  }
+);
+// Xoá mềm tin nhắn giữa 2 người và trả về lại danh sách đã lọc
+export const handleSoftDelete = createAsyncThunk(
+  "messages/handleSoftDelete",
+  async ({ userId, messageId }, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${API_URL}softDelete`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userId, messageId }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        return rejectWithValue(data);
+      }
+
+      return data.data; // <-- danh sách tin nhắn đã cập nhật
+    } catch (error) {
+      return rejectWithValue({ error: "Network error" });
+    }
+  }
+);
 
 const messagesSlice = createSlice({
   name: "messages",
@@ -101,11 +142,44 @@ const messagesSlice = createSlice({
     error: null,
   },
   reducers: {
+    // updateMessages: (state, action) => {
+    //   const newMessage = action.payload;
+
+    //   // Check if message with same ID already exists in state
+    //   const messageExists = state.chatMessages.some(
+    //     (msg) => msg._id === newMessage._id
+    //   );
+    //   const index = state.chatMessages.findIndex(
+    //     (msg) => msg._id === newMessage._id
+    //   );
+
+    //   // Only add if it doesn't exist
+    //   if (!messageExists) {
+    //     state.chatMessages.push(newMessage);
+    //     console.log("Added new message to state:", newMessage._id);
+    //   } else {
+    //     console.log("Prevented duplicate message:", newMessage._id);
+    //     state.chatMessages[index] = {
+    //       ...state.chatMessages[index],
+    //       ...newMessage, // ghi đè các field cũ bằng cái mới
+    //     };
+    //     console.log("♻️ Updated recalled message:", newMessage._id);
+    //   }
+    // },
     updateMessages: (state, action) => {
       const newMessage = action.payload;
 
-      // Check if message with same ID already exists in state
+      if (!Array.isArray(state.chatMessages)) {
+        state.chatMessages = [];
+        console.warn(
+          "chatMessages was not an array, initialized as empty array"
+        );
+      }
+
       const messageExists = state.chatMessages.some(
+        (msg) => msg._id === newMessage._id
+      );
+      const index = state.chatMessages.findIndex(
         (msg) => msg._id === newMessage._id
       );
 
@@ -115,6 +189,11 @@ const messagesSlice = createSlice({
         console.log("Added new message to state:", newMessage._id);
       } else {
         console.log("Prevented duplicate message:", newMessage._id);
+        state.chatMessages[index] = {
+          ...state.chatMessages[index],
+          ...newMessage, // ghi đè các field cũ bằng cái mới
+        };
+        console.log("♻️ Updated recalled message:", newMessage._id);
       }
     },
   },
@@ -195,11 +274,46 @@ const messagesSlice = createSlice({
           existingReceiver.timestamp = new Date().toISOString();
           existingReceiver.unread += 1;
         }
+      })
+      .addCase(recallToMessage.fulfilled, (state, action) => {
+        const messageId = action.payload;
+        const messageIndex = state.chatMessages.findIndex(
+          (msg) => msg._id === messageId
+        );
+        if (messageIndex !== -1) {
+          state.chatMessages[messageIndex].content = "Tin nhắn đã bị thu hồi";
+          state.chatMessages[messageIndex].recall = true;
+        }
+      })
+      .addCase(handleSoftDelete.pending, (state) => {
+        state.chatStatus = "loading";
+      })
+      .addCase(handleSoftDelete.fulfilled, (state, action) => {
+        state.chatStatus = "succeeded";
+        if (Array.isArray(action.payload)) {
+          state.chatMessages = action.payload;
+          console.log(
+            "Updated chatMessages after soft delete with array of length:",
+            action.payload.length
+          );
+        } else {
+          console.error(
+            "Expected array from API but received:",
+            typeof action.payload
+          );
+          if (!Array.isArray(state.chatMessages)) {
+            state.chatMessages = [];
+          }
+        }
+      })
+      .addCase(handleSoftDelete.rejected, (state, action) => {
+        state.chatStatus = "failed";
+        state.error = action.payload?.error || action.error.message;
+        console.error("Soft delete failed:", state.error);
       });
   },
 });
 
-// Export action creator
 export const { updateMessages } = messagesSlice.actions;
 
 export default messagesSlice.reducer;
