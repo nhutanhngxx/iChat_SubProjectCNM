@@ -15,8 +15,10 @@ import friendService from "../../services/friendService";
 import { getHostIP } from "../../services/api";
 import { StatusBar } from "expo-status-bar";
 import messageService from "../../services/messageService";
+import axios from "axios";
 
 const ForwardMessageScreen = () => {
+  const API_iChat = `http://${getHostIP()}:5001/api/messages`;
   const navigation = useNavigation();
   const route = useRoute();
   const { user } = useContext(UserContext);
@@ -44,6 +46,25 @@ const ForwardMessageScreen = () => {
   }, []);
 
   // Chuyển tiếp tin nhắn
+  // const handleForwardMessage = async () => {
+  //   if (selectedFriendIds.length === 0) {
+  //     Alert.alert("Lỗi", "Vui lòng chọn ít nhất một người nhận.");
+  //     return;
+  //   }
+
+  //   try {
+  //     for (const receiverId of selectedFriendIds) {
+  //       await messageService.forwardMessage(message._id, receiverId, user.id);
+  //     }
+
+  //     Alert.alert("Thông báo", "Tin nhắn đã được chuyển tiếp thành công.");
+  //     navigation.goBack();
+  //   } catch (error) {
+  //     console.error("Lỗi khi chuyển tiếp:", error);
+  //     Alert.alert("Lỗi", "Không thể chuyển tiếp đến một số người.");
+  //   }
+  // };
+
   const handleForwardMessage = async () => {
     if (selectedFriendIds.length === 0) {
       Alert.alert("Lỗi", "Vui lòng chọn ít nhất một người nhận.");
@@ -51,15 +72,71 @@ const ForwardMessageScreen = () => {
     }
 
     try {
+      const successfulForwards = [];
+      const failedForwards = [];
+
       for (const receiverId of selectedFriendIds) {
-        await messageService.forwardMessage(message._id, receiverId, user.id);
+        try {
+          // Tạo FormData với thông tin tin nhắn
+          const formData = new FormData();
+          formData.append("sender_id", user.id);
+          formData.append("receiver_id", receiverId);
+          formData.append("content", message.content);
+          formData.append("type", message.type);
+          formData.append("chat_type", "private");
+          formData.append("forwarded", "true");
+          formData.append("original_message_id", message._id);
+
+          // Nếu là hình ảnh hoặc file, thêm vào formData
+          if (message.type === "image" || message.type === "file") {
+            formData.append("file", {
+              uri: message.content,
+              type:
+                message.type === "image"
+                  ? "image/jpeg"
+                  : "application/octet-stream",
+              name: message.fileName || "forwarded_file",
+            });
+          }
+
+          const response = await axios.post(
+            `${API_iChat}/send-message`,
+            formData,
+            {
+              headers: {
+                "Content-Type": "multipart/form-data",
+              },
+            }
+          );
+
+          if (response.data.status === "error") {
+            throw new Error(response.data.message);
+          }
+
+          successfulForwards.push(receiverId);
+        } catch (err) {
+          console.error("Lỗi khi chuyển tiếp cho người dùng:", receiverId, err);
+          failedForwards.push(receiverId);
+        }
       }
 
-      Alert.alert("Thông báo", "Tin nhắn đã được chuyển tiếp thành công.");
-      navigation.goBack();
+      if (successfulForwards.length > 0) {
+        const successMessage = `Tin nhắn đã được chuyển tiếp thành công đến ${successfulForwards.length} người.`;
+        if (failedForwards.length > 0) {
+          Alert.alert(
+            "Thông báo",
+            `${successMessage}\nKhông thể chuyển tiếp đến ${failedForwards.length} người.`
+          );
+        } else {
+          Alert.alert("Thành công", successMessage);
+        }
+        navigation.goBack();
+      } else {
+        Alert.alert("Lỗi", "Không thể chuyển tiếp tin nhắn đến bất kỳ ai.");
+      }
     } catch (error) {
       console.error("Lỗi khi chuyển tiếp:", error);
-      Alert.alert("Lỗi", "Không thể chuyển tiếp đến một số người.");
+      Alert.alert("Lỗi", "Đã xảy ra lỗi khi chuyển tiếp tin nhắn.");
     }
   };
 

@@ -58,8 +58,16 @@ export default function AppNavigator() {
           <Stack.Screen name="MediaStorage" component={MediaStorage} />
           <Stack.Screen name="ViewProfile" component={ViewProfile} />
           <Stack.Screen name="QRScanner" component={QRScanner} />
-          <Stack.Screen name="ViewImagePost" component={ViewImagePost} />
-          <Stack.Screen name="ViewImageChat" component={ViewImageChat} />
+          <Stack.Screen
+            name="ViewImagePost"
+            component={ViewImagePost}
+            options={{ animation: "none" }}
+          />
+          <Stack.Screen
+            name="ViewImageChat"
+            component={ViewImageChat}
+            options={{ animation: "none" }}
+          />
           <Stack.Screen name="Option" component={Option} />
           <Stack.Screen
             name="AddFriend"

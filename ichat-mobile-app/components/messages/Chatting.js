@@ -52,7 +52,7 @@ const renderReactionIcons = (reactions) => {
     <View style={styles.reactionsWrapper}>
       {Object.entries(counts).map(([type, count]) => (
         <View key={type} style={styles.reactionItem}>
-          <Image source={icons[type]} style={{ width: 25, height: 25 }} />
+          <Image source={icons[type]} style={{ width: 15, height: 15 }} />
         </View>
       ))}
     </View>
@@ -203,10 +203,6 @@ const Chatting = ({ route }) => {
   };
 
   const handleReaction = async (reactionType) => {
-    console.log("Reaction type:", reactionType);
-    console.log("Selected message:", selectedMessage);
-    console.log("User ID:", user.id);
-
     if (!selectedMessage) return;
 
     try {
@@ -473,6 +469,7 @@ const Chatting = ({ route }) => {
                     item.sender_id === user.id
                       ? styles.myMessage
                       : styles.theirMessage,
+                    item.reactions?.length > 0 && { marginBottom: 10 }, // Thêm marginBottom nếu có reactions
                   ]}
                 >
                   {/* Tên người gửi */}
@@ -584,23 +581,24 @@ const Chatting = ({ route }) => {
                   )}
 
                   {/* Hiển thị reactions */}
-                  {item.reactions.length > 0 && (
-                    <View
-                      style={[
-                        styles.reactionsContainer,
-                        isMyMessage
-                          ? styles.reactionsRight
-                          : styles.reactionsLeft,
-                      ]}
-                    >
-                      <TouchableOpacity
-                        style={styles.reactionsWrapper}
-                        onPress={() => Alert.alert("Đã thả react")}
+                  {Array.isArray(item.reactions) &&
+                    item.reactions.length > 0 && (
+                      <View
+                        style={[
+                          styles.reactionsContainer,
+                          isMyMessage
+                            ? styles.reactionsRight
+                            : styles.reactionsLeft,
+                        ]}
                       >
-                        {renderReactionIcons(item.reactions)}
-                      </TouchableOpacity>
-                    </View>
-                  )}
+                        <TouchableOpacity
+                          style={styles.reactionsWrapper}
+                          onPress={() => Alert.alert("Đã thả react")}
+                        >
+                          {renderReactionIcons(item.reactions)}
+                        </TouchableOpacity>
+                      </View>
+                    )}
                 </TouchableOpacity>
 
                 {/* Hiển thị trạng thái của tin nhắn: Đã gửi, Đã nhận, Đã xem */}
@@ -632,150 +630,178 @@ const Chatting = ({ route }) => {
           >
             <View style={styles.modalContainer}>
               <View style={styles.modalContent}>
-                {/* Thả reaction */}
-                <View
-                  style={[
-                    styles.row,
-                    {
+                {selectedMessage?.content === "Tin nhắn đã được thu hồi" ? (
+                  // Chỉ hiển thị chức năng Xóa
+                  <View
+                    style={{
                       backgroundColor: "white",
                       width: "100%",
                       borderRadius: 10,
                       padding: 10,
-                    },
-                  ]}
-                >
-                  <TouchableOpacity onPress={() => handleReaction("like")}>
-                    <Image
-                      source={require("../../assets/icons/emoji-like.png")}
-                      style={styles.iconEmoji}
-                    />
-                  </TouchableOpacity>
-                  <TouchableOpacity onPress={() => handleReaction("haha")}>
-                    <Image
-                      source={require("../../assets/icons/emoji-haha.png")}
-                      style={styles.iconEmoji}
-                    />
-                  </TouchableOpacity>
-                  <TouchableOpacity onPress={() => handleReaction("love")}>
-                    <Image
-                      source={require("../../assets/icons/emoji-love.png")}
-                      style={styles.iconEmoji}
-                    />
-                  </TouchableOpacity>
-                  <TouchableOpacity onPress={() => handleReaction("sad")}>
-                    <Image
-                      source={require("../../assets/icons/emoji-cry.png")}
-                      style={styles.iconEmoji}
-                    />
-                  </TouchableOpacity>
-                  <TouchableOpacity onPress={() => handleReaction("wow")}>
-                    <Image
-                      source={require("../../assets/icons/emoji-surprised.png")}
-                      style={styles.iconEmoji}
-                    />
-                  </TouchableOpacity>
-                  <TouchableOpacity onPress={() => handleReaction("angry")}>
-                    <Image
-                      source={require("../../assets/icons/emoji-angry.png")}
-                      style={styles.iconEmoji}
-                    />
-                  </TouchableOpacity>
-                </View>
-
-                <View
-                  style={{
-                    backgroundColor: "white",
-                    width: "100%",
-                    borderRadius: 10,
-                    padding: 10,
-                  }}
-                >
-                  <View style={styles.row}>
-                    <TouchableOpacity
-                      style={styles.actionButton}
-                      onPress={() => handleReply(selectedMessage)}
-                    >
-                      <Image
-                        source={require("../../assets/icons/reply-message.png")}
-                        style={styles.icon}
-                      />
-                      <Text style={styles.modalOption}>Trả lời</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.actionButton}
-                      onPress={handleForwardMessage}
-                    >
-                      <Image
-                        source={require("../../assets/icons/forward-message.png")}
-                        style={styles.icon}
-                      />
-                      <Text style={styles.modalOption}>Chuyển tiếp</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.actionButton}
-                      onPress={() => console.log("Ghim tin nhắn")}
-                    >
-                      <Image
-                        source={require("../../assets/icons/pin.png")}
-                        style={styles.icon}
-                      />
-                      <Text style={styles.modalOption}>Ghim</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.actionButton}
-                      onPress={() => handleRecallMessage(selectedMessage)}
-                    >
-                      <Image
-                        source={require("../../assets/icons/recall.png")}
-                        style={styles.icon}
-                      />
-                      <Text style={styles.modalOption}>Thu hồi</Text>
-                    </TouchableOpacity>
+                    }}
+                  >
+                    <View style={styles.row}>
+                      <TouchableOpacity
+                        style={styles.actionButton}
+                        onPress={() => console.log("Xóa tin nhắn vĩnh viễn")}
+                      >
+                        <Image
+                          source={require("../../assets/icons/delete-message.png")}
+                          style={styles.icon}
+                        />
+                        <Text style={styles.modalOption}>Xóa</Text>
+                      </TouchableOpacity>
+                    </View>
                   </View>
+                ) : (
+                  // Hiển thị tất cả chức năng như hiện tại
+                  <>
+                    {/* Thả reaction */}
+                    <View
+                      style={[
+                        styles.row,
+                        {
+                          backgroundColor: "white",
+                          width: "100%",
+                          borderRadius: 10,
+                          padding: 10,
+                        },
+                      ]}
+                    >
+                      <TouchableOpacity onPress={() => handleReaction("like")}>
+                        <Image
+                          source={require("../../assets/icons/emoji-like.png")}
+                          style={styles.iconEmoji}
+                        />
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={() => handleReaction("haha")}>
+                        <Image
+                          source={require("../../assets/icons/emoji-haha.png")}
+                          style={styles.iconEmoji}
+                        />
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={() => handleReaction("love")}>
+                        <Image
+                          source={require("../../assets/icons/emoji-love.png")}
+                          style={styles.iconEmoji}
+                        />
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={() => handleReaction("sad")}>
+                        <Image
+                          source={require("../../assets/icons/emoji-cry.png")}
+                          style={styles.iconEmoji}
+                        />
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={() => handleReaction("wow")}>
+                        <Image
+                          source={require("../../assets/icons/emoji-surprised.png")}
+                          style={styles.iconEmoji}
+                        />
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={() => handleReaction("angry")}>
+                        <Image
+                          source={require("../../assets/icons/emoji-angry.png")}
+                          style={styles.iconEmoji}
+                        />
+                      </TouchableOpacity>
+                    </View>
 
-                  <View style={styles.row}>
-                    <TouchableOpacity
-                      style={styles.actionButton}
-                      onPress={() => console.log("Xem chi tiết tin nhắn")}
+                    <View
+                      style={{
+                        backgroundColor: "white",
+                        width: "100%",
+                        borderRadius: 10,
+                        padding: 10,
+                      }}
                     >
-                      <Image
-                        source={require("../../assets/icons/details.png")}
-                        style={styles.icon}
-                      />
-                      <Text style={styles.modalOption}>Xem chi tiết</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.actionButton}
-                      onPress={() => console.log("Lưu vào Cloud")}
-                    >
-                      <Image
-                        source={require("../../assets/icons/save-cloud.png")}
-                        style={styles.icon}
-                      />
-                      <Text style={styles.modalOption}>Lưu vào Cloud</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.actionButton}
-                      onPress={handleCopyMessage}
-                    >
-                      <Image
-                        source={require("../../assets/icons/copy.png")}
-                        style={styles.icon}
-                      />
-                      <Text style={styles.modalOption}>Sao chép</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.actionButton}
-                      onPress={() => console.log("Xóa tin nhắn vĩnh viễn")}
-                    >
-                      <Image
-                        source={require("../../assets/icons/delete-message.png")}
-                        style={styles.icon}
-                      />
-                      <Text style={styles.modalOption}>Xóa</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
+                      <View style={styles.row}>
+                        <TouchableOpacity
+                          style={styles.actionButton}
+                          onPress={() => handleReply(selectedMessage)}
+                        >
+                          <Image
+                            source={require("../../assets/icons/reply-message.png")}
+                            style={styles.icon}
+                          />
+                          <Text style={styles.modalOption}>Trả lời</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={styles.actionButton}
+                          onPress={handleForwardMessage}
+                        >
+                          <Image
+                            source={require("../../assets/icons/forward-message.png")}
+                            style={styles.icon}
+                          />
+                          <Text style={styles.modalOption}>Chuyển tiếp</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={styles.actionButton}
+                          onPress={() => console.log("Ghim tin nhắn")}
+                        >
+                          <Image
+                            source={require("../../assets/icons/pin.png")}
+                            style={styles.icon}
+                          />
+                          <Text style={styles.modalOption}>Ghim</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={styles.actionButton}
+                          onPress={() => handleRecallMessage(selectedMessage)}
+                        >
+                          <Image
+                            source={require("../../assets/icons/recall.png")}
+                            style={styles.icon}
+                          />
+                          <Text style={styles.modalOption}>Thu hồi</Text>
+                        </TouchableOpacity>
+                      </View>
+
+                      <View style={styles.row}>
+                        <TouchableOpacity
+                          style={styles.actionButton}
+                          onPress={() => console.log("Xem chi tiết tin nhắn")}
+                        >
+                          <Image
+                            source={require("../../assets/icons/details.png")}
+                            style={styles.icon}
+                          />
+                          <Text style={styles.modalOption}>Xem chi tiết</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={styles.actionButton}
+                          onPress={() => console.log("Lưu vào Cloud")}
+                        >
+                          <Image
+                            source={require("../../assets/icons/save-cloud.png")}
+                            style={styles.icon}
+                          />
+                          <Text style={styles.modalOption}>Lưu vào Cloud</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={styles.actionButton}
+                          onPress={handleCopyMessage}
+                        >
+                          <Image
+                            source={require("../../assets/icons/copy.png")}
+                            style={styles.icon}
+                          />
+                          <Text style={styles.modalOption}>Sao chép</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={styles.actionButton}
+                          onPress={() => console.log("Xóa tin nhắn vĩnh viễn")}
+                        >
+                          <Image
+                            source={require("../../assets/icons/delete-message.png")}
+                            style={styles.icon}
+                          />
+                          <Text style={styles.modalOption}>Xóa</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  </>
+                )}
               </View>
             </View>
           </Pressable>
@@ -884,6 +910,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginVertical: 5,
     maxWidth: "80%",
+    // marginBottom: i
   },
   myMessage: {
     alignSelf: "flex-end",
@@ -905,6 +932,7 @@ const styles = StyleSheet.create({
     marginVertical: 5,
     borderTopRightRadius: 5,
     borderBottomRightRadius: 5,
+    maxWidth: "80%",
   },
   replySender: {
     fontSize: 16,
@@ -938,9 +966,11 @@ const styles = StyleSheet.create({
   replyPreview: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
     backgroundColor: "#f0f0f0",
-    paddingVertical: 20,
+    paddingVertical: 10,
     paddingHorizontal: 10,
+    height: 70,
   },
   replyPreviewText: {
     flex: 1,
@@ -1076,7 +1106,6 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: -16,
     marginBottom: 5,
-    marginRight: 3,
     zIndex: 10,
     elevation: 5,
   },
@@ -1090,19 +1119,18 @@ const styles = StyleSheet.create({
   },
   reactionsWrapper: {
     flexDirection: "row",
-    backgroundColor: "#f0f0f0",
+    backgroundColor: "rgba(255, 255, 255, 0.8)",
     borderRadius: 16,
-    paddingVertical: 2,
-    paddingHorizontal: 5,
+    padding: 2,
     elevation: 2,
   },
   reactionItem: {
     flexDirection: "row",
     alignItems: "center",
-    marginLeft: 3,
+    marginHorizontal: 2,
   },
   reactionIcon: {
-    fontSize: 15,
+    fontSize: 10,
   },
   statusWrapper: {
     alignSelf: "flex-end",
@@ -1110,12 +1138,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 8,
     paddingVertical: 5,
-    marginTop: 10,
-    marginRight: 4,
   },
-
   statusText: {
-    fontSize: 14,
+    fontSize: 13,
     color: "#555",
   },
 });

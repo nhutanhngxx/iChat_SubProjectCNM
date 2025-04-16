@@ -175,8 +175,12 @@ const MessageModel = {
       };
     }
 
+    // Cập nhật các trường cần thiết
     message.type = "text";
     message.content = "Tin nhắn đã được thu hồi";
+    message.reactions = []; // Xóa tất cả reactions
+    message.reply_to = null; // Xóa liên kết reply_to
+
     await message.save();
     return message;
   },
