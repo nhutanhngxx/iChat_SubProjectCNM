@@ -32,10 +32,12 @@ const Option = ({ route }) => {
   useEffect(() => {
     const fetchReceiverInfo = async () => {
       const res = await userService.getUserById(id);
+
       if (res !== null) {
         setReceiverInfo(res);
       }
     };
+    fetchReceiverInfo();
   }, []);
 
   useEffect(() => {
@@ -161,40 +163,44 @@ const Option = ({ route }) => {
             />
           </TouchableOpacity>
         </View>
-        <View style={{ gap: 15 }}>
-          <View
-            style={{
-              height: 15,
-              backgroundColor: "rgba(0, 0, 0, 0.1)",
-              marginHorizontal: -20,
-            }}
-          ></View>
+        <View>
+          {receiverInfo && (
+            <View style={{ gap: 15 }}>
+              <View
+                style={{
+                  height: 15,
+                  backgroundColor: "rgba(0, 0, 0, 0.1)",
+                  marginHorizontal: -20,
+                }}
+              ></View>
+              <TouchableOpacity style={styles.component}>
+                <Image
+                  source={require("../../assets/icons/add-group.png")}
+                  style={styles.icon}
+                />
+                <Text style={styles.title}>Tạo nhóm với {name}</Text>
+              </TouchableOpacity>
+              {/* 3 */}
+              <TouchableOpacity style={styles.component}>
+                <Image
+                  source={require("../../assets/icons/add-friend.png")}
+                  style={styles.icon}
+                />
+                <Text style={styles.title}>Thêm {name} vào nhóm</Text>
+              </TouchableOpacity>
+              {/* 4 */}
+              <TouchableOpacity style={styles.component}>
+                <Image
+                  source={require("../../assets/icons/friend.png")}
+                  style={styles.icon}
+                />
+                <Text style={styles.title}>
+                  Xem các nhóm chung ({sharedGroups.length})
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
           {/* 2 */}
-          <TouchableOpacity style={styles.component}>
-            <Image
-              source={require("../../assets/icons/add-group.png")}
-              style={styles.icon}
-            />
-            <Text style={styles.title}>Tạo nhóm với {name}</Text>
-          </TouchableOpacity>
-          {/* 3 */}
-          <TouchableOpacity style={styles.component}>
-            <Image
-              source={require("../../assets/icons/add-friend.png")}
-              style={styles.icon}
-            />
-            <Text style={styles.title}>Thêm {name} vào nhóm</Text>
-          </TouchableOpacity>
-          {/* 4 */}
-          <TouchableOpacity style={styles.component}>
-            <Image
-              source={require("../../assets/icons/friend.png")}
-              style={styles.icon}
-            />
-            <Text style={styles.title}>
-              Xem các nhóm chung ({sharedGroups.length})
-            </Text>
-          </TouchableOpacity>
         </View>
         <View style={{ gap: 15 }}>
           <View
@@ -212,14 +218,19 @@ const Option = ({ route }) => {
             />
             <Text style={styles.title}>Lưu trữ cuộc trò chuyện</Text>
           </TouchableOpacity>
-          {/* 6 */}
-          <TouchableOpacity style={styles.component}>
-            <Image
-              source={require("../../assets/icons/delete-friend.png")}
-              style={styles.icon}
-            />
-            <Text style={styles.title}>Xóa khỏi danh sách bạn bè</Text>
-          </TouchableOpacity>
+          {receiverInfo && (
+            <View>
+              {/* 6 */}
+              <TouchableOpacity style={styles.component}>
+                <Image
+                  source={require("../../assets/icons/delete-friend.png")}
+                  style={styles.icon}
+                />
+                <Text style={styles.title}>Xóa khỏi danh sách bạn bè</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
           {/* 7 */}
           <TouchableOpacity
             style={styles.component}

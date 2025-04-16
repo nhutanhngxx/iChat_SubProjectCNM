@@ -12,10 +12,10 @@ const userService = {
         return response.data.user;
       }
     } catch (error) {
-      console.error(
-        "Lỗi: Không thể lấy được thông tin người dùng từ User Service:",
-        error
-      );
+      // console.error(
+      //   "Lỗi: Không thể lấy được thông tin người dùng từ User Service:",
+      //   error
+      // );
       return null;
     }
   },

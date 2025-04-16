@@ -464,12 +464,13 @@ const Chatting = ({ route }) => {
               <View>
                 <TouchableOpacity
                   onLongPress={() => handleLongPress(item)}
+                  delayLongPress={300}
                   style={[
                     styles.message,
                     item.sender_id === user.id
                       ? styles.myMessage
                       : styles.theirMessage,
-                    item.reactions?.length > 0 && { marginBottom: 10 }, // Thêm marginBottom nếu có reactions
+                    item.reactions?.length > 0 && { marginBottom: 15 }, // Thêm marginBottom nếu có reactions
                   ]}
                 >
                   {/* Tên người gửi */}
