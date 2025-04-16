@@ -42,7 +42,6 @@ const initialSuggestedFriends = [
 const RequestList = () => {
   const dispatch = useDispatch();
   const currentUser = useSelector((state) => state.auth).user;
-  const [requestData, setRequestData] = useState([]);
   const [receivedRequests, setReceivedRequests] = useState([]); // Lời mời đã nhận
   const [sentRequests, setSentRequests] = useState([]); // Lời mời đã gửi
 
