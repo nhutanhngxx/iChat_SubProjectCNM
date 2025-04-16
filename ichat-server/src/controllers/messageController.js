@@ -93,7 +93,7 @@ const MessageController = {
         req.params.userId,
         req.params.receiverId
       );
-      res.json({ status: "ok", message: "Deleted all messages successfully" });
+      res.json({ status: "ok", message: "Xóa cuộc trò chuyện thành công." });
     } catch (err) {
       res.status(500).json({ status: "error", message: err.message });
     }

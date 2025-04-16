@@ -26,16 +26,16 @@ const Option = ({ route }) => {
   const [receiverInfo, setReceiverInfo] = useState(null); // Thông tin người nhận
   const [sharedGroups, setSharedGroups] = useState([]); // Danh sách nhóm chung giữa 2 người
 
-  console.log("ID người nhận:", id);
+  // console.log("ID người nhận:", id);
 
   useEffect(() => {
     const fetchReceiverInfo = async () => {
       const res = await userService.getUserById(id);
-      console.log(res);
+      // console.log(res);
 
       if (res.status === "ok") {
         setReceiverInfo(res.user);
-        console.log("Người đang chat:", res.user);
+        // console.log("Người đang chat:", res.user);
       }
     };
     if (id) fetchReceiverInfo();
@@ -62,28 +62,69 @@ const Option = ({ route }) => {
     }
   }, [user?.id, id]);
 
-  const ipAdr = getHostIP();
-  const API_iChat = `http://${ipAdr}:5001/api`;
-
   useEffect(() => {
-    console.log("avatar: ", avatar);
+    // console.log("avatar: ", avatar);
   }, []);
 
   // Xóa tất cả tin nhắn giữa 2 người
   const deleteChatHistory = async () => {
-    try {
-      const response = messageService.deleteChatHistory(user._id, id);
+    Alert.alert(
+      "Thông báo",
+      "Bạn có chắc chắn muốn xóa lịch sử trò chuyện không?",
+      [
+        { text: "Hủy", style: "cancel" },
+        {
+          text: "Đồng ý",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const response = await messageService.deleteChatHistory(
+                user.id,
+                id
+              );
+              if (response.status === "ok") {
+                Alert.alert("Thông báo", response.message, [
+                  { text: "OK", onPress: () => navigation.navigate("Home") },
+                ]);
+              }
+              if (response.status === "error") {
+                Alert.alert("Thông báo", response.message);
+              }
+            } catch (error) {
+              console.error("Lỗi khi xóa lịch sử trò chuyện:", error);
+            }
+          },
+        },
+      ]
+    );
+  };
 
-      if (response.status === "ok") {
-        Alert.alert("Thông báo", response.message);
-        navigation.navigate("MessagesStack");
-      }
-      if (response.status === "error") {
-        Alert.alert("Thông báo", response.message);
-      }
-    } catch (error) {
-      console.error("Lỗi khi xóa lịch sử trò chuyện:", error);
-    }
+  // Hủy kết bạn
+  const handleUnfriend = async () => {
+    Alert.alert("Thông báo", "Bạn có chắc chắn muốn hủy kết bạn không?", [
+      { text: "Hủy" },
+      {
+        text: "Đồng ý",
+        onPress: async () => {
+          console.log("ID người dùng:", user?.id);
+          console.log("ID người nhận:", id);
+        },
+      },
+    ]);
+  };
+
+  // Chặn người dùng: hủy kết bạn và chuyển status thành blocked
+  const hnadleBlockUser = async (blockedUserId) => {
+    Alert.alert("Thông báo", "Bạn sẽ hủy kết bạn và chặn người dùng này!", [
+      { text: "Hủy" },
+      {
+        text: "Đồng ý",
+        onPress: async () => {
+          console.log("ID người dùng:", user?.id);
+          console.log("ID người nhận:", blockedUserId);
+        },
+      },
+    ]);
   };
 
   return (
@@ -219,12 +260,15 @@ const Option = ({ route }) => {
             <Text style={styles.title}>Lưu trữ cuộc trò chuyện</Text>
           </TouchableOpacity>
           {/* 6 */}
-          <TouchableOpacity style={styles.component}>
+          <TouchableOpacity
+            style={styles.component}
+            onPress={() => handleUnfriend()}
+          >
             <Image
               source={require("../../assets/icons/delete-friend.png")}
               style={styles.icon}
             />
-            <Text style={styles.title}>Xóa khỏi danh sách bạn bè</Text>
+            <Text style={styles.title}>Hủy kết bạn</Text>
           </TouchableOpacity>
           {/* 7 */}
           <TouchableOpacity
@@ -236,6 +280,17 @@ const Option = ({ route }) => {
               style={styles.icon}
             />
             <Text style={styles.title}>Xóa lịch sử trò chuyện</Text>
+          </TouchableOpacity>
+          {/* 8 */}
+          <TouchableOpacity
+            style={styles.component}
+            onPress={() => hnadleBlockUser(id)}
+          >
+            <Image
+              source={require("../../assets/icons/details.png")}
+              style={styles.icon}
+            />
+            <Text style={styles.title}>Chặn người dùng</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

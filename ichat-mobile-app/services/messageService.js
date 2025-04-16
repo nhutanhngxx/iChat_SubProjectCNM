@@ -68,6 +68,8 @@ const messageService = {
       const response = await apiService.delete(
         `/${PREFIX}/${userId}/${chatId}`
       );
+      console.log("response: ", response.data);
+
       if (response.data.status === "ok")
         return {
           status: response.data.status,
