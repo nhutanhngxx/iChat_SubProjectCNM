@@ -373,23 +373,12 @@ const Chatting = ({ route }) => {
     }
   };
 
-  // Chuyển tiếp tin nhắn
-  const handleForwardMessage = async (messageId) => {
-    try {
-      const response = await messageService.forwardMessage(
-        messageId,
-        user.id,
-        chat.id
-      );
-      if (response.status === "ok") {
-        Alert.alert("Thông báo", "Tin nhắn đã được chuyển tiếp thành công.");
-      } else {
-        Alert.alert("Thông báo", response.message);
-      }
-    } catch (error) {
-      console.error("Lỗi khi chuyển tiếp tin nhắn:", error);
-      Alert.alert("Lỗi", "Không thể chuyển tiếp tin nhắn.");
-    }
+  const handleForwardMessage = async () => {
+    navigation.navigate("ForwardMessage", {
+      message: selectedMessage,
+    });
+
+    setModalVisible(false);
   };
 
   return (
@@ -714,7 +703,7 @@ const Chatting = ({ route }) => {
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={styles.actionButton}
-                      onPress={() => handleForwardMessage(selectedMessage._id)}
+                      onPress={handleForwardMessage}
                     >
                       <Image
                         source={require("../../assets/icons/forward-message.png")}

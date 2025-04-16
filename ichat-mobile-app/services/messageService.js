@@ -149,13 +149,14 @@ const messageService = {
   },
 
   // Chuyển tiếp tin nhắn
-  forwardMessage: async (messageId, userId, chatId) => {
+  forwardMessage: async (messageId, receiverId, currentUserId) => {
     try {
       const response = await apiService.post(`/${PREFIX}/forward`, {
-        message_id: messageId,
-        user_id: userId,
-        chat_id: chatId,
+        messageId,
+        receiverId,
+        currentUserId,
       });
+
       return response.data;
     } catch (error) {
       console.log("Lỗi chuyển tiếp tin nhắn ở Message Service: ", error);
