@@ -38,6 +38,8 @@ const FriendTab = () => {
     if (!user?.id) return;
     const fetchFriendList = async () => {
       const friends = await friendService.getFriendListByUserId(user.id);
+      // console.log("Friend List: ", friends);
+
       setFriendList(friends);
     };
     fetchFriendList();
@@ -47,6 +49,12 @@ const FriendTab = () => {
 
   // Mở cuộc trò chuyện
   const handleOpenChatting = (chat) => {
+    chat = {
+      id: chat.id,
+      name: chat.full_name,
+      avatar: chat.avatar_path,
+    };
+
     navigation.navigate("Chatting", { chat });
   };
 
