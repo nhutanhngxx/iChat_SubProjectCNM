@@ -1,5 +1,12 @@
 import React, { useState, useEffect, useContext } from "react";
-import { Text, View, Image, TouchableOpacity, StyleSheet } from "react-native";
+import {
+  Text,
+  View,
+  Image,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+} from "react-native";
 import { useNavigation } from "@react-navigation/native";
 
 import HeaderViewProfile from "../header/HeaderViewProfile";
@@ -13,6 +20,7 @@ const ViewProfile = ({ route }) => {
   const { foundUser } = route.params || {};
   const { user } = useContext(UserContext);
   const [isFriend, setIsFriend] = useState(false);
+  const [hasSentRequest, setHasSentRequest] = useState(false);
 
   const checkFriendship = async () => {
     try {
@@ -42,11 +50,34 @@ const ViewProfile = ({ route }) => {
 
   const handleAddFriend = async () => {
     try {
-      await friendService.sendFriendRequest(user.id, foundUser._id);
-      alert("Đã gửi lời mời kết bạn!");
+      const resp = await friendService.sendFriendRequest({
+        senderId: user.id,
+        receiverId: foundUser._id,
+      });
+      setHasSentRequest(true);
+      Alert.alert("Thông báo", "Đã gửi lời mời kết bạn!");
     } catch (error) {
       console.error("Lỗi khi gửi lời mời kết bạn:", error);
-      alert("Không thể gửi lời mời kết bạn. Vui lòng thử lại sau.");
+      Alert.alert("Không thể gửi lời mời kết bạn. Vui lòng thử lại sau.");
+    }
+  };
+
+  const handleCancelRequest = async () => {
+    try {
+      const resp = await friendService.cancelFriendRequest({
+        senderId: user.id,
+        receiverId: foundUser._id,
+      });
+      if (resp.status === "ok") {
+        setHasSentRequest(false);
+        Alert.alert("Thông báo", "Đã thu hồi lời mời kết bạn!");
+      }
+    } catch (error) {
+      console.error("Lỗi khi thu hồi lời mời kết bạn:", error);
+      Alert.alert(
+        "Thông báo",
+        "Không thể thu hồi lời mời kết bạn. Vui lòng thử lại sau."
+      );
     }
   };
 
@@ -78,12 +109,21 @@ const ViewProfile = ({ route }) => {
             <Text style={styles.buttonText}>Nhắn tin</Text>
           </TouchableOpacity>
 
-          {!isFriend && (
+          {!isFriend && !hasSentRequest && (
             <TouchableOpacity
               style={styles.addFriendButton}
               onPress={handleAddFriend}
             >
               <Text style={styles.buttonText}>Kết bạn</Text>
+            </TouchableOpacity>
+          )}
+
+          {!isFriend && hasSentRequest && (
+            <TouchableOpacity
+              style={styles.cancelRequestButton}
+              onPress={handleCancelRequest}
+            >
+              <Text style={styles.buttonText}>Thu hồi</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -120,6 +160,12 @@ const styles = StyleSheet.create({
   buttonText: {
     color: "white",
     fontWeight: "500",
+  },
+  cancelRequestButton: {
+    backgroundColor: "#f44336",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 20,
   },
 });
 
