@@ -186,7 +186,6 @@ const friendService = {
       const response = await apiService.get(
         `/${PREFIX}/check-block-status/${userId}/${targetId}`
       );
-      console.log("checkBlockStatus", response.data);
 
       return response.data;
     } catch (error) {
