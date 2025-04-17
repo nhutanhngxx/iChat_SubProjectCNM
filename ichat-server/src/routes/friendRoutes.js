@@ -30,6 +30,12 @@ router.post("/cancel-friend-request", FriendshipController.cancelFriendRequest);
 // Chặn người dùng
 router.post("/block-user", FriendshipController.blockUser);
 
+// Bỏ chặn người dùng
+router.post("/unblock-user", FriendshipController.unblockUser);
+
+// Lấy danh sách người dùng bị chặn
+router.get("/blocked-users/:userId", FriendshipController.getBlockedUsers);
+
 // Hủy kết bạn (Đã chấp nhận lời mời kết bạn)
 router.post("/unfriend", FriendshipController.unfriendUser);
 

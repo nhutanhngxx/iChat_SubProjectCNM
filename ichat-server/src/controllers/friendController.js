@@ -211,17 +211,62 @@ const FriendshipController = {
 
       if (friendship) {
         friendship.status = "blocked";
+        friendship.blocked_by = blocker_id; // Lưu người chặn
         await friendship.save();
       } else {
         // Nếu chưa có quan hệ trước đó, tạo mới với trạng thái "blocked"
         friendship = await Friendship.create({
           sender_id: blocker_id,
           receiver_id: blocked_id,
+          blocked_by: blocker_id,
           status: "blocked",
         });
       }
 
       res.json({ status: "ok", message: "Người dùng đã bị chặn", friendship });
+    } catch (error) {
+      res.status(500).json({ status: "error", message: error.message });
+    }
+  },
+
+  // Hủy chặn người dùng - Tìm và xóa friendship với trạng thái "blocked"
+  unblockUser: async (req, res) => {
+    const { blocker_id, blocked_id } = req.body;
+
+    try {
+      const friendship = await Friendship.findOneAndDelete({
+        $or: [
+          {
+            blocked_by: blocker_id,
+            receiver_id: blocked_id,
+            status: "blocked",
+          },
+          { blocked_by: blocker_id, sender_id: blocked_id, status: "blocked" },
+        ],
+      });
+
+      if (!friendship) {
+        return res.status(400).json({
+          status: "error",
+          message: "Không tìm thấy người dùng để hủy chặn",
+        });
+      }
+
+      res.json({ status: "ok", message: "Đã hủy chặn thành công" });
+    } catch (error) {
+      res.status(500).json({ status: "error", message: error.message });
+    }
+  },
+
+  // Láy danh sách người dùng đã bị chặn
+  getBlockedUsers: async (req, res) => {
+    const { user_id } = req.params;
+    try {
+      const blockedUsers = await Friendship.find({
+        blocked_by: user_id,
+        status: "blocked",
+      });
+      res.json({ status: "ok", data: blockedUsers });
     } catch (error) {
       res.status(500).json({ status: "error", message: error.message });
     }
