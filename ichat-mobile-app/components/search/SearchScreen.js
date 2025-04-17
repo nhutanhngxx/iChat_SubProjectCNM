@@ -302,17 +302,6 @@ const SearchScreen = () => {
         console.error("Lỗi tìm kiếm tin nhắn:", error);
       }
 
-      // if (usersResponse.error) {
-      //   setSearchUsers([]);
-      // } else if (
-      //   usersResponse.data?.status === "ok" &&
-      //   Array.isArray(usersResponse.data.users)
-      // ) {
-      //   setSearchUsers(usersResponse.data.users);
-      // } else {
-      //   setSearchUsers([]);
-      // }
-
       if (
         usersResponse.data?.status === "ok" &&
         Array.isArray(usersResponse.data.users)
