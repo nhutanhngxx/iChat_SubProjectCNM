@@ -238,8 +238,6 @@ const Chatting = ({ route }) => {
           reactionType
         );
 
-        console.log("Reaction response:", response);
-
         if (response?.updatedMessage) {
           // Cập nhật lại toàn bộ object message theo kết quả từ server
           setMessages((prevMessages) =>
@@ -459,6 +457,22 @@ const Chatting = ({ route }) => {
   };
 
   const handleForwardMessage = async () => {
+    if (typeChat === "not-friend" || typeChat === "blocked") {
+      let message =
+        "Bạn không thể chuyển tiếp tin nhắn trong cuộc trò chuyện này.";
+
+      if (typeChat === "blocked") {
+        if (blockStatus.blockedByTarget) {
+          message = `Bạn không thể chuyển tiếp tin nhắn vì bạn đã bị chặn.`;
+        } else if (blockStatus.blockedByUser) {
+          message = `Bạn không thể chuyển tiếp tin nhắn vì bạn đã chặn người này.`;
+        }
+      }
+
+      Alert.alert("Thông báo", message);
+      return;
+    }
+
     navigation.navigate("ForwardMessage", {
       message: selectedMessage,
     });
@@ -468,6 +482,20 @@ const Chatting = ({ route }) => {
 
   // Hanlde xóa mềm- xóa tin nhắn 1 phía
   const handleSoftDelete = async () => {
+    if (typeChat === "not-friend" || typeChat === "blocked") {
+      let message = "Bạn không thể xóa tin nhắn trong cuộc trò chuyện này.";
+
+      if (typeChat === "blocked") {
+        if (blockStatus.blockedByTarget) {
+          message = `Bạn không thể xóa tin nhắn vì bạn đã bị chặn.`;
+        } else if (blockStatus.blockedByUser) {
+          message = `Bạn không thể xóa tin nhắn vì bạn đã chặn người này.`;
+        }
+      }
+
+      Alert.alert("Thông báo", message);
+      return;
+    }
     try {
       const response = await messageService.softDeleteMessagesForUser(
         user.id,
