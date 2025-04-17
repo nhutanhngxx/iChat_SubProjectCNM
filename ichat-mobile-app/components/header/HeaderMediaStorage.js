@@ -1,28 +1,52 @@
 import React from "react";
-import { Text, View, Image, TouchableOpacity } from "react-native";
+import { Text, View, Image, TouchableOpacity, Platform } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 
 const HeaderMediaStorage = () => {
   const navigation = useNavigation();
   return (
     <View
-      style={{
-        flexDirection: "row",
-        alignItems: "center",
-        // marginBottom: 10,
-        height: 50,
-        backgroundColor: "white",
-      }}
+      style={
+        Platform.OS === "ios"
+          ? {
+              flexDirection: "row",
+              alignItems: "flex-end",
+              width: "100%",
+              padding: 10,
+              height: 90,
+              backgroundColor: "#007bff",
+            }
+          : {
+              flexDirection: "row",
+              alignItems: "flex-end",
+              width: "100%",
+              paddingHorizontal: 10,
+              height: 80,
+              backgroundColor: "#007bff",
+            }
+      }
     >
-      <TouchableOpacity onPress={() => navigation.goBack()}>
-        <Image
-          source={require("../../assets/icons/go-back.png")}
-          style={{ width: 25, height: 25 }}
-        />
-      </TouchableOpacity>
-      <Text style={{ fontSize: 20, fontWeight: "bold", marginLeft: 10 }}>
-        Đa phương tiện, tệp tin, liên kết
-      </Text>
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 5,
+        }}
+      >
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Image
+            source={require("../../assets/icons/go-back.png")}
+            style={{
+              width: 25,
+              height: 25,
+              tintColor: "white",
+            }}
+          />
+        </TouchableOpacity>
+        <Text style={{ fontWeight: "bold", fontSize: 20, color: "white" }}>
+          Đa phương tiện, tệp tin, liên kết
+        </Text>
+      </View>
     </View>
   );
 };

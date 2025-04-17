@@ -15,6 +15,7 @@ import messageService from "../../services/messageService";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import "dayjs/locale/vi";
+import friendService from "../../services/friendService";
 
 dayjs.extend(relativeTime);
 dayjs.locale("vi");
@@ -30,6 +31,7 @@ const Priority = () => {
   const [chatList, setChatList] = useState([]);
   const [groupList, setGroupList] = useState([]);
   const [allUser, setAllUser] = useState([]);
+  const [friendList, setFriendList] = useState([]);
 
   // Nhận selectedChat từ SearchScreen
   const selectedChat = route.params?.selectedChat;
@@ -42,6 +44,8 @@ const Priority = () => {
     const fetchUsers = async () => {
       try {
         const response = await userService.getAllUser();
+        const friends = await friendService.getFriendListByUserId(user.id);
+        setFriendList(friends);
         if (response) {
           setAllUser(response);
         }
@@ -55,38 +59,51 @@ const Priority = () => {
   // Lọc lại dữ liệu tin nhắn theo từng người dùng
   const formatChatList = (messages, allUser) => {
     if (!Array.isArray(messages)) return [];
+    if (!Array.isArray(friendList) || friendList.length === 0) return [];
+
     const chatMap = new Map();
+
     messages.forEach((msg) => {
       if (msg.chat_type === "private") {
         const chatUserId =
           msg.sender_id === user.id ? msg.receiver_id : msg.sender_id;
-        const chatUser = allUser.find((u) => u._id === chatUserId);
-        const fullName = chatUser ? chatUser.full_name : "Người dùng ẩn danh";
-        const avatarPath =
-          chatUser?.avatar_path || "https://i.ibb.co/9k8sPRMx/best-seller.png";
-        const lastMessageTime = new Date(msg.timestamp).getTime();
-        const timeDiff = getTimeAgo(lastMessageTime);
-        if (
-          !chatMap.has(chatUserId) ||
-          lastMessageTime > chatMap.get(chatUserId).lastMessageTime
-        ) {
-          chatMap.set(chatUserId, {
-            id: chatUserId,
-            name: fullName,
-            lastMessage:
-              msg.type === "image"
-                ? "Hình ảnh"
-                : msg.type === "file"
-                ? "Tệp đính kèm"
-                : msg.content,
-            lastMessageTime: lastMessageTime,
-            time: timeDiff,
-            avatar: { uri: avatarPath },
-            chatType: "private",
-          });
+
+        const isFriend = friendList.some(
+          (friend) => friend.id === chatUserId || friend._id === chatUserId
+        );
+
+        if (isFriend) {
+          const chatUser = allUser.find((u) => u._id === chatUserId);
+          const fullName = chatUser ? chatUser.full_name : "Người dùng ẩn danh";
+          const avatarPath =
+            chatUser?.avatar_path ||
+            "https://i.ibb.co/9k8sPRMx/best-seller.png";
+          const lastMessageTime = new Date(msg.timestamp).getTime();
+          const timeDiff = getTimeAgo(lastMessageTime);
+
+          if (
+            !chatMap.has(chatUserId) ||
+            lastMessageTime > chatMap.get(chatUserId).lastMessageTime
+          ) {
+            chatMap.set(chatUserId, {
+              id: chatUserId,
+              name: fullName,
+              lastMessage:
+                msg.type === "image"
+                  ? "Hình ảnh"
+                  : msg.type === "file"
+                  ? "Tệp đính kèm"
+                  : msg.content,
+              lastMessageTime: lastMessageTime,
+              time: timeDiff,
+              avatar: { uri: avatarPath },
+              chatType: "private",
+            });
+          }
         }
       }
     });
+
     return Array.from(chatMap.values());
   };
 

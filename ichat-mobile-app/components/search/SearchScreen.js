@@ -19,6 +19,7 @@ import { getHostIP } from "../../services/api";
 import { ActivityIndicator } from "react-native-paper";
 import friendService from "../../services/friendService";
 import FriendButton from "../common/FriendButton";
+import userService from "../../services/userService";
 
 const SearchScreen = () => {
   const route = useRoute();
@@ -30,48 +31,74 @@ const SearchScreen = () => {
   const API_iChat = `http://${ipAdr}:5001/api`;
 
   const handleOpenChatting = async (selectedItem) => {
+    // Check friendship status first
     try {
-      let chatPartnerId, chatPartnerName, chatPartnerAvatar, messageId;
+      const friendships = await friendService.getFriendListByUserId(user.id);
+      const isFriend = friendships.some(
+        (friend) =>
+          friend.id === selectedItem.id || friend._id === selectedItem.id
+      );
 
-      if (selectedItem.content) {
-        // Search result is a message
-        const isSender = selectedItem.sender_id === user.id;
-        chatPartnerId = isSender
-          ? selectedItem.receiver_id
-          : selectedItem.sender_id;
-        messageId = selectedItem.id; // Store message ID for scrolling
-
-        // Get user info from the loaded users list
-        const chatPartner = users.find((u) => u.id === chatPartnerId);
-        chatPartnerName = chatPartner ? chatPartner.full_name : "Người ẩn danh";
-        chatPartnerAvatar =
-          chatPartner?.avatar_path ||
-          "https://i.ibb.co/9k8sPRMx/best-seller.png";
-      } else {
-        // Search result is a user
-        chatPartnerId = selectedItem.id;
-        chatPartnerName = selectedItem.full_name || "Người ẩn danh";
-        chatPartnerAvatar =
-          selectedItem.avatar_path ||
-          "https://i.ibb.co/9k8sPRMx/best-seller.png";
+      if (!isFriend) {
+        Alert.alert(
+          "Thông báo",
+          "Bạn cần kết bạn với người này trước khi bắt đầu cuộc trò chuyện",
+          [{ text: "OK" }]
+        );
+        return;
       }
 
-      const chat = {
-        id: chatPartnerId,
-        name: chatPartnerName,
-        avatar: { uri: chatPartnerAvatar },
-        chatType: "private",
-        messageId: messageId || null, // Pass messageId for messages
-      };
+      try {
+        let chatPartnerId, chatPartnerName, chatPartnerAvatar, messageId;
 
-      // Navigate to the Messages screen in TabNavigator
-      navigation.navigate("Home", {
-        screen: "Messages",
-        params: { selectedChat: chat },
-      });
+        if (selectedItem.content) {
+          // Search result is a message
+          const isSender = selectedItem.sender_id === user.id;
+          chatPartnerId = isSender
+            ? selectedItem.receiver_id
+            : selectedItem.sender_id;
+          messageId = selectedItem.id; // Store message ID for scrolling
+
+          // Get user info from the loaded users list
+          const chatPartner = users.find((u) => u.id === chatPartnerId);
+          chatPartnerName = chatPartner
+            ? chatPartner.full_name
+            : "Người ẩn danh";
+          chatPartnerAvatar =
+            chatPartner?.avatar_path ||
+            "https://i.ibb.co/9k8sPRMx/best-seller.png";
+        } else {
+          // Search result is a user
+          chatPartnerId = selectedItem.id;
+          chatPartnerName = selectedItem.full_name || "Người ẩn danh";
+          chatPartnerAvatar =
+            selectedItem.avatar_path ||
+            "https://i.ibb.co/9k8sPRMx/best-seller.png";
+        }
+
+        const chat = {
+          id: chatPartnerId,
+          name: chatPartnerName,
+          avatar: { uri: chatPartnerAvatar },
+          chatType: "private",
+          messageId: messageId || null, // Pass messageId for messages
+        };
+
+        // Navigate to the Messages screen in TabNavigator
+        navigation.navigate("Home", {
+          screen: "Messages",
+          params: { selectedChat: chat },
+        });
+      } catch (error) {
+        console.error("Error opening chat:", error);
+        Alert.alert("Error", "Unable to open chat. Please try again.");
+      }
     } catch (error) {
-      console.error("Error opening chat:", error);
-      Alert.alert("Error", "Unable to open chat. Please try again.");
+      console.error("Error checking friendship status:", error);
+      Alert.alert(
+        "Error",
+        "Unable to check friendship status. Please try again."
+      );
     }
   };
 
@@ -95,6 +122,11 @@ const SearchScreen = () => {
   const [users, setUsers] = useState([]);
   const [sentRequests, setSentRequests] = useState([]);
   const [listFriend, setListFriend] = useState([]);
+
+  const handleResultPress = (item) => {
+    saveSearchHistory(searchText); // Lưu lại từ khoá đã dùng
+    navigateToDetail(item); // Điều hướng đến trang chi tiết
+  };
 
   useEffect(() => {
     loadSearchHistory();
@@ -151,17 +183,33 @@ const SearchScreen = () => {
   };
 
   // Hàm xử lý gửi lời mời kết bạn
-  const handleSendFriendRequest = async (receiverId, full_name) => {
+  const handleSendFriendRequest = async (receiverId) => {
     try {
       const response = await friendService.sendFriendRequest({
         senderId: user.id,
         receiverId,
       });
       if (response.status === "ok") {
-        setSentRequests((prev) => [...prev, receiverId]);
-        Alert.alert("Thông báo", `Đã gửi lời mời kết bạn đến ${full_name}`, [
-          { text: "OK" },
-        ]);
+        // Tìm kiếm người dùng vừa được gửi lời mời kết bạn
+        const user = await userService.getUserById(receiverId);
+
+        if (!user) {
+          Alert.alert("Thông báo", "Không tìm thấy người dùng này");
+          return;
+        } else {
+          const newSentRequest = {
+            id: user.id,
+            full_name: user.full_name,
+            avatar_path: user.avatar_path,
+          };
+
+          setSentRequests((prev) => [...prev, newSentRequest]);
+          Alert.alert(
+            "Thông báo",
+            `Đã gửi lời mời kết bạn đến ${user.full_name}`,
+            [{ text: "OK" }]
+          );
+        }
       } else {
         Alert.alert(
           "Thông báo",
@@ -172,6 +220,18 @@ const SearchScreen = () => {
       console.error("Lỗi gửi lời mời kết bạn:", error);
       Alert.alert("Thông báo", "Đã xảy ra lỗi khi gửi lời mời kết bạn");
     }
+  };
+
+  // Hàm xử lý hủy lời mời kết bạn
+  const handleCancelFriendRequest = (itemId) => {
+    setSentRequests((prev) =>
+      prev.filter((req) => req.id !== itemId && req._id !== itemId)
+    );
+  };
+
+  // Hàm xử lý làm mới danh sách bạn bè và lời mời kết bạn
+  const refreshFriendRequests = () => {
+    fetchFriendRequests();
   };
 
   // Xử lý tìm kiếm tự động khi searchText thay đổi
@@ -242,13 +302,23 @@ const SearchScreen = () => {
         console.error("Lỗi tìm kiếm tin nhắn:", error);
       }
 
-      if (usersResponse.error) {
-        setSearchUsers([]);
-      } else if (
+      if (
         usersResponse.data?.status === "ok" &&
         Array.isArray(usersResponse.data.users)
       ) {
-        setSearchUsers(usersResponse.data.users);
+        // Nếu tìm kiếm bằng tên (không phải số điện thoại), chỉ hiển thị bạn bè
+        if (!/^(\+)?\d+$/.test(finalSearchQuery)) {
+          const filteredUsers = usersResponse.data.users.filter((searchUser) =>
+            listFriend.some(
+              (friend) =>
+                friend.id === searchUser.id || friend._id === searchUser.id
+            )
+          );
+          setSearchUsers(filteredUsers);
+        } else {
+          // Nếu tìm bằng số điện thoại, hiển thị tất cả kết quả
+          setSearchUsers(usersResponse.data.users);
+        }
       } else {
         setSearchUsers([]);
       }
@@ -303,8 +373,8 @@ const SearchScreen = () => {
     fetchFriendRequests();
   }, []);
 
-  console.log("Sent requests:", sentRequests);
-  console.log("List friend:", listFriend);
+  // console.log("Sent requests:", sentRequests);
+  // console.log("List friend:", listFriend);
 
   // Gọi fetchUsers khi component được mount
   useEffect(() => {
@@ -399,7 +469,6 @@ const SearchScreen = () => {
               onChangeText={setSearchText}
               onSubmitEditing={() => {
                 saveSearchHistory(searchText);
-                setSearchText("");
               }}
             />
             {searchText.length > 0 && (
@@ -530,7 +599,11 @@ const SearchScreen = () => {
           style={{ width: "100%", padding: 10, backgroundColor: "white" }}
         >
           <FlatList
-            data={[...searchMessages, ...searchUsers, ...searchGroups]}
+            data={[
+              ...searchMessages.filter((message) => message.type !== "image"),
+              ...searchUsers,
+              ...searchGroups,
+            ]}
             renderItem={({ item }) =>
               item.content ? (
                 // Tin nhắn
@@ -609,6 +682,8 @@ const SearchScreen = () => {
                     sentRequests={sentRequests}
                     listFriend={listFriend}
                     onSendRequest={handleSendFriendRequest}
+                    onCancelRequest={handleCancelFriendRequest}
+                    refreshRequests={refreshFriendRequests}
                   />
                 </TouchableOpacity>
               )
@@ -624,7 +699,9 @@ const SearchScreen = () => {
         >
           {searchMessages.length > 0 ? (
             <FlatList
-              data={searchMessages}
+              data={searchMessages.filter(
+                (message) => message.type !== "image"
+              )}
               showsVerticalScrollIndicator={false}
               renderItem={({ item }) => (
                 <TouchableOpacity
@@ -726,6 +803,8 @@ const SearchScreen = () => {
                     sentRequests={sentRequests}
                     listFriend={listFriend}
                     onSendRequest={handleSendFriendRequest}
+                    onCancelRequest={handleCancelFriendRequest}
+                    refreshRequests={refreshFriendRequests}
                   />
                 </TouchableOpacity>
               )}

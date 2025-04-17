@@ -34,6 +34,9 @@ router.put("/recall/:messageId", MessageController.recallToMessage);
 // Thêm reactions cho tin nhắn
 router.post("/:messageId/reactions", MessageController.addReactionToMessage);
 
+// Chuyển tiếp tin nhắn
+router.post("/forward", MessageController.forwardMessage);
+
 // Xóa reactions
 router.delete(
   "/:messageId/reactions/:userId",

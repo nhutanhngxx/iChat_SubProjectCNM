@@ -94,7 +94,7 @@ const MessageController = {
         req.params.userId,
         req.params.receiverId
       );
-      res.json({ status: "ok", message: "Deleted all messages successfully" });
+      res.json({ status: "ok", message: "Xóa cuộc trò chuyện thành công." });
     } catch (err) {
       res.status(500).json({ status: "error", message: err.message });
     }
@@ -102,8 +102,18 @@ const MessageController = {
 
   recallToMessage: async (req, res) => {
     try {
-      const updated = await MessageModel.recallMessage(req.params.messageId);
-      res.json({ status: "ok", message: "Message recalled successfully" });
+      // Lấy userId từ request body hoặc params
+      const userId = req.body.userId || req.params.userId; // Thay đổi ở đây
+      // Truyền cả messageId và userId vào MessageModel.recallMessage
+      const updated = await MessageModel.recallMessage(
+        req.params.messageId,
+        userId
+      );
+      res.json({
+        status: "ok",
+        message: "Thu hồi tin nhắn thành công rồi nhé!",
+        data: updated,
+      });
     } catch (err) {
       res.status(err.status || 500).json({ error: err.message });
     }
@@ -118,7 +128,7 @@ const MessageController = {
       });
 
       res.json({
-        message: "Reaction added successfully",
+        message: "Update reaction cho tin nhắn thành công!",
         updatedMessage: result,
       });
     } catch (err) {
@@ -364,6 +374,7 @@ const MessageController = {
       res.status(500).json({ error: "Internal Server Error" });
     }
   },
+
   // Tạo MessageCard
   createMessageCard: async (req, res) => {
     try {
@@ -411,6 +422,53 @@ const MessageController = {
     } catch (error) {
       console.error("Lỗi khi cập nhật trạng thái tin nhắn:", error);
       res.status(500).json({ error: "Lỗi khi cập nhật trạng thái tin nhắn" });
+    }
+  },
+
+  // Chuyển tiếp tin nhắn
+  forwardMessage: async (req, res) => {
+    try {
+      const { messageId, receiverId, currentUserId } = req.body;
+
+      if (!messageId || !receiverId || !currentUserId) {
+        return res
+          .status(400)
+          .json({ error: "Thiếu messageId, receiverId hoặc currentUserId" });
+      }
+
+      // Không cho phép gửi cho chính mình
+      if (currentUserId.toString() === receiverId.toString()) {
+        return res
+          .status(400)
+          .json({ error: "Không thể chuyển tiếp tin nhắn cho chính mình" });
+      }
+
+      // Tìm tin nhắn gốc
+      const originalMessage = await Messages.findById(messageId);
+
+      if (!originalMessage) {
+        return res.status(404).json({ error: "Tin nhắn không tồn tại" });
+      }
+
+      // Tạo tin nhắn mới
+      const newMessage = new Messages({
+        sender_id: currentUserId, // Người đang đăng nhập là người gửi mới
+        receiver_id: receiverId,
+        content: originalMessage.content,
+        type: originalMessage.type,
+        chat_type: originalMessage.chat_type,
+        status: "sent",
+      });
+
+      await newMessage.save();
+
+      res.status(201).json({
+        message: "Tin nhắn đã được chuyển tiếp thành công",
+        data: newMessage,
+      });
+    } catch (error) {
+      console.error("Lỗi khi chuyển tiếp tin nhắn:", error);
+      res.status(500).json({ error: "Lỗi khi chuyển tiếp tin nhắn" });
     }
   },
   // Soft delete (ẩn tin nhắn khỏi user hiện tại)

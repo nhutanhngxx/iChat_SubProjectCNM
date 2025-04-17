@@ -61,14 +61,14 @@ export default function CameraFunction() {
       const data = await response.json();
 
       if (response.ok) {
-        alert("Gửi yêu cầu thành công!");
+        Alert.alert("Gửi yêu cầu thành công!");
         console.log("QR login request sent:", data);
       } else {
-        alert("Gửi yêu cầu thất bại!");
+        Alert.alert("Gửi yêu cầu thất bại!");
         console.error("Lỗi từ server:", data);
       }
     } catch (error) {
-      alert("Đã xảy ra lỗi kết nối server.");
+      Alert.alert("Đã xảy ra lỗi kết nối server.");
       console.error("Lỗi khi gửi sessionId:", error);
     }
   };
