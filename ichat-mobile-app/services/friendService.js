@@ -144,10 +144,41 @@ const friendService = {
   },
 
   // Hủy chặn người dùng
-  unblockUser: async (userId) => {},
+  unblockUser: async ({ userId, blockedUserId }) => {
+    try {
+      const response = await apiService.post(`/${PREFIX}/unblock-user`, {
+        blocker_id: userId,
+        blocked_id: blockedUserId,
+      });
+      if (response.data.status === "error") {
+        return { status: "error", message: response.data.message };
+      }
+      if (response.data.status === "ok") {
+        return { status: "ok", message: response.data.message };
+      }
+    } catch (error) {
+      console.log("Không thể hủy chặn người dùng: ", error);
+      return { status: "error", message: "Đã xảy ra lỗi" };
+    }
+  },
 
   // Lấy danh sách người dùng bị chặn
-  getBlockedUsersByUserId: async (userId) => {},
+  getBlockedUsersByUserId: async (userId) => {
+    try {
+      const response = await apiService.get(
+        `/${PREFIX}/blocked-users/${userId}`
+      );
+      if (response.data.status === "error") {
+        return { status: "error", message: response.data.message };
+      }
+      if (response.data.status === "ok") {
+        return { status: "ok", message: response.data.message };
+      }
+    } catch (error) {
+      console.log("Không thể lấy danh sách người dùng bị chặn: ", error);
+      return { status: "error", message: "Đã xảy ra lỗi" };
+    }
+  },
 };
 
 export default friendService;

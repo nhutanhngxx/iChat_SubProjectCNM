@@ -23,6 +23,9 @@ const MeTab = () => {
   const [isAvatarModalVisible, setAvatarModalVisible] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
 
+  const avatar =
+    "https://nhutanhngxx.s3.ap-southeast-1.amazonaws.com/zcr5-1744474558209-blob.png";
+
   const pickImageFromLibrary = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
