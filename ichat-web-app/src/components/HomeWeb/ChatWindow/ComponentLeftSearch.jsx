@@ -37,7 +37,9 @@ import {
   FaChevronDown,
   FaChevronRight,
 } from "react-icons/fa";
-
+import { useDispatch } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+import { fetchChatMessages } from '../../../redux/slices/messagesSlice';
 const { Content } = Layout;
 const { TabPane } = Tabs;
 const { RangePicker } = DatePicker;
@@ -782,7 +784,11 @@ const FileList = ({ filteredFiles }) => (
 );
 
 // Component chính
-const ComponentLeftSearch = ({ userList, onClose }) => {
+const ComponentLeftSearch = ({ userList, onClose,onSelectChat }) => {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+   // Add this state for dropdown visibility if not already defined
+  const [dropdownVisible, setDropdownVisible] = useState(false);
   const [searchText, setSearchText] = useState("");
   const [searchSenderFilteredMessage, setSearchSenderFilteredMessage] =
     useState("");
@@ -798,7 +804,7 @@ const ComponentLeftSearch = ({ userList, onClose }) => {
   const [messageDateRange, setMessageDateRange] = useState({ from: null, to: null });
 
   const handleDropdownVisibleChange = (flag) => setDropdownOpen(flag);
-
+  
   const handleDelete = (receiver_id) => {
     setFilteredRecentlyUser(
       filteredRecentlyUser.filter((item) => item.receiver_id !== receiver_id)
@@ -844,6 +850,35 @@ const ComponentLeftSearch = ({ userList, onClose }) => {
     }
     return file.name.toLowerCase().includes(searchText.toLowerCase());
   });
+  // Add this function to handle user selection
+const handleUserSelect = (selectedUser) => {
+  console.log("Selected user from handleUserSelect :", selectedUser);
+  
+  // Get current user from localStorage or your auth state
+  const currentUser = JSON.parse(localStorage.getItem('user')) || {};
+  
+  // Fetch chat messages between current user and selected user
+  dispatch(fetchChatMessages({
+    senderId: currentUser.id,      // Current logged-in user
+    receiverId: selectedUser.id    // User selected from search
+  }));
+  
+  // Update the UI to show this chat (using prop passed from parent)
+  if (typeof onSelectChat === 'function') {
+    onSelectChat(selectedUser);
+  } else {
+    // Fallback to navigation if onSelectChat is not available
+    // navigate(`/messages/${selectedUser.id}`);
+  }
+  
+  // Close the dropdown menu
+  setDropdownVisible(false);
+  
+  // Close the search panel if needed
+  if (typeof onClose === 'function') {
+    onClose();
+  }
+};
 
   const userMenu = (
     <Menu>
@@ -853,6 +888,7 @@ const ComponentLeftSearch = ({ userList, onClose }) => {
           placeholder="Tìm kiếm"
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
+          onClick={(e) => e.stopPropagation()} // Prevent menu from closing when clicking input
         />
       </Menu.Item>
       {users
@@ -860,8 +896,8 @@ const ComponentLeftSearch = ({ userList, onClose }) => {
           user.name.toLowerCase().includes(searchText.toLowerCase())
         )
         .map((user) => (
-          <Menu.Item key={user.id}>
-            <Avatar src={user.avatar} size={24} /> {user.name}
+          <Menu.Item key={user.id}  onClick={() => handleUserSelect(user)}>
+            <Avatar src={user.avatar} size={24} /> {user.name} aloooo
           </Menu.Item>
         ))}
     </Menu>
