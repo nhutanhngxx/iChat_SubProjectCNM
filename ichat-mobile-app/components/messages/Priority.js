@@ -6,6 +6,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   FlatList,
+  AppState,
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { UserContext } from "../../config/context/UserContext";
@@ -41,36 +42,157 @@ const Priority = () => {
   listChat.sort((a, b) => b.lastMessageTime - a.lastMessageTime);
 
   useEffect(() => {
-    const fetchUsers = async () => {
+    if (!user?.id) return;
+
+    const loadAllData = async () => {
       try {
-        const response = await userService.getAllUser();
-        if (response) {
-          setAllUser(response);
+        const [usersResponse, friendsResponse] = await Promise.all([
+          userService.getAllUser(),
+          friendService.getFriendListByUserId(user.id),
+        ]);
+        setAllUser(usersResponse || []);
+        setFriendList(friendsResponse || []);
+
+        const messagesResponse = await messageService.getMessagesByUserId(
+          user.id
+        );
+        const formattedChats = formatChatList(
+          messagesResponse,
+          usersResponse,
+          friendsResponse
+        );
+
+        let finalChats = [...formattedChats];
+        if (
+          selectedChat &&
+          !formattedChats.some((chat) => chat.id === selectedChat.id)
+        ) {
+          formattedChats = [
+            {
+              ...selectedChat,
+              lastMessage: "", // Không có tin nhắn gần đây
+              lastMessageTime: Date.now(), // Sử dụng thời gian hiện tại để xếp đầu
+              time: getTimeAgo(Date.now()),
+            },
+            ...formattedChats,
+          ];
         }
+        setChatList(finalChats);
+
+        const groupsResponse = await groupService.getAllGroupsByUserId(user.id);
+        // setGroupList(groupsResponse || []);
+        setGroupList([...(groupsResponse || [])]);
       } catch (error) {
-        console.error("Lỗi khi lấy danh sách người dùng:", error);
+        console.error("Lỗi khi tải dữ liệu:", error);
       }
     };
-    fetchUsers();
-  }, []);
+
+    loadAllData();
+
+    const interval = setInterval(loadAllData, 3000); // Cập nhật 3 giây
+    return () => clearInterval(interval);
+  }, [user?.id, selectedChat]);
+
+  // Lấy danh sách người dùng
+  // useEffect(() => {
+  //   const fetchUsers = async () => {
+  //     try {
+  //       const response = await userService.getAllUser();
+  //       if (response) {
+  //         setAllUser(response);
+  //       }
+  //     } catch (error) {
+  //       console.error("Lỗi khi lấy danh sách người dùng:", error);
+  //     }
+  //   };
+  //   fetchUsers();
+  // }, []);
 
   // Lấy danh sách bạn bè của người dùng
+  // useEffect(() => {
+  //   const fetchFriendList = async () => {
+  //     try {
+  //       const friends = await friendService.getFriendListByUserId(user.id);
+  //       setFriendList(friends);
+  //     } catch (error) {
+  //       console.error("Lỗi khi lấy danh sách bạn bè:", error);
+  //     }
+  //   };
+  //   fetchFriendList();
+  // }, [user?.id]);
+
+  // Lấy danh sách group chat của người dùng
+  // useEffect(() => {
+  //   if (!user?.id) return;
+  //   const fetchGroupList = async () => {
+  //     const groups = await groupService.getAllGroupsByUserId(user.id);
+  //     setGroupList(groups);
+  //   };
+  //   fetchGroupList();
+  //   const interval = setInterval(fetchGroupList, 1000);
+  //   return () => clearInterval(interval);
+  // }, [user?.id]);
+
+  // const fetchChatList = async () => {
+  //   try {
+  //     const response = await messageService.getMessagesByUserId(user.id);
+  //     let formattedChats = formatChatList(response, allUser);
+
+  //     // Nếu có selectedChat và nó không tồn tại trong chatList, thêm vào
+  //     if (
+  //       selectedChat &&
+  //       !formattedChats.some((chat) => chat.id === selectedChat.id)
+  //     ) {
+  //       formattedChats = [
+  //         {
+  //           ...selectedChat,
+  //           lastMessage: "", // Không có tin nhắn gần đây
+  //           lastMessageTime: Date.now(), // Sử dụng thời gian hiện tại để xếp đầu
+  //           time: getTimeAgo(Date.now()),
+  //         },
+  //         ...formattedChats,
+  //       ];
+  //     }
+
+  //     setChatList(formattedChats);
+  //   } catch (error) {
+  //     console.error("Lỗi khi lấy danh sách chat:", error);
+  //   }
+  // };
+
+  // useEffect(() => {
+  //   if (!user?.id) return;
+
+  //   // Gọi fetch lần đầu tiên
+  //   fetchChatList();
+
+  //   // Thiết lập interval để fetch tin nhắn mới mỗi 1 giây
+  //   const interval = setInterval(fetchChatList, 1000);
+
+  //   // Cleanup interval khi component unmount
+  //   return () => clearInterval(interval);
+  // }, [user, allUser]);
+
+  // useEffect(() => {
+  //   if (allUser.length === 0 || !user?.id) return;
+  //   fetchChatList();
+  // }, [user, allUser]);
+
+  // Tự động mở Chatting nếu có selectedChat
   useEffect(() => {
-    const fetchFriendList = async () => {
-      try {
-        const friends = await friendService.getFriendListByUserId(user.id);
-        setFriendList(friends);
-      } catch (error) {
-        console.error("Lỗi khi lấy danh sách bạn bè:", error);
-      }
-    };
-    fetchFriendList();
-  }, [user?.id]);
+    if (selectedChat) {
+      handleOpenChatting(selectedChat);
+      // Xóa selectedChat khỏi route params để tránh mở lại
+      navigation.setParams({ selectedChat: undefined });
+    }
+  }, [selectedChat]);
 
   // Lọc lại dữ liệu tin nhắn theo từng người dùng
-  const formatChatList = (messages, allUser) => {
+  const formatChatList = (messages, allUser, friendListData) => {
     if (!Array.isArray(messages)) return [];
-    if (!Array.isArray(friendList) || friendList.length === 0) return [];
+    // if (!Array.isArray(friendList) || friendList.length === 0) return [];
+
+    const friendList = friendListData || [];
 
     const chatMap = new Map();
 
@@ -121,75 +243,8 @@ const Priority = () => {
         }
       }
     });
-
     return Array.from(chatMap.values());
   };
-
-  // Lấy danh sách group chat của người dùng
-  useEffect(() => {
-    if (!user?.id) return;
-    const fetchGroupList = async () => {
-      const groups = await groupService.getAllGroupsByUserId(user.id);
-      setGroupList(groups);
-    };
-    fetchGroupList();
-    const interval = setInterval(fetchGroupList, 1000);
-    return () => clearInterval(interval);
-  }, [user?.id]);
-
-  const fetchChatList = async () => {
-    try {
-      const response = await messageService.getMessagesByUserId(user.id);
-      let formattedChats = formatChatList(response, allUser);
-
-      // Nếu có selectedChat và nó không tồn tại trong chatList, thêm vào
-      if (
-        selectedChat &&
-        !formattedChats.some((chat) => chat.id === selectedChat.id)
-      ) {
-        formattedChats = [
-          {
-            ...selectedChat,
-            lastMessage: "", // Không có tin nhắn gần đây
-            lastMessageTime: Date.now(), // Sử dụng thời gian hiện tại để xếp đầu
-            time: getTimeAgo(Date.now()),
-          },
-          ...formattedChats,
-        ];
-      }
-
-      setChatList(formattedChats);
-    } catch (error) {
-      console.error("Lỗi khi lấy danh sách chat:", error);
-    }
-  };
-
-  useEffect(() => {
-    if (allUser.length === 0 || !user?.id) return;
-    fetchChatList();
-  }, [user, allUser]);
-
-  useEffect(() => {
-    if (!user?.id) return;
-
-    // Gọi fetch lần đầu tiên
-    fetchChatList();
-
-    // Thiết lập interval để fetch tin nhắn mới mỗi 1 giây
-    const interval = setInterval(fetchChatList, 1000);
-
-    // Cleanup interval khi component unmount
-    return () => clearInterval(interval);
-  }, [user, allUser]);
-
-  // Tự động mở Chatting nếu có selectedChat
-  useEffect(() => {
-    if (selectedChat) {
-      handleOpenChatting(selectedChat);
-      // Xóa selectedChat khỏi route params để tránh mở lại
-      navigation.setParams({ selectedChat: undefined });
-    }
-  }, [selectedChat]);
 
   // Cập nhật tin nhắn thành "viewed" khi mở cuộc trò chuyện
   const markMessagesAsViewed = async (senderId) => {
@@ -208,7 +263,7 @@ const Priority = () => {
     markMessagesAsViewed(chat.id);
     if (chat.chatType === "private") {
       try {
-        const friends = await friendService.getFriendListByUserId(user.id);
+        // const friends = await friendService.getFriendListByUserId(user.id);
         const blockStatus = await friendService.checkBlockStatus(
           user.id,
           chat.id
@@ -221,7 +276,7 @@ const Priority = () => {
           typeChat = "blocked";
         } else {
           // Kiểm tra xem có phải bạn bè không
-          const isFriend = friends.some(
+          const isFriend = friendList.some(
             (friend) => friend.id === chat.id || friend._id === chat.id
           );
 
