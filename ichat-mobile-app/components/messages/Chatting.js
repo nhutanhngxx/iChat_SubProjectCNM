@@ -65,8 +65,8 @@ const Chatting = ({ route }) => {
   const { user } = useContext(UserContext);
   const { chat } = route.params || {};
   const flatListRef = useRef(null);
-  // "normal" | "not-friend" | "blocked" dùng để kiểm tra trạng thái bạn bè giữa 2 người dùng
-  const [typeChat, setTypeChat] = useState(route.params?.typeChat || "normal");
+  // "friend" | "not-friend" | "blocked" dùng để kiểm tra trạng thái bạn bè giữa 2 người dùng
+  const [typeChat, setTypeChat] = useState(route.params?.typeChat || "friend");
   const [inputMessage, setInputMessage] = useState("");
   const [selectedImage, setSelectedImage] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);

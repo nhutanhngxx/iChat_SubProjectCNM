@@ -42,6 +42,12 @@ router.get(
   FriendshipController.checkBlockStatus
 );
 
+// Kiểm tra trạng thái kết bạn giữa 2 người dùng
+router.get(
+  "/check-friend-status/:user_id/:target_id",
+  FriendshipController.checkFriendStatus
+);
+
 // Hủy kết bạn (Đã chấp nhận lời mời kết bạn)
 router.post("/unfriend", FriendshipController.unfriendUser);
 

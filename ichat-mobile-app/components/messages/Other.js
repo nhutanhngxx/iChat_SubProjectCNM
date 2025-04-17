@@ -237,7 +237,7 @@ const Priority = () => {
         );
 
         // Xác định typeChat dựa trên trạng thái chặn
-        let typeChat = "normal";
+        let typeChat = "friend";
 
         if (blockStatus.isBlocked) {
           typeChat = "blocked";
