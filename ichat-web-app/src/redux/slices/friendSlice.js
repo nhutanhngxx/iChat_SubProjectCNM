@@ -99,7 +99,7 @@ export const getUserFriends = createAsyncThunk(
   "friend/getUserFriends",
   async (userId, { rejectWithValue }) => {
     try {
-      const res = await axios.get(`${API_URL}/friends/${userId}`);
+      const res = await axios.get(`${API_URL}/${userId}`);
       return res.data;
     } catch (err) {
       return rejectWithValue(err.response?.data || err.message);
