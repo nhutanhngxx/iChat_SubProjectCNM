@@ -161,33 +161,60 @@ const MessageModel = {
     });
   },
 
-  recallMessage: async (messageId) => {
+  recallMessage: async (messageId, userId) => {
     const message = await Messages.findById(messageId);
-    if (!message) throw { status: 404, message: "Message not found" };
+    if (!message) {
+      throw { status: 404, message: "Không tìm thấy tin nhắn cần thu hồi!" };
+    }
 
+    // Kiểm tra xem người gửi tin nhắn có phải là người đang đăng nhập không
+    if (message.sender_id.toString() !== userId.toString()) {
+      throw {
+        status: 403,
+        message: "Chỉ có thể thu hồi tin nhắn của chính mình thui!",
+      };
+    }
+
+    // Cập nhật các trường cần thiết
     message.type = "text";
     message.content = "Tin nhắn đã được thu hồi";
+    message.reactions = []; // Xóa tất cả reactions
+    message.reply_to = null; // Xóa liên kết reply_to
+
     await message.save();
     return message;
   },
 
   addReaction: async ({ messageId, user_id, reaction_type }) => {
     const message = await Messages.findById(messageId);
-    if (!message) throw { status: 404, message: "Message not found" };
+    if (!message)
+      throw {
+        status: 404,
+        message: "Không tìm thấy tin nhắn muốn thả react rồi!",
+      };
 
     const validReactions = ["like", "love", "haha", "wow", "sad", "angry"];
     if (!validReactions.includes(reaction_type)) {
-      throw { status: 400, message: "Invalid reaction type" };
+      throw { status: 400, message: "Kiểu reaction không hợp lệ!" };
     }
 
-    const existingReaction = message.reactions.find(
-      (r) => r.user_id.toString() === user_id
+    // Tìm xem user đã từng thả cùng loại reaction này chưa
+    const reactionIndex = message.reactions.findIndex(
+      (r) =>
+        r.user_id.toString() === user_id.toString() &&
+        r.reaction_type === reaction_type
     );
 
-    if (existingReaction) {
-      existingReaction.reaction_type = reaction_type;
+    if (reactionIndex !== -1) {
+      // Nếu đã thả rồi → gỡ bỏ reaction đó
+      message.reactions.splice(reactionIndex, 1);
     } else {
-      message.reactions.push({ user_id, reaction_type });
+      // Nếu chưa thả → thêm mới reaction này
+      message.reactions.push({
+        user_id,
+        reaction_type,
+        timestamp: new Date(),
+      });
     }
 
     await message.save();
@@ -222,6 +249,32 @@ const MessageModel = {
       receiver_id: new mongoose.Types.ObjectId(chatId),
       is_pinned: true,
     });
+  },
+
+  forwardMessage: async (messageId, receiverId, currentUserId) => {
+    const message = await Messages.findById(messageId);
+    if (!message) {
+      throw { status: 404, message: "Không tìm thấy tin nhắn để chuyển tiếp" };
+    }
+
+    // Không cho phép gửi tin nhắn cho chính mình
+    if (receiverId.toString() === currentUserId.toString()) {
+      throw {
+        status: 400,
+        message: "Không thể chuyển tiếp tin nhắn cho chính mình",
+      };
+    }
+
+    const newMessage = new Messages({
+      sender_id: currentUserId,
+      receiver_id,
+      content: message.content,
+      type: message.type,
+      chat_type: message.chat_type,
+    });
+
+    await newMessage.save();
+    return newMessage;
   },
 };
 

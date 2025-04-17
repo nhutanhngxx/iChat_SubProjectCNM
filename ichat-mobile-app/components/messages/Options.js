@@ -20,10 +20,12 @@ import messageService from "../../services/messageService";
 import friendService from "../../services/friendService";
 
 const Option = ({ route }) => {
+  const API_iChat = `http://${getHostIP()}:5001/api`;
   const navigation = useNavigation();
   const { user } = useContext(UserContext); // Lấy thông tin người dùng từ context
   const { id, name, avatar } = route.params || {}; // Nhận id, name, avatar từ route.params
   const [receiverInfo, setReceiverInfo] = useState(null); // Thông tin người nhận
+  const [isGroup, setIsGroup] = useState(false);
   const [sharedGroups, setSharedGroups] = useState([]); // Danh sách nhóm chung giữa 2 người
 
   // console.log("ID người nhận:", id);
@@ -38,8 +40,8 @@ const Option = ({ route }) => {
         // console.log("Người đang chat:", res.user);
       }
     };
-    if (id) fetchReceiverInfo();
-  }, [id]);
+    fetchReceiverInfo();
+  }, []);
 
   useEffect(() => {
     const fetchSharedGroups = async () => {
@@ -157,7 +159,7 @@ const Option = ({ route }) => {
 
   return (
     <View style={styles.container}>
-      <StatusBar hidden={false} />
+      <StatusBar style="light" />
       <HeaderOption />
       <View style={styles.profileContainer}>
         <Image
@@ -236,40 +238,44 @@ const Option = ({ route }) => {
             />
           </TouchableOpacity>
         </View>
-        <View style={{ gap: 15 }}>
-          <View
-            style={{
-              height: 15,
-              backgroundColor: "rgba(0, 0, 0, 0.1)",
-              marginHorizontal: -20,
-            }}
-          ></View>
+        <View>
+          {receiverInfo && (
+            <View style={{ gap: 15 }}>
+              <View
+                style={{
+                  height: 15,
+                  backgroundColor: "rgba(0, 0, 0, 0.1)",
+                  marginHorizontal: -20,
+                }}
+              ></View>
+              <TouchableOpacity style={styles.component}>
+                <Image
+                  source={require("../../assets/icons/add-group.png")}
+                  style={styles.icon}
+                />
+                <Text style={styles.title}>Tạo nhóm với {name}</Text>
+              </TouchableOpacity>
+              {/* 3 */}
+              <TouchableOpacity style={styles.component}>
+                <Image
+                  source={require("../../assets/icons/add-friend.png")}
+                  style={styles.icon}
+                />
+                <Text style={styles.title}>Thêm {name} vào nhóm</Text>
+              </TouchableOpacity>
+              {/* 4 */}
+              <TouchableOpacity style={styles.component}>
+                <Image
+                  source={require("../../assets/icons/friend.png")}
+                  style={styles.icon}
+                />
+                <Text style={styles.title}>
+                  Xem các nhóm chung ({sharedGroups.length})
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
           {/* 2 */}
-          <TouchableOpacity style={styles.component}>
-            <Image
-              source={require("../../assets/icons/add-group.png")}
-              style={styles.icon}
-            />
-            <Text style={styles.title}>Tạo nhóm với {name}</Text>
-          </TouchableOpacity>
-          {/* 3 */}
-          <TouchableOpacity style={styles.component}>
-            <Image
-              source={require("../../assets/icons/add-friend.png")}
-              style={styles.icon}
-            />
-            <Text style={styles.title}>Thêm {name} vào nhóm</Text>
-          </TouchableOpacity>
-          {/* 4 */}
-          <TouchableOpacity style={styles.component}>
-            <Image
-              source={require("../../assets/icons/friend.png")}
-              style={styles.icon}
-            />
-            <Text style={styles.title}>
-              Xem các nhóm chung ({sharedGroups.length})
-            </Text>
-          </TouchableOpacity>
         </View>
         <View style={{ gap: 15 }}>
           <View
