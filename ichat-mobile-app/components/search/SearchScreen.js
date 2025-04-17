@@ -45,6 +45,8 @@ const SearchScreen = () => {
   const API_iChat = `http://${ipAdr}:5001/api`;
 
   const handleOpenChatting = async (selectedItem) => {
+    const isMessage = selectedItem.content !== undefined;
+    let chatPartnerId, chatPartnerName, chatPartnerAvatar, messageId;
     // Kiểm tra xem người dùng đã là bạn bè hay chưa
     try {
       const friendships = await friendService.getFriendListByUserId(user.id);
@@ -57,14 +59,12 @@ const SearchScreen = () => {
         let chatPartnerId, chatPartnerName, chatPartnerAvatar, messageId;
 
         if (selectedItem.content) {
-          // Search result is a message
           const isSender = selectedItem.sender_id === user.id;
           chatPartnerId = isSender
             ? selectedItem.receiver_id
             : selectedItem.sender_id;
-          messageId = selectedItem.id; // Store message ID for scrolling
+          messageId = selectedItem.id;
 
-          // Get user info from the loaded users list
           const chatPartner = users.find((u) => u.id === chatPartnerId);
           chatPartnerName = chatPartner
             ? chatPartner.full_name
@@ -86,7 +86,7 @@ const SearchScreen = () => {
           name: chatPartnerName,
           avatar: { uri: chatPartnerAvatar },
           chatType: "private",
-          messageId: messageId || null, // Pass messageId for messages
+          messageId: messageId || null,
         };
 
         if (!isFriend) {
@@ -95,10 +95,8 @@ const SearchScreen = () => {
             "Bạn cần kết bạn với người này trước khi bắt đầu cuộc trò chuyện",
             [{ text: "OK" }]
           );
-          // return;
         }
 
-        // Navigate to the Messages screen in TabNavigator
         navigation.navigate("Home", {
           screen: "Messages",
           params: { selectedChat: chat },
