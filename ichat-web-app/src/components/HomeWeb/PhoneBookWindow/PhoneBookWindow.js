@@ -8,10 +8,22 @@ import "./index.css"; // Import CSS
 import FriendList from "./FriendList";
 import GroupList from "./GroupList";
 import RequestList from "./RequestList";
-import SearchComponent from "../ChatWindow/SearchComponent";
+import ComponentLeftSearch from "../ChatWindow/ComponentLeftSearch";
+import SearchBar from "../Common/SearchBar";
+
+const userList = [
+  {
+    id: 1,
+    name: "Lê Thị Quỳnh Như",
+    avatar: "https://i.pravatar.cc/150?img=1",
+  },
+];
+
 const PhoneBookWindow = () => {
   const [activeTab, setActiveTab] = useState("friends");
   const [searchText, setSearchText] = useState("");
+  const [showInterface, setShowInterface] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
 
   return (
     <div className="book-window">
@@ -20,45 +32,47 @@ const PhoneBookWindow = () => {
         className="sidebar"
         style={{ width: "364px", flex: "none", height: "60px" }}
       >
-        {/* Search */}
-        <div className="search" style={{ paddingBottom: "0", margin: "0" }}>
-          {/* <input type="text" placeholder="Tìm Kiếm"></input>
-          <div className="button-icons-group">
-            <button>
-              <BsPersonAdd className="text-gray-600 mr-2 icons" />
-            </button>
-            <button>
-              <FaUserFriends className="text-gray-600 mr-2 icons" />
-            </button>
-          </div> */}
-          <SearchComponent
-            searchText={searchText}
-            setSearchText={setSearchText}
+        {showInterface ? (
+          <ComponentLeftSearch
+            onClose={() => setShowInterface(false)}
+            userList={userList}
+            onSelectUser={setSelectedUser}
           />
-        </div>
-        <div className="menu">
-          <div
-            className={`menu-item ${activeTab === "friends" ? "active" : ""}`}
-            onClick={() => setActiveTab("friends")}
-          >
-            <BsFillPersonLinesFill className="text-gray-600 mr-2 icons" />
-            <span>Danh sách bạn bè</span>
+        ) : (
+          <div>
+            <SearchBar onFocus={() => setShowInterface(true)} />
+
+            <div className="menu">
+              <div
+                className={`menu-item ${
+                  activeTab === "friends" ? "active" : ""
+                }`}
+                onClick={() => setActiveTab("friends")}
+              >
+                <BsFillPersonLinesFill className="text-gray-600 mr-2 icons" />
+                <span>Danh sách bạn bè</span>
+              </div>
+              <div
+                className={`menu-item ${
+                  activeTab === "groups" ? "active" : ""
+                }`}
+                onClick={() => setActiveTab("groups")}
+              >
+                <FaUsers className="text-gray-600 mr-2 icons" />
+                <span>Danh sách nhóm và cộng đồng</span>
+              </div>
+              <div
+                className={`menu-item ${
+                  activeTab === "requests" ? "active" : ""
+                }`}
+                onClick={() => setActiveTab("requests")}
+              >
+                <BsPersonAdd className="text-gray-600 mr-2 icons" />
+                <span>Lời mời kết bạn</span>
+              </div>
+            </div>
           </div>
-          <div
-            className={`menu-item ${activeTab === "groups" ? "active" : ""}`}
-            onClick={() => setActiveTab("groups")}
-          >
-            <FaUsers className="text-gray-600 mr-2 icons" />
-            <span>Danh sách nhóm và cộng đồng</span>
-          </div>
-          <div
-            className={`menu-item ${activeTab === "requests" ? "active" : ""}`}
-            onClick={() => setActiveTab("requests")}
-          >
-            <BsPersonAdd className="text-gray-600 mr-2 icons" />
-            <span>Lời mời kết bạn</span>
-          </div>
-        </div>
+        )}
       </div>
 
       {/* Nội dung chính */}

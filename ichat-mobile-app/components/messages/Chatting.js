@@ -32,6 +32,7 @@ import groupService from "../../services/groupService";
 import MessageInputBar from "../../components/messages/MessageInputBar";
 
 import { getHostIP } from "../../services/api";
+import friendService from "../../services/friendService";
 
 const renderReactionIcons = (reactions) => {
   const icons = {
@@ -63,7 +64,8 @@ const Chatting = ({ route }) => {
   const navigation = useNavigation();
   const { user } = useContext(UserContext);
   const { chat } = route.params || {};
-  const flatListRef = useRef(null);
+  const flatListRef = useRef(null); // "friend" | "not-friend" | "blocked" dùng để kiểm tra trạng thái bạn bè giữa 2 người dùng
+  const [typeChat, setTypeChat] = useState(route.params?.typeChat || "friend");
   const [inputMessage, setInputMessage] = useState("");
   const [selectedImage, setSelectedImage] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
@@ -72,6 +74,13 @@ const Chatting = ({ route }) => {
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [groupMembers, setGroupMembers] = useState([]);
+
+  // Kiểm tra trạng thái chặn giữa 2 người dùng
+  const [blockStatus, setBlockStatus] = useState({
+    isBlocked: false,
+    blockedByTarget: false,
+    blockedByUser: false,
+  });
 
   const ipAdr = getHostIP();
   const API_iChat = `http://${ipAdr}:5001/api/messages/`;
@@ -170,6 +179,21 @@ const Chatting = ({ route }) => {
   const handleRecallMessage = async () => {
     if (!selectedMessage) return;
 
+    if (typeChat === "not-friend" || typeChat === "blocked") {
+      let message = "Bạn không thể gửi tin nhắn trong cuộc trò chuyện này.";
+
+      if (typeChat === "blocked") {
+        if (blockStatus.blockedByTarget) {
+          message = `Bạn không thể gửi tin nhắn cho ${chat.name} vì bạn đã bị chặn.`;
+        } else if (blockStatus.blockedByUser) {
+          message = `Bạn không thể gửi tin nhắn cho ${chat.name} vì bạn đã chặn người này.`;
+        }
+      }
+
+      Alert.alert("Thông báo", message);
+      return;
+    }
+
     try {
       const response = await axios.put(
         `${API_iChat}/recall/${selectedMessage._id}`,
@@ -205,27 +229,33 @@ const Chatting = ({ route }) => {
   const handleReaction = async (reactionType) => {
     if (!selectedMessage) return;
 
-    try {
-      const response = await messageService.addReaction(
-        selectedMessage._id,
-        user.id,
-        reactionType
-      );
-
-      console.log("Reaction response:", response);
-
-      if (response?.updatedMessage) {
-        // Cập nhật lại toàn bộ object message theo kết quả từ server
-        setMessages((prevMessages) =>
-          prevMessages.map((msg) =>
-            msg._id === selectedMessage._id ? response.updatedMessage : msg
-          )
+    if (typeChat !== "not-friend") {
+      try {
+        const response = await messageService.addReaction(
+          selectedMessage._id,
+          user.id,
+          reactionType
         );
+
+        if (response?.updatedMessage) {
+          // Cập nhật lại toàn bộ object message theo kết quả từ server
+          setMessages((prevMessages) =>
+            prevMessages.map((msg) =>
+              msg._id === selectedMessage._id ? response.updatedMessage : msg
+            )
+          );
+        }
+      } catch (error) {
+        console.error("Lỗi khi gửi reaction:", error);
+        Alert.alert("Lỗi", "Không thể gửi reaction.");
+      } finally {
+        setModalVisible(false);
       }
-    } catch (error) {
-      console.error("Lỗi khi gửi reaction:", error);
-      Alert.alert("Lỗi", "Không thể gửi reaction.");
-    } finally {
+    } else {
+      Alert.alert(
+        "Thông báo",
+        "Bạn không thể gửi reaction trong cuộc trò chuyện này."
+      );
       setModalVisible(false);
     }
   };
@@ -251,7 +281,21 @@ const Chatting = ({ route }) => {
               userId: user.id,
               chatId: chat.id,
             });
-            setMessages(response);
+            // Lọc tin nhắn trước khi set state
+            const filteredMessages = response.filter((message) => {
+              // Nếu không có mảng isdelete hoặc mảng rỗng thì hiển thị tin nhắn
+              if (
+                !Array.isArray(message.isdelete) ||
+                message.isdelete.length === 0
+              ) {
+                return true;
+              }
+              // Không hiển thị tin nhắn nếu id người dùng nằm trong mảng isdelete
+              return !message.isdelete.some(
+                (id) => id === user.id || id === String(user.id)
+              );
+            });
+            setMessages(filteredMessages);
           } catch (error) {
             console.error("Lỗi khi lấy tin nhắn:", error);
           }
@@ -283,10 +327,170 @@ const Chatting = ({ route }) => {
     };
   }, []);
 
+  useEffect(() => {
+    if (route.params?.typeChat) {
+      setTypeChat(route.params.typeChat);
+    }
+  }, [route.params?.typeChat]);
+
+  // Kiểm tra trạng thái chặn giữa 2 người dùng
+  useEffect(() => {
+    const checkIfBlocked = async () => {
+      if (chat?.id && user?.id && chat.chatType === "private") {
+        try {
+          const status = await friendService.checkBlockStatus(user.id, chat.id);
+          setBlockStatus(status);
+
+          // Nếu người dùng bị chặn, thay đổi typeChat
+          if (status.isBlocked) {
+            // Cập nhật typeChat thành "blocked"
+            setTypeChat("blocked");
+          }
+        } catch (error) {
+          console.error("Lỗi kiểm tra trạng thái chặn:", error);
+        }
+      }
+    };
+
+    checkIfBlocked();
+  }, [chat, user]);
+
+  // const sendMessage = async () => {
+  //   if (typeChat === "not-friend" || typeChat === "blocked") {
+  //     let message = "Bạn không thể gửi tin nhắn trong cuộc trò chuyện này.";
+
+  //     if (typeChat === "blocked") {
+  //       if (blockStatus.blockedByTarget) {
+  //         message = `Bạn không thể gửi tin nhắn cho ${chat.name} vì bạn đã bị chặn.`;
+  //       } else if (blockStatus.blockedByUser) {
+  //         message = `Bạn không thể gửi tin nhắn cho ${chat.name} vì bạn đã chặn người này.`;
+  //       }
+  //     }
+
+  //     Alert.alert("Thông báo", message);
+  //     return;
+  //   }
+  //   try {
+  //     // Gửi tin nhắn văn bản hoặc reply
+  //     if (inputMessage.trim() || replyMessage) {
+  //       console.log("replyMessage:", replyMessage);
+
+  //       const textMessage = {
+  //         sender_id: user.id,
+  //         receiver_id: chat.id,
+  //         content: inputMessage.trim() || replyMessage.content,
+  //         type: "text",
+  //         chat_type: chat?.chatType === "group" ? "group" : "private",
+  //         reply_to: replyMessage?._id || null,
+  //       };
+
+  //       const apiEndpoint = replyMessage
+  //         ? `${API_iChat}/reply`
+  //         : `${API_iChat}/send-message`;
+
+  //       const textResponse = await axios.post(apiEndpoint, textMessage);
+  //       setMessages((prev) => [...prev, textResponse.data.message]);
+  //       setInputMessage("");
+  //       setReplyMessage(null);
+  //     }
+
+  //     // Gửi hình ảnh hoặc file nếu có
+  //     if (selectedImage || selectedFile) {
+  //       console.log("selectedImage:", selectedImage);
+  //       console.log("selectedFile:", selectedFile);
+
+  //       const formData = new FormData();
+
+  //       if (selectedImage) {
+  //         formData.append("image", {
+  //           uri: selectedImage,
+  //           name: `photo-${Date.now()}.jpg`,
+  //           type: "image/jpeg",
+  //         });
+  //       }
+
+  //       if (selectedFile) {
+  //         formData.append("file", {
+  //           uri: selectedFile.uri,
+  //           name: selectedFile.name,
+  //           type: selectedFile.type,
+  //         });
+  //       }
+
+  //       formData.append("sender_id", user.id);
+  //       formData.append("receiver_id", chat.id);
+  //       formData.append(
+  //         "type",
+  //         selectedImage && selectedFile
+  //           ? "media"
+  //           : selectedImage
+  //           ? "image"
+  //           : "file"
+  //       );
+  //       formData.append(
+  //         "chat_type",
+  //         chat?.chatType === "group" ? "group" : "private"
+  //       );
+  //       formData.append("reply_to", replyMessage ? replyMessage._id : null);
+
+  //       console.log("formData:", formData);
+
+  //       const uploadResponse = await axios.post(
+  //         `${API_iChat}/send-message`,
+  //         formData,
+  //         {
+  //           headers: {
+  //             "Content-Type": "multipart/form-data",
+  //           },
+  //         }
+  //       );
+
+  //       console.log("formData:", formData);
+
+  //       console.log(`${API_iChat}/send-message`);
+
+  //       console.log("Upload Response:", uploadResponse);
+
+  //       if (uploadResponse.data.status === "error") {
+  //         throw new Error(uploadResponse.data.message);
+  //       }
+
+  //       if (uploadResponse.data.message) {
+  //         setMessages((prev) => [...prev, uploadResponse.data.message]);
+  //       }
+
+  //       setSelectedImage(null);
+  //       setSelectedFile(null);
+  //     }
+  //   } catch (error) {
+  //     console.error("Lỗi khi gửi tin nhắn:", error);
+  //     Alert.alert("Lỗi", error.message || "Không thể gửi tin nhắn hoặc tệp.");
+  //   }
+  // };
+
   const sendMessage = async () => {
+    // Kiểm tra trạng thái trò chuyện
+    if (typeChat === "not-friend" || typeChat === "blocked") {
+      let message = "Bạn không thể gửi tin nhắn trong cuộc trò chuyện này.";
+
+      if (typeChat === "blocked") {
+        if (blockStatus.blockedByTarget) {
+          message = `Bạn không thể gửi tin nhắn cho ${chat.name} vì bạn đã bị chặn.`;
+        } else if (blockStatus.blockedByUser) {
+          message = `Bạn không thể gửi tin nhắn cho ${chat.name} vì bạn đã chặn người này.`;
+        }
+      }
+
+      Alert.alert("Thông báo", message);
+      return;
+    }
+
     try {
       // Gửi tin nhắn văn bản hoặc reply
       if (inputMessage.trim() || replyMessage) {
+        console.log("Gửi tin nhắn văn bản/reply...");
+        console.log("replyMessage:", replyMessage);
+
         const textMessage = {
           sender_id: user.id,
           receiver_id: chat.id,
@@ -304,13 +508,20 @@ const Chatting = ({ route }) => {
         setMessages((prev) => [...prev, textResponse.data.message]);
         setInputMessage("");
         setReplyMessage(null);
+        console.log("Gửi tin nhắn văn bản thành công");
       }
 
       // Gửi hình ảnh hoặc file nếu có
       if (selectedImage || selectedFile) {
+        console.log("Chuẩn bị gửi hình ảnh/file...");
+        console.log("selectedImage:", selectedImage);
+        console.log("selectedFile:", selectedFile);
+
         const formData = new FormData();
 
+        // Thêm ảnh vào FormData
         if (selectedImage) {
+          console.log("Selected image path:", selectedImage);
           formData.append("image", {
             uri: selectedImage,
             name: `photo-${Date.now()}.jpg`,
@@ -318,14 +529,16 @@ const Chatting = ({ route }) => {
           });
         }
 
+        // Thêm file vào FormData
         if (selectedFile) {
           formData.append("file", {
             uri: selectedFile.uri,
-            name: selectedFile.name,
-            type: selectedFile.type,
+            name: selectedFile.name || `file-${Date.now()}`,
+            type: selectedFile.type || "application/octet-stream",
           });
         }
 
+        // Thêm các thông tin khác
         formData.append("sender_id", user.id);
         formData.append("receiver_id", chat.id);
         formData.append(
@@ -342,39 +555,105 @@ const Chatting = ({ route }) => {
         );
         formData.append("reply_to", replyMessage ? replyMessage._id : null);
 
+        console.log("Nội dung FormData:");
+        for (let [key, value] of formData) {
+          console.log(`${key}:`, value);
+        }
+
         const uploadResponse = await axios.post(
           `${API_iChat}/send-message`,
           formData,
           {
             headers: {
               "Content-Type": "multipart/form-data",
+              Accept: "application/json",
             },
           }
         );
 
+        console.log("Phản hồi từ server:", uploadResponse.data);
+
+        // Kiểm tra phản hồi từ server
         if (uploadResponse.data.status === "error") {
-          throw new Error(uploadResponse.data.message);
+          throw new Error(uploadResponse.data.message || "Lỗi từ server");
         }
 
+        // Cập nhật danh sách tin nhắn
         if (uploadResponse.data.message) {
           setMessages((prev) => [...prev, uploadResponse.data.message]);
         }
 
+        // Xóa trạng thái ảnh/file sau khi gửi thành công
         setSelectedImage(null);
         setSelectedFile(null);
+        console.log("Gửi hình ảnh/file thành công");
       }
     } catch (error) {
-      console.error("Lỗi khi gửi tin nhắn:", error);
-      Alert.alert("Lỗi", error.message || "Không thể gửi tin nhắn hoặc tệp.");
+      console.error("Lỗi khi gửi tin nhắn/hình ảnh/file:", error);
+      Alert.alert(
+        "Lỗi",
+        error.response?.data?.message ||
+          error.message ||
+          "Không thể gửi tin nhắn hoặc tệp. Vui lòng thử lại."
+      );
     }
   };
 
   const handleForwardMessage = async () => {
+    if (typeChat === "not-friend" || typeChat === "blocked") {
+      let message =
+        "Bạn không thể chuyển tiếp tin nhắn trong cuộc trò chuyện này.";
+
+      if (typeChat === "blocked") {
+        if (blockStatus.blockedByTarget) {
+          message = `Bạn không thể chuyển tiếp tin nhắn vì bạn đã bị chặn.`;
+        } else if (blockStatus.blockedByUser) {
+          message = `Bạn không thể chuyển tiếp tin nhắn vì bạn đã chặn người này.`;
+        }
+      }
+
+      Alert.alert("Thông báo", message);
+      return;
+    }
+
     navigation.navigate("ForwardMessage", {
       message: selectedMessage,
     });
 
     setModalVisible(false);
+  };
+
+  // Hanlde xóa mềm- xóa tin nhắn 1 phía
+  const handleSoftDelete = async () => {
+    if (typeChat === "not-friend" || typeChat === "blocked") {
+      let message = "Bạn không thể xóa tin nhắn trong cuộc trò chuyện này.";
+
+      if (typeChat === "blocked") {
+        if (blockStatus.blockedByTarget) {
+          message = `Bạn không thể xóa tin nhắn vì bạn đã bị chặn.`;
+        } else if (blockStatus.blockedByUser) {
+          message = `Bạn không thể xóa tin nhắn vì bạn đã chặn người này.`;
+        }
+      }
+
+      Alert.alert("Thông báo", message);
+      return;
+    }
+    try {
+      const response = await messageService.softDeleteMessagesForUser(
+        user.id,
+        selectedMessage._id
+      );
+      if (response.data !== null) {
+        setMessages((prevMessages) =>
+          prevMessages.filter((msg) => msg._id !== selectedMessage._id)
+        );
+      }
+    } catch (error) {
+      console.error("Lỗi khi xóa mềm tin nhắn:", error);
+    } finally {
+      setModalVisible(false);
+    }
   };
 
   return (
@@ -441,6 +720,34 @@ const Chatting = ({ route }) => {
           </View>
         </View>
       </View>
+      {typeChat === "blocked" && (
+        <View
+          style={
+            Platform.OS === "ios"
+              ? [styles.blockedContainer, { padding: 10 }]
+              : [styles.blockedContainer, { padding: 5 }]
+          }
+        >
+          <Text style={styles.blockedText}>
+            {blockStatus.blockedByTarget
+              ? `Bạn đã bị ${chat.name} chặn`
+              : `Bạn đã chặn ${chat.name}`}
+          </Text>
+        </View>
+      )}
+      {typeChat === "not-friend" && (
+        <View
+          style={
+            Platform.OS === "ios"
+              ? [styles.blockedContainer, { padding: 10 }]
+              : [styles.blockedContainer, { padding: 5 }]
+          }
+        >
+          <Text style={styles.blockedText}>
+            Bạn không thể gửi tin nhắn trong cuộc trò chuyện này.
+          </Text>
+        </View>
+      )}
 
       {/* Tin nhắn sẽ được hiển thị ở vùng nay */}
       <KeyboardAvoidingView
@@ -589,7 +896,7 @@ const Chatting = ({ route }) => {
                           styles.reactionsContainer,
                           isMyMessage
                             ? styles.reactionsRight
-                            : styles.reactionsLeft,
+                            : styles.reactionsRight,
                         ]}
                       >
                         <TouchableOpacity
@@ -644,7 +951,7 @@ const Chatting = ({ route }) => {
                     <View style={styles.row}>
                       <TouchableOpacity
                         style={styles.actionButton}
-                        onPress={() => console.log("Xóa tin nhắn vĩnh viễn")}
+                        onPress={handleSoftDelete}
                       >
                         <Image
                           source={require("../../assets/icons/delete-message.png")}
@@ -791,7 +1098,7 @@ const Chatting = ({ route }) => {
                         </TouchableOpacity>
                         <TouchableOpacity
                           style={styles.actionButton}
-                          onPress={() => console.log("Xóa tin nhắn vĩnh viễn")}
+                          onPress={handleSoftDelete}
                         >
                           <Image
                             source={require("../../assets/icons/delete-message.png")}
@@ -1143,6 +1450,26 @@ const styles = StyleSheet.create({
   statusText: {
     fontSize: 13,
     color: "#555",
+  },
+  blockedContainer: {
+    backgroundColor: "#f9d7d7",
+    alignItems: "center",
+    borderTopWidth: 1,
+    borderColor: "#e5e5e5",
+  },
+  blockedText: {
+    color: "#d32f2f",
+    fontSize: 14,
+  },
+  notFriendContainer: {
+    backgroundColor: "#f0f0f0",
+    alignItems: "center",
+    borderTopWidth: 1,
+    borderColor: "#e5e5e5",
+  },
+  notFriendText: {
+    color: "#757575",
+    fontSize: 14,
   },
 });
 

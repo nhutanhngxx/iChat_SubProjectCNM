@@ -26,177 +26,6 @@ const SearchScreen = () => {
   const navigation = useNavigation();
   const searchInputRef = useRef(null);
   const { user } = useContext(UserContext);
-
-  const ipAdr = getHostIP();
-  const API_iChat = `http://${ipAdr}:5001/api`;
-
-  // const handleOpenChatting = async (selectedItem) => {
-  //   // Check friendship status first
-  //   try {
-  //     const friendships = await friendService.getFriendListByUserId({
-  //       userId: user.id,
-  //     });
-  //     const isFriend = friendships.some(
-  //       (friend) =>
-  //         friend.id === selectedItem.id || friend._id === selectedItem.id
-  //     );
-
-  //     console.log("isFriend:", isFriend);
-
-  //     if (!isFriend) {
-  //       // Alert.alert(
-  //       //   "Thông báo",
-  //       //   "Bạn cần kết bạn với người này trước khi bắt đầu cuộc trò chuyện",
-  //       //   [{ text: "OK" }]
-  //       // );
-  //       console.log("Không là bạn bè");
-
-  //       return;
-  //     }
-
-  //     try {
-  //       let chatPartnerId, chatPartnerName, chatPartnerAvatar, messageId;
-
-  //       if (selectedItem.content) {
-  //         // Search result is a message
-  //         const isSender = selectedItem.sender_id === user.id;
-  //         chatPartnerId = isSender
-  //           ? selectedItem.receiver_id
-  //           : selectedItem.sender_id;
-  //         messageId = selectedItem.id; // Store message ID for scrolling
-
-  //         // Get user info from the loaded users list
-  //         const chatPartner = users.find((u) => u.id === chatPartnerId);
-  //         chatPartnerName = chatPartner
-  //           ? chatPartner.full_name
-  //           : "Người ẩn danh";
-  //         chatPartnerAvatar =
-  //           chatPartner?.avatar_path ||
-  //           "https://i.ibb.co/9k8sPRMx/best-seller.png";
-  //       } else {
-  //         // Search result is a user
-  //         chatPartnerId = selectedItem.id;
-  //         chatPartnerName = selectedItem.full_name || "Người ẩn danh";
-  //         chatPartnerAvatar =
-  //           selectedItem.avatar_path ||
-  //           "https://i.ibb.co/9k8sPRMx/best-seller.png";
-  //       }
-
-  //       const chat = {
-  //         id: chatPartnerId,
-  //         name: chatPartnerName,
-  //         avatar: { uri: chatPartnerAvatar },
-  //         chatType: "private",
-  //         messageId: messageId || null, // Pass messageId for messages
-  //       };
-
-  //       navigation.navigate("Home", {
-  //         screen: "Messages",
-  //         params: { chat },
-  //       });
-  //     } catch (error) {
-  //       console.error("Error opening chat:", error);
-  //       // Alert.alert("Error", "Unable to open chat. Please try again.");
-  //     }
-  //   } catch (error) {
-  //     console.error("Error checking friendship status:", error);
-  //     // Alert.alert(
-  //     //   "Error",
-  //     //   "Unable to check friendship status. Please try again."
-  //     // );
-  //   }
-  // };
-
-  const handleOpenChatting = async (selectedItem) => {
-    console.log("Đã chọn:", selectedItem);
-
-    try {
-      // Kiểm tra trạng thái bạn bè
-      console.log("Bắt đầu kiểm tra trạng thái bạn bè...");
-      const friendships = await friendService.getFriendListByUserId({
-        userId: user.id,
-      });
-
-      const isFriend = friendships.some(
-        (friend) =>
-          friend.id === selectedItem.id || friend._id === selectedItem.id
-      );
-
-      console.log("Kết quả kiểm tra bạn bè:", isFriend);
-
-      // if (!isFriend) {
-      //   console.log("Không thể mở trò chuyện: Người dùng chưa là bạn bè");
-      //   return;
-      // }
-
-      // Xử lý thông tin đối tác trò chuyện
-      console.log("Xử lý thông tin đối tác trò chuyện...");
-      let chatPartnerId, chatPartnerName, chatPartnerAvatar, messageId;
-
-      if (
-        selectedItem.content &&
-        selectedItem.sender_id &&
-        selectedItem.receiver_id
-      ) {
-        // Đầu vào là tin nhắn
-        console.log("Đầu vào là tin nhắn");
-        const isSender = selectedItem.sender_id === user.id;
-        chatPartnerId = isSender
-          ? selectedItem.receiver_id
-          : selectedItem.sender_id;
-        messageId = selectedItem.id;
-
-        const chatPartner = users.find((u) => u.id === chatPartnerId);
-        chatPartnerName = chatPartner?.full_name || "Người ẩn danh";
-        chatPartnerAvatar =
-          chatPartner?.avatar_path ||
-          "https://i.ibb.co/9k8sPRMx/best-seller.png";
-      } else {
-        // Đầu vào là người dùng
-        console.log("Đầu vào là người dùng");
-        chatPartnerId = selectedItem.id;
-        chatPartnerName = selectedItem.full_name || "Người ẩn danh";
-        chatPartnerAvatar =
-          selectedItem.avatar_path ||
-          "https://i.ibb.co/9k8sPRMx/best-seller.png";
-      }
-
-      // Tạo đối tượng chat
-      console.log("Tạo đối tượng chat và điều hướng...");
-      const chat = {
-        id: chatPartnerId,
-        name: chatPartnerName,
-        avatar: { uri: chatPartnerAvatar },
-        chatType: "private",
-        messageId: messageId || null,
-        lastMessage: "",
-        lastMessageTime: "",
-        time: "",
-        unreadCount: "",
-      };
-
-      console.log("Đối tượng chat:", chat);
-
-      // Điều hướng đến màn hình trò chuyện
-      // navigation.navigate("Home", {
-      //   screen: "Messages",
-      //   params: { chat },
-      // });
-
-      navigation.navigate("Chatting", { chat });
-
-      console.log("Mở trò chuyện thành công");
-    } catch (error) {
-      console.error("Lỗi khi xử lý mở trò chuyện:", error);
-    }
-  };
-
-  useEffect(() => {
-    if (route.params?.autoFocus) {
-      searchInputRef.current?.focus();
-    }
-  }, [route.params]);
-
   const [searchText, setSearchText] = useState("");
   const [index, setIndex] = useState(0);
 
@@ -211,6 +40,129 @@ const SearchScreen = () => {
   const [users, setUsers] = useState([]);
   const [sentRequests, setSentRequests] = useState([]);
   const [listFriend, setListFriend] = useState([]);
+
+  const ipAdr = getHostIP();
+  const API_iChat = `http://${ipAdr}:5001/api`;
+
+  const handleOpenChatting = async (selectedItem) => {
+    try {
+      let chatPartnerId, chatPartnerName, chatPartnerAvatar, messageId;
+
+      console.log("Selected item:", JSON.stringify(selectedItem, null, 2));
+
+      if (selectedItem.content) {
+        // Đây là tin nhắn
+        messageId = selectedItem._id || selectedItem.id;
+
+        // Xử lý trường hợp sender_id và receiver_id có thể là object hoặc string
+        if (typeof selectedItem.sender_id === "object") {
+          const isSender =
+            selectedItem.sender_id._id === user.id ||
+            selectedItem.sender_id.id === user.id;
+          if (isSender) {
+            // Người dùng hiện tại là người gửi
+            chatPartnerId =
+              typeof selectedItem.receiver_id === "object"
+                ? selectedItem.receiver_id._id || selectedItem.receiver_id.id
+                : selectedItem.receiver_id;
+
+            // Tìm thông tin người nhận từ users
+            const receiverUser = users.find(
+              (u) => u.id === chatPartnerId || u._id === chatPartnerId
+            );
+            chatPartnerName = receiverUser
+              ? receiverUser.full_name
+              : "Người dùng";
+            chatPartnerAvatar = receiverUser?.avatar_path;
+          } else {
+            // Người dùng hiện tại là người nhận
+            chatPartnerId =
+              selectedItem.sender_id._id || selectedItem.sender_id.id;
+            chatPartnerName = selectedItem.sender_id.full_name || "Người dùng";
+            chatPartnerAvatar = selectedItem.sender_id.avatar_path;
+          }
+        } else {
+          // sender_id là string
+          const isSender = selectedItem.sender_id === user.id;
+          chatPartnerId = isSender
+            ? selectedItem.receiver_id
+            : selectedItem.sender_id;
+
+          // Tìm thông tin người dùng từ danh sách users
+          const chatPartner = users.find(
+            (u) => u.id === chatPartnerId || u._id === chatPartnerId
+          );
+          chatPartnerName = chatPartner
+            ? chatPartner.full_name
+            : "Người dùng ẩn danh";
+          chatPartnerAvatar = chatPartner?.avatar_path;
+        }
+      } else {
+        // Đây là người dùng
+        chatPartnerId = selectedItem._id || selectedItem.id;
+        chatPartnerName = selectedItem.full_name || "Người dùng ẩn danh";
+        chatPartnerAvatar = selectedItem.avatar_path;
+      }
+
+      // Đảm bảo có avatar mặc định
+      if (!chatPartnerAvatar) {
+        chatPartnerAvatar = "https://i.ibb.co/9k8sPRMx/best-seller.png";
+      }
+
+      const chat = {
+        id: chatPartnerId,
+        name: chatPartnerName,
+        avatar: { uri: chatPartnerAvatar },
+        chatType: "private",
+        messageId: messageId || null,
+      };
+
+      console.log("Prepared chat object:", chat);
+
+      // Kiểm tra trạng thái bạn bè
+      const friendships = await friendService.getFriendListByUserId(user.id);
+      const isFriend = friendships.some(
+        (friend) => friend.id === chatPartnerId || friend._id === chatPartnerId
+      );
+
+      let typeChat = isFriend ? "normal" : "not-friend";
+
+      // Kiểm tra trạng thái chặn - bọc trong try/catch riêng để không làm gián đoạn luồng
+      try {
+        const blockStatus = await friendService.checkBlockStatus(
+          user.id,
+          chatPartnerId
+        );
+        if (blockStatus && blockStatus.isBlocked) {
+          typeChat = "blocked";
+        }
+      } catch (blockError) {
+        console.log("Bỏ qua lỗi kiểm tra chặn:", blockError.message);
+        // Tiếp tục với typeChat đã xác định trước đó
+      }
+
+      // Thông báo nếu không phải bạn bè
+      if (typeChat === "not-friend") {
+        Alert.alert(
+          "Thông báo",
+          "Bạn không phải là bạn bè với người này. Một số tính năng trò chuyện sẽ bị hạn chế.",
+          [{ text: "OK" }]
+        );
+      }
+
+      console.log("Final navigation params:", { chat, typeChat });
+      navigation.navigate("Chatting", { chat, typeChat });
+    } catch (error) {
+      console.error("Error in handleOpenChatting:", error);
+      Alert.alert("Lỗi", "Không thể mở cuộc trò chuyện. Vui lòng thử lại sau.");
+    }
+  };
+
+  useEffect(() => {
+    if (route.params?.autoFocus) {
+      searchInputRef.current?.focus();
+    }
+  }, [route.params]);
 
   const handleResultPress = (item) => {
     saveSearchHistory(searchText); // Lưu lại từ khoá đã dùng
@@ -390,17 +342,6 @@ const SearchScreen = () => {
       } catch (error) {
         console.error("Lỗi tìm kiếm tin nhắn:", error);
       }
-
-      // if (usersResponse.error) {
-      //   setSearchUsers([]);
-      // } else if (
-      //   usersResponse.data?.status === "ok" &&
-      //   Array.isArray(usersResponse.data.users)
-      // ) {
-      //   setSearchUsers(usersResponse.data.users);
-      // } else {
-      //   setSearchUsers([]);
-      // }
 
       if (
         usersResponse.data?.status === "ok" &&

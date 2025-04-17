@@ -10,6 +10,8 @@ import {
   MoreOutlined,
   ExpandOutlined,
   CheckOutlined,
+  PaperClipOutlined,
+  CloseCircleOutlined,
 } from "@ant-design/icons";
 import {
   Popover,
@@ -58,6 +60,8 @@ const MessageInput = ({
   showPickerFromMessArea,
   isExpanded,
   showConversation,
+  replyingTo,
+  clearReplyingTo,
 }) => {
   const [selectedImage, setSelectedImage] = useState(null); // State để lưu ảnh đã chọn
   const [selectedFile, setSelectedFile] = useState(null); // State để lưu file đã chọn
@@ -150,12 +154,25 @@ const MessageInput = ({
       if (selectedFile) {
         console.log("Gửi file:", selectedFile.name);
       }
+      console.log("Tin nhắn văn bản tại input:", replyingTo._id);
 
-      handleSendMessage(inputMessage); // Gửi tin nhắn văn bản nếu có
+      // Call the handleSendMessage with reply info if available
+      handleSendMessage(
+        inputMessage,
+        null,
+        null,
+        inputMessage,
+        replyingTo?._id
+      );
+
+      // handleSendMessage(inputMessage); // Gửi tin nhắn văn bản nếu có
       setSelectedGif(null); // Reset GIF sau khi gửi
       setSelectedImage(null); // Reset ảnh sau khi gửi
       setSelectedFile(null); // Reset file sau khi gửi
       setInputMessage(""); // Reset tin nhắn văn bản
+      if (replyingTo) {
+        clearReplyingTo(); // Xóa thông tin trả lời sau khi gửi
+      }
     }
     showPicker && setShowPicker(false); // Đóng picker nếu đang mở
     showPickerRight && setShowPickerRight(false); // Đóng picker nếu đang mở
@@ -313,6 +330,28 @@ const MessageInput = ({
   }, [showPicker, showPickerRight]); // Depend on both states
   return (
     <div className="message-input-container">
+      {/* Reply Preview */}
+      {replyingTo && (
+        <div className="reply-preview">
+          <div className="reply-preview-content">
+            <div className="reply-preview-icon">↩️</div>
+            <div className="reply-preview-text">
+              <p className="reply-preview-label">Đang trả lời tin nhắn</p>
+              <p className="reply-preview-message">
+                {replyingTo.type === "text"
+                  ? replyingTo.content.substring(0, 50) +
+                    (replyingTo.content.length > 50 ? "..." : "")
+                  : replyingTo.type === "image"
+                  ? "🖼️ Hình ảnh"
+                  : "📎 Tệp đính kèm"}
+              </p>
+            </div>
+          </div>
+          <button className="reply-preview-close" onClick={clearReplyingTo}>
+            <CloseCircleOutlined />
+          </button>
+        </div>
+      )}
       {/* Thanh công cụ trên */}
       <div className="message-toolbar">
         <div style={{ bottom: "102px", position: "absolute", left: "0px" }}>
@@ -474,7 +513,25 @@ const MessageInput = ({
               <SendOutlined style={{ fontSize: "20px" }} />
             </div>
           ) : (
-            <LikeOutlined className="action-icon" />
+            <LikeOutlined
+              className="action-icon"
+              onClick={() => {
+                // Call handleSendMessage with a predefined like message
+                handleSendMessage(
+                  "👍", // Send thumbs up emoji as text
+                  null, // No image
+                  null, // No file
+                  "👍", // Content (same as text)
+                  null // No reply
+                );
+
+                // Play a subtle send sound if you have one
+                // const sendSound = new Audio('/path/to/send-sound.mp3');
+                // sendSound.play();
+
+                console.log("Like message sent!");
+              }}
+            />
           )}
         </div>
       </div>

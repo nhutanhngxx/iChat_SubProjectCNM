@@ -20,7 +20,7 @@ import messageService from "../../services/messageService";
 import friendService from "../../services/friendService";
 
 const Option = ({ route }) => {
-  const API_iChat = `http://${getHostIP()}:5001/api`;
+  // const API_iChat = `http://${getHostIP()}:5001/api`;
   const navigation = useNavigation();
   const { user } = useContext(UserContext); // Lấy thông tin người dùng từ context
   const { id, name, avatar } = route.params || {}; // Nhận id, name, avatar từ route.params
@@ -302,7 +302,7 @@ const Option = ({ route }) => {
               source={require("../../assets/icons/delete-friend.png")}
               style={styles.icon}
             />
-            <Text style={styles.title}>Hủy kết bạn</Text>
+            <Text style={styles.title}>Xóa khỏi danh sách bạn bè</Text>
           </TouchableOpacity>
           {/* 7 */}
           <TouchableOpacity

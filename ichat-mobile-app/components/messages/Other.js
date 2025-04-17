@@ -6,6 +6,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   FlatList,
+  Alert,
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { UserContext } from "../../config/context/UserContext";
@@ -15,6 +16,7 @@ import messageService from "../../services/messageService";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import "dayjs/locale/vi";
+import friendService from "../../services/friendService";
 
 dayjs.extend(relativeTime);
 dayjs.locale("vi");
@@ -30,6 +32,7 @@ const Priority = () => {
   const [chatList, setChatList] = useState([]);
   const [groupList, setGroupList] = useState([]);
   const [allUser, setAllUser] = useState([]);
+  const [friendList, setFriendList] = useState([]);
 
   // Nhận selectedChat từ SearchScreen
   const selectedChat = route.params?.selectedChat;
@@ -42,6 +45,8 @@ const Priority = () => {
     const fetchUsers = async () => {
       try {
         const response = await userService.getAllUser();
+        const friends = await friendService.getFriendListByUserId(user.id);
+        setFriendList(friends);
         if (response) {
           setAllUser(response);
         }
@@ -55,38 +60,91 @@ const Priority = () => {
   // Lọc lại dữ liệu tin nhắn theo từng người dùng
   const formatChatList = (messages, allUser) => {
     if (!Array.isArray(messages)) return [];
+    if (!Array.isArray(friendList) || friendList.length === 0) return [];
+    if (!Array.isArray(groupList) || groupList.length === 0) return [];
+
     const chatMap = new Map();
+
     messages.forEach((msg) => {
       if (msg.chat_type === "private") {
         const chatUserId =
           msg.sender_id === user.id ? msg.receiver_id : msg.sender_id;
-        const chatUser = allUser.find((u) => u._id === chatUserId);
-        const fullName = chatUser ? chatUser.full_name : "Người dùng ẩn danh";
-        const avatarPath =
-          chatUser?.avatar_path || "https://i.ibb.co/9k8sPRMx/best-seller.png";
-        const lastMessageTime = new Date(msg.timestamp).getTime();
-        const timeDiff = getTimeAgo(lastMessageTime);
-        if (
-          !chatMap.has(chatUserId) ||
-          lastMessageTime > chatMap.get(chatUserId).lastMessageTime
-        ) {
-          chatMap.set(chatUserId, {
-            id: chatUserId,
-            name: fullName,
-            lastMessage:
-              msg.type === "image"
-                ? "Hình ảnh"
-                : msg.type === "file"
-                ? "Tệp đính kèm"
-                : msg.content,
-            lastMessageTime: lastMessageTime,
-            time: timeDiff,
-            avatar: { uri: avatarPath },
-            chatType: "private",
-          });
+
+        const isFriend = friendList.some(
+          (friend) => friend.id === chatUserId || friend._id === chatUserId
+        );
+
+        if (!isFriend) {
+          const chatUser = allUser.find((u) => u._id === chatUserId);
+          const fullName = chatUser ? chatUser.full_name : "Người dùng ẩn danh";
+          const avatarPath =
+            chatUser?.avatar_path ||
+            "https://i.ibb.co/9k8sPRMx/best-seller.png";
+          const lastMessageTime = new Date(msg.timestamp).getTime();
+          const timeDiff = getTimeAgo(lastMessageTime);
+
+          if (
+            !chatMap.has(chatUserId) ||
+            lastMessageTime > chatMap.get(chatUserId).lastMessageTime
+          ) {
+            chatMap.set(chatUserId, {
+              id: chatUserId,
+              name: fullName,
+              lastMessage:
+                msg.type === "image"
+                  ? "Hình ảnh"
+                  : msg.type === "file"
+                  ? "Tệp đính kèm"
+                  : msg.content,
+              lastMessageTime: lastMessageTime,
+              time: timeDiff,
+              avatar: { uri: avatarPath },
+              chatType: "private",
+            });
+          }
         }
       }
+
+      // if (msg.chat_type === "group") {
+      //   const groupId = msg.receiverId;
+      //   const isCurrentMember = groupList.some(
+      //     (group) => group.id === groupId || group._id === groupId
+      //   );
+
+      //   if (!isCurrentMember) {
+      //     // console.log("Group ID:", groupId);
+
+      //     // Tìm thông tin nhóm từ tin nhắn
+      //     const groupName = msg.group_name || "Nhóm không xác định";
+      //     const groupAvatar =
+      //       msg.group_avatar || "https://i.ibb.co/9k8sPRMx/best-seller.png";
+      //     // const lastMessageTime = new Date(msg.timestamp).getTime();
+      //     // const timeDiff = getTimeAgo(lastMessageTime);
+
+      //     if (
+      //       !chatMap.has(groupId)
+      //       // ||
+      //       // lastMessageTime > chatMap.get(groupId).lastMessageTime
+      //     ) {
+      //       chatMap.set(groupId, {
+      //         id: groupId,
+      //         name: groupName,
+      //         lastMessage:
+      //           msg.type === "image"
+      //             ? "Hình ảnh"
+      //             : msg.type === "file"
+      //             ? "Tệp đính kèm"
+      //             : msg.content,
+      //         // lastMessageTime: lastMessageTime,
+      //         // time: timeDiff,
+      //         avatar: { uri: groupAvatar },
+      //         chatType: "group",
+      //       });
+      //     }
+      //   }
+      // }
     });
+
     return Array.from(chatMap.values());
   };
 
@@ -169,9 +227,40 @@ const Priority = () => {
     }
   };
 
-  const handleOpenChatting = (chat) => {
+  const handleOpenChatting = async (chat) => {
     markMessagesAsViewed(chat.id);
-    navigation.navigate("Chatting", { chat });
+    if (chat.chatType === "private") {
+      try {
+        const blockStatus = await friendService.checkBlockStatus(
+          user.id,
+          chat.id
+        );
+
+        // Xác định typeChat dựa trên trạng thái chặn
+        let typeChat = "friend";
+
+        if (blockStatus.isBlocked) {
+          typeChat = "blocked";
+        } else {
+          // Kiểm tra xem có phải bạn bè không
+          const isFriend = friendList.some(
+            (friend) => friend.id === chat.id || friend._id === chat.id
+          );
+
+          if (!isFriend) {
+            typeChat = "not-friend";
+          }
+        }
+
+        navigation.navigate("Chatting", { chat, typeChat });
+      } catch (error) {
+        console.error("Lỗi kiểm tra trạng thái chặn:", error);
+        navigation.navigate("Chatting", { chat });
+      }
+    } else {
+      // Nếu là nhóm chat, mở bình thường
+      navigation.navigate("Chatting", { chat });
+    }
   };
 
   const renderItem = ({ item }) => {
@@ -185,7 +274,7 @@ const Priority = () => {
           {item.avatar && <Image source={item.avatar} style={styles.avatar} />}
           <View>
             <Text style={styles.name}>{item.name}</Text>
-            <Text>{item.lastMessage}</Text>
+            <Text style={{}}>{item.lastMessage}</Text>
           </View>
         </View>
         <View>
@@ -197,7 +286,7 @@ const Priority = () => {
 
   return (
     <View style={styles.wrapper}>
-      {listChat.length === 0 ? (
+      {chatList.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyText}>
             Hiện không có cuộc trò chuyện nào.
@@ -205,7 +294,7 @@ const Priority = () => {
         </View>
       ) : (
         <FlatList
-          data={listChat}
+          data={chatList}
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => renderItem({ item })}
           showsVerticalScrollIndicator={true}

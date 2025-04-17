@@ -3,6 +3,20 @@ import axios from "axios";
 
 const API_URL = `http://${window.location.hostname}:5001/api/users`;
 
+export const searchUsersByPhone = createAsyncThunk(
+  "user/searchUsersByPhone",
+  async (phone, { rejectWithValue }) => {
+    try {
+      const res = await axios.get(
+        `${API_URL}?search=${encodeURIComponent(phone)}`
+      );
+      return res.data.users;
+    } catch (err) {
+      return rejectWithValue(err.response?.data || err.message);
+    }
+  }
+);
+
 // Thunk để cập nhật thông tin người dùng
 export const updateUser = createAsyncThunk(
   "user/updateUser",

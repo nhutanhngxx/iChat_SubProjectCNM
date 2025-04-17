@@ -80,6 +80,7 @@ const MessageModel = {
     type,
     chat_type,
     file,
+    reply_to,
   }) => {
     if (!sender_id || !receiver_id || !chat_type || (!content && !file)) {
       throw { status: 400, message: "Thiếu dữ liệu" };
@@ -97,6 +98,7 @@ const MessageModel = {
       content: messageContent,
       type,
       chat_type,
+      reply_to,
     });
 
     await newMessage.save();
@@ -275,6 +277,22 @@ const MessageModel = {
 
     await newMessage.save();
     return newMessage;
+  },
+
+  // "Soft delete" - chỉ đánh dấu xóa cho User hiện tại
+  softDeleteMessagesForUser: async (userId, messageId) => {
+    // Cập nhật chỉ 1 tin nhắn duy nhất nếu chưa chứa userId trong isdelete
+    await Messages.updateOne(
+      { _id: messageId, isdelete: { $ne: userId } },
+      { $push: { isdelete: userId } }
+    );
+
+    // Trả về tin nhắn vừa cập nhật (nếu vẫn còn hiển thị cho user đó)
+    const message = await Messages.findOne({
+      _id: messageId,
+    });
+
+    return message; // hoặc return null nếu user đã xóa
   },
 };
 

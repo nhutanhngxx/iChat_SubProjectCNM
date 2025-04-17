@@ -26,10 +26,20 @@ module.exports = (io) => {
       console.log(` Deleted all messages in room: ${chatId}`);
     });
     // Thu hồi tin nhắn
-    socket.on("recall-message", ({ chatId, messageId, senderId }) => {
-      io.to(chatId).emit("message-recalled", { chatId, messageId, senderId });
-      console.log(` Message ${messageId} recalled in room: ${chatId}`);
+    socket.on("recall-message", (data) => {
+      console.log(" recall-message data:", data); // check chatId
+      const { chatId, messageId, senderId, newContent } = data;
+
+      io.to(chatId).emit("message-recalled", {
+        chatId,
+        messageId,
+        senderId,
+        newContent,
+      });
+
+      console.log(`Message ${messageId} recalled in room: ${chatId}`);
     });
+
     // Thêm reaction
     socket.on("add-reaction", ({ chatId, messageId, userId, reaction }) => {
       io.to(chatId).emit("reaction-added", {
