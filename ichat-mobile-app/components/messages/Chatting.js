@@ -753,7 +753,7 @@ const Chatting = ({ route }) => {
                           styles.reactionsContainer,
                           isMyMessage
                             ? styles.reactionsRight
-                            : styles.reactionsLeft,
+                            : styles.reactionsRight,
                         ]}
                       >
                         <TouchableOpacity
