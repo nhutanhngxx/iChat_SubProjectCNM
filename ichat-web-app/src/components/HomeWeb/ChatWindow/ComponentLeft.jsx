@@ -101,7 +101,7 @@ dayjs.extend(localizedFormat);
 // Component ChatItem: Render từng mục trong danh sách chat
 const ChatItem = ({ item, onSelectUser, onPin }) => {
   const [isClicked, setIsClicked] = useState(false);
-  console.log("Item từ componetnLeft",item);
+  console.log("Item từ componetnLeft", item);
   console.log(typeof item.isLastMessageFromMe, item.isLastMessageFromMe);
 
   // Tính thời gian từ timestamp
@@ -148,7 +148,7 @@ const ChatItem = ({ item, onSelectUser, onPin }) => {
           <Col>
             <div className="time-and-more-container" onClick={(e) => e.stopPropagation()} >
               <Dropdown overlay={<MenuMdMoreHoriz onPin={() => onPin(item.id)} />} trigger={["click"]} >
-                <MdMoreHoriz className="md-more-horiz-icon"   />
+                <MdMoreHoriz className="md-more-horiz-icon" />
               </Dropdown>
               <span className="chat-time">{formatTime(item.time)}</span>
             </div>
@@ -164,14 +164,13 @@ const ChatItem = ({ item, onSelectUser, onPin }) => {
               {item.type === "video" && <VideoCameraOutlined />}
               {item.type === "audio" && <PhoneOutlined />}
               {item.type === "notification" && <NotificationOutlined />}
-              {`${item.isLastMessageFromMe === true ? "Bạn: " : `${item.name}: `}${
-                item.type === "image"
-                  ? "Đã gửi một ảnh"
-                  : item.type === "file"
+              {`${item.isLastMessageFromMe === true ? "Bạn: " : `${item.name}: `}${item.type === "image"
+                ? "Đã gửi một ảnh"
+                : item.type === "file"
                   ? "Đã gửi một tệp tin"
                   : item.lastMessage?.length > 30
-                  ? item.lastMessage.slice(0, 30) + "..."
-                  : item.lastMessage || "Tin nhắn trống"
+                    ? item.lastMessage.slice(0, 30) + "..."
+                    : item.lastMessage || "Tin nhắn trống"
                 }`}
 
 
@@ -297,13 +296,13 @@ const ComponentLeft = ({ userList, setUserList, onSelectUser }) => {
     <div>
       {showInterface ? (
         <ComponentLeftSearch
-          onClose={handleClose}
+          onClose={() => setShowInterface(false)}
           userList={userList}
           onSelectUser={onSelectUser}
         />
       ) : (
         <Layout className="chat-sidebar">
-          <SearchBar onFocus={handleFocus} />
+          <SearchBar onFocus={() => setShowInterface(true)} />
           {/* <ChatList filteredChatList={userList} onSelectUser={onSelectUser} /> */}
           <div className="conversations-container">
             <div className="classification-conversation-container">

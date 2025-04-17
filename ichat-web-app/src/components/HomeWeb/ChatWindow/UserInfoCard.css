@@ -1,0 +1,66 @@
+.user-info-card {
+  margin-top: 20px;
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.user-header {
+  text-align: center;
+  padding: 20px;
+  background: #f5f5f5;
+  position: relative;
+}
+
+.cover-photo {
+  height: 100px;
+  background: #e0e0e0;
+  margin: -20px -20px 0;
+}
+
+.user-avatar {
+  margin-top: -40px;
+  border: 4px solid white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.user-name {
+  margin: 10px 0 5px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+}
+
+.join-date {
+  color: #666;
+  font-size: 14px;
+  margin: 0;
+}
+
+.user-actions {
+  padding: 15px;
+  display: grid;
+  gap: 10px;
+}
+
+.user-details {
+  padding: 15px;
+  border-top: 1px solid #e8e8e8;
+}
+
+.detail-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  padding: 4px 0;
+}
+
+.label {
+  color: #666;
+}
+
+.value {
+  font-weight: 500;
+  color: #333;
+}
