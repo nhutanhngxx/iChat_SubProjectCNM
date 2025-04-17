@@ -15,10 +15,14 @@ import {
   fetchMessages,
   updateMessages,
   handleSoftDelete,
+  addReactionToMessage,
+  removeReactionFromMessage,
 } from "../../../redux/slices/messagesSlice";
 import { useDispatch } from "react-redux";
 import socket from "../../services/socket";
 import { getUserFriends } from "../../../redux/slices/friendSlice";
+import { SmileOutlined } from "@ant-design/icons";
+import { Tooltip, Popover } from "antd";
 
 // import { LikeOutlined, CheckOutlined } from "@ant-design/icons";
 
@@ -98,7 +102,8 @@ const Message = ({
       console.log("Is friend with receiver:", result);
     }
   }, [friends, selectedChat]);
-
+  // State reaction
+  const [showReactionPicker, setShowReactionPicker] = useState(false);
   // Function to send friend request
   const handleSendFriendRequest = async () => {
     try {
@@ -294,23 +299,7 @@ const Message = ({
   }, [contextMenuVisible]);
   // Handler functions for message actions
   const handleReply = () => {
-    // Implement reply functionality
     console.log("Reply to message:", message);
-    // try {
-    //   const key = "replyMessage";
-    //   antMessage.loading({ content: "Đang trả lời tin nhắn...", key });
-    //   // Call the replyToMessage action
-    //   const result = await dispatch(
-    //     replyToMessage({
-    //       sender_id: user._id || user.id,
-    //       receiver_id: message.receiver_id,
-    //       content,
-    //       type,
-    //       chat_type,
-    //       reply_to,
-    //     })
-    //   );
-    // } catch (error) {}
     onReplyToMessage(message);
     closeContextMenu();
   };
@@ -377,10 +366,107 @@ const Message = ({
     closeContextMenu();
   };
 
-  const handleReaction = (reaction) => {
-    // Implement reaction functionality
-    console.log("React with", reaction, "to message:", message._id);
-    closeContextMenu();
+  const handleReaction = async (reaction) => {
+    try {
+      if (isInteractionDisabled && !isSender) {
+        return; // Don't allow reactions if interaction is disabled
+      }
+
+      const userId = user._id || user.id;
+
+      // Check if user has THIS SPECIFIC reaction already
+      const existingReaction = message.reactions?.find(
+        (r) => r.user_id === userId && r.reaction_type === reaction
+      );
+
+      if (existingReaction) {
+        // User clicked a reaction they already added - remove only this specific reaction
+        await dispatch(
+          removeReactionFromMessage({
+            messageId: message._id,
+            userId: userId,
+            reaction_type: reaction, // Pass the specific reaction to remove
+          })
+        ).unwrap();
+
+        antMessage.success({
+          content: `Đã bỏ biểu cảm ${getReactionEmoji(reaction)}`,
+          duration: 1,
+        });
+      } else {
+        // Add new reaction (without removing existing ones)
+        await dispatch(
+          addReactionToMessage({
+            messageId: message._id,
+            user_id: userId,
+            reaction_type: reaction,
+          })
+        ).unwrap();
+
+        antMessage.success({
+          content: `Đã thêm biểu cảm ${getReactionEmoji(reaction)}`,
+          duration: 1,
+        });
+      }
+
+      // Notify other clients via socket
+      const userIds = [user.id, selectedChat.id].sort();
+      const roomId = `chat_${userIds[0]}_${userIds[1]}`;
+
+      socket.emit("message-reaction", {
+        chatId: roomId,
+        messageId: message._id,
+        userId: userId,
+        reaction_type: reaction,
+        action: existingReaction ? "remove" : "add",
+      });
+
+      console.log(
+        `${
+          existingReaction ? "Removed" : "Added"
+        } reaction ${reaction} for message:`,
+        message._id
+      );
+
+      // Close menus
+      closeContextMenu();
+      setShowReactionPicker(false);
+    } catch (error) {
+      antMessage.error("Không thể thực hiện biểu cảm. Vui lòng thử lại.");
+      console.error("Error handling reaction:", error);
+    }
+  };
+  const getReactionEmoji = (type) => {
+    const map = {
+      like: "👍",
+      love: "❤️",
+      haha: "😂",
+      wow: "😮",
+      sad: "😢",
+      angry: "😠",
+    };
+    return map[type] || type; // Return the type if not in map (for direct emoji usage)
+  };
+
+  // Helper function to check if user has reacted with a specific reaction
+  const hasUserReacted = (reaction_type) => {
+    if (!message.reactions) return false;
+    const userId = user._id || user.id;
+    return message.reactions.some(
+      (r) => r.reaction_type === reaction_type && r.user_id === userId
+    );
+  };
+
+  // Helper function to count reactions by type
+  const countReactions = () => {
+    if (!message.reactions || !Array.isArray(message.reactions)) return {};
+
+    // Group reactions by type and count them
+    return message.reactions.reduce((counts, reaction) => {
+      const type = reaction.reaction_type;
+      counts[type] = (counts[type] || 0) + 1;
+      return counts;
+    }, {});
   };
   // xử lý cả menu ngữ cảnh và menu ba chấm
   useEffect(() => {
@@ -492,26 +578,6 @@ const Message = ({
     }
 
     return (
-      // <div
-      //   className="replied-message"
-      //   style={{ width: "fit-content", maxWidth: "80%" }}
-      // >
-      //   <div className="replied-content">
-      //     {repliedMessage.type === "text" ? (
-      //       <p className="replied-text">
-      //         Đã trả lời tin nhắn <br></br> {repliedMessage.content}
-      //       </p>
-      //     ) : repliedMessage.type === "image" ? (
-      //       <div className="replied-image">
-      //         <img src={repliedMessage.content} alt="replied" width="50" />
-      //       </div>
-      //     ) : repliedMessage.type === "file" ? (
-      //       <p className="replied-file">📄 File</p>
-      //     ) : (
-      //       <p>Unsupported reply type</p>
-      //     )}
-      //   </div>
-      // </div>
       <div className="replied-message">
         <div className="replied-content">
           {repliedMessage.type === "text" ? (
@@ -546,35 +612,29 @@ const Message = ({
     }
   }, [message, allMessages]);
   console.log("Kiểm tra isFriendWithReceiver:", isFriendWithReceiver);
+  // Add this to your existing useEffect socket setup
+  useEffect(() => {
+    if (!selectedChat?.id || !user?.id) return;
+
+    const userIds = [user.id, selectedChat.id].sort();
+    const roomId = `chat_${userIds[0]}_${userIds[1]}`;
+
+    // Handle reaction updates from other users
+    const handleMessageReaction = (data) => {
+      if (data.messageId) {
+        // Fetch updated messages to get the latest reaction data
+        dispatch(fetchMessages(user.id));
+      }
+    };
+
+    socket.on("message-reaction-update", handleMessageReaction);
+
+    return () => {
+      socket.off("message-reaction-update", handleMessageReaction);
+    };
+  }, [selectedChat?.id, user?.id, dispatch]);
   return (
     <>
-      {/* {!isFriendWithReceiver && !isSender && (
-        <div className="not-friend-banner">
-          <Alert
-            message="Hai bạn chưa là bạn bè"
-            description="Kết bạn để mở khóa tính năng tin nhắn đầy đủ."
-            type="warning"
-            showIcon
-            action={
-              friendRequestSent ? (
-                <Button size="small" disabled>
-                  Đã gửi lời mời
-                </Button>
-              ) : (
-                <Button
-                  type="primary"
-                  size="small"
-                  icon={<UserAddOutlined />}
-                  onClick={handleSendFriendRequest}
-                >
-                  Kết bạn
-                </Button>
-              )
-            }
-            className="not-friend-alert"
-          />
-        </div>
-      )} */}
       {!isFriendWithReceiver && !isSender && (
         <div className="not-friend-banner">
           <Alert
@@ -631,7 +691,6 @@ const Message = ({
         )}
 
         <div className="message-column">
-          {/* <RepliedMessage reply={message.reply_to} /> */}
           {message.reply_to && <RepliedMessage reply={message.reply_to} />}
           {message.type === "image" ? (
             <>
@@ -722,10 +781,30 @@ const Message = ({
               </span>
             </div>
           )}
+          {/* Display reactions */}
+          {message.reactions && message.reactions.length > 0 && (
+            <div className="message-reactions">
+              {Object.entries(countReactions()).map(([type, count]) => (
+                <Tooltip
+                  key={type}
+                  title={`${count} người đã bày tỏ ${getReactionEmoji(type)}`}
+                >
+                  <span
+                    className={`reaction-badge ${
+                      hasUserReacted(type) ? "user-reacted" : ""
+                    }`}
+                    onClick={() => handleReaction(type)}
+                  >
+                    {getReactionEmoji(type)} {count}
+                  </span>
+                </Tooltip>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Hover actions overlay */}
-        {isHovered && (isInteractionDisabled || isSender) && (
+        {isHovered && !isInteractionDisabled && (
           <>
             <div className="message-actions-overlay">
               <button
@@ -758,22 +837,93 @@ const Message = ({
                 <MoreOutlined />
               </button>
             </div>
-            <div className="reaction-icons">
+            {/* <div className="reaction-icons">
               <span onClick={() => handleReaction("👍")} title="Like">
                 <LikeOutlined />
               </span>
-              {/* <span onClick={() => handleReaction("❤️")} title="Love">
-              ❤️
-            </span>
-            <span onClick={() => handleReaction("😂")} title="Laugh">
-              😂
-            </span> */}
+              
+            </div> */}
+            <div className="reaction-icons">
+              <Popover
+                content={
+                  <div className="reaction-picker">
+                    <Tooltip title="Thích">
+                      <span
+                        className={`reaction-option ${
+                          hasUserReacted("like") ? "active" : ""
+                        }`}
+                        onClick={() => handleReaction("like")}
+                      >
+                        👍
+                      </span>
+                    </Tooltip>
+                    <Tooltip title="Yêu thích">
+                      <span
+                        className={`reaction-option ${
+                          hasUserReacted("love") ? "active" : ""
+                        }`}
+                        onClick={() => handleReaction("love")}
+                      >
+                        ❤️
+                      </span>
+                    </Tooltip>
+                    <Tooltip title="Haha">
+                      <span
+                        className={`reaction-option ${
+                          hasUserReacted("haha") ? "active" : ""
+                        }`}
+                        onClick={() => handleReaction("haha")}
+                      >
+                        😂
+                      </span>
+                    </Tooltip>
+                    <Tooltip title="Wow">
+                      <span
+                        className={`reaction-option ${
+                          hasUserReacted("wow") ? "active" : ""
+                        }`}
+                        onClick={() => handleReaction("wow")}
+                      >
+                        😮
+                      </span>
+                    </Tooltip>
+                    <Tooltip title="Buồn">
+                      <span
+                        className={`reaction-option ${
+                          hasUserReacted("sad") ? "active" : ""
+                        }`}
+                        onClick={() => handleReaction("sad")}
+                      >
+                        😢
+                      </span>
+                    </Tooltip>
+                    <Tooltip title="Giận">
+                      <span
+                        className={`reaction-option ${
+                          hasUserReacted("angry") ? "active" : ""
+                        }`}
+                        onClick={() => handleReaction("angry")}
+                      >
+                        😠
+                      </span>
+                    </Tooltip>
+                  </div>
+                }
+                trigger="hover"
+                placement="top"
+                open={showReactionPicker}
+                onOpenChange={setShowReactionPicker}
+              >
+                <span className="reaction-trigger" title="Thêm biểu cảm">
+                  <SmileOutlined />
+                </span>
+              </Popover>
             </div>
           </>
         )}
 
         {/* Three dots menu */}
-        {threeDotsMenuVisible && (isInteractionDisabled || isSender) && (
+        {threeDotsMenuVisible && !isInteractionDisabled && (
           <div className="three-dots-menu">
             <button onClick={handleReply}>Trả lời</button>
             <button onClick={handleShare}>Chia sẻ</button>
@@ -788,7 +938,7 @@ const Message = ({
         )}
 
         {/* Context Menu (on right-click) */}
-        {contextMenuVisible && (isInteractionDisabled || isSender) && (
+        {contextMenuVisible && !isInteractionDisabled && (
           <div className="context-menu">
             <button onClick={handleReply}>Trả lời</button>
             <button onClick={handleShare}>Chia sẻ</button>

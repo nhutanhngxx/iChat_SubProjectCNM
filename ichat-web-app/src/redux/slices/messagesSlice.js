@@ -169,6 +169,62 @@ export const replyToMessage = createAsyncThunk(
     }
   }
 );
+// Cập nhật reacation cho tin nhắn
+export const addReactionToMessage = createAsyncThunk(
+  "messages/addReaction",
+  async ({ messageId, user_id, reaction_type }, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${API_URL}${messageId}/reactions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ user_id, reaction_type }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        return rejectWithValue(errorData);
+      }
+
+      const data = await response.json();
+      return data.updatedMessage;
+    } catch (error) {
+      return rejectWithValue({
+        error: "Network error",
+        details: error.message,
+      });
+    }
+  }
+);
+
+// Xoá reaction cho tin nhắn
+export const removeReactionFromMessage = createAsyncThunk(
+  "messages/removeReaction",
+  async ({ messageId, userId }, { rejectWithValue }) => {
+    try {
+      const response = await fetch(
+        `${API_URL}${messageId}/reactions/${userId}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        return rejectWithValue(errorData);
+      }
+
+      const data = await response.json();
+      return data.updatedMessage;
+    } catch (error) {
+      return rejectWithValue({
+        error: "Network error",
+        details: error.message,
+      });
+    }
+  }
+);
 
 const messagesSlice = createSlice({
   name: "messages",
@@ -359,6 +415,59 @@ const messagesSlice = createSlice({
       .addCase(replyToMessage.rejected, (state, action) => {
         state.status = "failed";
         state.error = action.payload?.error || "Something went wrong";
+      })
+      .addCase(addReactionToMessage.pending, (state) => {
+        state.status = "loading";
+      })
+      .addCase(addReactionToMessage.fulfilled, (state, action) => {
+        state.status = "succeeded";
+
+        // Find and update the message with new reaction data
+        const updatedMessage = action.payload;
+        const messageIndex = state.chatMessages.findIndex(
+          (msg) => msg._id === updatedMessage._id
+        );
+
+        if (messageIndex !== -1) {
+          state.chatMessages[messageIndex] = {
+            ...state.chatMessages[messageIndex],
+            reactions: updatedMessage.reactions,
+          };
+          console.log(
+            `✅ Updated message ${updatedMessage._id} with new reactions`
+          );
+        }
+      })
+      .addCase(addReactionToMessage.rejected, (state, action) => {
+        state.status = "failed";
+        state.error = action.payload?.error || "Failed to add reaction";
+        console.error("Failed to add reaction:", action.payload);
+      })
+
+      .addCase(removeReactionFromMessage.pending, (state) => {
+        state.status = "loading";
+      })
+      .addCase(removeReactionFromMessage.fulfilled, (state, action) => {
+        state.status = "succeeded";
+
+        // Tìm và cập nhật tin nhắn với dữ liệu reaction mới
+        const updatedMessage = action.payload;
+        const messageIndex = state.chatMessages.findIndex(
+          (msg) => msg._id === updatedMessage._id
+        );
+
+        if (messageIndex !== -1) {
+          state.chatMessages[messageIndex] = {
+            ...state.chatMessages[messageIndex],
+            reactions: updatedMessage.reactions,
+          };
+          console.log(`✅ Removed reaction from message ${updatedMessage._id}`);
+        }
+      })
+      .addCase(removeReactionFromMessage.rejected, (state, action) => {
+        state.status = "failed";
+        state.error = action.payload?.error || "Failed to remove reaction";
+        console.error("Failed to remove reaction:", action.payload);
       });
   },
 });
