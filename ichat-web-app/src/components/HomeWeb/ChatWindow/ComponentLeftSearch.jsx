@@ -196,22 +196,23 @@ const formatDate = (date) => {
 };
 
 // Component RecentlySearched
-const RecentlySearched = ({ filteredRecentlyUser, handleDelete }) => (
+const RecentlySearched = ({ filteredRecentlyUser, handleDelete,handleUserSelect }) => (
   <div>
     <div className="title-chat-sidebar">Tìm gần đây</div>
     <Content className="chat-list">
       <List
         itemLayout="horizontal"
         dataSource={filteredRecentlyUser}
-        renderItem={(item) => renderItemRecently(item, handleDelete)}
+        renderItem={(item) => renderItemRecently(item, handleDelete,handleUserSelect)}
       />
     </Content>
   </div>
 );
 
 // Hàm renderItemRecently
-const renderItemRecently = (item, handleDelete) => (
-  <List.Item className="list-item">
+const renderItemRecently = (item, handleDelete,handleUserSelect) => (
+  <List.Item className="list-item" onClick={() => handleUserSelect(item)}
+  style={{ cursor: 'pointer' }}>
     <div className="avatar-container">
       <Avatar size={48} src={item.avatar_path} />
     </div>
@@ -220,7 +221,11 @@ const renderItemRecently = (item, handleDelete) => (
     </div>
     <div
       className="delete-button"
-      onClick={() => handleDelete(item.receiver_id)}
+      // onClick={() => handleDelete(item.receiver_id)}
+      onClick={(e) => {
+        e.stopPropagation(); // Prevent triggering the List.Item onClick
+        handleDelete(item.receiver_id);
+      }}
     >
       <CloseOutlined />
     </div>
@@ -862,6 +867,14 @@ const handleUserSelect = (selectedUser) => {
     senderId: currentUser.id,      // Current logged-in user
     receiverId: selectedUser.id    // User selected from search
   }));
+   // Create a properly formatted object for the chat header
+   const formattedChat = {
+    id: selectedUser.id,
+    name: selectedUser.name, 
+    avatar_path: selectedUser.avatar || selectedUser.avatar_path,
+    receiver_id: selectedUser.id,
+    // Add any other properties needed by your UI
+  };
   
   // Update the UI to show this chat (using prop passed from parent)
   if (typeof onSelectChat === 'function') {
@@ -885,7 +898,7 @@ const handleUserSelect = (selectedUser) => {
       <Menu.Item key="search">
         <Input
           prefix={<SearchOutlined />}
-          placeholder="Tìm kiếm"
+          placeholder="Tìm kiếm "
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
           onClick={(e) => e.stopPropagation()} // Prevent menu from closing when clicking input
@@ -897,7 +910,7 @@ const handleUserSelect = (selectedUser) => {
         )
         .map((user) => (
           <Menu.Item key={user.id}  onClick={() => handleUserSelect(user)}>
-            <Avatar src={user.avatar} size={24} /> {user.name} aloooo
+            <Avatar src={user.avatar} size={24} /> {user.name} 
           </Menu.Item>
         ))}
     </Menu>
@@ -934,6 +947,7 @@ const handleUserSelect = (selectedUser) => {
         <RecentlySearched
           filteredRecentlyUser={filteredRecentlyUser}
           handleDelete={handleDelete}
+          handleUserSelect={handleUserSelect} 
         />
       ) : (
         <SearchResults

@@ -600,6 +600,7 @@ const CreateGroupModal = ({ visible, onCancel, onOk }) => {
 //     },
 //   ],
 // };
+// At the top of your component
 
 const MessageArea = ({ selectedChat, user }) => {
   const dispatch = useDispatch();
@@ -615,6 +616,7 @@ const MessageArea = ({ selectedChat, user }) => {
   const [modalVisible, setModalVisible] = useState(false);
   // Trả lời tin nhắn
   const [replyingTo, setReplyingTo] = useState(null);
+
   //  handler function
   const handleReplyToMessage = (messageToReply) => {
     setReplyingTo(messageToReply);
@@ -624,6 +626,7 @@ const MessageArea = ({ selectedChat, user }) => {
   const clearReplyingTo = () => {
     setReplyingTo(null);
   };
+
   const handleShowSearchRight = () => {
     setShowSearchRight(!showSearchRight);
     setShowConversation(false);
@@ -652,7 +655,14 @@ const MessageArea = ({ selectedChat, user }) => {
     handleExpandContract();
   };
   console.log(handleExpandContract);
-
+  // At the top of your MessageArea component
+  useEffect(() => {
+    console.log("MessageArea received selectedChat:", selectedChat);
+    // Log specific properties we expect in the header
+    console.log("Avatar path:", selectedChat?.avatar_path);
+    console.log("Name:", selectedChat?.name);
+    console.log("Receiver ID:", selectedChat?.receiver_id);
+  }, [selectedChat]);
   // Gọi API khi component render
   useEffect(() => {
     if (user?.id && selectedChat?.receiver_id) {

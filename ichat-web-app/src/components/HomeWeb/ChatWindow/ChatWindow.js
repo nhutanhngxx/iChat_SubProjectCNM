@@ -25,7 +25,33 @@ const ChatWindow = ({ user }) => {
   useEffect(() => {
     dispatch(fetchMessages(senderId)); // Fetch danh sách người nhận
   }, [dispatch, senderId]);
+  useEffect(() => {
+    console.log("selectedUser updated:", selectedUser);
+  }, [selectedUser]);
+  const handleSelectUser = (user) => {
+    console.log("Setting selected user to:", user);
 
+    // Normalize the user object structure to ensure consistent properties
+    const normalizedUser = {
+      id: user.id,
+      name: user.name,
+      lastMessage: user.lastMessage || "",
+      time: user.timestamp || user.time || new Date(),
+      unread: user.unread || 0,
+      user_status: user.user_status || "Offline",
+      type: user.type || "text",
+      avatar_path:
+        user.avatar_path ||
+        user.avatar ||
+        "https://default-avatar.com/avatar.jpg",
+      priority: user.priority || "",
+      isLastMessageFromMe: user.isLastMessageFromMe || false,
+      // This is very important - both fields are needed
+      receiver_id: user.receiver_id || user.id,
+    };
+
+    setSelectedUser(normalizedUser);
+  };
   useEffect(() => {
     if (messages && messages.length > 0) {
       // Chuyển đổi `messages` thành danh sách user phù hợp
@@ -93,7 +119,7 @@ const ChatWindow = ({ user }) => {
       <ComponentLeft
         userList={userListFromState}
         setUserList={setUserListFromState}
-        onSelectUser={setSelectedUser}
+        onSelectUser={handleSelectUser} // Truyền hàm callback để chọn user
       />
       {/* Hiển thị màn hình chat hoặc màn hình chào */}{" "}
       {selectedUser ? (
