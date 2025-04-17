@@ -197,6 +197,33 @@ const FriendshipController = {
     }
   },
 
+  // Kiểm tra trạng thái kết bạn giữa 2 người dùng
+  checkFriendStatus: async (req, res) => {
+    const { user_id, friend_id } = req.body;
+    try {
+      console.log("User ID: ", user_id);
+      console.log("Friend ID: ", friend_id);
+
+      const friendship = await Friendship.findOne({
+        $or: [
+          { sender_id: user_id, receiver_id: friend_id },
+          { sender_id: friend_id, receiver_id: user_id },
+        ],
+      });
+
+      if (!friendship) {
+        return res.status(200).json({
+          status: "ok",
+          message: "Không tìm thấy kết nối",
+        });
+      }
+
+      res.json({ status: "ok", friendship });
+    } catch (error) {
+      res.status(500).json({ status: "error", message: error.message });
+    }
+  },
+
   // Chặn người dùng
   blockUser: async (req, res) => {
     const { blocker_id, blocked_id } = req.body;

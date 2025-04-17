@@ -44,8 +44,6 @@ const Priority = () => {
     const fetchUsers = async () => {
       try {
         const response = await userService.getAllUser();
-        const friends = await friendService.getFriendListByUserId(user.id);
-        setFriendList(friends);
         if (response) {
           setAllUser(response);
         }
@@ -55,6 +53,19 @@ const Priority = () => {
     };
     fetchUsers();
   }, []);
+
+  // Lấy danh sách bạn bè của người dùng
+  useEffect(() => {
+    const fetchFriendList = async () => {
+      try {
+        const friends = await friendService.getFriendListByUserId(user.id);
+        setFriendList(friends);
+      } catch (error) {
+        console.error("Lỗi khi lấy danh sách bạn bè:", error);
+      }
+    };
+    fetchFriendList();
+  }, [user?.id]);
 
   // Lọc lại dữ liệu tin nhắn theo từng người dùng
   const formatChatList = (messages, allUser) => {
@@ -197,6 +208,7 @@ const Priority = () => {
     markMessagesAsViewed(chat.id);
     if (chat.chatType === "private") {
       try {
+        const friends = await friendService.getFriendListByUserId(user.id);
         const blockStatus = await friendService.checkBlockStatus(
           user.id,
           chat.id
@@ -209,7 +221,7 @@ const Priority = () => {
           typeChat = "blocked";
         } else {
           // Kiểm tra xem có phải bạn bè không
-          const isFriend = friendList.some(
+          const isFriend = friends.some(
             (friend) => friend.id === chat.id || friend._id === chat.id
           );
 
