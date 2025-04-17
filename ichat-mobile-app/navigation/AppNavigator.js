@@ -28,6 +28,7 @@ import ChangePhoneNumber from "../components/profile/ChangePhoneNumber";
 import ViewProfile from "../components/profile/ViewProfile";
 import ForgotPasswordScreen from "../components/profile/ForgotPassword";
 import ChangePasswordScreen from "../components/profile/ChangePassword";
+import ManageUserBlock from "../components/profile/ManageUserBlock";
 
 const Stack = createStackNavigator();
 
@@ -94,6 +95,11 @@ export default function AppNavigator() {
           <Stack.Screen
             name="ChangePhoneNumber"
             component={ChangePhoneNumber}
+            options={{ animation: "none" }}
+          />
+          <Stack.Screen
+            name="ManageUserBlock"
+            component={ManageUserBlock}
             options={{ animation: "none" }}
           />
         </>

@@ -42,6 +42,11 @@ const AccountSecurity = () => {
         />
         <SecurityItem
           icon="time-outline"
+          label="Danh sách chặn người dùng"
+          onPress={() => navigation.navigate("ManageUserBlock")}
+        />
+        <SecurityItem
+          icon="time-outline"
           label="Lịch sử thay đổi"
           onPress={() =>
             Alert.alert("Lịch sử thay đổi", "Chức năng này hiện chưa khả dụng")
