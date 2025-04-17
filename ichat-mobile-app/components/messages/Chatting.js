@@ -32,6 +32,7 @@ import groupService from "../../services/groupService";
 import MessageInputBar from "../../components/messages/MessageInputBar";
 
 import { getHostIP } from "../../services/api";
+import friendService from "../../services/friendService";
 
 const renderReactionIcons = (reactions) => {
   const icons = {
@@ -62,7 +63,7 @@ const renderReactionIcons = (reactions) => {
 const Chatting = ({ route }) => {
   const navigation = useNavigation();
   const { user } = useContext(UserContext);
-  const { chat } = route.params || {};
+  const { chat, typeChat } = route.params || {};
   const flatListRef = useRef(null);
   const [inputMessage, setInputMessage] = useState("");
   const [selectedImage, setSelectedImage] = useState(null);
@@ -72,6 +73,13 @@ const Chatting = ({ route }) => {
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [groupMembers, setGroupMembers] = useState([]);
+
+  // Kiểm tra trạng thái chặn giữa 2 người dùng
+  const [blockStatus, setBlockStatus] = useState({
+    isBlocked: false,
+    blockedByTarget: false,
+    blockedByUser: false,
+  });
 
   const ipAdr = getHostIP();
   const API_iChat = `http://${ipAdr}:5001/api/messages/`;
@@ -170,6 +178,21 @@ const Chatting = ({ route }) => {
   const handleRecallMessage = async () => {
     if (!selectedMessage) return;
 
+    if (typeChat === "not-friend" || typeChat === "blocked") {
+      let message = "Bạn không thể gửi tin nhắn trong cuộc trò chuyện này.";
+
+      if (typeChat === "blocked") {
+        if (blockStatus.blockedByTarget) {
+          message = `Bạn không thể gửi tin nhắn cho ${chat.name} vì bạn đã bị chặn.`;
+        } else if (blockStatus.blockedByUser) {
+          message = `Bạn không thể gửi tin nhắn cho ${chat.name} vì bạn đã chặn người này.`;
+        }
+      }
+
+      Alert.alert("Thông báo", message);
+      return;
+    }
+
     try {
       const response = await axios.put(
         `${API_iChat}/recall/${selectedMessage._id}`,
@@ -205,27 +228,35 @@ const Chatting = ({ route }) => {
   const handleReaction = async (reactionType) => {
     if (!selectedMessage) return;
 
-    try {
-      const response = await messageService.addReaction(
-        selectedMessage._id,
-        user.id,
-        reactionType
-      );
-
-      console.log("Reaction response:", response);
-
-      if (response?.updatedMessage) {
-        // Cập nhật lại toàn bộ object message theo kết quả từ server
-        setMessages((prevMessages) =>
-          prevMessages.map((msg) =>
-            msg._id === selectedMessage._id ? response.updatedMessage : msg
-          )
+    if (typeChat !== "not-friend") {
+      try {
+        const response = await messageService.addReaction(
+          selectedMessage._id,
+          user.id,
+          reactionType
         );
+
+        console.log("Reaction response:", response);
+
+        if (response?.updatedMessage) {
+          // Cập nhật lại toàn bộ object message theo kết quả từ server
+          setMessages((prevMessages) =>
+            prevMessages.map((msg) =>
+              msg._id === selectedMessage._id ? response.updatedMessage : msg
+            )
+          );
+        }
+      } catch (error) {
+        console.error("Lỗi khi gửi reaction:", error);
+        Alert.alert("Lỗi", "Không thể gửi reaction.");
+      } finally {
+        setModalVisible(false);
       }
-    } catch (error) {
-      console.error("Lỗi khi gửi reaction:", error);
-      Alert.alert("Lỗi", "Không thể gửi reaction.");
-    } finally {
+    } else {
+      Alert.alert(
+        "Thông báo",
+        "Bạn không thể gửi reaction trong cuộc trò chuyện này."
+      );
       setModalVisible(false);
     }
   };
@@ -283,7 +314,46 @@ const Chatting = ({ route }) => {
     };
   }, []);
 
+  // Kiểm tra trạng thái chặn giữa 2 người dùng
+  useEffect(() => {
+    const checkIfBlocked = async () => {
+      if (chat?.id && user?.id && chat.chatType === "private") {
+        try {
+          const status = await friendService.checkBlockStatus(user.id, chat.id);
+          setBlockStatus(status);
+
+          // Nếu người dùng bị chặn, thay đổi typeChat
+          if (status.isBlocked) {
+            // Cập nhật typeChat thành "blocked"
+            navigation.setParams({
+              ...route.params,
+              typeChat: "blocked",
+            });
+          }
+        } catch (error) {
+          console.error("Lỗi kiểm tra trạng thái chặn:", error);
+        }
+      }
+    };
+
+    checkIfBlocked();
+  }, [chat, user]);
+
   const sendMessage = async () => {
+    if (typeChat === "not-friend" || typeChat === "blocked") {
+      let message = "Bạn không thể gửi tin nhắn trong cuộc trò chuyện này.";
+
+      if (typeChat === "blocked") {
+        if (blockStatus.blockedByTarget) {
+          message = `Bạn không thể gửi tin nhắn cho ${chat.name} vì bạn đã bị chặn.`;
+        } else if (blockStatus.blockedByUser) {
+          message = `Bạn không thể gửi tin nhắn cho ${chat.name} vì bạn đã chặn người này.`;
+        }
+      }
+
+      Alert.alert("Thông báo", message);
+      return;
+    }
     try {
       // Gửi tin nhắn văn bản hoặc reply
       if (inputMessage.trim() || replyMessage) {
@@ -441,6 +511,34 @@ const Chatting = ({ route }) => {
           </View>
         </View>
       </View>
+      {typeChat === "blocked" && (
+        <View
+          style={
+            Platform.OS === "ios"
+              ? [styles.blockedContainer, { padding: 10 }]
+              : [styles.blockedContainer, { padding: 5 }]
+          }
+        >
+          <Text style={styles.blockedText}>
+            {blockStatus.blockedByTarget
+              ? `Bạn đã bị ${chat.name} chặn`
+              : `Bạn đã chặn ${chat.name}`}
+          </Text>
+        </View>
+      )}
+      {typeChat === "not-friend" && (
+        <View
+          style={
+            Platform.OS === "ios"
+              ? [styles.blockedContainer, { padding: 10 }]
+              : [styles.blockedContainer, { padding: 5 }]
+          }
+        >
+          <Text style={styles.blockedText}>
+            Bạn không thể gửi tin nhắn trong cuộc trò chuyện này.
+          </Text>
+        </View>
+      )}
 
       {/* Tin nhắn sẽ được hiển thị ở vùng nay */}
       <KeyboardAvoidingView
@@ -1143,6 +1241,26 @@ const styles = StyleSheet.create({
   statusText: {
     fontSize: 13,
     color: "#555",
+  },
+  blockedContainer: {
+    backgroundColor: "#f9d7d7",
+    alignItems: "center",
+    borderTopWidth: 1,
+    borderColor: "#e5e5e5",
+  },
+  blockedText: {
+    color: "#d32f2f",
+    fontSize: 14,
+  },
+  notFriendContainer: {
+    backgroundColor: "#f0f0f0",
+    alignItems: "center",
+    borderTopWidth: 1,
+    borderColor: "#e5e5e5",
+  },
+  notFriendText: {
+    color: "#757575",
+    fontSize: 14,
   },
 });
 

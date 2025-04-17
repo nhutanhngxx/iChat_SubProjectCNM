@@ -80,13 +80,12 @@ const Priority = () => {
           const avatarPath =
             chatUser?.avatar_path ||
             "https://i.ibb.co/9k8sPRMx/best-seller.png";
-          // const lastMessageTime = new Date(msg.timestamp).getTime();
-          // const timeDiff = getTimeAgo(lastMessageTime);
+          const lastMessageTime = new Date(msg.timestamp).getTime();
+          const timeDiff = getTimeAgo(lastMessageTime);
 
           if (
-            !chatMap.has(chatUserId)
-            // ||
-            // lastMessageTime > chatMap.get(chatUserId).lastMessageTime
+            !chatMap.has(chatUserId) ||
+            lastMessageTime > chatMap.get(chatUserId).lastMessageTime
           ) {
             chatMap.set(chatUserId, {
               id: chatUserId,
@@ -97,8 +96,8 @@ const Priority = () => {
                   : msg.type === "file"
                   ? "Tệp đính kèm"
                   : msg.content,
-              // lastMessageTime: lastMessageTime,
-              // time: timeDiff,
+              lastMessageTime: lastMessageTime,
+              time: timeDiff,
               avatar: { uri: avatarPath },
               chatType: "private",
             });
@@ -228,23 +227,40 @@ const Priority = () => {
     }
   };
 
-  const handleOpenChatting = (chat) => {
+  const handleOpenChatting = async (chat) => {
     markMessagesAsViewed(chat.id);
-    navigation.navigate("Chatting", { chat });
-  };
+    if (chat.chatType === "private") {
+      try {
+        const blockStatus = await friendService.checkBlockStatus(
+          user.id,
+          chat.id
+        );
 
-  const handleNotify = (chat) => {
-    Alert.alert(
-      "Thông báo",
-      `Hiện không thể trò chuyện! Hãy kết bạn để trò chuyện với ${chat.name}!`,
-      [
-        { text: "Hủy", onPress: () => console.log("Cancel Pressed") },
-        {
-          text: "OK",
-          onPress: () => console.log("OK Pressed"),
-        },
-      ]
-    );
+        // Xác định typeChat dựa trên trạng thái chặn
+        let typeChat = "normal";
+
+        if (blockStatus.isBlocked) {
+          typeChat = "blocked";
+        } else {
+          // Kiểm tra xem có phải bạn bè không
+          const isFriend = friendList.some(
+            (friend) => friend.id === chat.id || friend._id === chat.id
+          );
+
+          if (!isFriend) {
+            typeChat = "not-friend";
+          }
+        }
+
+        navigation.navigate("Chatting", { chat, typeChat });
+      } catch (error) {
+        console.error("Lỗi kiểm tra trạng thái chặn:", error);
+        navigation.navigate("Chatting", { chat });
+      }
+    } else {
+      // Nếu là nhóm chat, mở bình thường
+      navigation.navigate("Chatting", { chat });
+    }
   };
 
   const renderItem = ({ item }) => {
@@ -252,16 +268,18 @@ const Priority = () => {
     return (
       <TouchableOpacity
         style={styles.container}
-        onPress={() => handleNotify(item)}
+        onPress={() => handleOpenChatting(item)}
       >
         <View style={styles.infoContainer}>
           {item.avatar && <Image source={item.avatar} style={styles.avatar} />}
           <View>
             <Text style={styles.name}>{item.name}</Text>
-            <Text style={{}}>Hiện không thể trò chuyện!</Text>
+            <Text style={{}}>{item.lastMessage}</Text>
           </View>
         </View>
-        <View>{/* <Text>{item.time}</Text> */}</View>
+        <View>
+          <Text>{item.time}</Text>
+        </View>
       </TouchableOpacity>
     );
   };

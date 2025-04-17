@@ -179,6 +179,21 @@ const friendService = {
       return { status: "error", message: "Đã xảy ra lỗi" };
     }
   },
+
+  // Kiểm tra trạng thái chặn giữa hai người dùng
+  checkBlockStatus: async (userId, targetId) => {
+    try {
+      const response = await apiService.get(
+        `/${PREFIX}/check-block-status/${userId}/${targetId}`
+      );
+      console.log("checkBlockStatus", response.data);
+
+      return response.data;
+    } catch (error) {
+      console.error("Lỗi kiểm tra trạng thái chặn:", error);
+      throw error;
+    }
+  },
 };
 
 export default friendService;

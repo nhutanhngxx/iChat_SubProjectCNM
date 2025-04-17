@@ -272,6 +272,59 @@ const FriendshipController = {
     }
   },
 
+  // Kiểm tra trạng thái chặn giữa 2 người dùng
+  checkBlockStatus: async (req, res) => {
+    const { user_id, target_id } = req.params;
+
+    try {
+      // Kiểm tra xem user_id có bị chặn bởi target_id không
+      const blockedByTarget = await Friendship.findOne({
+        $or: [
+          {
+            sender_id: user_id,
+            receiver_id: target_id,
+            status: "blocked",
+            blocked_by: target_id,
+          },
+          {
+            sender_id: target_id,
+            receiver_id: user_id,
+            status: "blocked",
+            blocked_by: target_id,
+          },
+        ],
+      });
+
+      // Kiểm tra xem user_id có chặn target_id không
+      const blockedByUser = await Friendship.findOne({
+        $or: [
+          {
+            sender_id: user_id,
+            receiver_id: target_id,
+            status: "blocked",
+            blocked_by: user_id,
+          },
+          {
+            sender_id: target_id,
+            receiver_id: user_id,
+            status: "blocked",
+            blocked_by: user_id,
+          },
+        ],
+      });
+
+      res.json({
+        status: "ok",
+        isBlocked: !!blockedByTarget || !!blockedByUser,
+        blockedByTarget: !!blockedByTarget,
+        blockedByUser: !!blockedByUser,
+      });
+    } catch (error) {
+      console.error("Error checking block status:", error);
+      res.status(500).json({ status: "error", message: error.message });
+    }
+  },
+
   // Hủy kết bạn (Đã chấp nhận lời mời kết bạn)
   unfriendUser: async (req, res) => {
     const { user_id, friend_id } = req.body;

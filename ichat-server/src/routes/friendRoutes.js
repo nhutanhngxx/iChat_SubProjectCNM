@@ -36,6 +36,12 @@ router.post("/unblock-user", FriendshipController.unblockUser);
 // Lấy danh sách người dùng bị chặn
 router.get("/blocked-users/:userId", FriendshipController.getBlockedUsers);
 
+// Kiểm tra trạng thái chặn giữa 2 người dùng
+router.get(
+  "/check-block-status/:user_id/:target_id",
+  FriendshipController.checkBlockStatus
+);
+
 // Hủy kết bạn (Đã chấp nhận lời mời kết bạn)
 router.post("/unfriend", FriendshipController.unfriendUser);
 

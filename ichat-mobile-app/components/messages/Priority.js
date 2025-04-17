@@ -186,9 +186,40 @@ const Priority = () => {
     }
   };
 
-  const handleOpenChatting = (chat) => {
+  const handleOpenChatting = async (chat) => {
     markMessagesAsViewed(chat.id);
-    navigation.navigate("Chatting", { chat });
+    if (chat.chatType === "private") {
+      try {
+        const blockStatus = await friendService.checkBlockStatus(
+          user.id,
+          chat.id
+        );
+
+        // Xác định typeChat dựa trên trạng thái chặn
+        let typeChat = "normal";
+
+        if (blockStatus.isBlocked) {
+          typeChat = "blocked";
+        } else {
+          // Kiểm tra xem có phải bạn bè không
+          const isFriend = friendList.some(
+            (friend) => friend.id === chat.id || friend._id === chat.id
+          );
+
+          if (!isFriend) {
+            typeChat = "not-friend";
+          }
+        }
+
+        navigation.navigate("Chatting", { chat, typeChat });
+      } catch (error) {
+        console.error("Lỗi kiểm tra trạng thái chặn:", error);
+        navigation.navigate("Chatting", { chat });
+      }
+    } else {
+      // Nếu là nhóm chat, mở bình thường
+      navigation.navigate("Chatting", { chat });
+    }
   };
 
   const renderItem = ({ item }) => {
