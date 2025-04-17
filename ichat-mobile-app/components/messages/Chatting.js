@@ -192,6 +192,7 @@ const Chatting = ({ route }) => {
       }
 
       Alert.alert("Thông báo", message);
+      setModalVisible(false);
       return;
     }
 
@@ -494,6 +495,7 @@ const Chatting = ({ route }) => {
       }
 
       Alert.alert("Thông báo", message);
+      setModalVisible(false);
       return;
     }
     try {
@@ -510,6 +512,24 @@ const Chatting = ({ route }) => {
       console.error("Lỗi khi xóa mềm tin nhắn:", error);
     } finally {
       setModalVisible(false);
+    }
+  };
+
+  // Gửi lời mời kết bạn
+  const handleSendFriendRequest = async (chatId) => {
+    try {
+      const response = await friendService.sendFriendRequest({
+        senderId: user.id,
+        receiverId: chatId,
+      });
+      if (response.status === "ok") {
+        Alert.alert("Thông báo", "Đã gửi lời mời kết bạn.");
+      } else {
+        Alert.alert("Thông báo", response.message);
+      }
+    } catch (error) {
+      console.error("Lỗi khi gửi lời mời kết bạn:", error);
+      Alert.alert("Lỗi", "Không thể gửi lời mời kết bạn.");
     }
   };
 
@@ -600,9 +620,19 @@ const Chatting = ({ route }) => {
               : [styles.blockedContainer, { padding: 5 }]
           }
         >
-          <Text style={styles.blockedText}>
-            Bạn không thể gửi tin nhắn trong cuộc trò chuyện này.
-          </Text>
+          <View style={styles.blockedText}>
+            <Text style={styles.blockedText}>Kết bạn để để nhắn tin. </Text>
+            <TouchableOpacity onPress={() => handleSendFriendRequest(chat.id)}>
+              <Text
+                style={{
+                  textDecorationLine: "underline",
+                  fontWeight: "semibold",
+                }}
+              >
+                Kết bạn
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
       )}
 
@@ -1317,6 +1347,8 @@ const styles = StyleSheet.create({
   blockedText: {
     color: "#d32f2f",
     fontSize: 14,
+    flexDirection: "row",
+    alignItems: "center",
   },
   notFriendContainer: {
     backgroundColor: "#f0f0f0",
