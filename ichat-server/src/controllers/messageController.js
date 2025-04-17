@@ -39,6 +39,7 @@ const MessageController = {
         type: req.body.type,
         chat_type: req.body.chat_type,
         file: imageFile || docFile,
+        reply_to: req.body.reply_to || null,
       });
 
       res.status(201).json({
@@ -468,6 +469,24 @@ const MessageController = {
     } catch (error) {
       console.error("Lỗi khi chuyển tiếp tin nhắn:", error);
       res.status(500).json({ error: "Lỗi khi chuyển tiếp tin nhắn" });
+    }
+  },
+  // Soft delete (ẩn tin nhắn khỏi user hiện tại)
+  softDeleteMessagesForUser: async (req, res) => {
+    const { userId, messageId } = req.body;
+
+    try {
+      const updatedMessages = await MessageModel.softDeleteMessagesForUser(
+        userId,
+        messageId
+      );
+      res.status(200).json({
+        message: "Messages hidden for user.",
+        data: updatedMessages, //
+      });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: "Failed to soft delete messages." });
     }
   },
 };

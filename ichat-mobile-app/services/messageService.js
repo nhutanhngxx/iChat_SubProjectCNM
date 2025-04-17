@@ -165,6 +165,19 @@ const messageService = {
       return null;
     }
   },
+
+  softDeleteMessagesForUser: async (userId, messageId) => {
+    try {
+      const response = await apiService.post(`/${PREFIX}/softDelete`, {
+        userId,
+        messageId,
+      });
+      return response.data;
+    } catch (error) {
+      console.log("Lỗi xoá tin nhắn 1 phía ở Message Service: ", error);
+      return null;
+    }
+  },
 };
 
 export default messageService;

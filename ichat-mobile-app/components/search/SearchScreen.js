@@ -26,27 +26,32 @@ const SearchScreen = () => {
   const navigation = useNavigation();
   const searchInputRef = useRef(null);
   const { user } = useContext(UserContext);
+  const [searchText, setSearchText] = useState("");
+  const [index, setIndex] = useState(0);
+
+  // Lưu trữ lịch sử Tìm kiếm
+  const [indexSearch, setIndexSearch] = useState(0);
+  const [historySearch, setHistorySearch] = useState([]);
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [searchUsers, setSearchUsers] = useState([]);
+  const [searchMessages, setSearchMessages] = useState([]);
+  const [searchGroups, setSearchGroups] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [sentRequests, setSentRequests] = useState([]);
+  const [listFriend, setListFriend] = useState([]);
 
   const ipAdr = getHostIP();
   const API_iChat = `http://${ipAdr}:5001/api`;
 
   const handleOpenChatting = async (selectedItem) => {
-    // Check friendship status first
+    // Kiểm tra xem người dùng đã là bạn bè hay chưa
     try {
       const friendships = await friendService.getFriendListByUserId(user.id);
       const isFriend = friendships.some(
         (friend) =>
           friend.id === selectedItem.id || friend._id === selectedItem.id
       );
-
-      if (!isFriend) {
-        Alert.alert(
-          "Thông báo",
-          "Bạn cần kết bạn với người này trước khi bắt đầu cuộc trò chuyện",
-          [{ text: "OK" }]
-        );
-        return;
-      }
 
       try {
         let chatPartnerId, chatPartnerName, chatPartnerAvatar, messageId;
@@ -84,6 +89,15 @@ const SearchScreen = () => {
           messageId: messageId || null, // Pass messageId for messages
         };
 
+        if (!isFriend) {
+          Alert.alert(
+            "Thông báo",
+            "Bạn cần kết bạn với người này trước khi bắt đầu cuộc trò chuyện",
+            [{ text: "OK" }]
+          );
+          // return;
+        }
+
         // Navigate to the Messages screen in TabNavigator
         navigation.navigate("Home", {
           screen: "Messages",
@@ -107,21 +121,6 @@ const SearchScreen = () => {
       searchInputRef.current?.focus();
     }
   }, [route.params]);
-
-  const [searchText, setSearchText] = useState("");
-  const [index, setIndex] = useState(0);
-
-  // Lưu trữ lịch sử Tìm kiếm
-  const [indexSearch, setIndexSearch] = useState(0);
-  const [historySearch, setHistorySearch] = useState([]);
-
-  const [isLoading, setIsLoading] = useState(false);
-  const [searchUsers, setSearchUsers] = useState([]);
-  const [searchMessages, setSearchMessages] = useState([]);
-  const [searchGroups, setSearchGroups] = useState([]);
-  const [users, setUsers] = useState([]);
-  const [sentRequests, setSentRequests] = useState([]);
-  const [listFriend, setListFriend] = useState([]);
 
   const handleResultPress = (item) => {
     saveSearchHistory(searchText); // Lưu lại từ khoá đã dùng
@@ -301,17 +300,6 @@ const SearchScreen = () => {
       } catch (error) {
         console.error("Lỗi tìm kiếm tin nhắn:", error);
       }
-
-      // if (usersResponse.error) {
-      //   setSearchUsers([]);
-      // } else if (
-      //   usersResponse.data?.status === "ok" &&
-      //   Array.isArray(usersResponse.data.users)
-      // ) {
-      //   setSearchUsers(usersResponse.data.users);
-      // } else {
-      //   setSearchUsers([]);
-      // }
 
       if (
         usersResponse.data?.status === "ok" &&

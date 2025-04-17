@@ -284,7 +284,21 @@ const Chatting = ({ route }) => {
               userId: user.id,
               chatId: chat.id,
             });
-            setMessages(response);
+            // Lọc tin nhắn trước khi set state
+            const filteredMessages = response.filter((message) => {
+              // Nếu không có mảng isdelete hoặc mảng rỗng thì hiển thị tin nhắn
+              if (
+                !Array.isArray(message.isdelete) ||
+                message.isdelete.length === 0
+              ) {
+                return true;
+              }
+              // Không hiển thị tin nhắn nếu id người dùng nằm trong mảng isdelete
+              return !message.isdelete.some(
+                (id) => id === user.id || id === String(user.id)
+              );
+            });
+            setMessages(filteredMessages);
           } catch (error) {
             console.error("Lỗi khi lấy tin nhắn:", error);
           }
@@ -450,6 +464,25 @@ const Chatting = ({ route }) => {
     });
 
     setModalVisible(false);
+  };
+
+  // Hanlde xóa mềm- xóa tin nhắn 1 phía
+  const handleSoftDelete = async () => {
+    try {
+      const response = await messageService.softDeleteMessagesForUser(
+        user.id,
+        selectedMessage._id
+      );
+      if (response.data !== null) {
+        setMessages((prevMessages) =>
+          prevMessages.filter((msg) => msg._id !== selectedMessage._id)
+        );
+      }
+    } catch (error) {
+      console.error("Lỗi khi xóa mềm tin nhắn:", error);
+    } finally {
+      setModalVisible(false);
+    }
   };
 
   return (
@@ -747,7 +780,7 @@ const Chatting = ({ route }) => {
                     <View style={styles.row}>
                       <TouchableOpacity
                         style={styles.actionButton}
-                        onPress={() => console.log("Xóa tin nhắn vĩnh viễn")}
+                        onPress={handleSoftDelete}
                       >
                         <Image
                           source={require("../../assets/icons/delete-message.png")}
@@ -894,7 +927,7 @@ const Chatting = ({ route }) => {
                         </TouchableOpacity>
                         <TouchableOpacity
                           style={styles.actionButton}
-                          onPress={() => console.log("Xóa tin nhắn vĩnh viễn")}
+                          onPress={handleSoftDelete}
                         >
                           <Image
                             source={require("../../assets/icons/delete-message.png")}

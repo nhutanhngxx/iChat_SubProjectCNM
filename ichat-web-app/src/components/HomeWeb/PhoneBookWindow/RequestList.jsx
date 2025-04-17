@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import "./RequestList.css";
 import { FaUserPlus, FaTimes, FaCheck } from "react-icons/fa";
 import { FaFacebookMessenger } from "react-icons/fa";
@@ -9,74 +9,11 @@ import { MdClose } from "react-icons/md";
 import { FaUserGroup } from "react-icons/fa6";
 import { MdBlock } from "react-icons/md";
 import { IoIosWarning } from "react-icons/io";
-const initialRequestData = [
-  {
-    id: 1,
-    full_name: "Nhựt Anh",
-    gender: "male",
-    dob: "1998-05-10",
-    phone: "0123456789",
-    avatar_path: "https://i.ibb.co/B2S2WVRX/Pamela2.jpg",
-    cover_path: "https://example.com/cover1.jpg",
-    status: "active",
-    created_at: "2024-02-27T10:00:00Z",
-    updated_at: "2024-02-27T10:00:00Z",
-    message: "Chào bạn, mình tên Nguyễn Thành Cương, mình muốn kết bạn với bạn",
-    received: true,
-  },
-  {
-    id: 2,
-    full_name: "Thành Cường",
-    gender: "male",
-    dob: "1995-09-22",
-    phone: "0987654321",
-    avatar_path: "https://i.ibb.co/B2S2WVRX/Pamela2.jpg",
-    cover_path: "https://example.com/cover2.jpg",
-    status: "active",
-    created_at: "2024-02-27T10:05:00Z",
-    updated_at: "2024-02-27T10:05:00Z",
-    message: "Chào bạn, mình muốn kết bạn với bạn",
-    received: true,
-  },
-  {
-    id: 3,
-    full_name: "Xuân Nam",
-    gender: "male",
-    dob: "2000-01-15",
-    phone: "0345678912",
-    avatar_path: "https://i.ibb.co/B2S2WVRX/Pamela2.jpg",
-    cover_path: "https://example.com/cover3.jpg",
-    status: "inactive",
-    created_at: "2024-02-27T10:10:00Z",
-    updated_at: "2024-02-27T10:10:00Z",
-    message: "Chào bạn, mình muốn kết bạn với bạn",
-    received: true,
-  },
-  {
-    id: 4,
-    full_name: "Tâm Cao Linh",
-    gender: "female",
-    dob: "1999-07-30",
-    phone: "0567891234",
-    avatar_path: "https://i.ibb.co/B2S2WVRX/Pamela2.jpg",
-    cover_path: "https://example.com/cover4.jpg",
-    status: "pending",
-    created_at: "2024-02-27T10:15:00Z",
-    updated_at: "2024-02-27T10:15:00Z",
-  },
-  {
-    id: 5,
-    full_name: "Nguyễn T T",
-    gender: "female",
-    dob: "2002-08-11",
-    phone: "0678912345",
-    avatar_path: "https://i.ibb.co/B2S2WVRX/Pamela2.jpg",
-    cover_path: "https://example.com/cover5.jpg",
-    status: "banned",
-    created_at: "2024-02-27T10:20:00Z",
-    updated_at: "2024-02-27T10:20:00Z",
-  },
-];
+import { useDispatch, useSelector } from "react-redux";
+import { getReceivedFriendRequests } from "../../../redux/slices/friendSlice";
+import { getSentFriendRequests } from "../../../redux/slices/friendSlice";
+import { cancelFriendRequest } from "../../../redux/slices/friendSlice";
+import { acceptFriendRequest } from "../../../redux/slices/friendSlice";
 
 const initialSuggestedFriends = [
   {
@@ -103,7 +40,30 @@ const initialSuggestedFriends = [
 ];
 
 const RequestList = () => {
-  const [requestData, setRequestData] = useState(initialRequestData);
+  const dispatch = useDispatch();
+  const currentUser = useSelector((state) => state.auth).user;
+  const [receivedRequests, setReceivedRequests] = useState([]); // Lời mời đã nhận
+  const [sentRequests, setSentRequests] = useState([]); // Lời mời đã gửi
+
+
+  useEffect(() => {
+    const fetchFriendRequests = async () => {
+      try {
+        const result_received = await dispatch(getReceivedFriendRequests(currentUser.id)).unwrap();
+        setReceivedRequests(result_received.friendRequests);
+
+        const result_sent = await dispatch(getSentFriendRequests(currentUser.id)).unwrap();
+        setSentRequests(result_sent.friendRequests);
+      } catch (error) {
+        console.error("Lỗi khi lấy danh sách lời mời:", error);
+      }
+    }
+    if (currentUser?.id) {
+      fetchFriendRequests();
+    }
+  }, [dispatch, currentUser, sentRequests, receivedRequests]);
+
+
   const [suggestedFriends, setSuggestedFriends] = useState(
     initialSuggestedFriends
   );
@@ -121,39 +81,63 @@ const RequestList = () => {
   };
 
   const [modalData, setModalData] = useState(null);
-  // Mở modal xác nhận
-  const openModal = (type, id) => {
-    setModalData({ type, id });
-  };
 
   // Đóng modal
   const closeModal = () => {
     setModalData(null);
   };
-  // Xác nhận đồng ý hoặc từ chối
-  const handleConfirmAction = () => {
-    if (!modalData) return;
-    const { type, id } = modalData;
+  // Xác nhận đồng ý 
+  const handleConfirmAction = async (senderId, receiverId) => {
+    try {
+      const data = {
+        senderId: senderId,
+        receiverId: receiverId,
+      }
 
-    if (type === "accept") {
-      setRequestData((prev) => prev.filter((req) => req.id !== id));
-    } else if (type === "reject") {
-      setRequestData((prev) => prev.filter((req) => req.id !== id));
+      const result = await dispatch(acceptFriendRequest(data)).unwrap();
+      if (result.status === "ok") {
+        setReceivedRequests((prev) =>
+          prev.filter((req) => req.id !== senderId)
+        );
+      }
+      console.log("Đã chấp nhận lời mời kết bạn thành công");
+    } catch (error) {
+      console.error("Lỗi khi chấp nhận lời mời kết bạn:", error);
     }
-
-    closeModal();
   };
 
   // Thu hồi lời mời
-  const handleCancelRequest = (id) => {
-    setRequestData((prev) =>
-      prev.map((req) =>
-        req.id === id
-          ? { ...req, message_request: "Đã thu hồi lời mời", received: false }
-          : req
-      )
-    );
+  // const handleCancelRequest = (id) => {
+  //   setRequestData((prev) =>
+  //     prev.map((req) =>
+  //       req.id === id
+  //         ? { ...req, message_request: "Đã thu hồi lời mời", received: false }
+  //         : req
+  //     )
+  //   );
+  // };
+
+  const handleCancelRequest = async (requestId, receivedId) => {
+    try {
+      const data = {
+        senderId: requestId,
+        receiverId: receivedId,
+      };
+      const result = await dispatch(cancelFriendRequest(data)).unwrap();
+
+      if (result.status === "ok") {
+        setSentRequests((prev) =>
+          prev.filter((req) => req.id !== requestId)
+        );
+      }
+      console.log("Đã hủy lời mời kết bạn thành công");
+
+    } catch (error) {
+      console.error("Lỗi khi hủy lời mời kết bạn:", error);
+
+    }
   };
+
   // Gửi lời mời kết bạn
   const handleSendRequest = (id) => {
     setSuggestedFriends((prev) =>
@@ -175,11 +159,10 @@ const RequestList = () => {
       <div className="request-list">
         {/* Lời mời đã nhận */}
         <h3 className="section-title">
-          Lời mời đã nhận ({requestData.filter((r) => r.received).length})
+          Lời mời đã nhận ({receivedRequests.length})
         </h3>
         <div className="request-container">
-          {requestData
-            .filter((r) => r.received)
+          {receivedRequests
             .map((request) => (
               <div key={request.id} className="request-card">
                 <div className="request-info">
@@ -209,13 +192,13 @@ const RequestList = () => {
                 <div className="actions">
                   <button
                     className="btn reject"
-                    onClick={() => openModal("reject", request.id)}
+                    onClick={() => handleCancelRequest(request.id, currentUser.id)}
                   >
                     <FaTimes /> Từ chối
                   </button>
                   <button
                     className="btn accept"
-                    onClick={() => openModal("accept", request.id)}
+                    onClick={() => handleConfirmAction(request.id, currentUser.id)}
                   >
                     <FaCheck /> Đồng ý
                   </button>
@@ -226,11 +209,10 @@ const RequestList = () => {
 
         {/* Lời mời đã gửi */}
         <h3 className="section-title">
-          Lời mời đã gửi ({requestData.filter((r) => !r.received).length})
+          Lời mời đã gửi ({sentRequests.length})
         </h3>
         <div className="request-container">
-          {requestData
-            .filter((r) => !r.received)
+          {sentRequests
             .map((request) => (
               <div key={request.id} className="request-card ">
                 <div className="request-info sent ">
@@ -240,14 +222,14 @@ const RequestList = () => {
                         className="info-user"
                         onClick={() => handleOpenUserInfo(request, "sent")}
                       >
-                        <div 
-                        style={{ width: "50px"}}>
-                      
-                        <img
-                          src={request.avatar_path}
-                          alt={request.full_name}
-                          className="avatar"
-                        /></div>
+                        <div
+                          style={{ width: "50px" }}>
+
+                          <img
+                            src={request.avatar_path}
+                            alt={request.full_name}
+                            className="avatar"
+                          /></div>
                         <div className="request-message">
                           <strong>{request.full_name}</strong>
                           <p className="message">{request.message}</p>
@@ -261,7 +243,7 @@ const RequestList = () => {
                 </div>
                 <button
                   className="btn cancel"
-                  onClick={() => handleCancelRequest(request.id)}
+                  onClick={() => handleCancelRequest(currentUser.id, request.id)}
                 >
                   {request.message_request ? (
                     <>
@@ -329,7 +311,7 @@ const RequestList = () => {
       {modalData && (
         <div className="modal-overlay">
           <div className="modal modal-confirm">
-            <h2 style={{fontSize: "20px",fontWeight: "600"}}>
+            <h2 style={{ fontSize: "20px", fontWeight: "600" }}>
               Bạn có chắc chắn muốn
               {modalData.type === "accept" ? " đồng ý" : " từ chối"}?
             </h2>

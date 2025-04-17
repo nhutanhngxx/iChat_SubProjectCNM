@@ -3,6 +3,32 @@ import axios from "axios";
 
 const API_URL = `http://${window.location.hostname}:5001/api/friendships`;
 
+//Lấy danh sách lời mời kết bạn đã nhận
+export const getReceivedFriendRequests = createAsyncThunk(
+  "friend/getReceivedFriendRequests",
+  async (userId, { rejectWithValue }) => {
+    try {
+      const res = await axios.get(`${API_URL}/received-requests/${userId}`);
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data || err.message);
+    }
+  }
+);
+
+//Lấy danh sách lời mời kết bạn đã gửi
+export const getSentFriendRequests = createAsyncThunk(
+  "friend/getSentFriendRequests",
+  async (userId, { rejectWithValue }) => {
+    try {
+      const res = await axios.get(`${API_URL}/sent-requests/${userId}`);
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data || err.message);
+    }
+  }
+);
+
 // Gửi lời mời kết bạn
 export const sendFriendRequest = createAsyncThunk(
   "friend/sendFriendRequest",
@@ -125,7 +151,35 @@ const friendSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // Get user friends
+      // Thêm cases mới cho getReceivedFriendRequests
+      .addCase(getReceivedFriendRequests.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(getReceivedFriendRequests.fulfilled, (state, action) => {
+        state.loading = false;
+        state.receivedRequests = action.payload.friendRequests;
+      })
+      .addCase(getReceivedFriendRequests.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      // Thêm cases mới cho getSentFriendRequests
+      .addCase(getSentFriendRequests.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(getSentFriendRequests.fulfilled, (state, action) => {
+        state.loading = false;
+        state.sentRequests = action.payload.friendRequests;
+      })
+      .addCase(getSentFriendRequests.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      // Giữ nguyên các cases khác
       .addCase(getUserFriends.pending, (state) => {
         state.loading = true;
       })

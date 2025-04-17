@@ -29,6 +29,7 @@ import {
   fetchMessages,
   updateMessages,
   sendImageMessage,
+  replyToMessage,
 } from "../../../redux/slices/messagesSlice";
 import Message from "./Message";
 import MessageInput from "./MessageInput";
@@ -599,10 +600,9 @@ const CreateGroupModal = ({ visible, onCancel, onOk }) => {
 //     },
 //   ],
 // };
+// At the top of your component
 
 const MessageArea = ({ selectedChat, user }) => {
-  // Load tin nhắn từ Bacend
-  // Lấy dữ liệu tin nhắn từ Redux Store
   const dispatch = useDispatch();
   const chatMessages = useSelector((state) => state.messages.chatMessages);
 
@@ -614,6 +614,18 @@ const MessageArea = ({ selectedChat, user }) => {
   // Tự động cuộn xuống cuối khi có tin nhắn mới
   const messageEndRef = useRef(null);
   const [modalVisible, setModalVisible] = useState(false);
+  // Trả lời tin nhắn
+  const [replyingTo, setReplyingTo] = useState(null);
+
+  //  handler function
+  const handleReplyToMessage = (messageToReply) => {
+    setReplyingTo(messageToReply);
+  };
+
+  // this function to clear reply when needed
+  const clearReplyingTo = () => {
+    setReplyingTo(null);
+  };
 
   const handleShowSearchRight = () => {
     setShowSearchRight(!showSearchRight);
@@ -643,7 +655,14 @@ const MessageArea = ({ selectedChat, user }) => {
     handleExpandContract();
   };
   console.log(handleExpandContract);
-
+  // At the top of your MessageArea component
+  useEffect(() => {
+    console.log("MessageArea received selectedChat:", selectedChat);
+    // Log specific properties we expect in the header
+    console.log("Avatar path:", selectedChat?.avatar_path);
+    console.log("Name:", selectedChat?.name);
+    console.log("Receiver ID:", selectedChat?.receiver_id);
+  }, [selectedChat]);
   // Gọi API khi component render
   useEffect(() => {
     if (user?.id && selectedChat?.receiver_id) {
@@ -657,14 +676,23 @@ const MessageArea = ({ selectedChat, user }) => {
   }, [dispatch, user?.id, selectedChat?.receiver_id]);
   console.log("Chat Messages in MessageArea", chatMessages);
 
-  const handleSendMessage = async (text = "", image = null, file = null) => {
+  const handleSendMessage = async (
+    text = "",
+    image = null,
+    file = null,
+    content,
+    replyToId = null // ID của tin nhắn được trả lời (nếu có)
+  ) => {
+    console.log("ReplyToId in MessageArea", replyToId);
+
     if ((text.trim() || image || file) && selectedChat) {
       const newMessage = {
         sender_id: user?.id, // ID người gửi
         receiver_id: selectedChat?.id, // ID người nhận
-        content: text || "",
+        content: text ? text : content || "",
         type: "text", // Loại tin nhắn (text, image, file)
         chat_type: "private",
+        ...(replyToId && { reply_to: replyToId }), // ID tin nhắn được trả lời (nếu có)
       };
 
       try {
@@ -783,6 +811,29 @@ const MessageArea = ({ selectedChat, user }) => {
       messageEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   };
+  useEffect(() => {
+    if (!selectedChat?.id || !user?.id) return;
+
+    // Fetch ALL messages, not just recent ones
+    const fetchAllMessages = async () => {
+      try {
+        // You might need to modify your API to support pagination or fetching all messages
+        const result = await dispatch(
+          fetchChatMessages({
+            senderId: user.id,
+            receiverId: selectedChat.id,
+            limit: 100, // Fetch more messages than needed to ensure replied messages are included
+          })
+        ).unwrap();
+
+        setMessages(result);
+      } catch (error) {
+        console.error("Error fetching messages:", error);
+      }
+    };
+
+    fetchAllMessages();
+  }, [selectedChat?.id, user?.id, dispatch]);
 
   // Kết nối socket và lắng nghe sự kiện nhận tin nhắn
   useEffect(() => {
@@ -866,19 +917,37 @@ const MessageArea = ({ selectedChat, user }) => {
 
         <Content className="message-area-content">
           <div className="message-container">
-            {(chatMessages || []).map((message) => (
-              <div>
-                <Message
-                  key={message.id}
-                  message={message}
-                  selectedChat={selectedChat}
-                  isSender={message.sender_id === user.id}
-                  onClick={handleScrollToBottom}
-                />
-                <div ref={messageEndRef}></div>
-              </div>
-            ))}
-            {/* Phần tử ẩn để cuộn xuống */}
+            {Array.isArray(chatMessages) ? (
+              chatMessages
+                .filter((message) => {
+                  // Simple, direct comparison focusing on string IDs
+                  if (!Array.isArray(message.isdelete)) {
+                    return true; // Keep message if no isdelete array
+                  }
+
+                  // Don't show message if user ID is in the isdelete array
+                  return !message.isdelete.some(
+                    (id) => id === user.id || id === String(user.id)
+                  );
+                })
+                .map((message) => (
+                  <React.Fragment key={message._id || message.id}>
+                    <Message
+                      message={message}
+                      allMessages={messages}
+                      selectedChat={selectedChat}
+                      isSender={message.sender_id === user.id}
+                      onClick={handleScrollToBottom}
+                      user={user}
+                      onReplyToMessage={handleReplyToMessage}
+                    />
+                  </React.Fragment>
+                ))
+            ) : (
+              <div className="no-messages">No messages to display</div>
+            )}
+
+            {/* Single scroll reference at the end */}
             <div ref={messageEndRef} />
           </div>
         </Content>
@@ -893,6 +962,8 @@ const MessageArea = ({ selectedChat, user }) => {
           showPickerFromMessArea={showPickerFromMessArea}
           isExpanded={isExpanded} // Truyền state isExpanded
           showConversation={showConversation} // Truyền showConversation
+          replyingTo={replyingTo} // Add this prop
+          clearReplyingTo={clearReplyingTo} // Add this prop
         />
       </Layout>
 

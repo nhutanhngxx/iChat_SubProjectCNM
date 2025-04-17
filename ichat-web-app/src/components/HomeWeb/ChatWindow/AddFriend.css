@@ -1,15 +1,59 @@
 .phone-input {
+  position: relative;
+  width: 100%;
+}
+
+.country-select {
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
   display: flex;
-  gap: 8px;
-  margin-bottom: 20px;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.country-flag {
+  width: 20px;
+  height: 15px;
+  object-fit: cover;
 }
 
 .country-code {
-  width: 120px;
+  color: #666;
+  font-size: 14px;
+}
+
+.dropdown-icon {
+  font-size: 10px;
+  color: #999;
 }
 
 .number-input {
-  flex: 1;
+  padding-left: 90px !important;
+}
+
+.number-input.error {
+  border-color: #ff4d4f;
+}
+
+.number-input.error:hover,
+.number-input.error:focus {
+  border-color: #ff7875;
+  box-shadow: 0 0 0 2px rgba(255, 77, 79, 0.2);
+}
+
+/* .input-wrapper {
+  display: flex;
+  flex-direction: column;
+} */
+
+.error-message {
+  color: #ff4d4f;
+  font-size: 12px;
+  margin-top: 4px;
 }
 
 .flag {
