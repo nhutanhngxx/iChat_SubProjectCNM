@@ -71,6 +71,7 @@ router.get("/:userId/:receiverId", MessageController.getPrivateMessages);
 
 // Xóa tất cả tin nhắn giữa người dùng đăng nhập và người nhận
 router.delete("/:userId/:receiverId", MessageController.deleteAllMessages);
+
 //Xoá ẩn tin nhắn giữa người dùng đăng nhập và người nhận
 router.post("/softDelete", MessageController.softDeleteMessagesForUser);
 

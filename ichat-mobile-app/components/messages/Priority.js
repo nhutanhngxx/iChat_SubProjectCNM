@@ -65,6 +65,11 @@ const Priority = () => {
 
     messages.forEach((msg) => {
       if (msg.chat_type === "private") {
+        // Bỏ qua tin nhắn đã bị xóa với user hiện tại
+        if (msg.isdelete?.includes(user.id)) {
+          return;
+        }
+
         const chatUserId =
           msg.sender_id === user.id ? msg.receiver_id : msg.sender_id;
 
@@ -81,10 +86,11 @@ const Priority = () => {
           const lastMessageTime = new Date(msg.timestamp).getTime();
           const timeDiff = getTimeAgo(lastMessageTime);
 
-          if (
-            !chatMap.has(chatUserId) ||
-            lastMessageTime > chatMap.get(chatUserId).lastMessageTime
-          ) {
+          // Kiểm tra xem đã có chat trong Map chưa
+          const existingChat = chatMap.get(chatUserId);
+
+          // Chỉ cập nhật nếu tin nhắn này mới hơn tin nhắn cuối cùng hiện tại
+          if (!existingChat || lastMessageTime > existingChat.lastMessageTime) {
             chatMap.set(chatUserId, {
               id: chatUserId,
               name: fullName,
@@ -98,6 +104,7 @@ const Priority = () => {
               time: timeDiff,
               avatar: { uri: avatarPath },
               chatType: "private",
+              unreadCount: existingChat ? existingChat.unreadCount : 0, // Giữ nguyên số tin nhắn chưa đọc
             });
           }
         }

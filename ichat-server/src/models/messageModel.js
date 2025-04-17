@@ -278,7 +278,8 @@ const MessageModel = {
     await newMessage.save();
     return newMessage;
   },
-  // "Soft delete" - chỉ đánh dấu xóa cho user hiện tại
+
+  // "Soft delete" - chỉ đánh dấu xóa cho User hiện tại
   softDeleteMessagesForUser: async (userId, messageId) => {
     // Cập nhật chỉ 1 tin nhắn duy nhất nếu chưa chứa userId trong isdelete
     await Messages.updateOne(
