@@ -934,6 +934,11 @@ style Modal Group
 :where(.css-dev-only-do-not-override-1htoz2s).ant-modal .ant-modal-content {
   height: 653px;
   max-height: 100%;
+  background: #ffffff !important;
+}
+:where(.css-dev-only-do-not-override-1htoz2s).ant-modal .ant-modal-close{
+  top: 0 !important;
+  right: 0 !important;
 }
 :where(.css-dev-only-do-not-override-1htoz2s).ant-modal-root .ant-modal-wrap {
   overflow: hidden;
