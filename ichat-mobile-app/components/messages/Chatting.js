@@ -63,8 +63,10 @@ const renderReactionIcons = (reactions) => {
 const Chatting = ({ route }) => {
   const navigation = useNavigation();
   const { user } = useContext(UserContext);
-  const { chat, typeChat } = route.params || {};
+  const { chat } = route.params || {};
   const flatListRef = useRef(null);
+  // "normal" | "not-friend" | "blocked" dùng để kiểm tra trạng thái bạn bè giữa 2 người dùng
+  const [typeChat, setTypeChat] = useState(route.params?.typeChat || "normal");
   const [inputMessage, setInputMessage] = useState("");
   const [selectedImage, setSelectedImage] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
@@ -314,6 +316,12 @@ const Chatting = ({ route }) => {
     };
   }, []);
 
+  useEffect(() => {
+    if (route.params?.typeChat) {
+      setTypeChat(route.params.typeChat);
+    }
+  }, [route.params?.typeChat]);
+
   // Kiểm tra trạng thái chặn giữa 2 người dùng
   useEffect(() => {
     const checkIfBlocked = async () => {
@@ -325,10 +333,7 @@ const Chatting = ({ route }) => {
           // Nếu người dùng bị chặn, thay đổi typeChat
           if (status.isBlocked) {
             // Cập nhật typeChat thành "blocked"
-            navigation.setParams({
-              ...route.params,
-              typeChat: "blocked",
-            });
+            setTypeChat("blocked");
           }
         } catch (error) {
           console.error("Lỗi kiểm tra trạng thái chặn:", error);
