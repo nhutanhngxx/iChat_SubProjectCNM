@@ -8,6 +8,7 @@ import {
   Modal,
   Input,
   Checkbox,
+  message,
 } from "antd";
 import {
   VideoCameraOutlined,
@@ -38,6 +39,7 @@ import SearchRight from "./SearchRight";
 import { set } from "lodash";
 import "./MessageArea.css";
 import socket from "../../services/socket";
+import { getUserFriends } from "../../../redux/slices/friendSlice";
 
 const { Header, Content } = Layout;
 
@@ -675,7 +677,38 @@ const MessageArea = ({ selectedChat, user }) => {
     }
   }, [dispatch, user?.id, selectedChat?.receiver_id]);
   console.log("Chat Messages in MessageArea", chatMessages);
+  // Near the top of your component
+  const [isFriendWithReceiver, setIsFriendWithReceiver] = useState(true);
+  const [friends, setFriends] = useState({ friends: [] });
 
+  // Add this useEffect to fetch friends
+  useEffect(() => {
+    const fetchFriends = async () => {
+      try {
+        const result = await dispatch(
+          getUserFriends(user._id || user.id)
+        ).unwrap();
+        setFriends(result);
+
+        // Check if the selected user is a friend
+        if (result && result.friends && selectedChat) {
+          const isFriend = result.friends.some(
+            (friend) =>
+              friend.id === selectedChat.id ||
+              friend._id === selectedChat.id ||
+              String(friend.id) === String(selectedChat.id)
+          );
+          setIsFriendWithReceiver(isFriend);
+        }
+      } catch (err) {
+        console.error("Error fetching friends:", err);
+      }
+    };
+
+    if (user?._id || user?.id) {
+      fetchFriends();
+    }
+  }, [dispatch, user, selectedChat]);
   const handleSendMessage = async (
     text = "",
     image = null,
@@ -683,6 +716,16 @@ const MessageArea = ({ selectedChat, user }) => {
     content,
     replyToId = null // ID của tin nhắn được trả lời (nếu có)
   ) => {
+    if (!isFriendWithReceiver && selectedChat.id !== user.id) {
+      message.warning("Bạn cần kết bạn để gửi tin nhắn.");
+      return;
+    }
+
+    // Always check if you have a valid selected chat and message ID before using
+    if (!selectedChat || !selectedChat.id) {
+      console.error("No selected chat or invalid chat", selectedChat);
+      return;
+    }
     console.log("ReplyToId in MessageArea", replyToId);
 
     if ((text.trim() || image || file) && selectedChat) {
@@ -778,7 +821,7 @@ const MessageArea = ({ selectedChat, user }) => {
           sendImageMessage({
             sender_id: user?.id,
             receiver_id: selectedChat?.id,
-            image: file, // ✅ chính là file object
+            image: file,
           })
         ).unwrap();
 
@@ -964,6 +1007,8 @@ const MessageArea = ({ selectedChat, user }) => {
           showConversation={showConversation} // Truyền showConversation
           replyingTo={replyingTo} // Add this prop
           clearReplyingTo={clearReplyingTo} // Add this prop
+          user={user}
+          selectedChat={selectedChat} // Thêm prop selectedChat
         />
       </Layout>
 

@@ -3,7 +3,6 @@ import { Input, Button, List, Avatar, Modal, Card, Divider, message } from "antd
 import { SearchOutlined, CloseOutlined, UserAddOutlined, MessageOutlined } from "@ant-design/icons";
 import "./SearchComponent.css";
 import {searchUsersPhone,searchUsersByPhone} from "../../../redux/slices/userSlide";
-import { fetchChatMessages } from "../../../redux/slices/messagesSlice";
 import { getUserFriends } from "../../../redux/slices/friendSlice";
 import { useDispatch, useSelector } from "react-redux";
 import { AsYouType } from 'libphonenumber-js';

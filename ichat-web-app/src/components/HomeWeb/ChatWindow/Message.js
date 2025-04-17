@@ -1,13 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Avatar, Button, Modal } from "antd";
+import { Avatar, Button, Modal, Alert } from "antd";
+import { UserAddOutlined } from "@ant-design/icons";
 import { message as antMessage } from "antd";
 import "./Message.css";
 import {
   LikeOutlined,
   DeleteOutlined,
   ShareAltOutlined,
-  PushpinOutlined,
-  CopyOutlined,
   MoreOutlined,
   RollbackOutlined,
 } from "@ant-design/icons";
@@ -16,10 +15,10 @@ import {
   fetchMessages,
   updateMessages,
   handleSoftDelete,
-  replyToMessage,
 } from "../../../redux/slices/messagesSlice";
 import { useDispatch } from "react-redux";
 import socket from "../../services/socket";
+import { getUserFriends } from "../../../redux/slices/friendSlice";
 
 // import { LikeOutlined, CheckOutlined } from "@ant-design/icons";
 
@@ -44,6 +43,87 @@ const Message = ({
   const messageRef = useRef(null);
   const dispatch = useDispatch();
   // const chatMessages = useSelector((state) => state.messages.chatMessages);
+  const [friends, setFriends] = useState([]);
+  // Lấy danh sách bạn bè
+  useEffect(() => {
+    const fetchFriends = async () => {
+      try {
+        const result = await dispatch(
+          getUserFriends(user._id || user.id)
+        ).unwrap();
+        setFriends(result);
+        console.log(
+          "friends from Search component",
+          user._id || user.id,
+          result
+        );
+      } catch (err) {
+        console.error("Lỗi khi lấy danh sách bạn bè:", err);
+      }
+    };
+
+    if (user._id || user.id) {
+      fetchFriends();
+    }
+  }, [dispatch, user._id, user.id]);
+  console.log("friends from Message component", user._id || user.id, friends);
+  // Kiêm tra xem người dùng đã là bạn hay chưa
+  const isFriend = (userId) => {
+    return friends.friends.some((friend) => friend.id === userId);
+  };
+  // state for friendship check and modal
+  const [isFriendWithReceiver, setIsFriendWithReceiver] = useState(true);
+  const [friendRequestSent, setFriendRequestSent] = useState(false);
+  const checkIsFriend = () => {
+    if (!friends || !friends.friends || !Array.isArray(friends.friends)) {
+      return false;
+    }
+
+    const receiverId = selectedChat?.id || message.sender_id;
+    if (receiverId === user.id) return true; // User is always "friends" with themself
+
+    const result = friends.friends.some(
+      (friend) =>
+        friend.id === receiverId ||
+        friend._id === receiverId ||
+        String(friend.id) === String(receiverId)
+    );
+    return result;
+  };
+  // Check friendship status when component mounts or selectedChat changes
+  useEffect(() => {
+    if (friends && friends.friends) {
+      const result = checkIsFriend();
+      setIsFriendWithReceiver(result);
+      console.log("Is friend with receiver:", result);
+    }
+  }, [friends, selectedChat]);
+
+  // Function to send friend request
+  const handleSendFriendRequest = async () => {
+    try {
+      antMessage.loading({
+        content: "Đang gửi lời mời kết bạn...",
+        key: "friendRequest",
+      });
+
+      // Mock successful request
+      setTimeout(() => {
+        antMessage.success({
+          content: "Đã gửi lời mời kết bạn!",
+          key: "friendRequest",
+          duration: 2,
+        });
+        setFriendRequestSent(true);
+      }, 1000);
+    } catch (error) {
+      antMessage.error("Không thể gửi lời mời kết bạn. Vui lòng thử lại sau.");
+      console.error("Error sending friend request:", error);
+    }
+  };
+
+  // Disabled all interaction if not friends
+  const isInteractionDisabled = !isFriendWithReceiver;
   //Thu hồi tin nhắn
   const handleRecall = async () => {
     try {
@@ -452,7 +532,7 @@ const Message = ({
   useEffect(() => {
     console.log("Message component rendered with:", {
       messageId: message._id,
-      replyTo: message.reply_to,
+      replyTo: message.reply_to || null,
       allMessagesCount: allMessages?.length || 0,
     });
 
@@ -465,188 +545,264 @@ const Message = ({
       );
     }
   }, [message, allMessages]);
-
+  console.log("Kiểm tra isFriendWithReceiver:", isFriendWithReceiver);
   return (
-    <div
-      className={`message ${isSender ? "sent" : "received"}`}
-      onContextMenu={handleContextMenu}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      ref={messageRef}
-      styles={{ display: "flex", flexDirection: "column" }}
-    >
-      {!isSender && (
-        <div className="avatar-message">
-          <Avatar
-            size={32}
-            src={selectedChat.avatar_path}
-            className="profile-avatar-message"
+    <>
+      {/* {!isFriendWithReceiver && !isSender && (
+        <div className="not-friend-banner">
+          <Alert
+            message="Hai bạn chưa là bạn bè"
+            description="Kết bạn để mở khóa tính năng tin nhắn đầy đủ."
+            type="warning"
+            showIcon
+            action={
+              friendRequestSent ? (
+                <Button size="small" disabled>
+                  Đã gửi lời mời
+                </Button>
+              ) : (
+                <Button
+                  type="primary"
+                  size="small"
+                  icon={<UserAddOutlined />}
+                  onClick={handleSendFriendRequest}
+                >
+                  Kết bạn
+                </Button>
+              )
+            }
+            className="not-friend-alert"
+          />
+        </div>
+      )} */}
+      {!isFriendWithReceiver && !isSender && (
+        <div className="not-friend-banner">
+          <Alert
+            message="Hai bạn chưa là bạn bè"
+            description="Kết bạn để mở khóa tính năng tin nhắn đầy đủ."
+            type="warning"
+            showIcon
+            action={
+              friendRequestSent ? (
+                <Button size="small" disabled>
+                  Đã gửi lời mời
+                </Button>
+              ) : (
+                <Button
+                  type="primary"
+                  size="small"
+                  icon={<UserAddOutlined />}
+                  onClick={handleSendFriendRequest}
+                >
+                  Kết bạn
+                </Button>
+              )
+            }
+            className="not-friend-alert"
           />
         </div>
       )}
-
-      <div className="message-column">
-        {/* <RepliedMessage reply={message.reply_to} /> */}
-        {message.reply_to && <RepliedMessage reply={message.reply_to} />}
-        {message.type === "image" ? (
-          <>
-            <div
-              className="message-image-container"
-              onClick={handleImageClick}
-              style={{ cursor: "pointer" }}
-            >
-              <img
-                src={message.content}
-                alt="Message image"
-                className="message-image"
-              />
-              <span className="image-hd">HD</span>
-              <span className="image-timestamp">
-                {new Date(message.timestamp).toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </span>
-            </div>
-            <Modal
-              open={isModalOpen}
-              footer={null}
-              onCancel={handleClose}
-              centered
-              width={500}
-              bodyStyle={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                padding: 0,
-                height: "100%",
-                top: "30px",
-              }}
-              style={{ top: "30px" }}
-            >
-              <img
-                src={message.content}
-                alt="Full-size image"
-                style={{
-                  maxWidth: "100%",
-                  maxHeight: "80vh",
-                  borderRadius: "8px",
-                }}
-              />
-            </Modal>
-          </>
-        ) : message.type === "file" ? (
-          <>
-            <div className="message-file-container">
-              <div className="file-content">
-                <span className="file-icon">📄</span>
-                <div className="file-info">
-                  <span className="file-name">{fileInfo.name}</span>
-                  <span className="file-type">
-                    Loại file: {fileInfo.extension.toUpperCase()}
-                  </span>
-                  <span className="file-size">Dung lượng: {fileInfo.size}</span>
-                </div>
-                <button onClick={handleDownload} className="download-button">
-                  📥 Tải về
-                </button>
-              </div>
-              <span className="file-timestamp">
-                {new Date(message.timestamp).toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </span>
-            </div>
-          </>
-        ) : (
-          <div
-            className="message-content"
-            style={{
-              backgroundColor: isSender ? "#e6f7ff" : "#fff",
-            }}
-          >
-            <p>{message.content}</p>
-            <span className="timestamp">
-              {new Date(message.timestamp).toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            </span>
+      <div
+        className={`message ${isSender ? "sent" : "received"} ${
+          !isFriendWithReceiver && !isSender ? "not-friend-message" : ""
+        }`}
+        onContextMenu={
+          isInteractionDisabled && !isSender
+            ? (e) => e.preventDefault()
+            : handleContextMenu
+        }
+        onMouseEnter={
+          isInteractionDisabled && !isSender ? null : () => setIsHovered(true)
+        }
+        onMouseLeave={
+          isInteractionDisabled && !isSender ? null : () => setIsHovered(false)
+        }
+        ref={messageRef}
+        style={{ display: "flex" }}
+      >
+        {!isSender && (
+          <div className="avatar-message">
+            <Avatar
+              size={32}
+              src={selectedChat.avatar_path}
+              className="profile-avatar-message"
+            />
           </div>
         )}
-      </div>
 
-      {/* Hover actions overlay */}
-      {isHovered && (
-        <>
-          <div className="message-actions-overlay">
-            <button onClick={handleReply} className="action-icon" title="Reply">
-              <RollbackOutlined />
-            </button>
-            <button
-              onClick={handleDelete}
-              className="action-icon"
-              title="Delete"
+        <div className="message-column">
+          {/* <RepliedMessage reply={message.reply_to} /> */}
+          {message.reply_to && <RepliedMessage reply={message.reply_to} />}
+          {message.type === "image" ? (
+            <>
+              <div
+                className="message-image-container"
+                onClick={handleImageClick}
+                style={{ cursor: "pointer" }}
+              >
+                <img
+                  src={message.content}
+                  alt="Message image"
+                  className="message-image"
+                />
+                <span className="image-hd">HD</span>
+                <span className="image-timestamp">
+                  {new Date(message.timestamp).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </span>
+              </div>
+              <Modal
+                open={isModalOpen}
+                footer={null}
+                onCancel={handleClose}
+                centered
+                width={500}
+                bodyStyle={{
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  padding: 0,
+                  height: "100%",
+                  top: "30px",
+                }}
+                style={{ top: "30px" }}
+              >
+                <img
+                  src={message.content}
+                  alt="Full-size image"
+                  style={{
+                    maxWidth: "100%",
+                    maxHeight: "80vh",
+                    borderRadius: "8px",
+                  }}
+                />
+              </Modal>
+            </>
+          ) : message.type === "file" ? (
+            <>
+              <div className="message-file-container">
+                <div className="file-content">
+                  <span className="file-icon">📄</span>
+                  <div className="file-info">
+                    <span className="file-name">{fileInfo.name}</span>
+                    <span className="file-type">
+                      Loại file: {fileInfo.extension.toUpperCase()}
+                    </span>
+                    <span className="file-size">
+                      Dung lượng: {fileInfo.size}
+                    </span>
+                  </div>
+                  <button onClick={handleDownload} className="download-button">
+                    📥 Tải về
+                  </button>
+                </div>
+                <span className="file-timestamp">
+                  {new Date(message.timestamp).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </span>
+              </div>
+            </>
+          ) : (
+            <div
+              className="message-content"
+              style={{
+                backgroundColor: isSender ? "#e6f7ff" : "#fff",
+              }}
             >
-              <DeleteOutlined />
-            </button>
-            <button onClick={handleShare} className="action-icon" title="Share">
-              <ShareAltOutlined />
-            </button>
+              <p>{message.content}</p>
+              <span className="timestamp">
+                {new Date(message.timestamp).toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </span>
+            </div>
+          )}
+        </div>
 
-            <button
-              onClick={() => setThreeDotsMenuVisible(!threeDotsMenuVisible)}
-              className="action-icon three-dots"
-              title="More options"
-            >
-              <MoreOutlined />
-            </button>
-          </div>
-          <div className="reaction-icons">
-            <span onClick={() => handleReaction("👍")} title="Like">
-              <LikeOutlined />
-            </span>
-            {/* <span onClick={() => handleReaction("❤️")} title="Love">
+        {/* Hover actions overlay */}
+        {isHovered && (isInteractionDisabled || isSender) && (
+          <>
+            <div className="message-actions-overlay">
+              <button
+                onClick={handleReply}
+                className="action-icon"
+                title="Reply"
+              >
+                <RollbackOutlined />
+              </button>
+              <button
+                onClick={handleDelete}
+                className="action-icon"
+                title="Delete"
+              >
+                <DeleteOutlined />
+              </button>
+              <button
+                onClick={handleShare}
+                className="action-icon"
+                title="Share"
+              >
+                <ShareAltOutlined />
+              </button>
+
+              <button
+                onClick={() => setThreeDotsMenuVisible(!threeDotsMenuVisible)}
+                className="action-icon three-dots"
+                title="More options"
+              >
+                <MoreOutlined />
+              </button>
+            </div>
+            <div className="reaction-icons">
+              <span onClick={() => handleReaction("👍")} title="Like">
+                <LikeOutlined />
+              </span>
+              {/* <span onClick={() => handleReaction("❤️")} title="Love">
               ❤️
             </span>
             <span onClick={() => handleReaction("😂")} title="Laugh">
               😂
             </span> */}
+            </div>
+          </>
+        )}
+
+        {/* Three dots menu */}
+        {threeDotsMenuVisible && (isInteractionDisabled || isSender) && (
+          <div className="three-dots-menu">
+            <button onClick={handleReply}>Trả lời</button>
+            <button onClick={handleShare}>Chia sẻ</button>
+            <button onClick={handlePin}>Ghim tin nhắn</button>
+            <button onClick={handleDelete}>Xoá tin nhắn</button>
+            <button onClick={handleCopy}>Coppy tin nhắn</button>
+            {/* <button onClick={handleRecall}>Thu hồi tin nhắn</button> */}
+            {canRecall && (
+              <button onClick={handleRecall}>Thu hồi tin nhắn</button>
+            )}
           </div>
-        </>
-      )}
+        )}
 
-      {/* Three dots menu */}
-      {threeDotsMenuVisible && (
-        <div className="three-dots-menu">
-          <button onClick={handleReply}>Trả lời</button>
-          <button onClick={handleShare}>Chia sẻ</button>
-          <button onClick={handlePin}>Ghim tin nhắn</button>
-          <button onClick={handleDelete}>Xoá tin nhắn</button>
-          <button onClick={handleCopy}>Coppy tin nhắn</button>
-          {/* <button onClick={handleRecall}>Thu hồi tin nhắn</button> */}
-          {canRecall && (
-            <button onClick={handleRecall}>Thu hồi tin nhắn</button>
-          )}
-        </div>
-      )}
-
-      {/* Context Menu (on right-click) */}
-      {contextMenuVisible && (
-        <div className="context-menu">
-          <button onClick={handleReply}>Trả lời</button>
-          <button onClick={handleShare}>Chia sẻ</button>
-          <button onClick={handlePin}>Ghim tin nhắn</button>
-          <button onClick={handleDelete}>Xoá tin nhắn</button>
-          <button onClick={handleCopy}>Copy tin nhắn</button>
-          {/* <button onClick={handleRecall}>Thu hồi tin nhắn</button> */}
-          {canRecall && (
-            <button onClick={handleRecall}>Thu hồi tin nhắn</button>
-          )}
-        </div>
-      )}
-    </div>
+        {/* Context Menu (on right-click) */}
+        {contextMenuVisible && (isInteractionDisabled || isSender) && (
+          <div className="context-menu">
+            <button onClick={handleReply}>Trả lời</button>
+            <button onClick={handleShare}>Chia sẻ</button>
+            <button onClick={handlePin}>Ghim tin nhắn</button>
+            <button onClick={handleDelete}>Xoá tin nhắn</button>
+            <button onClick={handleCopy}>Copy tin nhắn</button>
+            {/* <button onClick={handleRecall}>Thu hồi tin nhắn</button> */}
+            {canRecall && (
+              <button onClick={handleRecall}>Thu hồi tin nhắn</button>
+            )}
+          </div>
+        )}
+      </div>
+    </>
   );
 };
 

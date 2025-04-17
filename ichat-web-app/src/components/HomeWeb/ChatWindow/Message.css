@@ -406,3 +406,35 @@
   color: #555;
   font-style: italic;
 }
+.not-friend-banner {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.not-friend-alert {
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.not-friend-message {
+  position: relative;
+}
+
+.not-friend-icon {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background-color: #ff4d4f;
+  color: white;
+  border-radius: 50%;
+  padding: 3px;
+  font-size: 10px;
+}
+
+.download-button.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
