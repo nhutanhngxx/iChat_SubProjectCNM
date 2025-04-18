@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { Avatar, Button, message } from "antd";
 import { useDispatch, useSelector } from "react-redux";
-import { sendFriendRequest } from "../../../redux/slices/friendSlice";
-import { getUserFriends } from "../../../redux/slices/friendSlice";
+import { getSentFriendRequests, getReceivedFriendRequests, getUserFriends, sendFriendRequest, getBlockedUsers } from "../../../redux/slices/friendSlice";
+
 import { useEffect } from "react";
 import "./UserInfoCard.css";
 
@@ -10,30 +10,49 @@ const UserInfoCard = ({ user, onClose }) => {
   const dispatch = useDispatch();
   const [isLoading, setIsLoading] = useState(false);
   const currentUser = useSelector((state) => state.auth.user);
-  const [friendsData, setFriendsData] = useState([]);
-  const [relationship, setRelationship] = useState(null);
+  const [sentRequestData, setSentRequestData] = useState([]);
+  const [receiveRequestData, setReceiveRequestData] = useState([]);
+  const [acceptData, setAcceptData] = useState([]);
+  const [blockData, setBlockData] = useState([]);
 
-  // Kiểm tra xem có phải là bạn bè không
+  const isSentRequest = sentRequestData?.some(request => request.id === user.id);
+  const isReceiveRequest = receiveRequestData?.some(request => request.id === user.id);
+  const isAccept = acceptData?.some(request => request.id === user.id);
+  const isBlocked = blockData?.some(request => request.id === user.id);
 
+  console.log("isReceiveRequest: ", isReceiveRequest);
+  console.log("isSentRequest: ", isSentRequest);
+  console.log("isAccept: ", isAccept);
+  console.log("isBlocked: ", isBlocked);
 
   useEffect(() => {
-    const fetchFriends = async () => {
+    const fetchList = async () => {
       try {
-        const result = await dispatch(getUserFriends(currentUser.id)).unwrap();
-        setFriendsData(result.friends);
-        const relationshipResult = await dispatch(getUserFriends(user.id)).unwrap();
-        setRelationship(result.relationship);
+
+        const resultSentRequest = await dispatch(getSentFriendRequests(currentUser.id)).unwrap();
+        setSentRequestData(resultSentRequest.friendRequests);
+
+        const resultReceiveRequest = await dispatch(getReceivedFriendRequests(currentUser.id)).unwrap();
+        setReceiveRequestData(resultReceiveRequest.friendRequests);
+
+        const resultFriends = await dispatch(getUserFriends(currentUser.id)).unwrap();
+        setAcceptData(resultFriends.friends);
+
+        const resultBlockedUsers = await dispatch(getBlockedUsers(currentUser.id)).unwrap();
+        setBlockData(resultBlockedUsers.data);
+
       } catch (error) {
         console.error("Lỗi khi lấy danh sách bạn bè:", error);
       }
     }
 
     if (currentUser?.id) {
-      fetchFriends();
+      fetchList();
     }
-  }, [dispatch, currentUser, friendsData]);
+  }, [dispatch, currentUser]);
 
-  const isFriend = friendsData?.some(friend => friend.id === user.id);
+
+
 
   const onAddFriend = async () => {
     // Kiểm tra không thể kết bạn với chính mình
@@ -116,14 +135,18 @@ const UserInfoCard = ({ user, onClose }) => {
       </div>
 
       <div className="user-actions">
-        {!isFriend && (
+        {!isAccept && (
           <Button
             type="primary"
             block
             onClick={onAddFriend}
             loading={isLoading}
+            disabled={isSentRequest || isReceiveRequest || isBlocked}
           >
-            Kết bạn
+            {isSentRequest && "Đang chờ chấp nhận"}
+            {isReceiveRequest && "Đã nhận lời mời kết bạn"}
+            {isBlocked && "Bạn đang bị chặn"}
+            {!isSentRequest && !isReceiveRequest && !isBlocked && "Kết bạn"}
           </Button>
         )}
 
@@ -155,3 +178,6 @@ const UserInfoCard = ({ user, onClose }) => {
 };
 
 export default UserInfoCard;
+
+
+
