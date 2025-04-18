@@ -670,9 +670,9 @@ const Chatting = ({ route }) => {
 
             <View style={{ marginLeft: 10, gap: 2 }}>
               <Text style={styles.name}>{chat.name}</Text>
-              <Text style={{ fontSize: 12, color: "gray" }}>
+              {/* <Text style={{ fontSize: 12, color: "gray" }}>
                 {chat.status === "Online" ? "Đang hoạt động" : "Ngoại tuyến"}
-              </Text>
+              </Text> */}
             </View>
           </View>
           <View
@@ -890,7 +890,7 @@ const Chatting = ({ route }) => {
                           styles.reactionsContainer,
                           isMyMessage
                             ? styles.reactionsRight
-                            : styles.reactionsRight,
+                            : styles.reactionsLeft,
                         ]}
                       >
                         <TouchableOpacity
@@ -1198,7 +1198,7 @@ const styles = StyleSheet.create({
     borderRadius: 25,
   },
   name: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "bold",
   },
   messagesContainer: {
