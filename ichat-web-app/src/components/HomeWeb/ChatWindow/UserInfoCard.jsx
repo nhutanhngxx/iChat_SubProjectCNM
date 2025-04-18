@@ -6,12 +6,30 @@ import { getUserFriends } from "../../../redux/slices/friendSlice";
 import { useEffect } from "react";
 import "./UserInfoCard.css";
 
-const UserInfoCard = ({ user, onClose }) => {
+const UserInfoCard = ({ user, onClose,onSelectUser }) => {
   const dispatch = useDispatch();
   const [isLoading, setIsLoading] = useState(false);
   const currentUser = useSelector((state) => state.auth.user);
   const [friendsData, setFriendsData] = useState([]);
 
+  //Chuyển qua chat
+  const handleChat = () => {
+    const normalizedUser = {
+      id: user.id,
+      name: user.full_name || user.name,
+      lastMessage: "",
+      time: new Date(),
+      unread: 0,
+      user_status: user.user_status || "Offline",
+      type: "text",
+      avatar_path: user.avatar_path || "https://default-avatar.com/avatar.jpg",
+      priority: "",
+      isLastMessageFromMe: false,
+      receiver_id: user.id  // This is very important
+    };
+    onSelectUser(normalizedUser); // Gọi hàm onSelectUser với user hiện tại
+    onClose(false); // Đóng modal sau khi chọn người dùng
+  };
   // Kiểm tra xem có phải là bạn bè không
 
 
@@ -124,7 +142,7 @@ const UserInfoCard = ({ user, onClose }) => {
           </Button>
         )}
 
-        <Button block>
+        <Button block onClick={handleChat}>
           Nhắn tin
         </Button>
       </div>

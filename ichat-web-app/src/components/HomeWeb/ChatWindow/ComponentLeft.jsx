@@ -303,7 +303,7 @@ const ComponentLeft = ({ userList, setUserList, onSelectUser,user }) => {
         />
       ) : (
         <Layout className="chat-sidebar">
-          <SearchBar onFocus={() => setShowInterface(true)} />
+          <SearchBar onFocus={() => setShowInterface(true)} onSelectUser={onSelectUser} />
           {/* <ChatList filteredChatList={userList} onSelectUser={onSelectUser} /> */}
           <div className="conversations-container">
             <div className="classification-conversation-container">

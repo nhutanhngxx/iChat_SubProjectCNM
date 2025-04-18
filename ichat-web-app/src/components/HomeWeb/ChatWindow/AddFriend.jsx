@@ -7,7 +7,7 @@ import UserInfoCard from "./UserInfoCard";
 import { useSelector } from "react-redux";
 import ProfileModal from "../DropDownList/ProfileModal/ProfileModal";
 
-const AddFriend = ({ visible, onClose }) => {
+const AddFriend = ({ visible, onClose,onSelectUser }) => {
   const dispatch = useDispatch();
   const currentUser = useSelector((state) => state.auth.user);
   const [phone, setPhone] = useState("");
@@ -81,6 +81,7 @@ const AddFriend = ({ visible, onClose }) => {
     setUserResult(null);
     setPhone("");
     setPhoneError("");
+    onClose();
   };
 
   const handleModalClose = () => {
@@ -212,6 +213,7 @@ const AddFriend = ({ visible, onClose }) => {
           <UserInfoCard
             user={userResult}
             onClose={handleCloseUserInfo}
+            onSelectUser={onSelectUser}
           />
         )}
       </Modal>
