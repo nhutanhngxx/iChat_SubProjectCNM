@@ -14,15 +14,15 @@ const UserInfoCard = ({ user, onClose, onSelectUser }) => {
   const [friendsData, setFriendsData] = useState([]);
 
   // Thêm các state để theo dõi trạng thái lời mời kết bạn
-  const [isSentRequest, setIsSentRequest] = useState([]);
-  const [isReceiveRequest, setIsReceiveRequest] = useState([]);
+  // const [isSentRequest, setIsSentRequest] = useState([]);
+  // const [isReceiveRequest, setIsReceiveRequest] = useState([]);
 
-  const [blockingStatus, setBlockingStatus] = useState({
-    isBlocking: false,  // currentUser đang chặn người kia
-    isBlocked: false    // currentUser đang bị người kia chặn
-  });
+  // const [blockingStatus, setBlockingStatus] = useState({
+  //   isBlocking: false,  // currentUser đang chặn người kia
+  //   isBlocked: false    // currentUser đang bị người kia chặn
+  // });
 
-  console.log("block ", blockingStatus);
+  // console.log("block ", blockingStatus);
 
   const isFriend = (userId) => {
     return friendsData.some((friend) => friend.id === userId);
@@ -45,27 +45,27 @@ const UserInfoCard = ({ user, onClose, onSelectUser }) => {
     }
   }, [dispatch, currentUser, friendsData]);
 
-  useEffect(() => {
-    const checkBlocking = async () => {
-      try {
-        const result = await dispatch(checkBlockingStatus({
-          userId: currentUser.id,
-          otherUserId: user.id
-        })).unwrap();
+  // useEffect(() => {
+  //   const checkBlocking = async () => {
+  //     try {
+  //       const result = await dispatch(checkBlockingStatus({
+  //         userId: currentUser.id,
+  //         otherUserId: user.id
+  //       })).unwrap();
 
-        setBlockingStatus({
-          isBlocking: result.isBlocking,
-          isBlocked: result.isBlocked
-        });
-      } catch (error) {
-        console.error("Lỗi khi kiểm tra trạng thái chặn:", error);
-      }
-    };
+  //       setBlockingStatus({
+  //         isBlocking: result.isBlocking,
+  //         isBlocked: result.isBlocked
+  //       });
+  //     } catch (error) {
+  //       console.error("Lỗi khi kiểm tra trạng thái chặn:", error);
+  //     }
+  //   };
 
-    if (currentUser?.id && user?.id) {
-      checkBlocking();
-    }
-  }, [dispatch, currentUser?.id, user?.id]);
+  //   if (currentUser?.id && user?.id) {
+  //     checkBlocking();
+  //   }
+  // }, [dispatch, currentUser?.id, user?.id]);
 
   //Chuyển qua chat
   const handleChat = () => {
@@ -175,13 +175,9 @@ const UserInfoCard = ({ user, onClose, onSelectUser }) => {
             block
             onClick={onAddFriend}
             loading={isLoading}
-            disabled={isSentRequest || isReceiveRequest || blockingStatus.isBlocking || blockingStatus.isBlocked}
+
           >
-            {isSentRequest && "Đang chờ chấp nhận"}
-            {isReceiveRequest && "Đã nhận lời mời kết bạn"}
-            {blockingStatus.isBlocking && "Bạn đang chặn người này"}
-            {blockingStatus.isBlocked && "Bạn đang bị chặn"}
-            {!isSentRequest && !isReceiveRequest && !blockingStatus.isBlocking && !blockingStatus.isBlocked && "Kết bạn"}
+            Kết bạn
           </Button>
         )}
 
