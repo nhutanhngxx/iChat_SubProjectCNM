@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Text,
+  Platform,
 } from "react-native";
 
 import attachmentIcon from "../../assets/icons/attachment.png";
@@ -91,7 +92,13 @@ const MessageInputBar = ({
       )}
 
       {/* Thanh nhập tin nhắn */}
-      <View style={styles.inputContainer}>
+      <View
+        style={
+          Platform.OS === "ios"
+            ? [styles.inputContainer, { paddingVertical: 10 }]
+            : [styles.inputContainer, { paddingVertical: 5 }]
+        }
+      >
         <TouchableOpacity>
           <Image
             source={require("../../assets/icons/gif.png")}
@@ -146,8 +153,9 @@ export default MessageInputBar;
 const styles = StyleSheet.create({
   wrapper: {
     paddingHorizontal: 10,
-    paddingVertical: 8,
+    paddingBottom: 25,
     backgroundColor: "#f9f9f9",
+    paddingTop: 10,
   },
   inputContainer: {
     flexDirection: "row",
@@ -155,7 +163,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderRadius: 25,
     paddingHorizontal: 10,
-    paddingVertical: 10,
+    // paddingVertical: 10, // android 5
     shadowColor: "#000",
     shadowOpacity: 0.05,
     shadowOffset: { width: 0, height: 1 },

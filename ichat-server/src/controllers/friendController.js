@@ -207,8 +207,6 @@ const FriendshipController = {
   // Gửi lời mời kết bạn
   sendFriendRequest: async (req, res) => {
     const { senderId, receiverId } = req.body;
-    console.log("Sender ID: ", senderId);
-    console.log("Receiver ID: ", receiverId);
 
     try {
       // Kiểm tra nếu sender_id và receiver_id giống nhau
@@ -296,6 +294,8 @@ const FriendshipController = {
   //  Từ chối / Hủy lời mời kết bạn
   cancelFriendRequest: async (req, res) => {
     const { senderId, receiverId } = req.body;
+    console.log("Sender ID: ", senderId);
+    console.log("Receiver ID: ", receiverId);
 
     try {
       const friendship = await Friendship.findOneAndDelete({
@@ -316,6 +316,33 @@ const FriendshipController = {
     }
   },
 
+  // Kiểm tra trạng thái kết bạn giữa 2 người dùng
+  checkFriendStatus: async (req, res) => {
+    const { user_id, friend_id } = req.body;
+    try {
+      console.log("User ID: ", user_id);
+      console.log("Friend ID: ", friend_id);
+
+      const friendship = await Friendship.findOne({
+        $or: [
+          { sender_id: user_id, receiver_id: friend_id },
+          { sender_id: friend_id, receiver_id: user_id },
+        ],
+      });
+
+      if (!friendship) {
+        return res.status(200).json({
+          status: "ok",
+          message: "Không tìm thấy kết nối",
+        });
+      }
+
+      res.json({ status: "ok", friendship });
+    } catch (error) {
+      res.status(500).json({ status: "error", message: error.message });
+    }
+  },
+
   // Chặn người dùng
   blockUser: async (req, res) => {
     const { blocker_id, blocked_id } = req.body;
@@ -330,7 +357,7 @@ const FriendshipController = {
 
       if (friendship) {
         friendship.status = "blocked";
-        friendship.blocked_by = blocker_id;
+        friendship.blocked_by = blocker_id; // Lưu người chặn
         await friendship.save();
       } else {
         // Nếu chưa có quan hệ trước đó, tạo mới với trạng thái "blocked"
@@ -373,6 +400,85 @@ const FriendshipController = {
 
       res.json({ status: "ok", message: "Đã hủy chặn thành công" });
     } catch (error) {
+      res.status(500).json({ status: "error", message: error.message });
+    }
+  },
+
+  // Láy danh sách người dùng đã bị chặn
+  getBlockedUsers: async (req, res) => {
+    const { userId } = req.params;
+    try {
+      const blockedFriendships = await Friendship.find({
+        blocked_by: userId,
+        status: "blocked",
+      });
+
+      const blockedUsersIds = blockedFriendships.map((friendship) => {
+        const isSenderBlocker =
+          friendship.blocked_by.toString() ===
+          friendship.sender_id._id.toString();
+        return isSenderBlocker ? friendship.receiver_id : friendship.sender_id;
+      });
+
+      const blockedUsers = await User.find({
+        _id: { $in: blockedUsersIds },
+      });
+
+      res.json({ status: "ok", data: blockedUsers });
+    } catch (error) {
+      res.status(500).json({ status: "error", message: error.message });
+    }
+  },
+
+  // Kiểm tra trạng thái chặn giữa 2 người dùng
+  checkBlockStatus: async (req, res) => {
+    const { user_id, target_id } = req.params;
+
+    try {
+      // Kiểm tra xem user_id có bị chặn bởi target_id không
+      const blockedByTarget = await Friendship.findOne({
+        $or: [
+          {
+            sender_id: user_id,
+            receiver_id: target_id,
+            status: "blocked",
+            blocked_by: target_id,
+          },
+          {
+            sender_id: target_id,
+            receiver_id: user_id,
+            status: "blocked",
+            blocked_by: target_id,
+          },
+        ],
+      });
+
+      // Kiểm tra xem user_id có chặn target_id không
+      const blockedByUser = await Friendship.findOne({
+        $or: [
+          {
+            sender_id: user_id,
+            receiver_id: target_id,
+            status: "blocked",
+            blocked_by: user_id,
+          },
+          {
+            sender_id: target_id,
+            receiver_id: user_id,
+            status: "blocked",
+            blocked_by: user_id,
+          },
+        ],
+      });
+
+      res.json({
+        status: "ok",
+        isBlocked: !!blockedByTarget || !!blockedByUser,
+        blockedByTarget: !!blockedByTarget,
+        blockedByUser: !!blockedByUser,
+      });
+    } catch (error) {
+      console.error("Error checking block status:", error);
       res.status(500).json({ status: "error", message: error.message });
     }
   },

@@ -586,6 +586,14 @@ const Message = ({
             <div className="replied-image">
               <img src={repliedMessage.content} alt="replied" width="50" />
             </div>
+          ) : repliedMessage.type === "video" ? (
+            <div className="replied-video">
+              <span>🎬 Video</span>
+            </div>
+          ) : repliedMessage.type === "audio" ? (
+            <div className="replied-audio">
+              <span>🎵 Audio</span>
+            </div>
           ) : repliedMessage.type === "file" ? (
             <p className="replied-file">📄 File</p>
           ) : (
@@ -738,6 +746,47 @@ const Message = ({
                   }}
                 />
               </Modal>
+            </>
+          ) : message.type === "video" ? (
+            <>
+              <div className="message-video-container">
+                <video
+                  controls
+                  className="message-video"
+                  src={message.content}
+                  preload="metadata"
+                />
+                <span className="video-controls">
+                  <span className="video-timestamp">
+                    {new Date(message.timestamp).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </span>
+                </span>
+              </div>
+            </>
+          ) : message.type === "audio" ? (
+            <>
+              <div className="message-audio-container">
+                <div className="audio-content">
+                  <span className="audio-icon">🎵</span>
+                  <div className="audio-player">
+                    <audio
+                      controls
+                      src={message.content}
+                      className="message-audio"
+                      preload="metadata"
+                    />
+                  </div>
+                </div>
+                <span className="audio-timestamp">
+                  {new Date(message.timestamp).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </span>
+              </div>
             </>
           ) : message.type === "file" ? (
             <>

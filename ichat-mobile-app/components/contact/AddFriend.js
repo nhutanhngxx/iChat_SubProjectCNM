@@ -63,21 +63,17 @@ const AddFriend = () => {
 
       if (response.data.status === "ok" && response.data) {
         const foundUser = response.data.users?.[0];
-        console.log("Found user:", foundUser);
-
-        navigation.navigate(
-          "ViewProfile",
-          {
-            name: foundUser.full_name,
-            avatar: foundUser.avatar_path,
-          },
-          { foundUser }
-        );
+        // console.log("Found user:", foundUser);
+        if (!foundUser) {
+          Alert.alert("Không tìm thấy", "Số điện thoại này chưa có tài khoản!");
+          return;
+        }
+        navigation.navigate("ViewProfile", { foundUser });
       } else {
         Alert.alert("Không tìm thấy", "Số điện thoại này chưa có tài khoản!");
       }
     } catch (error) {
-      console.error("Lỗi khi tìm kiếm:", error);
+      // console.error("Lỗi khi tìm kiếm:", error);
       Alert.alert("Lỗi", "Không thể kết nối đến server.");
     }
   };

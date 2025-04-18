@@ -47,6 +47,24 @@ router.post("/cancel-friend-request", FriendshipController.cancelFriendRequest);
 // Chặn người dùng
 router.post("/block-user", FriendshipController.blockUser);
 
+// Bỏ chặn người dùng
+router.post("/unblock-user", FriendshipController.unblockUser);
+
+// Lấy danh sách người dùng bị chặn
+router.get("/blocked-users/:userId", FriendshipController.getBlockedUsers);
+
+// Kiểm tra trạng thái chặn giữa 2 người dùng
+router.get(
+  "/check-block-status/:user_id/:target_id",
+  FriendshipController.checkBlockStatus
+);
+
+// Kiểm tra trạng thái kết bạn giữa 2 người dùng
+router.get(
+  "/check-friend-status/:user_id/:target_id",
+  FriendshipController.checkFriendStatus
+);
+
 // Hủy kết bạn (Đã chấp nhận lời mời kết bạn)
 router.post("/unfriend", FriendshipController.unfriendUser);
 
