@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 
 import { useDispatch, useSelector } from "react-redux";
-import { getUserFriends, unfriendUser, getBlockedUsers, unblockUser } from "../../../redux/slices/friendSlice";
+import { unfriendUser, getBlockedUsers, unblockUser } from "../../../redux/slices/friendSlice";
 import { BsFillPersonLinesFill } from "react-icons/bs";
 import { FaEllipsisV } from "react-icons/fa";
 import { Menu, Dropdown, Modal, message } from 'antd';
@@ -16,8 +16,6 @@ const BlockerUserList = () => {
     const [searchTerm, setSearchTerm] = useState("");
     const [sortOrder, setSortOrder] = useState("asc");
     const [blockedUsersData, setBlockedUsersData] = useState([]);
-
-
 
     const handleUnfriend = async (friendId) => {
         confirm({
@@ -96,20 +94,35 @@ const BlockerUserList = () => {
     useEffect(() => {
         const fetchList = async () => {
             try {
-                const resultBlockedUsers = await dispatch(getBlockedUsers(currentUser.id)).unwrap();
-                setBlockedUsersData(resultBlockedUsers.blockedUsers);
+                const result = await dispatch(getBlockedUsers(currentUser.id)).unwrap();
+                console.log("API Response:", result); // Log để kiểm tra cấu trúc dữ liệu
+
+                // Kiểm tra và xử lý dữ liệu từ API
+                let users = [];
+                if (result && result.data) {
+                    users = Array.isArray(result.data) ? result.data : [];
+                } else if (Array.isArray(result)) {
+                    users = result;
+                }
+
+                setBlockedUsersData(users);
             } catch (error) {
-                console.error("Lỗi khi fetch danh sách :", error);
+                console.error("Lỗi khi fetch danh sách:", error);
+                setBlockedUsersData([]);
             }
         }
-        console.log("Blocked users data:", blockedUsersData);
 
         if (currentUser?.id) {
             fetchList();
         }
     }, [dispatch, currentUser, blockedUsersData]);
 
-    const filteredFriends = (blockedUsersData || [])
+    console.log("blockedUsersData before filter:", blockedUsersData); // Log để kiểm tra dữ liệu
+
+    // Đảm bảo blockedUsersData là mảng trước khi filter
+    const dataArray = Array.isArray(blockedUsersData) ? blockedUsersData : [];
+
+    const filteredFriends = dataArray
         .filter((friend) =>
             (friend?.full_name || '').toLowerCase().includes((searchTerm || '').toLowerCase())
         )
@@ -122,7 +135,6 @@ const BlockerUserList = () => {
     // Nhóm bạn bè theo chữ cái đầu tiên
     const groupedFriends = filteredFriends.reduce((acc, friend) => {
         const firstLetter = (friend?.full_name || '').charAt(0).toUpperCase();
-
         if (!acc[firstLetter]) acc[firstLetter] = [];
         acc[firstLetter].push(friend);
         return acc;

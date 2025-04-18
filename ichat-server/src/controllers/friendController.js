@@ -4,27 +4,27 @@ const Friendship = require("../schemas/Friendship");
 require("dotenv").config();
 
 const FriendshipController = {
-  //Lấy danh sách chặn của người dùng
-  getBlockListByUserId: async (req, res) => {
+  // Láy danh sách người dùng đã bị chặn
+  getBlockedUsers: async (req, res) => {
     const { userId } = req.params;
-
     try {
-      const friendships = await Friendship.find({
-        $or: [
-          { sender_id: userId, status: "blocked" },
-          { receiver_id: userId, status: "blocked" },
-        ],
+      const blockedFriendships = await Friendship.find({
+        blocked_by: userId,
+        status: "blocked",
       });
 
-      const friendIds = friendships.map((friendship) =>
-        friendship.sender_id.toString() === userId
-          ? friendship.receiver_id
-          : friendship.sender_id
-      );
+      const blockedUsersIds = blockedFriendships.map((friendship) => {
+        const isSenderBlocker =
+          friendship.blocked_by.toString() ===
+          friendship.sender_id._id.toString();
+        return isSenderBlocker ? friendship.receiver_id : friendship.sender_id;
+      });
 
-      const blockedUsers = await User.find({ _id: { $in: friendIds } });
+      const blockedUsers = await User.find({
+        _id: { $in: blockedUsersIds },
+      });
 
-      res.json({ status: "ok", blockedUsers });
+      res.json({ status: "ok", data: blockedUsers });
     } catch (error) {
       res.status(500).json({ status: "error", message: error.message });
     }

@@ -11,6 +11,7 @@ const UserInfoCard = ({ user, onClose }) => {
   const [isLoading, setIsLoading] = useState(false);
   const currentUser = useSelector((state) => state.auth.user);
   const [friendsData, setFriendsData] = useState([]);
+  const [relationship, setRelationship] = useState(null);
 
   // Kiểm tra xem có phải là bạn bè không
 
@@ -20,6 +21,8 @@ const UserInfoCard = ({ user, onClose }) => {
       try {
         const result = await dispatch(getUserFriends(currentUser.id)).unwrap();
         setFriendsData(result.friends);
+        const relationshipResult = await dispatch(getUserFriends(user.id)).unwrap();
+        setRelationship(result.relationship);
       } catch (error) {
         console.error("Lỗi khi lấy danh sách bạn bè:", error);
       }
