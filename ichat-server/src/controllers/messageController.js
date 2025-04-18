@@ -141,11 +141,17 @@ const MessageController = {
     try {
       const { messageId, userId } = req.params;
       const { reaction_type } = req.body;
-      const result = await MessageModel.removeReaction(
+      console.log(
+        "messageId, userId, reaction_type",
         messageId,
         userId,
         reaction_type
       );
+      const result = await MessageModel.removeReaction({
+        messageId,
+        userId,
+        reaction_type,
+      });
       res.json({
         message: "Reaction removed successfully",
         updatedMessage: result,

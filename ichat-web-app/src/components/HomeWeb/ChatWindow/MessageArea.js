@@ -690,7 +690,7 @@ const MessageArea = ({ selectedChat, user }) => {
       );
     }
   }, [dispatch, user?.id, selectedChat?.receiver_id]);
-  console.log("Chat Messages in MessageArea", chatMessages);
+  // console.log("Chat Messages in MessageArea", chatMessages);
   // Near the top of your component
   const [isFriendWithReceiver, setIsFriendWithReceiver] = useState(true);
   const [friends, setFriends] = useState({ friends: [] });
