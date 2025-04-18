@@ -3,11 +3,6 @@ const router = express.Router();
 
 const FriendshipController = require("../controllers/friendController");
 
-router.post("/unblock-user", FriendshipController.unblockUser);
-
-//Danh sách người dùng chặn
-router.get("/blocked-users/:userId", FriendshipController.getBlockListByUserId);
-
 // Danh sách bạn bè
 router.get("/:userId", FriendshipController.getFriendListByUserId);
 

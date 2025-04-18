@@ -19,7 +19,7 @@ const HeaderMessages = () => {
 
   const handleLogout = async () => {
     try {
-      // // Gửi yêu cầu cập nhật trạng thái thành "Offline"
+      // Gửi yêu cầu cập nhật trạng thái thành "Offline"
       authService.logout(user.id);
       setUser(null);
     } catch (error) {
@@ -134,8 +134,11 @@ const styles = StyleSheet.create({
     position: "absolute",
   },
   icon: {
-    width: 25,
-    height: 25,
+    width: 35,
+    height: 35,
+    padding: 5,
+    backgroundColor: "white",
+    borderRadius: 50,
   },
   modalContainer: {
     flex: 1,

@@ -153,7 +153,7 @@ export default MessageInputBar;
 const styles = StyleSheet.create({
   wrapper: {
     paddingHorizontal: 10,
-    paddingBottom: 25,
+    paddingBottom: Platform.OS === "ios" ? 20 : 15,
     backgroundColor: "#f9f9f9",
     paddingTop: 10,
   },
