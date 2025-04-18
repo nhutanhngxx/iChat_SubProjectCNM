@@ -45,24 +45,26 @@ const RequestList = () => {
   const [receivedRequests, setReceivedRequests] = useState([]); // Lời mời đã nhận
   const [sentRequests, setSentRequests] = useState([]); // Lời mời đã gửi
 
-
   useEffect(() => {
     const fetchFriendRequests = async () => {
       try {
-        const result_received = await dispatch(getReceivedFriendRequests(currentUser.id)).unwrap();
+        const result_received = await dispatch(
+          getReceivedFriendRequests(currentUser.id)
+        ).unwrap();
         setReceivedRequests(result_received.friendRequests);
 
-        const result_sent = await dispatch(getSentFriendRequests(currentUser.id)).unwrap();
+        const result_sent = await dispatch(
+          getSentFriendRequests(currentUser.id)
+        ).unwrap();
         setSentRequests(result_sent.friendRequests);
       } catch (error) {
         console.error("Lỗi khi lấy danh sách lời mời:", error);
       }
-    }
+    };
     if (currentUser?.id) {
       fetchFriendRequests();
     }
   }, [dispatch, currentUser, sentRequests, receivedRequests]);
-
 
   const [suggestedFriends, setSuggestedFriends] = useState(
     initialSuggestedFriends
@@ -86,13 +88,14 @@ const RequestList = () => {
   const closeModal = () => {
     setModalData(null);
   };
-  // Xác nhận đồng ý 
+
+  // Xác nhận đồng ý
   const handleConfirmAction = async (senderId, receiverId) => {
     try {
       const data = {
         senderId: senderId,
         receiverId: receiverId,
-      }
+      };
 
       const result = await dispatch(acceptFriendRequest(data)).unwrap();
       if (result.status === "ok") {
@@ -126,15 +129,11 @@ const RequestList = () => {
       const result = await dispatch(cancelFriendRequest(data)).unwrap();
 
       if (result.status === "ok") {
-        setSentRequests((prev) =>
-          prev.filter((req) => req.id !== requestId)
-        );
+        setSentRequests((prev) => prev.filter((req) => req.id !== requestId));
       }
       console.log("Đã hủy lời mời kết bạn thành công");
-
     } catch (error) {
       console.error("Lỗi khi hủy lời mời kết bạn:", error);
-
     }
   };
 
@@ -162,49 +161,52 @@ const RequestList = () => {
           Lời mời đã nhận ({receivedRequests.length})
         </h3>
         <div className="request-container">
-          {receivedRequests
-            .map((request) => (
-              <div key={request.id} className="request-card">
-                <div className="request-info">
-                  <div
-                    className="info-user"
-                    onClick={() => handleOpenUserInfo(request, "received")}
-                  >
-                    <img
-                      src={request.avatar_path}
-                      alt={request.full_name}
-                      className="avatar"
-                    />
+          {receivedRequests.map((request) => (
+            <div key={request.id} className="request-card">
+              <div className="request-info">
+                <div
+                  className="info-user"
+                  onClick={() => handleOpenUserInfo(request, "received")}
+                >
+                  <img
+                    src={request.avatar_path}
+                    alt={request.full_name}
+                    className="avatar"
+                  />
 
-                    <div className="info">
-                      <strong>{request.full_name}</strong>
-                      <p className="date">08:01</p>
-                    </div>
-                  </div>
-                  <div className="icons">
-                    <FaFacebookMessenger className="icon" />
+                  <div className="info">
+                    <strong>{request.full_name}</strong>
+                    <p className="date">08:01</p>
                   </div>
                 </div>
-                <div className="box-message">
-                  <span className="message">{request.message}</span>
-                </div>
-
-                <div className="actions">
-                  <button
-                    className="btn reject"
-                    onClick={() => handleCancelRequest(request.id, currentUser.id)}
-                  >
-                    <FaTimes /> Từ chối
-                  </button>
-                  <button
-                    className="btn accept"
-                    onClick={() => handleConfirmAction(request.id, currentUser.id)}
-                  >
-                    <FaCheck /> Đồng ý
-                  </button>
+                <div className="icons">
+                  <FaFacebookMessenger className="icon" />
                 </div>
               </div>
-            ))}
+              <div className="box-message">
+                <span className="message">{request.message}</span>
+              </div>
+
+              <div className="actions">
+                <button
+                  className="btn reject"
+                  onClick={() =>
+                    handleCancelRequest(request.id, currentUser.id)
+                  }
+                >
+                  <FaTimes /> Từ chối
+                </button>
+                <button
+                  className="btn accept"
+                  onClick={() =>
+                    handleConfirmAction(request.id, currentUser.id)
+                  }
+                >
+                  <FaCheck /> Đồng ý
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
 
         {/* Lời mời đã gửi */}
@@ -212,53 +214,51 @@ const RequestList = () => {
           Lời mời đã gửi ({sentRequests.length})
         </h3>
         <div className="request-container">
-          {sentRequests
-            .map((request) => (
-              <div key={request.id} className="request-card ">
-                <div className="request-info sent ">
-                  <div className="info info-rq">
-                    <div className="info-rq-left">
-                      <div
-                        className="info-user"
-                        onClick={() => handleOpenUserInfo(request, "sent")}
-                      >
-                        <div
-                          style={{ width: "50px" }}>
-
-                          <img
-                            src={request.avatar_path}
-                            alt={request.full_name}
-                            className="avatar"
-                          /></div>
-                        <div className="request-message">
-                          <strong>{request.full_name}</strong>
-                          <p className="message">{request.message}</p>
-                        </div>
+          {sentRequests.map((request) => (
+            <div key={request.id} className="request-card ">
+              <div className="request-info sent ">
+                <div className="info info-rq">
+                  <div className="info-rq-left">
+                    <div
+                      className="info-user"
+                      onClick={() => handleOpenUserInfo(request, "sent")}
+                    >
+                      <div style={{ width: "50px" }}>
+                        <img
+                          src={request.avatar_path}
+                          alt={request.full_name}
+                          className="avatar"
+                        />
+                      </div>
+                      <div className="request-message">
+                        <strong>{request.full_name}</strong>
+                        <p className="message">{request.message}</p>
                       </div>
                     </div>
-                    <div className="icons">
-                      <FaFacebookMessenger className="icon" />
-                    </div>
+                  </div>
+                  <div className="icons">
+                    <FaFacebookMessenger className="icon" />
                   </div>
                 </div>
-                <button
-                  className="btn cancel"
-                  onClick={() => handleCancelRequest(currentUser.id, request.id)}
-                >
-                  {request.message_request ? (
-                    <>
-                      <CiRedo />
-                      <p> Đã thu hồi lời mời</p>
-                    </>
-                  ) : (
-                    <>
-                      <FaUserPlus />
-                      <p> Thu hồi lời mời</p>
-                    </>
-                  )}
-                </button>
               </div>
-            ))}
+              <button
+                className="btn cancel"
+                onClick={() => handleCancelRequest(currentUser.id, request.id)}
+              >
+                {request.message_request ? (
+                  <>
+                    <CiRedo />
+                    <p> Đã thu hồi lời mời</p>
+                  </>
+                ) : (
+                  <>
+                    <FaUserPlus />
+                    <p> Thu hồi lời mời</p>
+                  </>
+                )}
+              </button>
+            </div>
+          ))}
         </div>
 
         {/* Gợi ý kết bạn */}
