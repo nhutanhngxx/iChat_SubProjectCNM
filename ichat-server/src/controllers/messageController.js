@@ -139,9 +139,12 @@ const MessageController = {
 
   removeReactionToMessage: async (req, res) => {
     try {
+      const { messageId, userId } = req.params;
+      const { reaction_type } = req.body;
       const result = await MessageModel.removeReaction(
-        req.params.messageId,
-        req.params.userId
+        messageId,
+        userId,
+        reaction_type
       );
       res.json({
         message: "Reaction removed successfully",

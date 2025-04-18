@@ -307,12 +307,16 @@ export const addReactionToMessage = createAsyncThunk(
 // Xoá reaction cho tin nhắn
 export const removeReactionFromMessage = createAsyncThunk(
   "messages/removeReaction",
-  async ({ messageId, userId }, { rejectWithValue }) => {
+  async ({ messageId, userId, reaction_type }, { rejectWithValue }) => {
     try {
       const response = await fetch(
         `${API_URL}${messageId}/reactions/${userId}`,
         {
           method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ reaction_type }),
         }
       );
 

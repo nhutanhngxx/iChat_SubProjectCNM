@@ -465,77 +465,35 @@ const Message = ({
       }
 
       const userId = user._id || user.id;
-      const existingReaction = message.reactions?.find(
-        (r) => r.user_id === userId && r.reaction_type === reaction
-      );
-      const isRemoving = !!existingReaction;
 
-      // Add debug logs
-      console.log("Handling reaction:", {
-        action: isRemoving ? "remove" : "add",
-        reaction,
-        messageId: message._id,
-        existingReaction,
+      // Always ADD the reaction - never remove automatically based on existing reactions
+      await dispatch(
+        addReactionToMessage({
+          messageId: message._id,
+          user_id: userId,
+          reaction_type: reaction,
+        })
+      ).unwrap();
+
+      antMessage.success({
+        content: `Đã thêm biểu cảm ${getReactionEmoji(reaction)}`,
+        duration: 1,
       });
 
-      if (isRemoving) {
-        // Remove reaction
-        await dispatch(
-          removeReactionFromMessage({
-            messageId: message._id,
-            userId: userId,
-            reaction_type: reaction,
-          })
-        ).unwrap();
+      // Create room ID
+      const userIds = [user.id, selectedChat.id].sort();
+      const roomId = `chat_${userIds[0]}_${userIds[1]}`;
 
-        antMessage.success({
-          content: `Đã bỏ biểu cảm ${getReactionEmoji(reaction)}`,
-          duration: 1,
-        });
+      // Emit add-reaction event
+      const payload = {
+        chatId: roomId,
+        messageId: message._id,
+        userId: userId,
+        reaction: reaction, // Match server parameter name
+      };
 
-        // Create room ID
-        const userIds = [user.id, selectedChat.id].sort();
-        const roomId = `chat_${userIds[0]}_${userIds[1]}`;
-
-        // Format payload exactly as server expects it
-        const payload = {
-          chatId: roomId,
-          messageId: message._id,
-          userId: userId,
-        };
-
-        console.log("Emitting remove-reaction with payload:", payload);
-        socket.emit("remove-reaction", payload);
-      } else {
-        // Add reaction
-        await dispatch(
-          addReactionToMessage({
-            messageId: message._id,
-            user_id: userId,
-            reaction_type: reaction,
-          })
-        ).unwrap();
-
-        antMessage.success({
-          content: `Đã thêm biểu cảm ${getReactionEmoji(reaction)}`,
-          duration: 1,
-        });
-
-        // Create room ID
-        const userIds = [user.id, selectedChat.id].sort();
-        const roomId = `chat_${userIds[0]}_${userIds[1]}`;
-
-        // Format payload exactly as server expects it
-        const payload = {
-          chatId: roomId,
-          messageId: message._id,
-          userId: userId,
-          reaction: reaction, // This must match server expectations
-        };
-
-        console.log("Emitting add-reaction with payload:", payload);
-        socket.emit("add-reaction", payload);
-      }
+      console.log("Emitting add-reaction with payload:", payload);
+      socket.emit("add-reaction", payload);
 
       // Close menus
       closeContextMenu();
@@ -543,6 +501,43 @@ const Message = ({
     } catch (error) {
       console.error("Reaction error:", error);
       antMessage.error("Không thể thực hiện biểu cảm. Vui lòng thử lại.");
+    }
+  };
+
+  // Add a separate function for removing reactions
+  const handleRemoveReaction = async (reaction) => {
+    try {
+      const userId = user._id || user.id;
+
+      await dispatch(
+        removeReactionFromMessage({
+          messageId: message._id,
+          userId: userId,
+          reaction_type: reaction,
+        })
+      ).unwrap();
+
+      antMessage.success({
+        content: `Đã bỏ biểu cảm ${getReactionEmoji(reaction)}`,
+        duration: 1,
+      });
+
+      // Create room ID
+      const userIds = [user.id, selectedChat.id].sort();
+      const roomId = `chat_${userIds[0]}_${userIds[1]}`;
+
+      // Format payload exactly as server expects it
+      const payload = {
+        chatId: roomId,
+        messageId: message._id,
+        userId: userId,
+      };
+
+      console.log("Emitting remove-reaction with payload:", payload);
+      socket.emit("remove-reaction", payload);
+    } catch (error) {
+      console.error("Error removing reaction:", error);
+      antMessage.error("Không thể bỏ biểu cảm. Vui lòng thử lại.");
     }
   };
   // 1. First, separate room joining to its own useEffect that runs first
@@ -1008,7 +1003,7 @@ const Message = ({
             </div>
           )}
           {/* Display reactions */}
-          {message.reactions && message.reactions.length > 0 && (
+          {/* {message.reactions && message.reactions.length > 0 && (
             <div className="message-reactions">
               {Object.entries(countReactions()).map(([type, count]) => (
                 <Tooltip
@@ -1020,6 +1015,41 @@ const Message = ({
                       hasUserReacted(type) ? "user-reacted" : ""
                     }`}
                     onClick={() => handleReaction(type)}
+                  >
+                    {getReactionEmoji(type)} {count}
+                  </span>
+                </Tooltip>
+              ))}
+            </div>
+          )} */}
+          {message.reactions && message.reactions.length > 0 && (
+            <div className="message-reactions">
+              {Object.entries(countReactions()).map(([type, count]) => (
+                <Tooltip
+                  key={type}
+                  title={
+                    <div>
+                      <div>{`${count} người đã bày tỏ ${getReactionEmoji(
+                        type
+                      )}`}</div>
+                      <div className="reaction-tooltip-actions">
+                        <button onClick={() => handleReaction(type)}>
+                          Thêm
+                        </button>
+                        <button onClick={() => handleRemoveReaction(type)}>
+                          Bỏ
+                        </button>
+                      </div>
+                    </div>
+                  }
+                >
+                  <span
+                    className="reaction-badge"
+                    onClick={() => handleReaction(type)} // Always add on click
+                    onContextMenu={(e) => {
+                      e.preventDefault();
+                      handleRemoveReaction(type); // Remove on right-click
+                    }}
                   >
                     {getReactionEmoji(type)} {count}
                   </span>
@@ -1072,67 +1102,85 @@ const Message = ({
             <div className="reaction-icons">
               <Popover
                 content={
+                  // <div className="reaction-picker">
+                  //   <Tooltip title="Thích">
+                  //     <span
+                  //       className={`reaction-option ${
+                  //         hasUserReacted("like") ? "active" : ""
+                  //       }`}
+                  //       onClick={() => handleReaction("like")}
+                  //     >
+                  //       👍
+                  //     </span>
+                  //   </Tooltip>
+                  //   <Tooltip title="Yêu thích">
+                  //     <span
+                  //       className={`reaction-option ${
+                  //         hasUserReacted("love") ? "active" : ""
+                  //       }`}
+                  //       onClick={() => handleReaction("love")}
+                  //     >
+                  //       ❤️
+                  //     </span>
+                  //   </Tooltip>
+                  //   <Tooltip title="Haha">
+                  //     <span
+                  //       className={`reaction-option ${
+                  //         hasUserReacted("haha") ? "active" : ""
+                  //       }`}
+                  //       onClick={() => handleReaction("haha")}
+                  //     >
+                  //       😂
+                  //     </span>
+                  //   </Tooltip>
+                  //   <Tooltip title="Wow">
+                  //     <span
+                  //       className={`reaction-option ${
+                  //         hasUserReacted("wow") ? "active" : ""
+                  //       }`}
+                  //       onClick={() => handleReaction("wow")}
+                  //     >
+                  //       😮
+                  //     </span>
+                  //   </Tooltip>
+                  //   <Tooltip title="Buồn">
+                  //     <span
+                  //       className={`reaction-option ${
+                  //         hasUserReacted("sad") ? "active" : ""
+                  //       }`}
+                  //       onClick={() => handleReaction("sad")}
+                  //     >
+                  //       😢
+                  //     </span>
+                  //   </Tooltip>
+                  //   <Tooltip title="Giận">
+                  //     <span
+                  //       className={`reaction-option ${
+                  //         hasUserReacted("angry") ? "active" : ""
+                  //       }`}
+                  //       onClick={() => handleReaction("angry")}
+                  //     >
+                  //       😠
+                  //     </span>
+                  //   </Tooltip>
+                  // </div>
                   <div className="reaction-picker">
-                    <Tooltip title="Thích">
-                      <span
-                        className={`reaction-option ${
-                          hasUserReacted("like") ? "active" : ""
-                        }`}
-                        onClick={() => handleReaction("like")}
-                      >
-                        👍
-                      </span>
-                    </Tooltip>
-                    <Tooltip title="Yêu thích">
-                      <span
-                        className={`reaction-option ${
-                          hasUserReacted("love") ? "active" : ""
-                        }`}
-                        onClick={() => handleReaction("love")}
-                      >
-                        ❤️
-                      </span>
-                    </Tooltip>
-                    <Tooltip title="Haha">
-                      <span
-                        className={`reaction-option ${
-                          hasUserReacted("haha") ? "active" : ""
-                        }`}
-                        onClick={() => handleReaction("haha")}
-                      >
-                        😂
-                      </span>
-                    </Tooltip>
-                    <Tooltip title="Wow">
-                      <span
-                        className={`reaction-option ${
-                          hasUserReacted("wow") ? "active" : ""
-                        }`}
-                        onClick={() => handleReaction("wow")}
-                      >
-                        😮
-                      </span>
-                    </Tooltip>
-                    <Tooltip title="Buồn">
-                      <span
-                        className={`reaction-option ${
-                          hasUserReacted("sad") ? "active" : ""
-                        }`}
-                        onClick={() => handleReaction("sad")}
-                      >
-                        😢
-                      </span>
-                    </Tooltip>
-                    <Tooltip title="Giận">
-                      <span
-                        className={`reaction-option ${
-                          hasUserReacted("angry") ? "active" : ""
-                        }`}
-                        onClick={() => handleReaction("angry")}
-                      >
-                        😠
-                      </span>
-                    </Tooltip>
+                    {["like", "love", "haha", "wow", "sad", "angry"].map(
+                      (reactionType) => (
+                        <Tooltip key={reactionType} title={reactionType}>
+                          <span
+                            className="reaction-option"
+                            onClick={() => handleReaction(reactionType)}
+                            onContextMenu={(e) => {
+                              e.preventDefault();
+                              handleRemoveReaction(reactionType);
+                            }}
+                          >
+                            {getReactionEmoji(reactionType)}
+                          </span>
+                        </Tooltip>
+                      )
+                    )}
                   </div>
                 }
                 trigger="hover"
