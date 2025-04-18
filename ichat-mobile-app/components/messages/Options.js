@@ -28,16 +28,11 @@ const Option = ({ route }) => {
   const [isGroup, setIsGroup] = useState(false);
   const [sharedGroups, setSharedGroups] = useState([]); // Danh sách nhóm chung giữa 2 người
 
-  // console.log("ID người nhận:", id);
-
   useEffect(() => {
     const fetchReceiverInfo = async () => {
       const res = await userService.getUserById(id);
-      // console.log(res);
-
-      if (res.status === "ok") {
-        setReceiverInfo(res.user);
-        // console.log("Người đang chat:", res.user);
+      if (res._id !== null) {
+        setReceiverInfo(res);
       }
     };
     fetchReceiverInfo();
@@ -192,8 +187,7 @@ const Option = ({ route }) => {
             <TouchableOpacity
               onPress={() =>
                 navigation.navigate("ViewProfile", {
-                  name: name,
-                  avatar: avatar,
+                  foundUser: receiverInfo,
                 })
               }
             >
