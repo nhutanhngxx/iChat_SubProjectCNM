@@ -2,12 +2,35 @@ import React, { useState } from "react";
 import { Avatar, Button, message } from "antd";
 import { useDispatch, useSelector } from "react-redux";
 import { sendFriendRequest } from "../../../redux/slices/friendSlice";
+import { getUserFriends } from "../../../redux/slices/friendSlice";
+import { useEffect } from "react";
 import "./UserInfoCard.css";
 
 const UserInfoCard = ({ user, onClose }) => {
   const dispatch = useDispatch();
   const [isLoading, setIsLoading] = useState(false);
   const currentUser = useSelector((state) => state.auth.user);
+  const [friendsData, setFriendsData] = useState([]);
+
+  // Kiểm tra xem có phải là bạn bè không
+
+
+  useEffect(() => {
+    const fetchFriends = async () => {
+      try {
+        const result = await dispatch(getUserFriends(currentUser.id)).unwrap();
+        setFriendsData(result.friends);
+      } catch (error) {
+        console.error("Lỗi khi lấy danh sách bạn bè:", error);
+      }
+    }
+
+    if (currentUser?.id) {
+      fetchFriends();
+    }
+  }, [dispatch, currentUser, friendsData]);
+
+  const isFriend = friendsData?.some(friend => friend.id === user.id);
 
   const onAddFriend = async () => {
     // Kiểm tra không thể kết bạn với chính mình
@@ -90,14 +113,17 @@ const UserInfoCard = ({ user, onClose }) => {
       </div>
 
       <div className="user-actions">
-        <Button
-          type="primary"
-          block
-          onClick={onAddFriend}
-          loading={isLoading}
-        >
-          Kết bạn
-        </Button>
+        {!isFriend && (
+          <Button
+            type="primary"
+            block
+            onClick={onAddFriend}
+            loading={isLoading}
+          >
+            Kết bạn
+          </Button>
+        )}
+
         <Button block>
           Nhắn tin
         </Button>

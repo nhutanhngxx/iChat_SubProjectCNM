@@ -197,7 +197,7 @@ const ChatList = ({ filteredChatList, onSelectUser, onPin }) => (
 );
 
 // Component chính: ComponentLeft
-const ComponentLeft = ({ userList, setUserList, onSelectUser }) => {
+const ComponentLeft = ({ userList, setUserList, onSelectUser,user }) => {
   const [activeTab, setActiveTab] = useState("priority");
   const [searchText] = useState("");
   const [showInterface, setShowInterface] = useState(false);
@@ -299,6 +299,7 @@ const ComponentLeft = ({ userList, setUserList, onSelectUser }) => {
           onClose={() => setShowInterface(false)}
           userList={userList}
           onSelectUser={onSelectUser}
+          user={user}
         />
       ) : (
         <Layout className="chat-sidebar">

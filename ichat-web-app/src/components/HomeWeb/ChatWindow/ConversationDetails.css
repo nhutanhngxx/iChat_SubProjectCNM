@@ -111,8 +111,12 @@
 }
 
 /* Đảm bảo button có vị trí tương đối để text hiển thị đúng */
-.action-button {
+.conversation-action-button {
   position: relative;
+  width: fit-content ;
+  background-color: rgb(202, 202, 202);
+  border-radius: 50%;
+  padding: 2px 4px;
 }
 
 /* Phần conversation options */

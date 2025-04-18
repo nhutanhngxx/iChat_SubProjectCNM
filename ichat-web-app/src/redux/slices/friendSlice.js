@@ -3,6 +3,32 @@ import axios from "axios";
 
 const API_URL = `http://${window.location.hostname}:5001/api/friendships`;
 
+// Lấy danh sách chặn
+export const getBlockedUsers = createAsyncThunk(
+  "friend/getBlockedUsers",
+  async (userId, { rejectWithValue }) => {
+    try {
+      const res = await axios.get(`${API_URL}/blocked-users/${userId}`);
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data || err.message);
+    }
+  }
+);
+
+// Lấy danh sách bạn bè
+export const getUserFriends = createAsyncThunk(
+  "friend/getUserFriends",
+  async (userId, { rejectWithValue }) => {
+    try {
+      const res = await axios.get(`${API_URL}/${userId}`);
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data || err.message);
+    }
+  }
+);
+
 //Lấy danh sách lời mời kết bạn đã nhận
 export const getReceivedFriendRequests = createAsyncThunk(
   "friend/getReceivedFriendRequests",
@@ -81,12 +107,12 @@ export const blockUser = createAsyncThunk(
   }
 );
 
-// Hủy kết bạn
-export const unfriendUser = createAsyncThunk(
-  "friend/unfriendUser",
+// Hủy chặn người dùng
+export const unblockUser = createAsyncThunk(
+  "friend/unblockUser",
   async (data, { rejectWithValue }) => {
     try {
-      const res = await axios.post(`${API_URL}/unfriend`, data);
+      const res = await axios.post(`${API_URL}/unblock-user`, data);
       return res.data;
     } catch (err) {
       return rejectWithValue(err.response?.data || err.message);
@@ -94,12 +120,12 @@ export const unfriendUser = createAsyncThunk(
   }
 );
 
-// Lấy danh sách bạn bè
-export const getUserFriends = createAsyncThunk(
-  "friend/getUserFriends",
-  async (userId, { rejectWithValue }) => {
+// Hủy kết bạn
+export const unfriendUser = createAsyncThunk(
+  "friend/unfriendUser",
+  async (data, { rejectWithValue }) => {
     try {
-      const res = await axios.get(`${API_URL}/friends/${userId}`);
+      const res = await axios.post(`${API_URL}/unfriend`, data);
       return res.data;
     } catch (err) {
       return rejectWithValue(err.response?.data || err.message);
