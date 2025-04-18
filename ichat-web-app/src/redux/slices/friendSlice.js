@@ -3,6 +3,21 @@ import axios from "axios";
 
 const API_URL = `http://${window.location.hostname}:5001/api/friendships`;
 
+// Kiểm tra trạng thái chặn của 2 người dùng
+export const checkBlockingStatus = createAsyncThunk(
+  "friend/checkBlockingStatus",
+  async ({ userId, otherUserId }, { rejectWithValue }) => {
+    try {
+      const res = await axios.get(
+        `${API_URL}/check-blocking-status/${userId}/${otherUserId}`
+      );
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data || err.message);
+    }
+  }
+);
+
 // Lấy danh sách chặn
 export const getBlockedUsers = createAsyncThunk(
   "friend/getBlockedUsers",

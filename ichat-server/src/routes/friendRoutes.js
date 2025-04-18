@@ -3,10 +3,22 @@ const router = express.Router();
 
 const FriendshipController = require("../controllers/friendController");
 
+// Kiểm tra trạng thái chặn giữa hai người dùng
+router.get(
+  "/check-blocking-status/:userId/:otherUserId",
+  FriendshipController.checkBlockingStatus
+);
+
+// Kiểm tra trạng thái kết bạn giữa 2 người dùng
+router.get(
+  "/check-friend-status/:user_id/:target_id",
+  FriendshipController.checkFriendStatus
+);
+
 router.post("/unblock-user", FriendshipController.unblockUser);
 
-//Danh sách người dùng chặn
-router.get("/blocked-users/:userId", FriendshipController.getBlockListByUserId);
+// Lấy danh sách người dùng bị chặn
+router.get("/blocked-users/:userId", FriendshipController.getBlockedUsers);
 
 // Danh sách bạn bè
 router.get("/:userId", FriendshipController.getFriendListByUserId);
