@@ -11,7 +11,7 @@ import {
 } from "../../../redux/slices/messagesSlice";
 import "./ChatWindow.css";
 
-const ChatWindow = ({ user }) => {
+const ChatWindow = ({ user, selectedFriend }) => {
   // Load ttin nhan tu Backend
   const dispatch = useDispatch();
   const { messages, status, chatMessages, chatStatus } = useSelector(
@@ -25,9 +25,18 @@ const ChatWindow = ({ user }) => {
   useEffect(() => {
     dispatch(fetchMessages(senderId)); // Fetch danh sách người nhận
   }, [dispatch, senderId]);
+
   useEffect(() => {
     console.log("selectedUser updated:", selectedUser);
   }, [selectedUser]);
+
+  // Process selectedFriend from props (when coming from FriendList)
+  useEffect(() => {
+    if (selectedFriend && !selectedUser) {
+      handleSelectUser(selectedFriend);
+    }
+  }, [selectedFriend]);
+
   const handleSelectUser = (user) => {
     console.log("Setting selected user to:", user);
 
@@ -72,36 +81,6 @@ const ChatWindow = ({ user }) => {
       console.log("formattedUsers", formattedUsers);
     }
   }, [messages]);
-  // // Lấy tin nhắn giữa sender và receiver
-  // Khi chọn một user, lọc tin nhắn giữa senderId và receiverId
-  // useEffect(() => {
-  //     if (messages && messages.length > 0) {
-  //       const updatedUsers = messages.map((msg) => ({
-  //         id: msg.receiver_id,
-  //         name: msg.name,
-  //         lastMessage: msg.lastMessage,
-  //         timestamp: msg.timestamp,
-  //         unread: msg.unread || 0,
-  //         user_status: msg.user_status || "Offline",
-  //         avatar_path: msg.avatar_path || "https://default-avatar.com/avatar.jpg",
-  //       }));
-
-  //       setUserListFromState((prevUsers) => {
-  //         const mergedUsers = [...prevUsers];
-
-  //         updatedUsers.forEach((newUser) => {
-  //           const index = mergedUsers.findIndex((u) => u.id === newUser.id);
-  //           if (index === -1) {
-  //             mergedUsers.unshift(newUser);
-  //           } else {
-  //             mergedUsers[index] = newUser; // Cập nhật tin nhắn mới nhất
-  //           }
-  //         });
-
-  //         return mergedUsers;
-  //       });
-  //     }
-  //   }, [messages]);
 
   useEffect(() => {
     if (selectedUser) {
