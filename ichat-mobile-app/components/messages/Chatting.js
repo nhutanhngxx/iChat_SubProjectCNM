@@ -263,18 +263,6 @@ const Chatting = ({ route }) => {
 
   if (chat?.chatType === "group") {
     useEffect(() => {
-      const fetchMessages = async () => {
-        const messages = await messageService.getMessagesByGroupId(chat.id);
-        const members = await groupService.getGroupMembers(chat.id);
-        setMessages(messages);
-        setGroupMembers(members);
-      };
-      fetchMessages();
-      const interval = setInterval(fetchMessages, 1000);
-      return () => clearInterval(interval);
-    }, [user, chat]);
-  } else {
-    useEffect(() => {
       if (chat?.id && user?.id) {
         const fetchMessages = async () => {
           try {
@@ -296,14 +284,24 @@ const Chatting = ({ route }) => {
                 (id) => id === user.id || id === String(user.id)
               );
             });
+            console.log("filteredMessages:", filteredMessages);
             setMessages(filteredMessages);
           } catch (error) {
             console.error("Lỗi khi lấy tin nhắn:", error);
           }
         };
-        const interval = setInterval(fetchMessages, 100);
-        return () => clearInterval(interval);
+        fetchMessages();
       }
+    }, [user, chat]);
+  } else {
+    useEffect(() => {
+      const fetchMessages = async () => {
+        const messages = await messageService.getMessagesByGroupId(chat.id);
+        const members = await groupService.getGroupMembers(chat.id);
+        setMessages(messages);
+        setGroupMembers(members);
+      };
+      fetchMessages();
     }, [user, chat]);
   }
 
@@ -496,9 +494,9 @@ const Chatting = ({ route }) => {
         console.log("replyMessage:", replyMessage);
 
         const textMessage = {
-          sender_id: user.id,
-          receiver_id: chat.id,
-          content: inputMessage.trim() || replyMessage.content,
+          sender_id: user.id.toString(),
+          receiver_id: chat.id.toString(),
+          content: inputMessage.trim() || replyMessage.content || "",
           type: "text",
           chat_type: chat?.chatType === "group" ? "group" : "private",
           reply_to: replyMessage?._id || null,
@@ -515,7 +513,7 @@ const Chatting = ({ route }) => {
           chatId: roomId,
         });
         // Cập nhật danh sách tin nhắn
-        setMessages((prev) => [...prev, textResponse.data.message]);
+        // setMessages((prev) => [...prev, textResponse.data.message]);
         setInputMessage("");
         setReplyMessage(null);
         console.log("Gửi tin nhắn văn bản thành công");
@@ -578,6 +576,7 @@ const Chatting = ({ route }) => {
         if (uploadResponse.data.message) {
           setMessages((prev) => [...prev, uploadResponse.data.message]);
         }
+
         // Xóa trạng thái ảnh/file sau khi gửi thành công
         setSelectedImage(null);
         setSelectedFile(null);
