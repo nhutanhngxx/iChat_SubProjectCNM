@@ -13,6 +13,8 @@ const FILE_TYPE_MATCH = [
   "image/gif",
   "video/mp3",
   "video/mp4",
+  "video/mov",
+  "audio/mpeg",
   "application/pdf",
   "application/msword",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",

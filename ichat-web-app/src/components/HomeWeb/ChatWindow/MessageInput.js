@@ -12,6 +12,7 @@ import {
   CheckOutlined,
   PaperClipOutlined,
   CloseCircleOutlined,
+  PlayCircleOutlined,
 } from "@ant-design/icons";
 import {
   Popover,
@@ -185,7 +186,6 @@ const MessageInput = ({
       console.error("Emoji is undefined or invalid:", event); // Log lỗi nếu emoji không hợp lệ
     }
   };
-  console.log("InputMessage: " + inputMessage);
   // Hàm xử lý khi chọn file ảnh (mở hộp thoại tải ảnh trực tiếp)
   const handleImageUpload = (event) => {
     // Check if users are friends before sending
@@ -210,6 +210,29 @@ const MessageInput = ({
   };
 
   // Hàm xử lý khi chọn file (mở hộp thoại tải file trực tiếp)
+  // const handleFileUpload = (event) => {
+  //   // Check if users are friends before sending
+  //   if (!isFriendWithReceiver && selectedChat.id !== user.id) {
+  //     message.warning("Bạn cần kết bạn để gửi tin nhắn.");
+  //     return;
+  //   }
+
+  //   // Always check if you have a valid selected chat and message ID before using
+  //   if (!selectedChat || !selectedChat.id) {
+  //     console.error("No selected chat or invalid chat", selectedChat);
+  //     return;
+  //   }
+  //   const file = event.target.files[0];
+  //   if (file) {
+  //     // setSelectedFile(file); // Lưu file object
+  //     onFileUpload(file); // Truyền file lên MessageArea
+  //     message.success(`File "${file.name}" đã được tải lên thành công!`);
+  //   }
+  //   // Reset input để có thể chọn lại cùng file
+  //   event.target.value = null;
+  // };
+  //Hàm xử lý khi chọn file (mở hộp thoại tải file trực tiếp) upload file (audio, video, docx, pdf)
+  // Enhanced file upload handler with media type detection
   const handleFileUpload = (event) => {
     // Check if users are friends before sending
     if (!isFriendWithReceiver && selectedChat.id !== user.id) {
@@ -217,19 +240,159 @@ const MessageInput = ({
       return;
     }
 
-    // Always check if you have a valid selected chat and message ID before using
+    // Validate selected chat
     if (!selectedChat || !selectedChat.id) {
       console.error("No selected chat or invalid chat", selectedChat);
       return;
     }
+
     const file = event.target.files[0];
-    if (file) {
-      // setSelectedFile(file); // Lưu file object
-      onFileUpload(file); // Truyền file lên MessageArea
-      message.success(`File "${file.name}" đã được tải lên thành công!`);
+    if (!file) return;
+
+    // Get file size in MB
+    const fileSizeInMB = file.size / (1024 * 1024);
+
+    // Validate file size (limit to 100MB)
+    if (fileSizeInMB > 100) {
+      message.error("File quá lớn. Vui lòng chọn file nhỏ hơn 100MB.");
+      return;
     }
-    // Reset input để có thể chọn lại cùng file
+
+    // Determine file type
+    const fileType = determineFileType(file);
+
+    // Handle file based on type
+    switch (fileType) {
+      case "video":
+        handleVideoUpload(file);
+        break;
+      case "audio":
+        handleAudioUpload(file);
+        break;
+      case "image":
+        handleImageUpload(file);
+        break;
+      default:
+        handleGenericFileUpload(file);
+        break;
+    }
+
+    // Reset input to allow selecting the same file again
     event.target.value = null;
+  };
+
+  // Helper function to determine file type
+  const determineFileType = (file) => {
+    const fileType = file.type.split("/")[0];
+
+    if (fileType === "video") return "video";
+    if (fileType === "audio") return "audio";
+    if (fileType === "image") return "image";
+    return "file";
+  };
+
+  // Video upload handler
+  const handleVideoUpload = (file) => {
+    // Create preview if needed
+    const previewUrl = URL.createObjectURL(file);
+
+    // Display preview
+    setMediaPreview({
+      type: "video",
+      url: previewUrl,
+      file: file,
+    });
+
+    message.success(`Video "${file.name}" đã được chọn và sẵn sàng để gửi!`);
+  };
+
+  // Audio upload handler
+  const handleAudioUpload = (file) => {
+    // Create preview if needed
+    const previewUrl = URL.createObjectURL(file);
+
+    // Display preview
+    setMediaPreview({
+      type: "audio",
+      url: previewUrl,
+      file: file,
+    });
+
+    message.success(`Audio "${file.name}" đã được chọn và sẵn sàng để gửi!`);
+  };
+
+  // Generic file upload handler
+  const handleGenericFileUpload = (file) => {
+    // Set file for upload
+    onFileUpload(file);
+    message.success(`File "${file.name}" đã được tải lên thành công!`);
+  };
+  // Mở MediaPreview Modal
+  // Add this to your state declarations
+  const [mediaPreview, setMediaPreview] = useState(null);
+
+  // Add this function to clear media preview
+  const clearMediaPreview = () => {
+    if (mediaPreview?.url) {
+      URL.revokeObjectURL(mediaPreview.url);
+    }
+    setMediaPreview(null);
+  };
+
+  // Add this component to render media previews
+  const MediaPreviewComponent = () => {
+    if (!mediaPreview) return null;
+
+    return (
+      <div className="media-preview">
+        <div className="media-preview-header">
+          <span>
+            {mediaPreview.type === "video" ? "Video Preview" : "Audio Preview"}
+          </span>
+          <Button
+            type="text"
+            icon={<CloseCircleOutlined />}
+            onClick={clearMediaPreview}
+          />
+        </div>
+
+        {mediaPreview.type === "video" && (
+          <video
+            controls
+            src={mediaPreview.url}
+            style={{ maxWidth: "100%", maxHeight: "200px" }}
+          />
+        )}
+
+        {mediaPreview.type === "audio" && (
+          <audio controls src={mediaPreview.url} style={{ width: "100%" }} />
+        )}
+
+        <div className="media-preview-footer">
+          <span>{mediaPreview.file.name}</span>
+          <Button type="primary" onClick={() => handleSendMedia()}>
+            Gửi
+          </Button>
+        </div>
+      </div>
+    );
+  };
+
+  // Add this function to send the media
+  const handleSendMedia = () => {
+    if (!mediaPreview) return;
+
+    const { file, type } = mediaPreview;
+
+    if (type === "video") {
+      // Handle video upload with specific type
+      onFileUpload(file, "video");
+    } else if (type === "audio") {
+      // Handle audio upload with specific type
+      onFileUpload(file, "audio");
+    }
+
+    clearMediaPreview();
   };
   //hàm fect lại replyingTo khi có thay đổi
   useEffect(() => {
@@ -451,28 +614,6 @@ const MessageInput = ({
   }, [showPicker, showPickerRight]);
   return (
     <div className="message-input-container">
-      {/* Reply Preview */}
-      {/* {replyingTo && (
-        <div className="reply-preview">
-          <div className="reply-preview-content">
-            <div className="reply-preview-icon">↩️</div>
-            <div className="reply-preview-text">
-              <p className="reply-preview-label">Đang trả lời tin nhắn</p>
-              <p className="reply-preview-message">
-                {replyingTo.type === "text"
-                  ? replyingTo.content.substring(0, 50) +
-                    (replyingTo.content.length > 50 ? "..." : "")
-                  : replyingTo.type === "image"
-                  ? "🖼️ Hình ảnh"
-                  : "📎 Tệp đính kèm"}
-              </p>
-            </div>
-          </div>
-          <button className="reply-preview-close" onClick={clearReplyingTo}>
-            <CloseCircleOutlined />
-          </button>
-        </div>
-      )} */}
       {replyingTo && (
         <div className="reply-preview">
           <div className="reply-preview-content">
@@ -496,6 +637,7 @@ const MessageInput = ({
           </button>
         </div>
       )}
+      {mediaPreview && <MediaPreviewComponent />}
       {/* Thanh công cụ trên */}
       <div className="message-toolbar">
         <div style={{ bottom: "102px", position: "absolute", left: "0px" }}>
@@ -554,11 +696,21 @@ const MessageInput = ({
           <input
             type="file"
             id="file-upload"
-            accept="*/*"
+            accept="audio/*,video/*,image/*,application/*,.pdf,.doc,.docx,.xls,.xlsx,.txt"
             onChange={handleFileUpload}
-            style={{ display: "none" }} // Ẩn input file
+            style={{ display: "none" }}
           />
-          <LinkOutlined />
+          <PaperClipOutlined />
+        </label>
+        <label htmlFor="media-upload" className="toolbar-icon">
+          <input
+            type="file"
+            id="media-upload"
+            accept="audio/*,video/*"
+            onChange={handleFileUpload}
+            style={{ display: "none" }}
+          />
+          <PlayCircleOutlined />
         </label>
 
         <IdcardOutlined

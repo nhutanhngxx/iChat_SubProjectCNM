@@ -800,14 +800,28 @@ const MessageArea = ({ selectedChat, user }) => {
   };
 
   // Tự động cuộn xuống cuối khi có tin nhắn mới
-  const handleFileUpload = async (file) => {
+  const handleFileUpload = async (file, mediaType) => {
     if (selectedChat) {
       try {
+        message.loading({ content: "Đang tải lên...", key: "uploadMedia" });
+        // Determine file type if not provided
+        const fileType = mediaType || determineFileType(file);
+
+        console.log("Uploading file type:", fileType, file.name);
+
+        // Create form data
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("sender_id", user?.id);
+        formData.append("receiver_id", selectedChat?.id);
+        formData.append("type", fileType); // Important: specify file type
+
         const result = await dispatch(
           sendImageMessage({
             sender_id: user?.id,
             receiver_id: selectedChat?.id,
             image: file,
+            fileType: fileType, // Specify the file type
           })
         ).unwrap();
 
@@ -822,10 +836,29 @@ const MessageArea = ({ selectedChat, user }) => {
         });
 
         dispatch(fetchMessages(user?.id)); // Optional
+        // Show success message
+        message.success({
+          content: `${
+            fileType.charAt(0).toUpperCase() + fileType.slice(1)
+          } đã được gửi thành công!`,
+          key: "uploadMedia",
+        });
       } catch (error) {
         console.log("Error sending file message:", error);
+        message.error({
+          content: "Không thể gửi tệp. Vui lòng thử lại.",
+          key: "uploadMedia",
+        });
       }
     }
+  };
+  const determineFileType = (file) => {
+    const mimeType = file.type;
+
+    if (mimeType.startsWith("video/")) return "video";
+    if (mimeType.startsWith("audio/")) return "audio";
+    if (mimeType.startsWith("image/")) return "image";
+    return "file";
   };
   // Tự động cuộn xuống cuối khi có tin nhắn mới
   useEffect(() => {
@@ -833,6 +866,7 @@ const MessageArea = ({ selectedChat, user }) => {
       messageEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [selectedChat, messages]);
+
   const handleScrollToBottom = () => {
     if (messageEndRef.current) {
       messageEndRef.current.scrollIntoView({ behavior: "smooth" });

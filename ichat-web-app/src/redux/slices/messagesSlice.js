@@ -50,43 +50,115 @@ export const sendMessage = createAsyncThunk(
   }
 );
 // Gửi ảnh
+// export const sendImageMessage = createAsyncThunk(
+//   "messages/sendImageMessage",
+//   async ({ sender_id, receiver_id, image }, { rejectWithValue }) => {
+//     try {
+//       const formData = new FormData();
+//       formData.append("sender_id", sender_id);
+//       formData.append("receiver_id", receiver_id);
+//       formData.append("content", ""); // server sẽ tự xử lý content từ file
+//       // Tự động xác định type
+//       const mimeType = image.type;
+//       const isImage = mimeType.startsWith("image/");
+//       const fileType = isImage ? "image" : "file";
+
+//       formData.append("type", fileType);
+//       formData.append("chat_type", "private");
+
+//       formData.append("file", image); // đơn giản là File gốc từ input
+//       console.log("formData", formData);
+//       const response = await fetch(`${API_URL}send-message`, {
+//         method: "POST",
+//         body: formData,
+//         // headers: {
+//         //   "Content-Type": "multipart/form-data",
+//         // },
+//       });
+
+//       if (!response.ok) {
+//         const errorData = await response.text();
+//         console.error("Error data send image:", errorData);
+
+//         return rejectWithValue(errorData);
+//       }
+
+//       return await response.json();
+//     } catch (err) {
+//       console.error("Error sending image:", err);
+//       return rejectWithValue({ message: "Network Error" });
+//     }
+//   }
+// );
+// Update the function to handle all media types properly
 export const sendImageMessage = createAsyncThunk(
   "messages/sendImageMessage",
-  async ({ sender_id, receiver_id, image }, { rejectWithValue }) => {
+  async (
+    { sender_id, receiver_id, image, type: forcedType },
+    { rejectWithValue }
+  ) => {
     try {
       const formData = new FormData();
       formData.append("sender_id", sender_id);
       formData.append("receiver_id", receiver_id);
-      formData.append("content", ""); // server sẽ tự xử lý content từ file
-      // Tự động xác định type
-      const mimeType = image.type;
-      const isImage = mimeType.startsWith("image/");
-      const fileType = isImage ? "image" : "file";
+      formData.append("content", ""); // server will handle content from file
+
+      // Determine file type based on MIME type
+      let fileType;
+
+      // If type is explicitly provided from the caller, use that
+      if (forcedType) {
+        fileType = forcedType;
+      } else {
+        const mimeType = image.type;
+
+        // Better type detection
+        if (mimeType.startsWith("image/")) {
+          fileType = "image";
+        } else if (mimeType.startsWith("video/")) {
+          fileType = "video";
+        } else if (mimeType.startsWith("audio/")) {
+          fileType = "audio";
+        } else {
+          fileType = "file";
+        }
+      }
+
+      // Log for debugging
+      console.log("Sending file as type:", fileType, "MIME:", image.type);
 
       formData.append("type", fileType);
       formData.append("chat_type", "private");
+      formData.append("file", image);
 
-      formData.append("file", image); // đơn giản là File gốc từ input
-      console.log("formData", formData);
+      // Set content field to avoid validation error
+      // This is a temporary value that will be replaced by the server
+      formData.append("content", "Uploading media...");
+
       const response = await fetch(`${API_URL}send-message`, {
         method: "POST",
         body: formData,
-        // headers: {
-        //   "Content-Type": "multipart/form-data",
-        // },
       });
 
       if (!response.ok) {
-        const errorData = await response.text();
-        console.error("Error data send image:", errorData);
+        const errorText = await response.text();
+        console.error("Error data send media:", errorText);
 
-        return rejectWithValue(errorData);
+        try {
+          // Try to parse as JSON if possible
+          const errorJson = JSON.parse(errorText);
+          return rejectWithValue(errorJson);
+        } catch {
+          // Fall back to text if not JSON
+          return rejectWithValue(errorText);
+        }
       }
 
-      return await response.json();
+      const data = await response.json();
+      return data;
     } catch (err) {
-      console.error("Error sending image:", err);
-      return rejectWithValue({ message: "Network Error" });
+      console.error("Error sending media:", err);
+      return rejectWithValue({ message: err.message || "Network Error" });
     }
   }
 );
