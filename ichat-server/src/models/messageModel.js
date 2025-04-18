@@ -80,7 +80,6 @@ const MessageModel = {
     type,
     chat_type,
     file,
-    reply_to,
   }) => {
     if (!sender_id || !receiver_id || !chat_type || (!content && !file)) {
       throw { status: 400, message: "Thiếu dữ liệu" };
@@ -98,7 +97,6 @@ const MessageModel = {
       content: messageContent,
       type,
       chat_type,
-      reply_to,
     });
 
     await newMessage.save();

@@ -33,6 +33,7 @@ import MessageInputBar from "../../components/messages/MessageInputBar";
 
 import { getHostIP } from "../../services/api";
 import friendService from "../../services/friendService";
+import socketService from "../../services/socketService";
 
 const renderReactionIcons = (reactions) => {
   const icons = {
@@ -486,6 +487,9 @@ const Chatting = ({ route }) => {
     }
 
     try {
+      // Tạo roomId cho chat
+      const userIds = [user.id, chat.id].sort();
+      const roomId = `chat_${userIds[0]}_${userIds[1]}`;
       // Gửi tin nhắn văn bản hoặc reply
       if (inputMessage.trim() || replyMessage) {
         console.log("Gửi tin nhắn văn bản/reply...");
@@ -505,6 +509,12 @@ const Chatting = ({ route }) => {
           : `${API_iChat}/send-message`;
 
         const textResponse = await axios.post(apiEndpoint, textMessage);
+        // Gửi tin nhắn qua socket
+        socketService.sendMessage({
+          ...textResponse.data.message,
+          chatId: roomId,
+        });
+        // Cập nhật danh sách tin nhắn
         setMessages((prev) => [...prev, textResponse.data.message]);
         setInputMessage("");
         setReplyMessage(null);
@@ -514,11 +524,7 @@ const Chatting = ({ route }) => {
       // Gửi hình ảnh hoặc file nếu có
       if (selectedImage || selectedFile) {
         console.log("Chuẩn bị gửi hình ảnh/file...");
-        console.log("selectedImage:", selectedImage);
-        console.log("selectedFile:", selectedFile);
-
         const formData = new FormData();
-
         // Thêm ảnh vào FormData
         if (selectedImage) {
           console.log("Selected image path:", selectedImage);
@@ -528,7 +534,6 @@ const Chatting = ({ route }) => {
             type: "image/jpeg",
           });
         }
-
         // Thêm file vào FormData
         if (selectedFile) {
           formData.append("file", {
@@ -537,7 +542,6 @@ const Chatting = ({ route }) => {
             type: selectedFile.type || "application/octet-stream",
           });
         }
-
         // Thêm các thông tin khác
         formData.append("sender_id", user.id);
         formData.append("receiver_id", chat.id);
@@ -555,11 +559,6 @@ const Chatting = ({ route }) => {
         );
         formData.append("reply_to", replyMessage ? replyMessage._id : null);
 
-        console.log("Nội dung FormData:");
-        for (let [key, value] of formData) {
-          console.log(`${key}:`, value);
-        }
-
         const uploadResponse = await axios.post(
           `${API_iChat}/send-message`,
           formData,
@@ -570,19 +569,15 @@ const Chatting = ({ route }) => {
             },
           }
         );
-
         console.log("Phản hồi từ server:", uploadResponse.data);
-
         // Kiểm tra phản hồi từ server
         if (uploadResponse.data.status === "error") {
           throw new Error(uploadResponse.data.message || "Lỗi từ server");
         }
-
         // Cập nhật danh sách tin nhắn
         if (uploadResponse.data.message) {
           setMessages((prev) => [...prev, uploadResponse.data.message]);
         }
-
         // Xóa trạng thái ảnh/file sau khi gửi thành công
         setSelectedImage(null);
         setSelectedFile(null);

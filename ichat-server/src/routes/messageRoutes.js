@@ -6,10 +6,12 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 const MessageController = require("../controllers/messageController");
 
-// Route để upload ảnh (dùng multer để nhận file ảnh)
 router.post(
   "/upload-image",
-  upload.single("image"),
+  upload.fields([
+    { name: "image", maxCount: 1 },
+    { name: "file", maxCount: 1 },
+  ]),
   MessageController.uploadImage
 );
 

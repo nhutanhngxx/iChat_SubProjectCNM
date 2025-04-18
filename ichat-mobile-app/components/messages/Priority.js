@@ -18,6 +18,7 @@ import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import "dayjs/locale/vi";
 import friendService from "../../services/friendService";
+import socketService from "../../services/socketService";
 
 dayjs.extend(relativeTime);
 dayjs.locale("vi");
@@ -38,6 +39,47 @@ const Priority = () => {
   const [showOptions, setShowOptions] = useState(false);
   const longPressTimeout = useRef(null);
   const isLongPress = useRef(false);
+
+  useEffect(() => {
+    // Lắng nghe sự kiện nhận tin nhắn mới
+    socketService.onReceiveMessage((messageData) => {
+      if (!messageData) return;
+
+      setChatList((prevChats) => {
+        return prevChats
+          .map((chat) => {
+            // Kiểm tra nếu tin nhắn thuộc về chat này
+            if (
+              chat.id === messageData.sender_id ||
+              chat.id === messageData.receiver_id
+            ) {
+              // Định dạng nội dung tin nhắn cuối
+              let lastMessageContent = messageData.content;
+              if (messageData.type === "file") {
+                lastMessageContent = "Tệp đính kèm";
+              } else if (messageData.type === "image") {
+                lastMessageContent = "Hình ảnh";
+              }
+
+              // Cập nhật thông tin chat
+              return {
+                ...chat,
+                lastMessage: lastMessageContent,
+                lastMessageTime: new Date(messageData.timestamp).getTime(),
+                time: getTimeAgo(new Date(messageData.timestamp)),
+              };
+            }
+            return chat;
+          })
+          .sort((a, b) => b.lastMessageTime - a.lastMessageTime); // Sắp xếp lại theo thời gian
+      });
+    });
+
+    // Cleanup function
+    return () => {
+      socketService.removeAllListeners();
+    };
+  }, []);
 
   // Nhận selectedChat từ SearchScreen
   const selectedChat = route.params?.selectedChat || null;
@@ -115,10 +157,10 @@ const Priority = () => {
               id: chatUserId,
               name: fullName,
               lastMessage:
-                msg.type === "image"
-                  ? "Hình ảnh"
-                  : msg.type === "file"
+                msg.type === "file"
                   ? "Tệp đính kèm"
+                  : msg.type === "image"
+                  ? "Hình ảnh"
                   : msg.content,
               lastMessageTime: lastMessageTime,
               time: timeDiff,
