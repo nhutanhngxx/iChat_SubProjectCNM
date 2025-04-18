@@ -7,7 +7,7 @@ import UserInfoCard from "./UserInfoCard";
 import { useSelector } from "react-redux";
 import ProfileModal from "../DropDownList/ProfileModal/ProfileModal";
 
-const AddFriend = ({ visible, onClose,onSelectUser }) => {
+const AddFriend = ({ visible, onClose, onSelectUser }) => {
   const dispatch = useDispatch();
   const currentUser = useSelector((state) => state.auth.user);
   const [phone, setPhone] = useState("");
@@ -28,7 +28,7 @@ const AddFriend = ({ visible, onClose,onSelectUser }) => {
     if (value.length !== 10) {
       return "Số điện thoại phải có 10 số";
     }
-    if (!value.startsWith('0')) {
+    if (!value.startsWith("0")) {
       return "Số điện thoại phải bắt đầu bằng số 0";
     }
     return "";
@@ -44,7 +44,7 @@ const AddFriend = ({ visible, onClose,onSelectUser }) => {
     setIsSearching(true);
     try {
       // Chuyển đổi số điện thoại sang format +84
-      const formattedPhone = '+84' + phone.substring(1);
+      const formattedPhone = "+84" + phone.substring(1);
 
       // Kiểm tra nếu số điện thoại trùng với user hiện tại
       if (formattedPhone === currentUser.phone) {
@@ -53,7 +53,9 @@ const AddFriend = ({ visible, onClose,onSelectUser }) => {
         return;
       }
 
-      const result = await dispatch(searchUsersByPhone(formattedPhone)).unwrap();
+      const result = await dispatch(
+        searchUsersByPhone(formattedPhone)
+      ).unwrap();
 
       if (result && result.length > 0) {
         setUserResult(result[0]);
@@ -70,7 +72,7 @@ const AddFriend = ({ visible, onClose,onSelectUser }) => {
   };
 
   const handlePhoneChange = (e) => {
-    const value = e.target.value.replace(/\D/g, ''); // chỉ cho phép nhập số
+    const value = e.target.value.replace(/\D/g, ""); // chỉ cho phép nhập số
     setPhone(value);
     const error = validatePhone(value);
     setPhoneError(error);
@@ -157,7 +159,11 @@ const AddFriend = ({ visible, onClose,onSelectUser }) => {
       >
         <div className="phone-input">
           <div className="country-select">
-            <img src="https://flagcdn.com/w20/vn.png" alt="VN" className="country-flag" />
+            <img
+              src="https://flagcdn.com/w20/vn.png"
+              alt="VN"
+              className="country-flag"
+            />
             <span className="country-code">(+84)</span>
             <span className="dropdown-icon">▼</span>
           </div>
@@ -166,17 +172,13 @@ const AddFriend = ({ visible, onClose,onSelectUser }) => {
             value={phone}
             onChange={handlePhoneChange}
             maxLength={10}
-            className={`number-input ${phoneError ? 'error' : ''}`}
+            className={`number-input ${phoneError ? "error" : ""}`}
             status={phoneError ? "error" : ""}
           />
-          {phoneError && (
-            <div className="error-message">
-              {phoneError}
-            </div>
-          )}
+          {/* {phoneError && <div className="error-message">{phoneError}</div>} */}
         </div>
 
-        <div className="suggested-section">
+        {/* <div className="suggested-section">
           <h4>Có thể bạn quen</h4>
           <div className="friends-list">
             {suggestedFriends.map((friend) => (
@@ -198,7 +200,7 @@ const AddFriend = ({ visible, onClose,onSelectUser }) => {
               </div>
             ))}
           </div>
-        </div>
+        </div> */}
       </Modal>
 
       {/* Modal hiển thị thông tin user khi tìm thấy */}

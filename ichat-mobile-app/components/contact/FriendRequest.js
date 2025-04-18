@@ -48,10 +48,13 @@ const RequestRecieve = () => {
         text: "Đồng ý",
         onPress: async () => {
           try {
-            await friendService.acceptFriendRequest({
+            const response = await friendService.acceptFriendRequest({
               senderId: item.id,
               receiverId: user.id,
             });
+            if (response.status === "ok") {
+              Alert.alert("Thông báo", "Đã kết bạn thành công");
+            }
             setListRequest((prev) => prev.filter((r) => r.id !== item.id));
           } catch (error) {
             Alert.alert("Lỗi", error.message || "Lỗi chưa rõ");

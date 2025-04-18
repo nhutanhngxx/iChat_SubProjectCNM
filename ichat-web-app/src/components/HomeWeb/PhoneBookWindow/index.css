@@ -1,24 +1,17 @@
 .book-window {
   display: flex;
   height: 100vh;
-  background-image: url("https://i.ibb.co/p6FPMSqT/new-background.png");
-  background-size: cover; /* Để ảnh phủ toàn bộ background */
-  background-position: center; /* Căn giữa ảnh */
-  background-repeat: no-repeat; /* Không lặp lại ảnh */
-  /* padding: 16px; */
+  background-color: #fff;
   border-radius: 8px;
 }
 
-/* Sidebar */
 .sidebar {
   flex: 3;
-  background-image: url("https://i.ibb.co/p6FPMSqT/new-background.png");
+  background-color: "white";
   background-size: cover; /* Để ảnh phủ toàn bộ background */
-  background-position: center; /* Căn giữa ảnh */
-  background-repeat: no-repeat; /* Không lặp lại ảnh */
+  background-position: center;
+  background-repeat: no-repeat;
   box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
-  /* padding: 16px; */
-  border-radius: 8px;
 }
 /* Search  */
 .search {

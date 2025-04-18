@@ -103,27 +103,6 @@ const Message = ({
   // State reaction
   const [showReactionPicker, setShowReactionPicker] = useState(false);
   // Function to send friend request
-  const handleSendFriendRequest = async () => {
-    try {
-      antMessage.loading({
-        content: "Đang gửi lời mời kết bạn...",
-        key: "friendRequest",
-      });
-
-      // Mock successful request
-      setTimeout(() => {
-        antMessage.success({
-          content: "Đã gửi lời mời kết bạn!",
-          key: "friendRequest",
-          duration: 2,
-        });
-        setFriendRequestSent(true);
-      }, 1000);
-    } catch (error) {
-      antMessage.error("Không thể gửi lời mời kết bạn. Vui lòng thử lại sau.");
-      console.error("Error sending friend request:", error);
-    }
-  };
 
   // Disabled all interaction if not friends
   const isInteractionDisabled = !isFriendWithReceiver;
@@ -822,33 +801,6 @@ const Message = ({
   }, [selectedChat?.id, user?.id, dispatch]);
   return (
     <>
-      {/* {!isFriendWithReceiver && !isSender && (
-        <div className="not-friend-banner">
-          <Alert
-            message="Hai bạn chưa là bạn bè"
-            description="Kết bạn để mở khóa tính năng tin nhắn đầy đủ."
-            type="warning"
-            showIcon
-            // action={
-            //   friendRequestSent ? (
-            //     <Button size="small" disabled>
-            //       Đã gửi lời mời
-            //     </Button>
-            //   ) : (
-            //     <Button
-            //       type="primary"
-            //       size="small"
-            //       icon={<UserAddOutlined />}
-            //       onClick={handleSendFriendRequest}
-            //     >
-            //       Kết bạn
-            //     </Button>
-            //   )
-            // }
-            className="not-friend-alert"
-          />
-        </div>
-      )} */}
       <div
         className={`message ${isSender ? "sent" : "received"} ${
           !isFriendWithReceiver && !isSender ? "not-friend-message" : ""
