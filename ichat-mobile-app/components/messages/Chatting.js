@@ -471,6 +471,7 @@ const Chatting = ({ route }) => {
       }
 
       Alert.alert("Thông báo", message);
+      setModalVisible(false);
       return;
     }
 
@@ -531,6 +532,41 @@ const Chatting = ({ route }) => {
       console.error("Lỗi khi gửi lời mời kết bạn:", error);
       Alert.alert("Lỗi", "Không thể gửi lời mời kết bạn.");
     }
+  };
+
+  // Hủy chặn
+  const handleUnblockUser = async (chatId) => {
+    Alert.alert(
+      "Xác nhận",
+      `Bạn có chắc chắn muốn hủy chặn ${chat.name} không?`,
+      [
+        { text: "Hủy" },
+        {
+          text: "Xác nhận",
+          onPress: async () => {
+            try {
+              const response = await friendService.unblockUser({
+                userId: user.id,
+                blockedUserId: chatId,
+              });
+              if (response.status === "ok") {
+                setBlockStatus((prev) => ({
+                  ...prev,
+                  // isBlocked: false,
+                  // blockedByTarget: false,
+                  blockedByUser: false,
+                }));
+                setTypeChat("not-friend"); // Cập nhật lại trạng thái chat
+              } else {
+                Alert.alert("Lỗi", response.message);
+              }
+            } catch (error) {
+              console.error("Lỗi khi hủy chặn:", error);
+            }
+          },
+        },
+      ]
+    );
   };
 
   return (
@@ -606,9 +642,25 @@ const Chatting = ({ route }) => {
           }
         >
           <Text style={styles.blockedText}>
-            {blockStatus.blockedByTarget
-              ? `Bạn đã bị ${chat.name} chặn`
-              : `Bạn đã chặn ${chat.name}`}
+            {blockStatus.blockedByTarget ? (
+              `Bạn đã bị ${chat.name} chặn`
+            ) : (
+              <View style={styles.blockedText}>
+                <Text style={styles.blockedText}>
+                  Bạn đã chặn {chat.name}.{" "}
+                </Text>
+                <TouchableOpacity onPress={() => handleUnblockUser(chat.id)}>
+                  <Text
+                    style={{
+                      textDecorationLine: "underline",
+                      fontWeight: "semibold",
+                    }}
+                  >
+                    Hủy chặn
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </Text>
         </View>
       )}
