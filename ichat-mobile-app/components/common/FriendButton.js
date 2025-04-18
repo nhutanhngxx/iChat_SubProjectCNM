@@ -132,7 +132,7 @@ const FriendButton = ({
           paddingVertical: 5,
           paddingHorizontal: 10,
         }}
-        onPress={() => onSendRequest(itemId, fullName)}
+        onPress={() => onSendRequest(itemId)}
       >
         <Text style={{ color: "white", fontWeight: "500" }}>
           <Image

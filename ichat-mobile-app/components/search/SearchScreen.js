@@ -230,6 +230,9 @@ const SearchScreen = () => {
         senderId: user.id,
         receiverId,
       });
+
+      console.log("Response from sendFriendRequest:", response);
+
       if (response.status === "ok") {
         // Tìm kiếm người dùng vừa được gửi lời mời kết bạn
         const user = await userService.getUserById(receiverId);
@@ -243,6 +246,8 @@ const SearchScreen = () => {
             full_name: user.full_name,
             avatar_path: user.avatar_path,
           };
+
+          console.log("New sent request:", newSentRequest);
 
           setSentRequests((prev) => [...prev, newSentRequest]);
           Alert.alert(

@@ -46,6 +46,7 @@ const friendService = {
         senderId,
         receiverId,
       });
+
       if (response.data.status === "error") {
         return { status: "error", message: response.data.message };
       }
