@@ -85,8 +85,9 @@ const UserController = {
   // Lấy tất cả người dùng
   getAllUsers: async (req, res) => {
     const { search } = req.query;
+    const currentUserId = req.user?.id;
     try {
-      const users = await UserModel.getAllUsers(search);
+      const users = await UserModel.getAllUsers(search, currentUserId);
       res.json({ status: "ok", users });
     } catch (error) {
       console.error("Lỗi tìm kiếm người dùng:", error);

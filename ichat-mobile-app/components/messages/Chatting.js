@@ -32,12 +32,44 @@ import groupService from "../../services/groupService";
 import MessageInputBar from "../../components/messages/MessageInputBar";
 
 import { getHostIP } from "../../services/api";
+import friendService from "../../services/friendService";
+import socketService from "../../services/socketService";
+// import { SocketContext } from "../../config/context/SocketContext";
+
+const renderReactionIcons = (reactions) => {
+  const icons = {
+    like: require("../../assets/icons/emoji-like.png"),
+    love: require("../../assets/icons/emoji-love.png"),
+    haha: require("../../assets/icons/emoji-haha.png"),
+    wow: require("../../assets/icons/emoji-surprised.png"),
+    sad: require("../../assets/icons/emoji-cry.png"),
+    angry: require("../../assets/icons/emoji-angry.png"),
+  };
+
+  const counts = reactions.reduce((acc, r) => {
+    acc[r.reaction_type] = (acc[r.reaction_type] || 0) + 1;
+    return acc;
+  }, {});
+
+  return (
+    <View style={styles.reactionsWrapper}>
+      {Object.entries(counts).map(([type, count]) => (
+        <View key={type} style={styles.reactionItem}>
+          <Image source={icons[type]} style={{ width: 15, height: 15 }} />
+        </View>
+      ))}
+    </View>
+  );
+};
 
 const Chatting = ({ route }) => {
+  const ipAdr = getHostIP();
+  const API_iChat = `http://${ipAdr}:5001/api/messages/`;
   const navigation = useNavigation();
   const { user } = useContext(UserContext);
   const { chat } = route.params || {};
-  const flatListRef = useRef(null);
+  const flatListRef = useRef(null); // "friend" | "not-friend" | "blocked" dùng để kiểm tra trạng thái bạn bè giữa 2 người dùng
+  const [typeChat, setTypeChat] = useState(route.params?.typeChat || "friend");
   const [inputMessage, setInputMessage] = useState("");
   const [selectedImage, setSelectedImage] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
@@ -46,9 +78,74 @@ const Chatting = ({ route }) => {
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [groupMembers, setGroupMembers] = useState([]);
+  // Kiểm tra trạng thái chặn giữa 2 người dùng
+  const [blockStatus, setBlockStatus] = useState({
+    isBlocked: false,
+    blockedByTarget: false,
+    blockedByUser: false,
+  });
 
-  const ipAdr = getHostIP();
-  const API_iChat = `http://${ipAdr}:5001/api/messages/`;
+  const [socketConnected, setSocketConnected] = useState(false);
+
+  // Thêm useEffect để quản lý socket connection và events
+  useEffect(() => {
+    if (!user?.id || !chat?.id) return;
+
+    // Tạo roomId cho chat
+    const userIds = [user.id, chat.id].sort();
+    const roomId = `chat_${userIds[0]}_${userIds[1]}`;
+
+    console.log("Joining room:", roomId);
+
+    // Lắng nghe sự kiện kết nối
+    socketService.connect(() => {
+      console.log("Socket connected to room:", roomId);
+      setSocketConnected(true);
+    });
+
+    // Join room
+    socketService.joinRoom(roomId);
+
+    // Lắng nghe tin nhắn mới
+    socketService.onReceiveMessage((data) => {
+      console.log("Received new message:", data);
+      if (data.chatId === roomId) {
+        setMessages((prevMessages) => {
+          // Kiểm tra tin nhắn đã tồn tại chưa
+          const messageExists = prevMessages.some(
+            (msg) => msg._id === data._id
+          );
+          if (!messageExists) {
+            return [...prevMessages, data];
+          }
+          return prevMessages;
+        });
+      }
+    });
+
+    // Gửi tin nhắn
+    socketService.handleSendMessage((messageData, roomId) => {
+      console.log("Sending message:", messageData);
+      socketService.handleSendMessage(messageData, roomId);
+    });
+
+    socketService.handleRecallMessage((data) => {
+      console.log("Recalled message event received:", data);
+      if (data.chatId === roomId) {
+        setMessages((prevMessages) =>
+          prevMessages.map((msg) => (msg._id === data.messageId ? data : msg))
+        );
+      }
+    });
+
+    // Cleanup function
+    return () => {
+      console.log("Leaving room:", roomId);
+      socketService.leaveRoom(roomId);
+      socketService.removeAllListeners();
+      socketService.disconect();
+    };
+  }, [user?.id, chat?.id]);
 
   const getFileNameFromUrl = (url) => {
     // Tách URL theo dấu '/' và lấy phần cuối cùng
@@ -142,44 +239,118 @@ const Chatting = ({ route }) => {
 
   // Thu hồi tin nhắn (Xóa nội dung tin nhắn đã gửi)
   const handleRecallMessage = async () => {
+    const userIds = [user.id, chat.id].sort();
+    const roomId = `chat_${userIds[0]}_${userIds[1]}`;
     if (!selectedMessage) return;
+
+    if (typeChat === "not-friend" || typeChat === "blocked") {
+      let message = "Bạn không thể gửi tin nhắn trong cuộc trò chuyện này.";
+
+      if (typeChat === "blocked") {
+        if (blockStatus.blockedByTarget) {
+          message = `Bạn không thể gửi tin nhắn cho ${chat.name} vì bạn đã bị chặn.`;
+        } else if (blockStatus.blockedByUser) {
+          message = `Bạn không thể gửi tin nhắn cho ${chat.name} vì bạn đã chặn người này.`;
+        }
+      }
+
+      Alert.alert("Thông báo", message);
+      return;
+    }
 
     try {
       const response = await axios.put(
-        `${API_iChat}/recall/${selectedMessage._id}`
+        `${API_iChat}/recall/${selectedMessage._id}`,
+        {
+          userId: user.id,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
       );
 
-      if (response.data?.status === "ok") {
-        setMessages((prevMessages) =>
-          prevMessages.map((msg) =>
-            msg._id === selectedMessage._id
-              ? { ...msg, content: "Tin nhắn đã được thu hồi" }
-              : msg
-          )
-        );
-      } else {
-        console.error("Thu hồi tin nhắn thất bại:", response.data);
+      if (response.data.data) {
+        const recalledMessage = {
+          ...response.data.data,
+          chatId: roomId,
+        };
+        console.log(socketService.handleRecallMessage(recalledMessage));
+
+        socketService.handleSendMessage(recalledMessage);
       }
+
+      // if (response.data?.status === "ok") {
+      //   setMessages((prevMessages) =>
+      //     prevMessages.map((msg) =>
+      //       msg._id === selectedMessage._id
+      //         ? { ...msg, content: "Tin nhắn đã được thu hồi" }
+      //         : msg
+      //     )
+      //   );
+      // } else {
+      //   console.error("Thu hồi tin nhắn thất bại:", response.data);
+      // }
     } catch (error) {
-      console.error("Lỗi khi thu hồi tin nhắn:", error);
+      // console.error("Lỗi khi thu hồi tin nhắn:", error);
+      Alert.alert("Thông báo", "Tin nhắn này không thể thu hồi.");
     } finally {
       setModalVisible(false);
     }
   };
 
-  if (chat?.chatType === "group") {
-    useEffect(() => {
-      const fetchMessages = async () => {
-        const messages = await messageService.getMessagesByGroupId(chat.id);
-        const members = await groupService.getGroupMembers(chat.id);
-        setMessages(messages);
-        setGroupMembers(members);
-      };
-      fetchMessages();
-      const interval = setInterval(fetchMessages, 1000);
-      return () => clearInterval(interval);
-    }, [user, chat]);
-  } else {
+  const handleReaction = async (reactionType) => {
+    const userIds = [user.id, chat.id].sort();
+    const roomId = `chat_${userIds[0]}_${userIds[1]}`;
+
+    if (!selectedMessage) return;
+
+    if (typeChat !== "not-friend") {
+      try {
+        const response = await messageService.addReaction(
+          selectedMessage._id,
+          user.id,
+          reactionType
+        );
+
+        console.log("Phản hồi từ server:", response.updatedMessage);
+        // console.log("Room: ", roomId);
+
+        if (response.updatedMessage) {
+          socketService.handleAddReaction({
+            chatId: roomId,
+            messageId: selectedMessage._id,
+            userId: user.id,
+            reaction: reactionType,
+          });
+        }
+
+        // if (response?.updatedMessage) {
+        //   // Cập nhật lại toàn bộ object message theo kết quả từ server
+        //   setMessages((prevMessages) =>
+        //     prevMessages.map((msg) =>
+        //       msg._id === selectedMessage._id ? response.updatedMessage : msg
+        //     )
+        //   );
+        // }
+      } catch (error) {
+        console.error("Lỗi khi gửi reaction:", error);
+        Alert.alert("Lỗi", "Không thể gửi reaction.");
+      } finally {
+        setModalVisible(false);
+      }
+    } else {
+      Alert.alert(
+        "Thông báo",
+        "Bạn không thể gửi reaction trong cuộc trò chuyện này."
+      );
+      setModalVisible(false);
+    }
+  };
+
+  // Load tin nhắn trò chuyện
+  if (chat?.chatType === "private") {
     useEffect(() => {
       if (chat?.id && user?.id) {
         const fetchMessages = async () => {
@@ -188,14 +359,41 @@ const Chatting = ({ route }) => {
               userId: user.id,
               chatId: chat.id,
             });
-            setMessages(response);
+            // Lọc tin nhắn trước khi set state
+            const filteredMessages = response.filter((message) => {
+              // Nếu không có mảng isdelete hoặc mảng rỗng thì hiển thị tin nhắn
+              if (
+                !Array.isArray(message.isdelete) ||
+                message.isdelete.length === 0
+              ) {
+                return true;
+              }
+              // Không hiển thị tin nhắn nếu id người dùng nằm trong mảng isdelete
+              return !message.isdelete.some(
+                (id) => id === user.id || id === String(user.id)
+              );
+            });
+            setMessages(filteredMessages);
           } catch (error) {
             console.error("Lỗi khi lấy tin nhắn:", error);
           }
         };
-        const interval = setInterval(fetchMessages, 100);
+        fetchMessages();
+        const interval = setInterval(fetchMessages, 500);
         return () => clearInterval(interval);
       }
+    }, [user, chat]);
+  } else {
+    useEffect(() => {
+      // const fetchMessages = async () => {
+      //   const messages = await messageService.getMessagesByGroupId(chat.id);
+      //   const members = await groupService.getGroupMembers(chat.id);
+      //   setMessages(messages);
+      //   setGroupMembers(members);
+      // };
+      // fetchMessages();
+      // const interval = setInterval(fetchMessages, 500);
+      // return () => clearInterval(interval);
     }, [user, chat]);
   }
 
@@ -220,10 +418,65 @@ const Chatting = ({ route }) => {
     };
   }, []);
 
+  useEffect(() => {
+    if (route.params?.typeChat) {
+      setTypeChat(route.params.typeChat);
+    }
+  }, [route.params?.typeChat]);
+
+  // Kiểm tra trạng thái chặn giữa 2 người dùng
+  useEffect(() => {
+    const checkIfBlocked = async () => {
+      if (chat?.id && user?.id && chat.chatType === "private") {
+        try {
+          const status = await friendService.checkBlockStatus(user.id, chat.id);
+          setBlockStatus(status);
+
+          // Nếu người dùng bị chặn, thay đổi typeChat
+          if (status.isBlocked) {
+            // Cập nhật typeChat thành "blocked"
+            setTypeChat("blocked");
+          }
+        } catch (error) {
+          console.error("Lỗi kiểm tra trạng thái chặn:", error);
+        }
+      }
+    };
+
+    checkIfBlocked();
+  }, [chat, user]);
+
   const sendMessage = async () => {
+    if (!socketService.connect()) {
+      Alert.alert("Thông báo", "Đang kết nối lại với server...");
+      return;
+    }
+    // Kiểm tra trạng thái trò chuyện
+    if (typeChat === "not-friend" || typeChat === "blocked") {
+      let message = "Bạn không thể gửi tin nhắn trong cuộc trò chuyện này.";
+
+      if (typeChat === "blocked") {
+        if (blockStatus.blockedByTarget) {
+          message = `Bạn không thể gửi tin nhắn cho ${chat.name} vì bạn đã bị chặn.`;
+        } else if (blockStatus.blockedByUser) {
+          message = `Bạn không thể gửi tin nhắn cho ${chat.name} vì bạn đã chặn người này.`;
+        }
+      }
+
+      Alert.alert("Thông báo", message);
+      return;
+    }
+
     try {
+      // Tạo roomId cho chat
+      const userIds = [user.id, chat.id].sort();
+      const roomId = `chat_${userIds[0]}_${userIds[1]}`;
+
       // Gửi tin nhắn văn bản hoặc reply
       if (inputMessage.trim() || replyMessage) {
+        console.log("Gửi tin nhắn văn bản/reply...");
+        console.log("replyMessage:", replyMessage);
+
         const textMessage = {
           sender_id: user.id,
           receiver_id: chat.id,
@@ -238,31 +491,48 @@ const Chatting = ({ route }) => {
           : `${API_iChat}/send-message`;
 
         const textResponse = await axios.post(apiEndpoint, textMessage);
-        setMessages((prev) => [...prev, textResponse.data.message]);
+
+        console.log("Phản hồi từ server:", textResponse.data.data);
+
+        if (textResponse.data.data) {
+          const messageToSend = {
+            ...textResponse.data.data,
+            chatId: roomId,
+          };
+          console.log(socketService.handleSendMessage(messageToSend));
+
+          socketService.handleSendMessage(messageToSend);
+        }
+
+        // Cập nhật danh sách tin nhắn // Tạm thời khóa lại
+        // setMessages((prev) => [...prev, textResponse.data.message]);
         setInputMessage("");
         setReplyMessage(null);
+        console.log("Gửi tin nhắn văn bản thành công");
       }
 
       // Gửi hình ảnh hoặc file nếu có
       if (selectedImage || selectedFile) {
+        console.log("Chuẩn bị gửi hình ảnh/file...");
         const formData = new FormData();
-
+        // Thêm ảnh vào FormData
         if (selectedImage) {
+          console.log("Selected image path:", selectedImage);
           formData.append("image", {
             uri: selectedImage,
             name: `photo-${Date.now()}.jpg`,
             type: "image/jpeg",
           });
         }
-
+        // Thêm file vào FormData
         if (selectedFile) {
           formData.append("file", {
             uri: selectedFile.uri,
-            name: selectedFile.name,
-            type: selectedFile.type,
+            name: selectedFile.name || `file-${Date.now()}`,
+            type: selectedFile.type || "application/octet-stream",
           });
         }
-
+        // Thêm các thông tin khác
         formData.append("sender_id", user.id);
         formData.append("receiver_id", chat.id);
         formData.append(
@@ -277,7 +547,11 @@ const Chatting = ({ route }) => {
           "chat_type",
           chat?.chatType === "group" ? "group" : "private"
         );
-        formData.append("reply_to", replyMessage ? replyMessage._id : null);
+
+        // In formData
+        for (let [key, value] of formData.entries()) {
+          console.log(key, value);
+        }
 
         const uploadResponse = await axios.post(
           `${API_iChat}/send-message`,
@@ -285,24 +559,92 @@ const Chatting = ({ route }) => {
           {
             headers: {
               "Content-Type": "multipart/form-data",
+              Accept: "application/json",
             },
           }
         );
+        console.log("Phản hồi từ server:", uploadResponse.data.data);
 
-        if (uploadResponse.data.status === "error") {
-          throw new Error(uploadResponse.data.message);
+        if (uploadResponse.data.data) {
+          const messageToSend = {
+            ...uploadResponse.data.data,
+            chatId: roomId,
+          };
+          console.log(socketService.handleSendMessage(messageToSend));
+
+          socketService.handleSendMessage(messageToSend);
         }
 
-        if (uploadResponse.data.message) {
-          setMessages((prev) => [...prev, uploadResponse.data.message]);
-        }
-
+        // Xóa trạng thái ảnh/file sau khi gửi thành công
         setSelectedImage(null);
         setSelectedFile(null);
+        console.log("Gửi hình ảnh/file thành công");
       }
     } catch (error) {
-      console.error("Lỗi khi gửi tin nhắn:", error);
-      Alert.alert("Lỗi", error.message || "Không thể gửi tin nhắn hoặc tệp.");
+      console.error("Lỗi khi gửi tin nhắn/hình ảnh/file:", error);
+      Alert.alert(
+        "Lỗi",
+        error.response?.data?.message ||
+          error.message ||
+          "Không thể gửi tin nhắn hoặc tệp. Vui lòng thử lại."
+      );
+    }
+  };
+
+  const handleForwardMessage = async () => {
+    if (typeChat === "not-friend" || typeChat === "blocked") {
+      let message =
+        "Bạn không thể chuyển tiếp tin nhắn trong cuộc trò chuyện này.";
+
+      if (typeChat === "blocked") {
+        if (blockStatus.blockedByTarget) {
+          message = `Bạn không thể chuyển tiếp tin nhắn vì bạn đã bị chặn.`;
+        } else if (blockStatus.blockedByUser) {
+          message = `Bạn không thể chuyển tiếp tin nhắn vì bạn đã chặn người này.`;
+        }
+      }
+
+      Alert.alert("Thông báo", message);
+      return;
+    }
+
+    navigation.navigate("ForwardMessage", {
+      message: selectedMessage,
+    });
+
+    setModalVisible(false);
+  };
+
+  // Hanlde xóa mềm- xóa tin nhắn 1 phía
+  const handleSoftDelete = async () => {
+    if (typeChat === "not-friend" || typeChat === "blocked") {
+      let message = "Bạn không thể xóa tin nhắn trong cuộc trò chuyện này.";
+
+      if (typeChat === "blocked") {
+        if (blockStatus.blockedByTarget) {
+          message = `Bạn không thể xóa tin nhắn vì bạn đã bị chặn.`;
+        } else if (blockStatus.blockedByUser) {
+          message = `Bạn không thể xóa tin nhắn vì bạn đã chặn người này.`;
+        }
+      }
+
+      Alert.alert("Thông báo", message);
+      return;
+    }
+    try {
+      const response = await messageService.softDeleteMessagesForUser(
+        user.id,
+        selectedMessage._id
+      );
+      if (response.data !== null) {
+        setMessages((prevMessages) =>
+          prevMessages.filter((msg) => msg._id !== selectedMessage._id)
+        );
+      }
+    } catch (error) {
+      console.error("Lỗi khi xóa mềm tin nhắn:", error);
+    } finally {
+      setModalVisible(false);
     }
   };
 
@@ -370,6 +712,34 @@ const Chatting = ({ route }) => {
           </View>
         </View>
       </View>
+      {typeChat === "blocked" && (
+        <View
+          style={
+            Platform.OS === "ios"
+              ? [styles.blockedContainer, { padding: 10 }]
+              : [styles.blockedContainer, { padding: 5 }]
+          }
+        >
+          <Text style={styles.blockedText}>
+            {blockStatus.blockedByTarget
+              ? `Bạn đã bị ${chat.name} chặn`
+              : `Bạn đã chặn ${chat.name}`}
+          </Text>
+        </View>
+      )}
+      {typeChat === "not-friend" && (
+        <View
+          style={
+            Platform.OS === "ios"
+              ? [styles.blockedContainer, { padding: 10 }]
+              : [styles.blockedContainer, { padding: 5 }]
+          }
+        >
+          <Text style={styles.blockedText}>
+            Bạn không thể gửi tin nhắn trong cuộc trò chuyện này.
+          </Text>
+        </View>
+      )}
 
       {/* Tin nhắn sẽ được hiển thị ở vùng nay */}
       <KeyboardAvoidingView
@@ -390,133 +760,162 @@ const Chatting = ({ route }) => {
               ? messages.find((msg) => msg._id === item.reply_to)
               : null;
             return (
-              <TouchableOpacity
-                onLongPress={() => handleLongPress(item)}
-                style={[
-                  styles.message,
-                  item.sender_id === user.id
-                    ? styles.myMessage
-                    : styles.theirMessage,
-                ]}
-              >
-                {/* Tên người gửi */}
-                {!isMyMessage && chat.chatType === "group" && (
-                  <Text style={styles.replySender}>
-                    {getMemberName(item.sender_id)}
-                  </Text>
-                )}
-
-                {/* Hiển thị tin nhắn Reply => Hiển thị tin nhắn gốc trước */}
-                {repliedMessage && (
-                  <View style={styles.replyContainer}>
+              <View>
+                <TouchableOpacity
+                  onLongPress={() => handleLongPress(item)}
+                  delayLongPress={300}
+                  style={[
+                    styles.message,
+                    item.sender_id === user.id
+                      ? styles.myMessage
+                      : styles.theirMessage,
+                    item.reactions?.length > 0 && { marginBottom: 15 }, // Thêm marginBottom nếu có reactions
+                  ]}
+                >
+                  {/* Tên người gửi */}
+                  {!isMyMessage && chat.chatType === "group" && (
                     <Text style={styles.replySender}>
-                      {repliedMessage.sender_id === user.id
-                        ? "Bạn"
-                        : getMemberName(repliedMessage.sender_id)}
-                      :
+                      {getMemberName(item.sender_id)}
                     </Text>
+                  )}
 
-                    {repliedMessage.type === "text" && (
-                      <Text
-                        style={styles.replyText}
-                        numberOfLines={1}
-                        ellipsizeMode="tail"
-                      >
-                        {repliedMessage.content}
+                  {/* Hiển thị tin nhắn Reply => Hiển thị tin nhắn gốc trước */}
+                  {repliedMessage && (
+                    <View style={styles.replyContainer}>
+                      <Text style={styles.replySender}>
+                        {repliedMessage.sender_id === user.id
+                          ? "Bạn"
+                          : chat.chatType === "group"
+                          ? getMemberName(repliedMessage.sender_id)
+                          : chat.name}
+                        :
                       </Text>
-                    )}
 
-                    {repliedMessage.type === "image" && (
-                      <Text style={styles.replyText}>[Hình ảnh]</Text>
-                    )}
-
-                    {repliedMessage.type === "file" && (
-                      <View style={styles.replyFileContainer}>
-                        <Image
-                          source={require("../../assets/icons/attachment.png")}
-                          style={styles.replyFileIcon}
-                        />
+                      {repliedMessage.type === "text" && (
                         <Text
-                          style={styles.replyFileName}
+                          style={styles.replyText}
                           numberOfLines={1}
                           ellipsizeMode="tail"
                         >
-                          {repliedMessage.fileName || "Tệp đính kèm"}
+                          {repliedMessage.content}
                         </Text>
+                      )}
+
+                      {repliedMessage.type === "image" && (
+                        <Text style={styles.replyText}>[Hình ảnh]</Text>
+                      )}
+
+                      {repliedMessage.type === "file" && (
+                        <View style={styles.replyFileContainer}>
+                          <Image
+                            source={require("../../assets/icons/attachment.png")}
+                            style={styles.replyFileIcon}
+                          />
+                          <Text
+                            style={styles.replyFileName}
+                            numberOfLines={1}
+                            ellipsizeMode="tail"
+                          >
+                            {repliedMessage.fileName || "Tệp đính kèm"}
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+                  )}
+
+                  {item.type === "image" ? (
+                    <TouchableOpacity
+                      onPress={() =>
+                        navigation.navigate("ViewImageChat", {
+                          imageUrl: item.content,
+                        })
+                      }
+                    >
+                      <Image
+                        source={{ uri: item.content }}
+                        style={{
+                          width: 200,
+                          height: 200,
+                          borderRadius: 10,
+                          marginTop: 5,
+                        }}
+                        resizeMode="cover"
+                      />
+                    </TouchableOpacity>
+                  ) : item.type === "file" ? (
+                    <TouchableOpacity
+                      style={styles.fileContainer}
+                      onPress={() => {
+                        Alert.alert("Thông báo", "Hãy tải hoặc mở file về máy");
+                      }}
+                    >
+                      <Image
+                        source={require("../../assets/icons/attachment.png")}
+                        style={styles.fileIcon}
+                      />
+                      <Text
+                        style={styles.fileName}
+                        numberOfLines={1}
+                        ellipsizeMode="tail"
+                      >
+                        {getFileNameFromUrl(item.content) || "Tệp đính kèm"}
+                      </Text>
+                    </TouchableOpacity>
+                  ) : (
+                    <Text
+                      style={[
+                        styles.messageText,
+                        isRecalled && styles.recalledText,
+                      ]}
+                    >
+                      {item.content}
+                    </Text>
+                  )}
+
+                  {/* Hiển thị thời gian hh:mm gửi tin nhắn */}
+                  {isLastMessage && (
+                    <Text style={styles.timestamp}>
+                      {new Date(item.timestamp).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </Text>
+                  )}
+
+                  {/* Hiển thị reactions */}
+                  {Array.isArray(item.reactions) &&
+                    item.reactions.length > 0 && (
+                      <View
+                        style={[
+                          styles.reactionsContainer,
+                          isMyMessage
+                            ? styles.reactionsRight
+                            : styles.reactionsRight,
+                        ]}
+                      >
+                        <TouchableOpacity
+                          style={styles.reactionsWrapper}
+                          onPress={() => Alert.alert("Đã thả react")}
+                        >
+                          {renderReactionIcons(item.reactions)}
+                        </TouchableOpacity>
                       </View>
                     )}
-                  </View>
-                )}
+                </TouchableOpacity>
 
-                {item.type === "image" ? (
-                  <TouchableOpacity
-                    onPress={() =>
-                      navigation.navigate("ViewImageChat", {
-                        imageUrl: item.content,
-                      })
-                    }
-                  >
-                    <Image
-                      source={{ uri: item.content }}
-                      style={{
-                        width: 200,
-                        height: 200,
-                        borderRadius: 10,
-                        marginTop: 5,
-                      }}
-                      resizeMode="cover"
-                    />
-                  </TouchableOpacity>
-                ) : item.type === "file" ? (
-                  <TouchableOpacity
-                    style={styles.fileContainer}
-                    onPress={() => {
-                      Alert.alert("Thông báo", "Hãy tải hoặc mở file về máy");
-                    }}
-                  >
-                    <Image
-                      source={require("../../assets/icons/attachment.png")}
-                      style={styles.fileIcon}
-                    />
-                    <Text
-                      style={styles.fileName}
-                      numberOfLines={1}
-                      ellipsizeMode="tail"
-                    >
-                      {getFileNameFromUrl(item.content) || "Tệp đính kèm"}
-                    </Text>
-                  </TouchableOpacity>
-                ) : (
-                  <Text
-                    style={[
-                      styles.messageText,
-                      isRecalled && styles.recalledText,
-                    ]}
-                  >
-                    {item.content}
-                  </Text>
-                )}
-
-                {/* Hiển thị thời gian hh:mm gửi tin nhắn */}
-                {isLastMessage && (
-                  <Text style={styles.timestamp}>
-                    {new Date(item.timestamp).toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </Text>
-                )}
                 {/* Hiển thị trạng thái của tin nhắn: Đã gửi, Đã nhận, Đã xem */}
                 {isLastMessage && item.sender_id === user.id && (
-                  <Text style={styles.status}>
-                    {item.status === "sent"
-                      ? "Đã gửi"
-                      : item.status === "received"
-                      ? "Đã nhận"
-                      : "Đã xem"}
-                  </Text>
+                  <View style={styles.statusWrapper}>
+                    <Text style={styles.statusText}>
+                      {item.status === "sent"
+                        ? "Đã gửi"
+                        : item.status === "received"
+                        ? "Đã nhận"
+                        : "Đã xem"}
+                    </Text>
+                  </View>
                 )}
-              </TouchableOpacity>
+              </View>
             );
           }}
           contentContainerStyle={styles.messagesContainer}
@@ -533,143 +932,178 @@ const Chatting = ({ route }) => {
           >
             <View style={styles.modalContainer}>
               <View style={styles.modalContent}>
-                <View
-                  style={[
-                    styles.row,
-                    {
+                {selectedMessage?.content === "Tin nhắn đã được thu hồi" ? (
+                  // Chỉ hiển thị chức năng Xóa
+                  <View
+                    style={{
                       backgroundColor: "white",
                       width: "100%",
                       borderRadius: 10,
                       padding: 10,
-                    },
-                  ]}
-                >
-                  <TouchableOpacity>
-                    <Image
-                      source={require("../../assets/icons/emoji-haha.png")}
-                      style={styles.iconEmoji}
-                    />
-                  </TouchableOpacity>
-                  <TouchableOpacity>
-                    <Image
-                      source={require("../../assets/icons/emoji-love.png")}
-                      style={styles.iconEmoji}
-                    />
-                  </TouchableOpacity>
-                  <TouchableOpacity>
-                    <Image
-                      source={require("../../assets/icons/emoji-cry.png")}
-                      style={styles.iconEmoji}
-                    />
-                  </TouchableOpacity>
-                  <TouchableOpacity>
-                    <Image
-                      source={require("../../assets/icons/emoji-surprised.png")}
-                      style={styles.iconEmoji}
-                    />
-                  </TouchableOpacity>
-                  <TouchableOpacity>
-                    <Image
-                      source={require("../../assets/icons/emoji-angry.png")}
-                      style={styles.iconEmoji}
-                    />
-                  </TouchableOpacity>
-                </View>
-
-                <View
-                  style={{
-                    backgroundColor: "white",
-                    width: "100%",
-                    borderRadius: 10,
-                    padding: 10,
-                  }}
-                >
-                  <View style={styles.row}>
-                    <TouchableOpacity
-                      style={styles.actionButton}
-                      onPress={() => handleReply(selectedMessage)}
-                    >
-                      <Image
-                        source={require("../../assets/icons/reply-message.png")}
-                        style={styles.icon}
-                      />
-                      <Text style={styles.modalOption}>Trả lời</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.actionButton}
-                      onPress={() => console.log("Chuyển tiếp tin nhắn")}
-                    >
-                      <Image
-                        source={require("../../assets/icons/forward-message.png")}
-                        style={styles.icon}
-                      />
-                      <Text style={styles.modalOption}>Chuyển tiếp</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.actionButton}
-                      onPress={() => console.log("Ghim tin nhắn")}
-                    >
-                      <Image
-                        source={require("../../assets/icons/pin.png")}
-                        style={styles.icon}
-                      />
-                      <Text style={styles.modalOption}>Ghim</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.actionButton}
-                      onPress={() => handleRecallMessage(selectedMessage)}
-                    >
-                      <Image
-                        source={require("../../assets/icons/recall.png")}
-                        style={styles.icon}
-                      />
-                      <Text style={styles.modalOption}>Thu hồi</Text>
-                    </TouchableOpacity>
+                    }}
+                  >
+                    <View style={styles.row}>
+                      <TouchableOpacity
+                        style={styles.actionButton}
+                        onPress={handleSoftDelete}
+                      >
+                        <Image
+                          source={require("../../assets/icons/delete-message.png")}
+                          style={styles.icon}
+                        />
+                        <Text style={styles.modalOption}>Xóa</Text>
+                      </TouchableOpacity>
+                    </View>
                   </View>
+                ) : (
+                  // Hiển thị tất cả chức năng như hiện tại
+                  <>
+                    {/* Thả reaction */}
+                    <View
+                      style={[
+                        styles.row,
+                        {
+                          backgroundColor: "white",
+                          width: "100%",
+                          borderRadius: 10,
+                          padding: 10,
+                        },
+                      ]}
+                    >
+                      <TouchableOpacity onPress={() => handleReaction("like")}>
+                        <Image
+                          source={require("../../assets/icons/emoji-like.png")}
+                          style={styles.iconEmoji}
+                        />
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={() => handleReaction("haha")}>
+                        <Image
+                          source={require("../../assets/icons/emoji-haha.png")}
+                          style={styles.iconEmoji}
+                        />
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={() => handleReaction("love")}>
+                        <Image
+                          source={require("../../assets/icons/emoji-love.png")}
+                          style={styles.iconEmoji}
+                        />
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={() => handleReaction("sad")}>
+                        <Image
+                          source={require("../../assets/icons/emoji-cry.png")}
+                          style={styles.iconEmoji}
+                        />
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={() => handleReaction("wow")}>
+                        <Image
+                          source={require("../../assets/icons/emoji-surprised.png")}
+                          style={styles.iconEmoji}
+                        />
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={() => handleReaction("angry")}>
+                        <Image
+                          source={require("../../assets/icons/emoji-angry.png")}
+                          style={styles.iconEmoji}
+                        />
+                      </TouchableOpacity>
+                    </View>
 
-                  <View style={styles.row}>
-                    <TouchableOpacity
-                      style={styles.actionButton}
-                      onPress={() => console.log("Xem chi tiết tin nhắn")}
+                    <View
+                      style={{
+                        backgroundColor: "white",
+                        width: "100%",
+                        borderRadius: 10,
+                        padding: 10,
+                      }}
                     >
-                      <Image
-                        source={require("../../assets/icons/details.png")}
-                        style={styles.icon}
-                      />
-                      <Text style={styles.modalOption}>Xem chi tiết</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.actionButton}
-                      onPress={() => console.log("Lưu vào Cloud")}
-                    >
-                      <Image
-                        source={require("../../assets/icons/save-cloud.png")}
-                        style={styles.icon}
-                      />
-                      <Text style={styles.modalOption}>Lưu vào Cloud</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.actionButton}
-                      onPress={handleCopyMessage}
-                    >
-                      <Image
-                        source={require("../../assets/icons/copy.png")}
-                        style={styles.icon}
-                      />
-                      <Text style={styles.modalOption}>Sao chép</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.actionButton}
-                      onPress={() => console.log("Xóa tin nhắn vĩnh viễn")}
-                    >
-                      <Image
-                        source={require("../../assets/icons/delete-message.png")}
-                        style={styles.icon}
-                      />
-                      <Text style={styles.modalOption}>Xóa</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
+                      <View style={styles.row}>
+                        <TouchableOpacity
+                          style={styles.actionButton}
+                          onPress={() => handleReply(selectedMessage)}
+                        >
+                          <Image
+                            source={require("../../assets/icons/reply-message.png")}
+                            style={styles.icon}
+                          />
+                          <Text style={styles.modalOption}>Trả lời</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={styles.actionButton}
+                          onPress={handleForwardMessage}
+                        >
+                          <Image
+                            source={require("../../assets/icons/forward-message.png")}
+                            style={styles.icon}
+                          />
+                          <Text style={styles.modalOption}>Chuyển tiếp</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={styles.actionButton}
+                          onPress={() => console.log("Ghim tin nhắn")}
+                        >
+                          <Image
+                            source={require("../../assets/icons/pin.png")}
+                            style={styles.icon}
+                          />
+                          <Text style={styles.modalOption}>Ghim</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={styles.actionButton}
+                          onPress={() => handleRecallMessage(selectedMessage)}
+                        >
+                          <Image
+                            source={require("../../assets/icons/recall.png")}
+                            style={styles.icon}
+                          />
+                          <Text style={styles.modalOption}>Thu hồi</Text>
+                        </TouchableOpacity>
+                      </View>
+
+                      <View style={styles.row}>
+                        <TouchableOpacity
+                          style={styles.actionButton}
+                          onPress={() => console.log("Xem chi tiết tin nhắn")}
+                        >
+                          <Image
+                            source={require("../../assets/icons/details.png")}
+                            style={styles.icon}
+                          />
+                          <Text style={styles.modalOption}>Xem chi tiết</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={styles.actionButton}
+                          onPress={() => console.log("Lưu vào Cloud")}
+                        >
+                          <Image
+                            source={require("../../assets/icons/save-cloud.png")}
+                            style={styles.icon}
+                          />
+                          <Text style={styles.modalOption}>Lưu vào Cloud</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={styles.actionButton}
+                          onPress={handleCopyMessage}
+                        >
+                          <Image
+                            source={require("../../assets/icons/copy.png")}
+                            style={styles.icon}
+                          />
+                          <Text style={styles.modalOption}>Sao chép</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={styles.actionButton}
+                          onPress={handleSoftDelete}
+                        >
+                          <Image
+                            source={require("../../assets/icons/delete-message.png")}
+                            style={styles.icon}
+                          />
+                          <Text style={styles.modalOption}>Xóa</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  </>
+                )}
               </View>
             </View>
           </Pressable>
@@ -749,7 +1183,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "white",
-    paddingBottom: 10,
   },
   chatHeader: {
     flexDirection: "row",
@@ -779,6 +1212,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginVertical: 5,
     maxWidth: "80%",
+    // marginBottom: i
   },
   myMessage: {
     alignSelf: "flex-end",
@@ -800,6 +1234,7 @@ const styles = StyleSheet.create({
     marginVertical: 5,
     borderTopRightRadius: 5,
     borderBottomRightRadius: 5,
+    maxWidth: "80%",
   },
   replySender: {
     fontSize: 16,
@@ -833,9 +1268,11 @@ const styles = StyleSheet.create({
   replyPreview: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
     backgroundColor: "#f0f0f0",
-    paddingVertical: 20,
+    paddingVertical: 10,
     paddingHorizontal: 10,
+    height: 70,
   },
   replyPreviewText: {
     flex: 1,
@@ -966,6 +1403,67 @@ const styles = StyleSheet.create({
     color: "#333",
     fontSize: 14,
     flexShrink: 1,
+  },
+  reactionsContainer: {
+    position: "absolute",
+    bottom: -16,
+    marginBottom: 5,
+    zIndex: 10,
+    elevation: 5,
+  },
+  reactionsLeft: {
+    left: 5,
+    alignSelf: "flex-start",
+  },
+  reactionsRight: {
+    right: 5,
+    alignSelf: "flex-end",
+  },
+  reactionsWrapper: {
+    flexDirection: "row",
+    backgroundColor: "rgba(255, 255, 255, 0.8)",
+    borderRadius: 16,
+    padding: 2,
+    elevation: 2,
+  },
+  reactionItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginHorizontal: 2,
+  },
+  reactionIcon: {
+    fontSize: 10,
+  },
+  statusWrapper: {
+    alignSelf: "flex-end",
+    backgroundColor: "#eee",
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+  },
+  statusText: {
+    fontSize: 13,
+    color: "#555",
+  },
+  blockedContainer: {
+    backgroundColor: "#f9d7d7",
+    alignItems: "center",
+    borderTopWidth: 1,
+    borderColor: "#e5e5e5",
+  },
+  blockedText: {
+    color: "#d32f2f",
+    fontSize: 14,
+  },
+  notFriendContainer: {
+    backgroundColor: "#f0f0f0",
+    alignItems: "center",
+    borderTopWidth: 1,
+    borderColor: "#e5e5e5",
+  },
+  notFriendText: {
+    color: "#757575",
+    fontSize: 14,
   },
 });
 

@@ -6,10 +6,12 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 const MessageController = require("../controllers/messageController");
 
-// Route để upload ảnh (dùng multer để nhận file ảnh)
 router.post(
   "/upload-image",
-  upload.single("image"),
+  upload.fields([
+    { name: "image", maxCount: 1 },
+    { name: "file", maxCount: 1 },
+  ]),
   MessageController.uploadImage
 );
 
@@ -33,6 +35,9 @@ router.put("/recall/:messageId", MessageController.recallToMessage);
 
 // Thêm reactions cho tin nhắn
 router.post("/:messageId/reactions", MessageController.addReactionToMessage);
+
+// Chuyển tiếp tin nhắn
+router.post("/forward", MessageController.forwardMessage);
 
 // Xóa reactions
 router.delete(
@@ -68,6 +73,7 @@ router.get("/:userId/:receiverId", MessageController.getPrivateMessages);
 
 // Xóa tất cả tin nhắn giữa người dùng đăng nhập và người nhận
 router.delete("/:userId/:receiverId", MessageController.deleteAllMessages);
+
 //Xoá ẩn tin nhắn giữa người dùng đăng nhập và người nhận
 router.post("/softDelete", MessageController.softDeleteMessagesForUser);
 
