@@ -111,24 +111,22 @@ const ManageUserBlock = () => {
       </View>
 
       <View style={{ padding: 20, flex: 1 }}>
+        <View style={styles.noticeBox}>
+          <Text style={styles.sectionTitle}>
+            LƯU Ý:{" "}
+            <Text style={styles.notice}>Người dùng bị chặn sẽ không thể:</Text>
+          </Text>
+
+          <Text style={styles.notice}>- Nhắn tin cho bạn</Text>
+          <Text style={styles.notice}>- Thêm bạn vào nhóm</Text>
+          <Text style={styles.notice}>- Xem trạng thái hoạt động của bạn</Text>
+        </View>
         {blockedUsers.length === 0 ? (
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyText}>Bạn chưa chặn người dùng nào</Text>
           </View>
         ) : (
           <>
-            <View style={styles.noticeBox}>
-              <Text style={styles.sectionTitle}>Thông tin</Text>
-              <Text style={styles.notice}>
-                • Người dùng bị chặn sẽ không thể:
-              </Text>
-              <Text style={styles.notice}>- Nhắn tin cho bạn</Text>
-              <Text style={styles.notice}>- Thêm bạn vào nhóm</Text>
-              <Text style={styles.notice}>
-                - Xem trạng thái hoạt động của bạn
-              </Text>
-            </View>
-
             <FlatList
               data={blockedUsers}
               renderItem={renderBlockedUser}

@@ -399,6 +399,8 @@ const Chatting = ({ route }) => {
 
   // Click vào để reply
   const handleReply = (selectedMessage) => {
+    console.log("Reply message:", selectedMessage);
+
     setReplyMessage(selectedMessage);
     setModalVisible(false); // Ẩn modal sau khi chọn reply
   };
@@ -410,9 +412,7 @@ const Chatting = ({ route }) => {
       navigation.getParent()?.setOptions({
         tabBarStyle: {
           backgroundColor: "white",
-          height: 60,
-          paddingBottom: 10,
-          paddingTop: 10,
+          height: 0,
         },
       });
     };
@@ -670,9 +670,9 @@ const Chatting = ({ route }) => {
 
             <View style={{ marginLeft: 10, gap: 2 }}>
               <Text style={styles.name}>{chat.name}</Text>
-              <Text style={{ fontSize: 12, color: "gray" }}>
+              {/* <Text style={{ fontSize: 12, color: "gray" }}>
                 {chat.status === "Online" ? "Đang hoạt động" : "Ngoại tuyến"}
-              </Text>
+              </Text> */}
             </View>
           </View>
           <View
@@ -788,7 +788,6 @@ const Chatting = ({ route }) => {
                           : chat.chatType === "group"
                           ? getMemberName(repliedMessage.sender_id)
                           : chat.name}
-                        :
                       </Text>
 
                       {repliedMessage.type === "text" && (
@@ -816,7 +815,8 @@ const Chatting = ({ route }) => {
                             numberOfLines={1}
                             ellipsizeMode="tail"
                           >
-                            {repliedMessage.fileName || "Tệp đính kèm"}
+                            {getFileNameFromUrl(repliedMessage.content) ||
+                              "Tệp đính kèm"}
                           </Text>
                         </View>
                       )}
@@ -890,7 +890,7 @@ const Chatting = ({ route }) => {
                           styles.reactionsContainer,
                           isMyMessage
                             ? styles.reactionsRight
-                            : styles.reactionsRight,
+                            : styles.reactionsLeft,
                         ]}
                       >
                         <TouchableOpacity
@@ -937,12 +937,11 @@ const Chatting = ({ route }) => {
                   <View
                     style={{
                       backgroundColor: "white",
-                      width: "100%",
                       borderRadius: 10,
-                      padding: 10,
+                      paddingTop: 10,
                     }}
                   >
-                    <View style={styles.row}>
+                    <View style={{}}>
                       <TouchableOpacity
                         style={styles.actionButton}
                         onPress={handleSoftDelete}
@@ -1198,7 +1197,7 @@ const styles = StyleSheet.create({
     borderRadius: 25,
   },
   name: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "bold",
   },
   messagesContainer: {
@@ -1272,7 +1271,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#f0f0f0",
     paddingVertical: 10,
     paddingHorizontal: 10,
-    height: 70,
+    minHeight: 70,
+    maxHeight: 120,
   },
   replyPreviewText: {
     flex: 1,

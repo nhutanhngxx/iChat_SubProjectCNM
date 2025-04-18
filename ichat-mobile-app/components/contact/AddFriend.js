@@ -68,7 +68,11 @@ const AddFriend = () => {
           Alert.alert("Không tìm thấy", "Số điện thoại này chưa có tài khoản!");
           return;
         }
-        navigation.navigate("ViewProfile", { foundUser });
+        if (foundUser.id === user.id) {
+          navigation.navigate("Home", { screen: "Me" });
+        } else {
+          navigation.navigate("ViewProfile", { foundUser });
+        }
       } else {
         Alert.alert("Không tìm thấy", "Số điện thoại này chưa có tài khoản!");
       }

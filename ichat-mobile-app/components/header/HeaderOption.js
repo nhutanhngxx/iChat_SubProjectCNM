@@ -20,7 +20,7 @@ const HeaderOption = () => {
               flexDirection: "row",
               alignItems: "flex-end",
               width: "100%",
-              paddingHorizontal: 10,
+              padding: 10,
               height: 80,
               backgroundColor: "#007bff",
             }

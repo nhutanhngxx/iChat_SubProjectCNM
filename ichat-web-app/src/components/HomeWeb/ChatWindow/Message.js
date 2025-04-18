@@ -23,7 +23,7 @@ import socket from "../../services/socket";
 import { getUserFriends } from "../../../redux/slices/friendSlice";
 import { SmileOutlined } from "@ant-design/icons";
 import { Tooltip, Popover } from "antd";
-
+import { fetchChatMessages } from "../../../redux/slices/messagesSlice";
 // import { LikeOutlined, CheckOutlined } from "@ant-design/icons";
 
 const Message = ({
@@ -46,7 +46,6 @@ const Message = ({
   const [threeDotsMenuVisible, setThreeDotsMenuVisible] = useState(false);
   const messageRef = useRef(null);
   const dispatch = useDispatch();
-  // const chatMessages = useSelector((state) => state.messages.chatMessages);
   const [friends, setFriends] = useState([]);
   // Lấy danh sách bạn bè
   useEffect(() => {
@@ -70,7 +69,6 @@ const Message = ({
       fetchFriends();
     }
   }, [dispatch, user._id, user.id]);
-  console.log("friends from Message component", user._id || user.id, friends);
   // Kiêm tra xem người dùng đã là bạn hay chưa
   const isFriend = (userId) => {
     return friends.friends.some((friend) => friend.id === userId);
@@ -130,53 +128,98 @@ const Message = ({
   // Disabled all interaction if not friends
   const isInteractionDisabled = !isFriendWithReceiver;
   //Thu hồi tin nhắn
+
   const handleRecall = async () => {
     try {
-      // Show loading notification
       const key = "recallMessage";
       antMessage.loading({ content: "Đang thu hồi tin nhắn...", key });
 
-      //Gọi action thu hồi tin nhắn
+      if (!message._id) {
+        console.error("Missing message ID:", message);
+        antMessage.error("Không thể thu hồi: ID tin nhắn không hợp lệ");
+        return;
+      }
 
-      const result = await dispatch(recallToMessage(message._id)).unwrap();
+      console.log("Attempting to recall message:", {
+        messageId: message._id,
+        userId: user?.id || user?._id,
+      });
+
+      // Pass both IDs as an object
+      const result = await dispatch(
+        recallToMessage({
+          messageId: message._id,
+          userId: user?.id || user?._id,
+        })
+      ).unwrap();
+
       console.log("Recall result:", result);
 
-      if (result && result.data) {
-        const sentMessage = result.data; // The recalled message from API
+      // Notify other users via socket
+      const userIds = [user.id, selectedChat.id].sort();
+      const roomId = `chat_${userIds[0]}_${userIds[1]}`;
 
-        // Sử dụng socket để gửi tin nhắn thu hồi đến server
-        // Tạo roomId từ userId và selectedChatId
-        const userIds = [user.id, selectedChat.id].sort();
-        const roomId = `chat_${userIds[0]}_${userIds[1]}`;
+      socket.emit("recall-message", {
+        chatId: roomId,
+        messageId: message._id,
+        senderId: user.id || user._id,
+        newContent: "Tin nhắn đã được thu hồi",
+      });
 
-        // Gửi tin nhắn thu hồi đến server
-        socket.emit("recall-message", {
-          chatId: roomId,
-          messageId: message._id,
-          senderId: user.id,
-          newContent: "Tin nhắn đã được thu hồi",
-        });
-
-        // Thông báo thành công
-        antMessage.success({
-          content: "Đã thu hồi tin nhắn",
-          key,
-          duration: 2,
-        });
-        dispatch(fetchMessages(user.id)); // Fetch updated messages
-        // Close menus
-        closeContextMenu();
-        setThreeDotsMenuVisible(false);
-      }
-    } catch (error) {
-      // Show error message
-      antMessage.error({
-        content: "Không thể thu hồi tin nhắn. Vui lòng thử lại.",
+      // Show success message
+      antMessage.success({
+        content: "Đã thu hồi tin nhắn",
+        key,
         duration: 2,
       });
+
+      // Refresh messages
+      dispatch(fetchMessages(user.id || user._id));
+      closeContextMenu();
+      setThreeDotsMenuVisible(false);
+    } catch (error) {
       console.error("Error recalling message:", error);
+      antMessage.error({
+        content:
+          error.message || "Không thể thu hồi tin nhắn. Vui lòng thử lại.",
+        duration: 2,
+      });
     }
   };
+  // Add this back to your useEffect socket setup
+  useEffect(() => {
+    if (!selectedChat?.id || !user?.id) return;
+
+    const userIds = [user.id, selectedChat.id].sort();
+    const roomId = `chat_${userIds[0]}_${userIds[1]}`;
+
+    // Join the consistent room
+    socket.emit("join-room", roomId);
+
+    const handleRecalledMessage = (data) => {
+      console.log("Message recalled event received:", data);
+
+      // Update the recalled message in your Redux store
+      if (data.messageId) {
+        // Create an updated message object
+        const updatedMessage = {
+          _id: data.messageId,
+          content: data.newContent || "Tin nhắn đã được thu hồi",
+          recall: true,
+        };
+
+        dispatch(updateMessages(updatedMessage));
+        dispatch(fetchMessages(user.id));
+      }
+    };
+
+    socket.on("message-recalled", handleRecalledMessage);
+
+    return () => {
+      console.log("Cleaning up socket listener");
+      socket.off("message-recalled", handleRecalledMessage);
+    };
+  }, [selectedChat?.id, user?.id, dispatch]);
   // Kiểm tra xem người dùng có phải là người gửi tin nhắn không
   const canRecall =
     isSender && new Date() - new Date(message.timestamp) < 30 * 60 * 1000;
@@ -192,27 +235,6 @@ const Message = ({
     extension: "",
     size: "",
   });
-  // useEffect(() => {
-  //   const fetchFileInfo = () => {
-  //     try {
-  //       const fileUrl = message.content;
-  //       const fileName = decodeURIComponent(fileUrl.split("/").pop()); // Lấy tên file cuối URL
-  //       const fileExtension = fileName.split(".").pop();
-  //       const parts = fileName.split("-");
-  //       const originalName = parts.slice(2).join("-"); // Bỏ random + timestamp
-
-  //       setFileInfo({
-  //         name: originalName,
-  //         extension: fileExtension,
-  //         size: "Không xác định (CORS bị chặn)", // fallback
-  //       });
-  //     } catch (error) {
-  //       console.error("Lỗi khi xử lý file:", error);
-  //     }
-  //   };
-
-  //   fetchFileInfo();
-  // }, [message.content]);
   useEffect(() => {
     const fetchFileInfo = async () => {
       try {
@@ -366,6 +388,76 @@ const Message = ({
     closeContextMenu();
   };
 
+  // const handleReaction = async (reaction) => {
+  //   try {
+  //     if (isInteractionDisabled && !isSender) {
+  //       return; // Don't allow reactions if interaction is disabled
+  //     }
+
+  //     const userId = user._id || user.id;
+
+  //     // Check if user has THIS SPECIFIC reaction already
+  //     const existingReaction = message.reactions?.find(
+  //       (r) => r.user_id === userId && r.reaction_type === reaction
+  //     );
+
+  //     if (existingReaction) {
+  //       // User clicked a reaction they already added - remove only this specific reaction
+  //       await dispatch(
+  //         removeReactionFromMessage({
+  //           messageId: message._id,
+  //           userId: userId,
+  //           reaction_type: reaction, // Pass the specific reaction to remove
+  //         })
+  //       ).unwrap();
+
+  //       antMessage.success({
+  //         content: `Đã bỏ biểu cảm ${getReactionEmoji(reaction)}`,
+  //         duration: 1,
+  //       });
+  //     } else {
+  //       // Add new reaction (without removing existing ones)
+  //       await dispatch(
+  //         addReactionToMessage({
+  //           messageId: message._id,
+  //           user_id: userId,
+  //           reaction_type: reaction,
+  //         })
+  //       ).unwrap();
+
+  //       antMessage.success({
+  //         content: `Đã thêm biểu cảm ${getReactionEmoji(reaction)}`,
+  //         duration: 1,
+  //       });
+  //     }
+
+  //     // Notify other clients via socket
+  //     const userIds = [user.id, selectedChat.id].sort();
+  //     const roomId = `chat_${userIds[0]}_${userIds[1]}`;
+
+  //     socket.emit("add-reaction", {
+  //       chatId: roomId,
+  //       messageId: message._id,
+  //       userId: userId,
+  //       reaction_type: reaction,
+  //       action: existingReaction ? "remove" : "add",
+  //     });
+
+  //     console.log(
+  //       `${
+  //         existingReaction ? "Removed" : "Added"
+  //       } reaction ${reaction} for message:`,
+  //       message._id
+  //     );
+
+  //     // Close menus
+  //     closeContextMenu();
+  //     setShowReactionPicker(false);
+  //   } catch (error) {
+  //     antMessage.error("Không thể thực hiện biểu cảm. Vui lòng thử lại.");
+  //     console.error("Error handling reaction:", error);
+  //   }
+  // };
   const handleReaction = async (reaction) => {
     try {
       if (isInteractionDisabled && !isSender) {
@@ -373,19 +465,26 @@ const Message = ({
       }
 
       const userId = user._id || user.id;
-
-      // Check if user has THIS SPECIFIC reaction already
       const existingReaction = message.reactions?.find(
         (r) => r.user_id === userId && r.reaction_type === reaction
       );
+      const isRemoving = !!existingReaction;
 
-      if (existingReaction) {
-        // User clicked a reaction they already added - remove only this specific reaction
+      // Add debug logs
+      console.log("Handling reaction:", {
+        action: isRemoving ? "remove" : "add",
+        reaction,
+        messageId: message._id,
+        existingReaction,
+      });
+
+      if (isRemoving) {
+        // Remove reaction
         await dispatch(
           removeReactionFromMessage({
             messageId: message._id,
             userId: userId,
-            reaction_type: reaction, // Pass the specific reaction to remove
+            reaction_type: reaction,
           })
         ).unwrap();
 
@@ -393,8 +492,22 @@ const Message = ({
           content: `Đã bỏ biểu cảm ${getReactionEmoji(reaction)}`,
           duration: 1,
         });
+
+        // Create room ID
+        const userIds = [user.id, selectedChat.id].sort();
+        const roomId = `chat_${userIds[0]}_${userIds[1]}`;
+
+        // Format payload exactly as server expects it
+        const payload = {
+          chatId: roomId,
+          messageId: message._id,
+          userId: userId,
+        };
+
+        console.log("Emitting remove-reaction with payload:", payload);
+        socket.emit("remove-reaction", payload);
       } else {
-        // Add new reaction (without removing existing ones)
+        // Add reaction
         await dispatch(
           addReactionToMessage({
             messageId: message._id,
@@ -407,35 +520,99 @@ const Message = ({
           content: `Đã thêm biểu cảm ${getReactionEmoji(reaction)}`,
           duration: 1,
         });
+
+        // Create room ID
+        const userIds = [user.id, selectedChat.id].sort();
+        const roomId = `chat_${userIds[0]}_${userIds[1]}`;
+
+        // Format payload exactly as server expects it
+        const payload = {
+          chatId: roomId,
+          messageId: message._id,
+          userId: userId,
+          reaction: reaction, // This must match server expectations
+        };
+
+        console.log("Emitting add-reaction with payload:", payload);
+        socket.emit("add-reaction", payload);
       }
-
-      // Notify other clients via socket
-      const userIds = [user.id, selectedChat.id].sort();
-      const roomId = `chat_${userIds[0]}_${userIds[1]}`;
-
-      socket.emit("message-reaction", {
-        chatId: roomId,
-        messageId: message._id,
-        userId: userId,
-        reaction_type: reaction,
-        action: existingReaction ? "remove" : "add",
-      });
-
-      console.log(
-        `${
-          existingReaction ? "Removed" : "Added"
-        } reaction ${reaction} for message:`,
-        message._id
-      );
 
       // Close menus
       closeContextMenu();
       setShowReactionPicker(false);
     } catch (error) {
+      console.error("Reaction error:", error);
       antMessage.error("Không thể thực hiện biểu cảm. Vui lòng thử lại.");
-      console.error("Error handling reaction:", error);
     }
   };
+  // 1. First, separate room joining to its own useEffect that runs first
+  useEffect(() => {
+    if (!selectedChat?.id || !user?.id) return;
+
+    const userIds = [user.id, selectedChat.id].sort();
+    const roomId = `chat_${userIds[0]}_${userIds[1]}`;
+
+    console.log("Joining chat room:", roomId);
+    socket.emit("join-room", roomId);
+
+    // No return cleanup needed for joining
+  }, [selectedChat?.id, user?.id]);
+
+  // 2. Now handle all socket listeners in a separate useEffect
+  useEffect(() => {
+    if (!selectedChat?.id || !user?.id) return;
+
+    const userIds = [user.id, selectedChat.id].sort();
+    const roomId = `chat_${userIds[0]}_${userIds[1]}`;
+
+    // Debug helper to see all incoming socket events
+    const debugSocketEvent = (eventName, data) => {
+      console.log(`Socket event received: ${eventName}`, data);
+    };
+
+    // Reaction handlers
+    const handleReactionAdded = (data) => {
+      debugSocketEvent("reaction-added", data);
+      // Check all possible paths to get messageId
+      const messageId = data?.messageId || data?.message_id;
+      if (messageId) {
+        // Use more specific fetch rather than fetching all messages
+        dispatch(
+          fetchChatMessages({
+            senderId: user.id,
+            receiverId: selectedChat.id,
+          })
+        );
+      }
+    };
+
+    const handleReactionRemoved = (data) => {
+      debugSocketEvent("reaction-removed", data);
+      // Check all possible paths to get messageId
+      const messageId = data?.messageId || data?.message_id;
+      if (messageId) {
+        // Use more specific fetch rather than fetching all messages
+        dispatch(
+          fetchChatMessages({
+            senderId: user.id,
+            receiverId: selectedChat.id,
+          })
+        );
+      }
+    };
+
+    // Set up all event listeners
+    socket.on("reaction-added", handleReactionAdded);
+    socket.on("reaction-removed", handleReactionRemoved);
+
+    // Clean up ALL listeners when component unmounts
+    return () => {
+      console.log("Cleaning up socket listeners for reactions");
+      socket.off("reaction-added", handleReactionAdded);
+      socket.off("reaction-removed", handleReactionRemoved);
+      socket.off("message-reaction-update"); // Remove any legacy listeners
+    };
+  }, [selectedChat?.id, user?.id, dispatch]);
   const getReactionEmoji = (type) => {
     const map = {
       like: "👍",
@@ -560,6 +737,8 @@ const Message = ({
     if (!reply) return null;
 
     const repliedMessage = findRepliedMessage(reply);
+    console.log("Replied message found:", repliedMessage);
+
     // if (!repliedMessage) return null;
     if (!repliedMessage) {
       // Return a fallback UI when the replied message can't be found
@@ -619,7 +798,7 @@ const Message = ({
       );
     }
   }, [message, allMessages]);
-  console.log("Kiểm tra isFriendWithReceiver:", isFriendWithReceiver);
+  // console.log("Kiểm tra isFriendWithReceiver:", isFriendWithReceiver);
   // Add this to your existing useEffect socket setup
   useEffect(() => {
     if (!selectedChat?.id || !user?.id) return;
@@ -650,22 +829,22 @@ const Message = ({
             description="Kết bạn để mở khóa tính năng tin nhắn đầy đủ."
             type="warning"
             showIcon
-            action={
-              friendRequestSent ? (
-                <Button size="small" disabled>
-                  Đã gửi lời mời
-                </Button>
-              ) : (
-                <Button
-                  type="primary"
-                  size="small"
-                  icon={<UserAddOutlined />}
-                  onClick={handleSendFriendRequest}
-                >
-                  Kết bạn
-                </Button>
-              )
-            }
+            // action={
+            //   friendRequestSent ? (
+            //     <Button size="small" disabled>
+            //       Đã gửi lời mời
+            //     </Button>
+            //   ) : (
+            //     <Button
+            //       type="primary"
+            //       size="small"
+            //       icon={<UserAddOutlined />}
+            //       onClick={handleSendFriendRequest}
+            //     >
+            //       Kết bạn
+            //     </Button>
+            //   )
+            // }
             className="not-friend-alert"
           />
         </div>
@@ -686,7 +865,13 @@ const Message = ({
           isInteractionDisabled && !isSender ? null : () => setIsHovered(false)
         }
         ref={messageRef}
-        style={{ display: "flex" }}
+        style={{
+          display: "flex",
+          marginBottom:
+            message.reactions && message.reactions.length > 0
+              ? "15px"
+              : undefined,
+        }}
       >
         {!isSender && (
           <div className="avatar-message">
