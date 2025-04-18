@@ -134,10 +134,14 @@ const Other = () => {
               id: chatUserId,
               name: fullName,
               lastMessage:
-                msg.type === "image"
-                  ? "Hình ảnh"
-                  : msg.type === "file"
-                  ? "Tệp đính kèm"
+                msg.type === "file"
+                  ? "[Tệp đính kèm]"
+                  : msg.type === "image"
+                  ? "[Hình ảnh]"
+                  : msg.type === "video"
+                  ? "[Video]"
+                  : msg.type === "audio"
+                  ? "[Tệp âm thanh]"
                   : msg.content,
               lastMessageTime: lastMessageTime,
               time: timeDiff,
