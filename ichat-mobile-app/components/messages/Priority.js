@@ -198,6 +198,8 @@ const Priority = () => {
                   ? "Tệp đính kèm"
                   : msg.type === "image"
                   ? "Hình ảnh"
+                  : msg.type === "video"
+                  ? "Video"
                   : msg.content,
               lastMessageTime: lastMessageTime,
               time: timeDiff,

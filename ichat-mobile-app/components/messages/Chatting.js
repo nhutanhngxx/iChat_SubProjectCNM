@@ -385,15 +385,15 @@ const Chatting = ({ route }) => {
     }, [user, chat]);
   } else {
     useEffect(() => {
-      const fetchMessages = async () => {
-        const messages = await messageService.getMessagesByGroupId(chat.id);
-        const members = await groupService.getGroupMembers(chat.id);
-        setMessages(messages);
-        setGroupMembers(members);
-      };
-      fetchMessages();
-      const interval = setInterval(fetchMessages, 500);
-      return () => clearInterval(interval);
+      // const fetchMessages = async () => {
+      //   const messages = await messageService.getMessagesByGroupId(chat.id);
+      //   const members = await groupService.getGroupMembers(chat.id);
+      //   setMessages(messages);
+      //   setGroupMembers(members);
+      // };
+      // fetchMessages();
+      // const interval = setInterval(fetchMessages, 500);
+      // return () => clearInterval(interval);
     }, [user, chat]);
   }
 

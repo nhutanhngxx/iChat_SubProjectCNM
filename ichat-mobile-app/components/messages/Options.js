@@ -75,7 +75,7 @@ const Option = ({ route }) => {
           style: "destructive",
           onPress: async () => {
             try {
-              const response = await messageService.deleteChatHistory(
+              const response = await messageService.softDeleteMessagesForUser(
                 user.id,
                 id
               );

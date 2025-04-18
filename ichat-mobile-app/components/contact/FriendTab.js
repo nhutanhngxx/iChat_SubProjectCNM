@@ -49,13 +49,44 @@ const FriendTab = () => {
 
   // Mở cuộc trò chuyện
   const handleOpenChatting = (chat) => {
-    chat = {
-      id: chat.id,
+    // Chuẩn bị thông tin chat giống như trong Priority
+    const chatInfo = {
+      id: chat.id || chat._id,
       name: chat.full_name,
-      avatar: chat.avatar_path,
+      avatar: {
+        uri: chat.avatar_path || "https://i.ibb.co/9k8sPRMx/best-seller.png",
+      },
+      chatType: "private",
+      lastMessageTime: Date.now(),
     };
 
-    navigation.navigate("Chatting", { chat });
+    // Kiểm tra trạng thái block trước khi chuyển màn hình
+    const checkBlockAndNavigate = async () => {
+      try {
+        const blockStatus = await friendService.checkBlockStatus(
+          user.id,
+          chatInfo.id
+        );
+
+        let typeChat = "normal";
+        if (blockStatus.isBlocked) {
+          typeChat = "blocked";
+        }
+
+        navigation.navigate("Chatting", {
+          chat: chatInfo,
+          typeChat,
+        });
+      } catch (error) {
+        console.error("Lỗi kiểm tra trạng thái chặn:", error);
+        navigation.navigate("Chatting", {
+          chat: chatInfo,
+          typeChat: "normal",
+        });
+      }
+    };
+
+    checkBlockAndNavigate();
   };
 
   // Render danh sách bạn bè
