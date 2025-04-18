@@ -20,7 +20,9 @@ const cardService = {
   },
   getMessageCardsByUserId: async (userId) => {
     try {
-      const response = await apiService.get(`/message-cards/${userId}`);
+      const response = await apiService.get(
+        `/${PREFIX}/message-cards/${userId}`
+      );
       if (response.data.status === "ok") return response.data.data;
       else return [];
     } catch (error) {

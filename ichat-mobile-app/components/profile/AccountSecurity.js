@@ -31,6 +31,11 @@ const AccountSecurity = () => {
           onPress={() => navigation.navigate("ChangePhoneNumber")}
         />
         <SecurityItem
+          icon="list-outline"
+          label="Danh sách chặn"
+          onPress={() => navigation.navigate("BlockList")}
+        />
+        <SecurityItem
           icon="qr-code-outline"
           label="Mã QR đăng nhập"
           onPress={() => navigation.navigate("AddFriend")}
@@ -39,6 +44,11 @@ const AccountSecurity = () => {
           icon="key-outline"
           label="Thay đổi mật khẩu"
           onPress={() => navigation.navigate("ChangePassword")}
+        />
+        <SecurityItem
+          icon="list-outline"
+          label="Danh sách chặn"
+          onPress={() => navigation.navigate("ManageUserBlock")}
         />
         <SecurityItem
           icon="time-outline"

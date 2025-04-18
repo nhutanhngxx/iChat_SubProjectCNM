@@ -26,7 +26,7 @@ import addIcon from "../assets/icons/add.png";
 import backIcon from "../assets/icons/go-back.png";
 
 import cardService from "../services/cardService";
-import { UserContext } from "../context/UserContext";
+import { UserContext } from "../config/context/UserContext";
 
 const MessagesTab = () => {
   const [index, setIndex] = useState(0);

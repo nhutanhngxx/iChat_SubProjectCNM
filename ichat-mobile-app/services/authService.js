@@ -20,7 +20,7 @@ const authService = {
         ? phone.replace(/^0/, "+84")
         : `+84${phone}`;
 
-      const response = await apiService.post(`/login`, {
+      const response = await apiService.post(`/${PREFIX}/login`, {
         phone: formattedPhone,
         password,
       });
@@ -44,7 +44,7 @@ const authService = {
 
   checkPassword: async ({ phone, password }) => {
     try {
-      const response = await apiService.post(`/verify-password`, {
+      const response = await apiService.post(`/${PREFIX}/verify-password`, {
         phone,
         password,
       });
@@ -56,7 +56,7 @@ const authService = {
 
   logout: async (userId) => {
     try {
-      await apiService.post(`/logout`, { userId });
+      await apiService.post(`/${PREFIX}/logout`, { userId });
       await AsyncStorage.removeItem("token");
       await AsyncStorage.removeItem("user");
     } catch (error) {
@@ -95,15 +95,15 @@ const authService = {
   },
 
   checkExistedPhone: async (phone) => {
-    if (!phone) {
-      return {
-        result: true,
-        message: "Vui lòng nhập số điện thoại",
-      };
-    }
+    // if (!phone) {
+    //   return {
+    //     result: false,
+    //     message: "Vui lòng nhập số điện thoại",
+    //   };
+    // }
     try {
       const response = await apiService.post(`/${PREFIX}/check-existed-phone`, {
-        phone,
+        phone: formatPhoneNumber(phone),
       });
 
       if (response.data.status === "error") {

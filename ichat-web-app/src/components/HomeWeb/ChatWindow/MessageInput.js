@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import TextareaAutosize from "@mui/material/TextareaAutosize";
 import {
   SmileOutlined,
@@ -10,6 +10,8 @@ import {
   MoreOutlined,
   ExpandOutlined,
   CheckOutlined,
+  PaperClipOutlined,
+  CloseCircleOutlined,
 } from "@ant-design/icons";
 import {
   Popover,
@@ -25,10 +27,12 @@ import {
 } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import "./MessageInput.css";
-import EmojiPicker from "emoji-picker-react";
 import Picker from "emoji-picker-react";
-import { set } from "lodash";
-
+import GifPicker from "./GifPicker";
+import { RiExpandDiagonalLine } from "react-icons/ri";
+import ConversationDetails from "./ConversationDetails";
+import { getUserFriends } from "../../../redux/slices/friendSlice";
+import { useDispatch, useSelector } from "react-redux";
 // Dữ liệu mẫu cho danh sách bạn bè
 const mockContacts = [
   { id: 1, name: "Ái Lý", avatar: "https://i.pravatar.cc/300?img=1" },
@@ -53,6 +57,14 @@ const MessageInput = ({
   handleSendMessage,
   onImageUpload,
   onFileUpload,
+  handleShowConversationSymbol,
+  showPickerFromMessArea,
+  isExpanded,
+  showConversation,
+  replyingTo,
+  clearReplyingTo,
+  user,
+  selectedChat,
 }) => {
   const [selectedImage, setSelectedImage] = useState(null); // State để lưu ảnh đã chọn
   const [selectedFile, setSelectedFile] = useState(null); // State để lưu file đã chọn
@@ -62,20 +74,110 @@ const MessageInput = ({
   const [activeCategory, setActiveCategory] = useState("Khách hàng"); // State cho tab hiện tại
 
   // Emoji picker
-  const [chosenEmoji, setChosenEmoji] = useState(null);
   const [showPicker, setShowPicker] = useState(false);
   const [showPickerRight, setShowPickerRight] = useState(false);
+  const [selectedGif, setSelectedGif] = useState(null);
+  const [activeTab, setActiveTab] = useState("emoji");
   // const [inputMessage, setInputMessage] = useState("");
   // Mở picker ở trên hoặc bên phải
+  const pickerContainerRef = useRef(null);
+  const pickerRightContainerRef = useRef(null);
+  // Check bạn bè
+  const [isFriendWithReceiver, setIsFriendWithReceiver] = useState(true);
+  const [friends, setFriends] = useState({ friends: [] });
+  const dispatch = useDispatch();
+  // effect để lấy danh sách bạn bè
+  useEffect(() => {
+    const fetchFriends = async () => {
+      try {
+        const userId = user?._id || user?.id;
+        if (!userId) return;
+        const result = await dispatch(getUserFriends(userId)).unwrap();
+        setFriends(result);
+
+        // Check if the selected user is a friend
+        if (result && result.friends && selectedChat) {
+          const isFriend = result.friends.some(
+            (friend) =>
+              friend.id === selectedChat.id ||
+              friend._id === selectedChat.id ||
+              String(friend.id) === String(selectedChat.id)
+          );
+          setIsFriendWithReceiver(isFriend);
+        }
+      } catch (err) {
+        console.error("Error fetching friends:", err);
+      }
+    };
+
+    if (user?._id || user?.id) {
+      fetchFriends();
+    }
+  }, [dispatch, user, selectedChat]);
   const handleShowPickerTop = () => {
+    // Check if users are friends before sending
+    if (!isFriendWithReceiver && selectedChat.id !== user.id) {
+      message.warning("Bạn cần kết bạn để gửi tin nhắn.");
+      return;
+    }
+
+    // Always check if you have a valid selected chat and message ID before using
+    if (!selectedChat || !selectedChat.id) {
+      console.error("No selected chat or invalid chat", selectedChat);
+      return;
+    }
+    if (isExpanded) return;
     setShowPicker((prev) => !prev);
     setShowPickerRight(false);
   };
+  //Chạy lại khi mở picker trong tt hộp thoại từ messArea để đóng picker
+  const renderCount = useRef(0); // Biến cờ để kiểm tra lần chạy đầu tiên
+  useEffect(() => {
+    renderCount.current += 1;
+    console.log("Render count:", renderCount.current);
+
+    if (renderCount.current === 1) {
+      setShowPicker(false);
+      console.log("Lần 1: setShowPicker(false)");
+      return;
+    }
+
+    if (renderCount.current === 2) {
+      console.log("Lần 2: Không làm gì cả");
+      return;
+    }
+    // Chỉ chạy khi renderCount > 2
+    setShowPicker(showPickerFromMessArea);
+    console.log("showPickerFromMessArea: " + showPickerFromMessArea);
+  }, [showPickerFromMessArea]);
+
   const handleShowPickerRight = () => {
+    // Check if users are friends before sending
+    if (!isFriendWithReceiver && selectedChat.id !== user.id) {
+      message.warning("Bạn cần kết bạn để gửi tin nhắn.");
+      return;
+    }
+
+    // Always check if you have a valid selected chat and message ID before using
+    if (!selectedChat || !selectedChat.id) {
+      console.error("No selected chat or invalid chat", selectedChat);
+      return;
+    }
     setShowPickerRight((prev) => !prev);
     setShowPicker(false);
   };
   const onEmojiClick = (event) => {
+    // Check if users are friends before sending
+    if (!isFriendWithReceiver && selectedChat.id !== user.id) {
+      message.warning("Bạn cần kết bạn để gửi tin nhắn.");
+      return;
+    }
+
+    // Always check if you have a valid selected chat and message ID before using
+    if (!selectedChat || !selectedChat.id) {
+      console.error("No selected chat or invalid chat", selectedChat);
+      return;
+    }
     const emoji = event.emoji; // Lấy emoji từ thuộc tính `emoji` của event
     if (emoji) {
       setInputMessage((prevMessage) => prevMessage + emoji); // Thêm emoji vào tin nhắn
@@ -86,48 +188,95 @@ const MessageInput = ({
   console.log("InputMessage: " + inputMessage);
   // Hàm xử lý khi chọn file ảnh (mở hộp thoại tải ảnh trực tiếp)
   const handleImageUpload = (event) => {
+    // Check if users are friends before sending
+    if (!isFriendWithReceiver && selectedChat.id !== user.id) {
+      message.warning("Bạn cần kết bạn để gửi tin nhắn.");
+      return;
+    }
+
+    // Always check if you have a valid selected chat and message ID before using
+    if (!selectedChat || !selectedChat.id) {
+      console.error("No selected chat or invalid chat", selectedChat);
+      return;
+    }
     const file = event.target.files[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const imageUrl = e.target.result; // Lưu URL của ảnh (base64)
-        setSelectedImage(imageUrl);
-        onImageUpload(imageUrl); // Truyền ảnh lên MessageArea
-        message.success("Ảnh đã được tải lên thành công!");
-      };
-      reader.readAsDataURL(file);
+      // setSelectedImage(URL.createObjectURL(file)); // preview ảnh
+      onImageUpload(file); // truyền file gốc, không phải base64
+      message.success("Ảnh đã được tải lên thành công!");
     }
-    // Reset input để có thể chọn lại cùng file
+
     event.target.value = null;
   };
 
   // Hàm xử lý khi chọn file (mở hộp thoại tải file trực tiếp)
   const handleFileUpload = (event) => {
+    // Check if users are friends before sending
+    if (!isFriendWithReceiver && selectedChat.id !== user.id) {
+      message.warning("Bạn cần kết bạn để gửi tin nhắn.");
+      return;
+    }
+
+    // Always check if you have a valid selected chat and message ID before using
+    if (!selectedChat || !selectedChat.id) {
+      console.error("No selected chat or invalid chat", selectedChat);
+      return;
+    }
     const file = event.target.files[0];
     if (file) {
-      setSelectedFile(file); // Lưu file object
+      // setSelectedFile(file); // Lưu file object
       onFileUpload(file); // Truyền file lên MessageArea
       message.success(`File "${file.name}" đã được tải lên thành công!`);
     }
     // Reset input để có thể chọn lại cùng file
     event.target.value = null;
   };
-
+  //hàm fect lại replyingTo khi có thay đổi
+  useEffect(() => {
+    console.log("MessageInput replyingTo:", replyingTo);
+  }, [replyingTo]);
   // Hàm gửi tin nhắn (bao gồm gửi ảnh hoặc file nếu có)
   const handleSend = () => {
-    if (inputMessage.trim() || selectedImage || selectedFile) {
+    // Check if users are friends before sending
+    if (!isFriendWithReceiver && selectedChat.id !== user.id) {
+      message.warning("Bạn cần kết bạn để gửi tin nhắn.");
+      return;
+    }
+
+    // Always check if you have a valid selected chat and message ID before using
+    if (!selectedChat || !selectedChat.id) {
+      console.error("No selected chat or invalid chat", selectedChat);
+      return;
+    }
+
+    if (inputMessage.trim() || selectedImage || selectedFile || selectedGif) {
+      if (selectedGif) {
+        console.log("Gửi GIF:", selectedGif);
+      }
       if (selectedImage) {
         console.log("Gửi ảnh:", selectedImage);
-        // Thêm logic gửi ảnh đến server (nếu cần)
       }
       if (selectedFile) {
         console.log("Gửi file:", selectedFile.name);
-        // Thêm logic gửi file đến server (nếu cần)
       }
-      handleSendMessage(inputMessage); // Gửi tin nhắn văn bản nếu có
+
+      // Call the handleSendMessage with reply info if available
+      handleSendMessage(
+        inputMessage,
+        null,
+        null,
+        inputMessage,
+        replyingTo?._id
+      );
+
+      // handleSendMessage(inputMessage); // Gửi tin nhắn văn bản nếu có
+      setSelectedGif(null); // Reset GIF sau khi gửi
       setSelectedImage(null); // Reset ảnh sau khi gửi
       setSelectedFile(null); // Reset file sau khi gửi
       setInputMessage(""); // Reset tin nhắn văn bản
+      if (replyingTo) {
+        clearReplyingTo(); // Xóa thông tin trả lời sau khi gửi
+      }
     }
     showPicker && setShowPicker(false); // Đóng picker nếu đang mở
     showPickerRight && setShowPickerRight(false); // Đóng picker nếu đang mở
@@ -144,6 +293,17 @@ const MessageInput = ({
 
   // Hàm gửi danh thiếp
   const handleSendContacts = () => {
+    // Check if users are friends before sending
+    if (!isFriendWithReceiver && selectedChat.id !== user.id) {
+      message.warning("Bạn cần kết bạn để gửi tin nhắn.");
+      return;
+    }
+
+    // Always check if you have a valid selected chat and message ID before using
+    if (!selectedChat || !selectedChat.id) {
+      console.error("No selected chat or invalid chat", selectedChat);
+      return;
+    }
     if (selectedContacts.length > 0) {
       const contactNames = selectedContacts
         .map((id) => mockContacts.find((c) => c.id === id).name)
@@ -233,25 +393,153 @@ const MessageInput = ({
     </div>
   );
 
+  const handleGifSelect = async (gifUrl) => {
+    try {
+      // Check if users are friends before sending
+      if (!isFriendWithReceiver && selectedChat.id !== user.id) {
+        message.warning("Bạn cần kết bạn để gửi tin nhắn.");
+        return;
+      }
+
+      // Always check if you have a valid selected chat and message ID before using
+      if (!selectedChat || !selectedChat.id) {
+        console.error("No selected chat or invalid chat", selectedChat);
+        return;
+      }
+      // First, fetch the GIF data as a blob
+      const response = await fetch(gifUrl);
+      if (!response.ok) throw new Error("Failed to fetch GIF");
+      const gifBlob = await response.blob();
+
+      // Create a proper File object with a meaningful name
+      const filename = `gif_${new Date().getTime()}.gif`;
+      const gifFile = new File([gifBlob], filename, { type: "image/gif" });
+
+      // Now process it through your existing image handler
+      onImageUpload(gifFile);
+      message.success("GIF đã được chọn thành công!");
+    } catch (error) {
+      console.error("Error processing GIF:", error);
+      message.error("Không thể tải GIF, vui lòng thử lại!");
+    }
+  };
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (
+        showPicker &&
+        pickerContainerRef.current &&
+        !pickerContainerRef.current.contains(event.target)
+      ) {
+        setShowPicker(false);
+      }
+      if (
+        showPickerRight &&
+        pickerRightContainerRef.current &&
+        !pickerRightContainerRef.current.contains(event.target)
+      ) {
+        setShowPickerRight(false);
+      }
+    }
+
+    if (showPicker || showPickerRight) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showPicker, showPickerRight]);
   return (
     <div className="message-input-container">
+      {/* Reply Preview */}
+      {/* {replyingTo && (
+        <div className="reply-preview">
+          <div className="reply-preview-content">
+            <div className="reply-preview-icon">↩️</div>
+            <div className="reply-preview-text">
+              <p className="reply-preview-label">Đang trả lời tin nhắn</p>
+              <p className="reply-preview-message">
+                {replyingTo.type === "text"
+                  ? replyingTo.content.substring(0, 50) +
+                    (replyingTo.content.length > 50 ? "..." : "")
+                  : replyingTo.type === "image"
+                  ? "🖼️ Hình ảnh"
+                  : "📎 Tệp đính kèm"}
+              </p>
+            </div>
+          </div>
+          <button className="reply-preview-close" onClick={clearReplyingTo}>
+            <CloseCircleOutlined />
+          </button>
+        </div>
+      )} */}
+      {replyingTo && (
+        <div className="reply-preview">
+          <div className="reply-preview-content">
+            <div className="reply-preview-icon">↩️</div>
+            <div className="reply-preview-text">
+              <p className="reply-preview-label">Đang trả lời tin nhắn</p>
+              <p className="reply-preview-message">
+                {replyingTo.type === "text"
+                  ? replyingTo.content
+                    ? replyingTo.content.substring(0, 50) +
+                      (replyingTo.content.length > 50 ? "..." : "")
+                    : ""
+                  : replyingTo.type === "image"
+                  ? "🖼️ Hình ảnh"
+                  : "📎 Tệp đính kèm"}
+              </p>
+            </div>
+          </div>
+          <button className="reply-preview-close" onClick={clearReplyingTo}>
+            <CloseCircleOutlined />
+          </button>
+        </div>
+      )}
       {/* Thanh công cụ trên */}
       <div className="message-toolbar">
         <div style={{ bottom: "102px", position: "absolute", left: "0px" }}>
           {showPicker && (
-            <Picker
-              // onEmojiClick={(event, emojiObject) =>
-              //   onEmojiClick(event, emojiObject)
-              // } // Truyền cả event và emojiObject vào hàm
-              onEmojiClick={onEmojiClick} // Truyền hàm onEmojiClick đúng cách
-            />
+            <div className="picker-container" ref={pickerContainerRef}>
+              <div className="tabs">
+                <button
+                  className={activeTab === "emoji" ? "active" : ""}
+                  onClick={() => setActiveTab("emoji")}
+                >
+                  Emoji
+                </button>
+                <button
+                  className={activeTab === "gif" ? "active" : ""}
+                  onClick={() => setActiveTab("gif")}
+                >
+                  GIF
+                </button>
+                <button
+                  className="expand-icon"
+                  onClick={handleShowConversationSymbol}
+                >
+                  <RiExpandDiagonalLine />
+                </button>
+              </div>
+              <div className="picker-content">
+                {activeTab === "emoji" ? (
+                  <Picker
+                    onEmojiClick={onEmojiClick}
+                    className="emoji-picker"
+                    style={{ width: "310px" }}
+                  />
+                ) : (
+                  <GifPicker
+                    onSelect={setSelectedGif}
+                    onImageUpload={handleGifSelect}
+                    onClose={() => setShowPicker(false)} // Add this line
+                  />
+                )}
+              </div>
+            </div>
           )}
         </div>
-        <SmileOutlined
-          className="toolbar-icon"
-          // onClick={() => setShowPicker((prev) => !prev)}
-          onClick={handleShowPickerTop}
-        />
+        <SmileOutlined className="toolbar-icon" onClick={handleShowPickerTop} />
         <label htmlFor="image-upload" className="toolbar-icon">
           <input
             type="file"
@@ -277,15 +565,6 @@ const MessageInput = ({
           className="toolbar-icon"
           onClick={() => setIsModalOpen(true)} // Mở modal trực tiếp khi nhấp
         />
-        {/* <Popover
-          content={moreContent}
-          title={null}
-          trigger="click"
-          placement="topRight"
-          overlayClassName="more-popover"
-        >
-          <MoreOutlined className="toolbar-icon" />
-        </Popover> */}
       </div>
 
       <div style={{ display: "inline-flex" }}>
@@ -323,14 +602,46 @@ const MessageInput = ({
             // onClick={() => setShowPickerRight((prev) => !prev)}
             onClick={handleShowPickerRight}
           />
-          <div style={{ bottom: "37px", position: "absolute", right: "45px" }}>
+          <div
+            style={{
+              bottom: "37px",
+              position: "absolute",
+              right: showConversation ? "-265px" : "50px",
+              zIndex: "1000",
+            }}
+          >
             {showPickerRight && (
-              <Picker
-                // onEmojiClick={(event, emojiObject) =>
-                //   onEmojiClick(event, emojiObject)
-                // } // Truyền cả event và emojiObject vào hàm
-                onEmojiClick={onEmojiClick} // Truyền hàm onEmojiClick đúng cách
-              />
+              <div className="picker-container" ref={pickerRightContainerRef}>
+                <div className="tabs">
+                  <button
+                    className={activeTab === "emoji" ? "active" : ""}
+                    onClick={() => setActiveTab("emoji")}
+                  >
+                    Emoji
+                  </button>
+                  <button
+                    className={activeTab === "gif" ? "active" : ""}
+                    onClick={() => setActiveTab("gif")}
+                  >
+                    GIF
+                  </button>
+                </div>
+                <div className="picker-content">
+                  {activeTab === "emoji" ? (
+                    <Picker
+                      onEmojiClick={onEmojiClick}
+                      className="emoji-picker"
+                      style={{ width: "310px" }}
+                    />
+                  ) : (
+                    <GifPicker
+                      onSelect={setSelectedGif}
+                      onImageUpload={handleGifSelect}
+                      onClose={() => setShowPickerRight(false)} // Add this line
+                    />
+                  )}
+                </div>
+              </div>
             )}
           </div>
           {inputMessage || selectedImage || selectedFile ? (
@@ -346,7 +657,18 @@ const MessageInput = ({
               <SendOutlined style={{ fontSize: "20px" }} />
             </div>
           ) : (
-            <LikeOutlined className="action-icon" />
+            <LikeOutlined
+              className="action-icon"
+              onClick={() => {
+                handleSendMessage(
+                  "👍", // Send thumbs up emoji as text
+                  null, // No image
+                  null, // No file
+                  "👍", // Content (same as text)
+                  null // No reply
+                );
+              }}
+            />
           )}
         </div>
       </div>

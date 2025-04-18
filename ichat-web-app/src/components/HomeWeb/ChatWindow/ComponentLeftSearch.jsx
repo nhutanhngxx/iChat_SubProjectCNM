@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+"use client";
+
+import { useState } from "react";
 import {
   Layout,
   List,
@@ -11,12 +13,13 @@ import {
   Menu,
   DatePicker,
   Space,
+  Col,
+  Row,
 } from "antd";
 import {
   CloseOutlined,
-  UserOutlined,
-  CalendarOutlined,
   SearchOutlined,
+  FileWordOutlined,
   FileExcelOutlined,
   PlayCircleOutlined,
   FilePdfOutlined,
@@ -27,7 +30,16 @@ import "./ComponentLeftSearch.css";
 
 import SearchComponent from "./SearchComponent";
 import MenuMdMoreHoriz from "./MenuMdMoreHoriz";
-
+import {
+  FaUser,
+  FaCalendar,
+  FaSearch,
+  FaChevronDown,
+  FaChevronRight,
+} from "react-icons/fa";
+import { useDispatch } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+import { fetchChatMessages } from '../../../redux/slices/messagesSlice';
 const { Content } = Layout;
 const { TabPane } = Tabs;
 const { RangePicker } = DatePicker;
@@ -122,35 +134,50 @@ const messages = [
 const files = [
   {
     id: 1,
-    name: "DS_SV_Tham_du_Hoi_thao_chia_se_...",
+    name: "DS_SV",
     type: "excel",
     size: "22.89 KB",
-    sender: "Nguyen Thi Hanh",
     date: "07/01/2025",
+    type: "excel",
   },
   {
     id: 2,
-    name: "DJI_2024092921100_0574.D.MP4",
+    name: "DJI.MP4",
     type: "video",
     size: "373.43 MB",
-    sender: "Thanh Canh",
+    author: "Thanh Cảnh",
     date: "30/09/2024",
+    type: "video",
   },
   {
     id: 3,
     name: "Pháp luật đại cương.pdf",
-    type: "pdf",
     size: "93.15 MB",
-    sender: "Unknown",
     date: "25/09/2024",
+    type: "pdf",
   },
   {
     id: 4,
-    name: "Giáo trình pháp luật đại cương –...",
+    name: "Giáo trình pháp luật.pdf",
     type: "pdf",
     size: "18.53 MB",
-    sender: "Unknown",
     date: "25/09/2024",
+    type: "pdf",
+  },
+  {
+    id: 5,
+    name: "GT Pháp luật đại cương.pdf",
+    size: "4.44 MB",
+    date: "25/09/2024",
+    type: "pdf",
+  },
+  {
+    id: 6,
+    name: "Đặc tả yêu cầu và sơ đồ usecase...",
+    size: "384.2 KB",
+    author: "Vũ Hải Nam",
+    date: "25/08/2024",
+    type: "word",
   },
 ];
 
@@ -160,193 +187,46 @@ const parseDate = (dateStr) => {
   return new Date(year, month - 1, day);
 };
 
+// Hàm formatDate an toàn
+const formatDate = (date) => {
+  if (!date || !(date instanceof Date) || isNaN(date.getTime())) return "";
+  return `${date.getDate().toString().padStart(2, "0")}/${(date.getMonth() + 1)
+    .toString()
+    .padStart(2, "0")}/${date.getFullYear()}`;
+};
+
 // Component RecentlySearched
-const RecentlySearched = ({ filteredRecentlyUser, handleDelete }) => (
+const RecentlySearched = ({ filteredRecentlyUser, handleDelete,handleUserSelect }) => (
   <div>
     <div className="title-chat-sidebar">Tìm gần đây</div>
     <Content className="chat-list">
       <List
         itemLayout="horizontal"
         dataSource={filteredRecentlyUser}
-        renderItem={(item) => renderItemRecently(item, handleDelete)}
+        renderItem={(item) => renderItemRecently(item, handleDelete,handleUserSelect)}
       />
     </Content>
   </div>
 );
 
-// Component SearchResults
-const SearchResults = ({
-  filteredSearchUser,
-  messages,
-  filteredFiles,
-  selectedType,
-  setSelectedType,
-  dateRange,
-  setDateRange,
-  dropdownOpen,
-  handleDropdownVisibleChange,
-  userMenu,
-  dateMenu,
-  fileDateMenu,
-}) => (
-  <Content className="chat-list">
-    <Tabs
-      defaultActiveKey="1"
-      tabBarStyle={{ margin: "0px 0px 4px 0px", padding: "0 20px" }}
-      style={{ fontWeight: "bold" }}
-    >
-      <TabPane tab="Tất cả" key="1">
-        <div className="title-tabpane">
-          Liên hệ ({filteredSearchUser.length})
-        </div>
-        <List
-          itemLayout="horizontal"
-          dataSource={filteredSearchUser}
-          renderItem={renderItemSearch}
-        />
-        <MessageList messages={messages} filteredSearchMessages={messages} />
-        <FileList filteredFiles={filteredFiles} />
-      </TabPane>
-      <TabPane tab="Liên hệ" key="2">
-        <div className="title-tabpane">
-          Cá nhân ({filteredSearchUser.length})
-        </div>
-        <List
-          itemLayout="horizontal"
-          dataSource={filteredSearchUser}
-          renderItem={renderItemSearch}
-        />
-      </TabPane>
-      <TabPane tab="Tin nhắn" key="3">
-        <MessageFilter
-          userMenu={userMenu}
-          dateMenu={dateMenu}
-          dropdownOpen={dropdownOpen}
-          handleDropdownVisibleChange={handleDropdownVisibleChange}
-        />
-        <MessageList messages={messages} filteredSearchMessages={messages} />
-      </TabPane>
-      <TabPane tab="File" key="4">
-        <FileFilter
-          selectedType={selectedType}
-          setSelectedType={setSelectedType}
-          fileDateMenu={fileDateMenu}
-          dateRange={dateRange}
-          setDateRange={setDateRange}
-        />
-        <FileList filteredFiles={filteredFiles} />
-      </TabPane>
-    </Tabs>
-  </Content>
-);
-
-// Component MessageFilter
-const MessageFilter = ({
-  userMenu,
-  dateMenu,
-  dropdownOpen,
-  handleDropdownVisibleChange,
-}) => (
-  <div className="filter-container">
-    <span className="filter-item">Lọc theo:</span>
-    <Dropdown
-      overlay={userMenu}
-      trigger={["click"]}
-      open={dropdownOpen}
-      onVisibleChange={handleDropdownVisibleChange}
-    >
-      <Select
-        defaultValue="Người gửi"
-        suffixIcon={<UserOutlined />}
-        className="filter-select"
-      />
-    </Dropdown>
-    <Dropdown overlay={dateMenu} trigger={["click"]}>
-      <Select
-        defaultValue="Ngày gửi"
-        suffixIcon={<CalendarOutlined />}
-        className="filter-select"
-      />
-    </Dropdown>
-  </div>
-);
-
-// Component MessageList
-const MessageList = ({ messages, filteredSearchMessages }) => (
-  <div className="message-container-component-left-search">
-    <div className="title-tabpane">
-      Tin nhắn ({filteredSearchMessages.length})
-    </div>
-    <div className="message-list">
-      {messages.map((msg) => (
-        <div key={msg.id} className="message-item">
-          <img src={msg.avatar} alt={msg.name} className="message-avatar" />
-          <div className="message-content">
-            <div className="message-header-row">
-              <span className="message-name">{msg.name}</span>
-              <span className="message-time">{msg.time}</span>
-            </div>
-            <p className="message-text">{msg.content}</p>
-          </div>
-        </div>
-      ))}
-    </div>
-  </div>
-);
-
-// Component FileFilter
-const FileFilter = ({
-  selectedType,
-  setSelectedType,
-  fileDateMenu,
-  dateRange,
-  setDateRange,
-}) => (
-  <div className="filter-container">
-    <span className="filter-item">Lọc theo:</span>
-    <Select
-      defaultValue="all"
-      onChange={(value) => setSelectedType(value)}
-      style={{ width: 120, marginRight: 10 }}
-    >
-      <Option value="all">Tất cả</Option>
-      <Option value="pdf">PDF</Option>
-      <Option value="excel">Excel</Option>
-      <Option value="video">Video</Option>
-    </Select>
-    <Dropdown overlay={fileDateMenu} trigger={["click"]}>
-      <Select
-        defaultValue="Ngày gửi"
-        suffixIcon={<CalendarOutlined />}
-        style={{ width: 120 }}
-        className="filter-select"
-      />
-    </Dropdown>
-  </div>
-);
-
-// Component FileList
-const FileList = ({ filteredFiles }) => (
-  <div className="file-list">
-    <div className="title-tabpane">File ({filteredFiles.length})</div>
-    <List
-      itemLayout="horizontal"
-      dataSource={filteredFiles}
-      renderItem={renderFileItem}
-    />
-  </div>
-);
-
 // Hàm renderItemRecently
-const renderItemRecently = (item, handleDelete) => (
-  <List.Item className="list-item">
+const renderItemRecently = (item, handleDelete,handleUserSelect) => (
+  <List.Item className="list-item" onClick={() => handleUserSelect(item)}
+  style={{ cursor: 'pointer' }}>
     <div className="avatar-container">
-      <Avatar size={48} src={`https://i.pravatar.cc/150?img=${item.id}`} />
+      <Avatar size={48} src={item.avatar_path} />
     </div>
     <div className="chat-info">
       <span className="chat-name">{item.name}</span>
     </div>
-    <div className="delete-button" onClick={() => handleDelete(item.id)}>
+    <div
+      className="delete-button"
+      // onClick={() => handleDelete(item.receiver_id)}
+      onClick={(e) => {
+        e.stopPropagation(); // Prevent triggering the List.Item onClick
+        handleDelete(item.receiver_id);
+      }}
+    >
       <CloseOutlined />
     </div>
   </List.Item>
@@ -369,10 +249,35 @@ const renderItemSearch = (item) => (
   </List.Item>
 );
 
+// Hàm rederMessageItem
+const renderMessageItem = (message) => (
+  <List.Item className="list-item">
+    <div className="avatar-container">
+      <Avatar size={48} src={message.avatar} />
+    </div>
+    <div className="chat-info">
+      <Row justify="space-between">
+        <Col>
+          <span className="chat-name">{message.name}</span>
+        </Col>
+        <Col>
+          <span className="chat-time">{message.time}</span>
+        </Col>
+      </Row>
+      <Row>
+        <span className="chat-message">{message.content}</span>
+      </Row>
+    </div>
+  </List.Item>
+);
+
 // Hàm renderFileItem
 const renderFileItem = (file) => {
   let icon;
   switch (file.type) {
+    case "word":
+      icon = <FileWordOutlined style={{ color: "blue", fontSize: "24px" }} />;
+      break;
     case "excel":
       icon = <FileExcelOutlined style={{ color: "green", fontSize: "24px" }} />;
       break;
@@ -389,60 +294,614 @@ const renderFileItem = (file) => {
   }
   return (
     <List.Item className="list-item">
-      <div className="file-icon">{icon}</div>
-      <div className="file-info">
-        <span className="file-name">{file.name}</span>
-        <span className="file-size">{file.size}</span>
-        <span className="file-sender">{file.sender}</span>
-        <span className="file-date">{file.date}</span>
+      <div className="avatar-container">
+        <div className="file-icon">{icon}</div>
       </div>
+      <div className="chat-info">
+        <Row justify="space-between" style={{ display: 'flex', alignItems: 'center' }}>
+          <Col flex="auto" style={{ overflow: 'hidden' }}>
+            <span className="chat-name">{file.name}</span>
+          </Col>
+          <Col>
+            <span className="chat-time">{file.date}</span>
+          </Col>
+        </Row>
+        <Row>
+          <span className="chat-message">{file.size}{file.sender && (
+            <>
+              <span>-</span>
+              <span>{file.sender}</span>
+            </>
+          )}</span>
+        </Row>
+      </div>
+      <div className="text-xs text-gray-500 whitespace-nowrap">{file.date}</div>
     </List.Item>
   );
 };
 
+// Component SearchResults
+const SearchResults = ({
+  filteredSearchUser,
+
+  messages,
+  filteredFiles,
+  selectedType,
+  setSelectedType,
+  dateRange,
+  setDateRange,
+  fileDateMenu,
+
+  //messagefilter
+  selectedUser,
+  setSelectedUser,
+  messageDateRange,
+  setMessageDateRange,
+  filteredSearchMessages
+}) => (
+  <Tabs
+    defaultActiveKey="1"
+    tabBarStyle={{ margin: "0px 0px 4px 0px", padding: "0 20px" }}
+  >
+    <TabPane tab={<strong>Tất cả</strong>} key="1">
+      <div className="search-results-tabpane">
+        <div className="title-tabpane">
+          Liên hệ ({filteredSearchUser.length})
+        </div>
+        <List
+          itemLayout="horizontal"
+          dataSource={filteredSearchUser}
+          renderItem={renderItemSearch}
+        />
+        <MessageList filteredSearchMessages={messages} />
+        <FileList filteredFiles={filteredFiles} />
+      </div>
+    </TabPane>
+    <TabPane tab={<strong>Liên hệ</strong>} key="2">
+      <div className="title-tabpane">Cá nhân ({filteredSearchUser.length})</div>
+      <List
+        itemLayout="horizontal"
+        dataSource={filteredSearchUser}
+        renderItem={renderItemSearch}
+      />
+    </TabPane>
+    <TabPane tab={<strong>Tin nhắn</strong>} key="3">
+      <MessageFilter />
+      <MessageList
+        filteredSearchMessages={filteredSearchMessages}
+      />
+    </TabPane>
+    <TabPane tab={<strong>File</strong>} key="4">
+      <FileFilter
+        selectedType={selectedType}
+        setSelectedType={setSelectedType}
+        fileDateMenu={fileDateMenu}
+        dateRange={dateRange}
+        setDateRange={setDateRange}
+      />
+      <FileList filteredFiles={filteredFiles} />
+    </TabPane>
+  </Tabs>
+);
+
+// Component MessageFilter
+const MessageFilter = () => {
+  const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
+  const [isDateDropdownOpen, setIsDateDropdownOpen] = useState(false);
+  const [isTimeOptionsOpen, setIsTimeOptionsOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [dateRange, setDateRange] = useState({ from: null, to: null });
+
+  // Quick time options
+  const timeOptions = [
+    { label: "7 ngày trước", value: 7 },
+    { label: "30 ngày trước", value: 30 },
+    { label: "3 tháng trước", value: 90 },
+  ];
+
+  const filteredUsers = users.filter((user) =>
+    user.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const clearDateFilter = (e) => {
+    e.stopPropagation();
+    setDateRange({ from: null, to: null });
+  };
+
+  const handleUserSelect = (user) => {
+    setSelectedUser(user);
+    setIsUserDropdownOpen(false);
+    setSearchQuery("");
+  };
+
+  const clearUserFilter = (e) => {
+    e.stopPropagation();
+    setSelectedUser(null);
+  };
+
+  return (
+    <div className="filter-messages-container">
+      {/* Filter section */}
+      <div className="filter-messages-section">
+        <span className="filter-label">Lọc theo:</span>
+
+        {/* User dropdown */}
+        <div className="filter-user-dropdown">
+          <button style={{ border: 'none' }} onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}>
+            {selectedUser ? (
+              <div className="filter-user-selected">
+                <FaUser className="filter-user-icon" />
+                <div className="filter-user-info">
+                  <span className="filter-user-name">{selectedUser.name}</span>
+                  <button
+                    onClick={clearUserFilter}
+                    className="filter-user-clear"
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="filter-user-default">
+                <FaUser className="filter-user-icon" />
+                <span>Người gửi</span>
+                <FaChevronDown className="filter-user-chevron" />
+              </div>
+            )}
+          </button>
+
+          {isUserDropdownOpen && (
+            <div className="filter-user-dropdown-menu">
+              <div className="filter-user-search">
+                <FaSearch className="filter-user-search-icon" />
+                <input
+                  type="text"
+                  placeholder="Tìm kiếm"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+              <div className="filter-user-list">
+                {filteredUsers.length > 0 ? (
+                  filteredUsers.map((user) => (
+                    <button
+                      key={user.id}
+                      className="filter-user-item"
+                      onClick={() => handleUserSelect(user)}
+                    >
+                      <div className="filter-user-avatar">
+                        <Avatar src={user.avatar} size={24} />
+                      </div>
+                      <span className="filter-user-item-name">{user.name}</span>
+                    </button>
+                  ))
+                ) : (
+                  <div className="filter-user-no-results">
+                    <p>Không tìm thấy kết quả</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Date dropdown */}
+        <div className="filter-date-dropdown">
+          <button style={{ border: 'none' }}
+            onClick={() => {
+              setIsDateDropdownOpen(!isDateDropdownOpen);
+              setIsTimeOptionsOpen(false);
+            }}
+          >
+            {dateRange.from ? (
+              <div className="filter-date-selected">
+                <FaCalendar className="filter-date-icon" />
+                <span className="filter-date-range">{`${dateRange.from} - ${dateRange.to}`}</span>
+                <button onClick={clearDateFilter} className="filter-date-clear">
+                  ×
+                </button>
+              </div>
+            ) : (
+              <div className="filter-date-default">
+                <FaCalendar className="filter-date-icon" />
+                <span>Ngày gửi</span>
+                <FaChevronDown className="filter-date-chevron" />
+              </div>
+            )}
+          </button>
+
+          {isDateDropdownOpen && (
+            <div className="filter-date-dropdown-menu">
+              {/* Quick time suggestions */}
+              <div className="filter-date-suggestions">
+                <div
+                  className="filter-date-suggestions-header"
+                  onClick={() => setIsTimeOptionsOpen(!isTimeOptionsOpen)}
+                >
+                  <h3>Gợi ý thời gian</h3>
+                  <FaChevronRight className="filter-date-suggestions-chevron" />
+                </div>
+              </div>
+
+              {/* Time options dropdown */}
+              {isTimeOptionsOpen && (
+                <div className="filter-time-options">
+                  {timeOptions.map((option) => (
+                    <button
+                      key={option.value}
+                      className="filter-time-option"
+                      onClick={() => {
+                        const to = new Date();
+                        const from = new Date();
+                        from.setDate(from.getDate() - option.value);
+                        setDateRange({ from, to });
+                        setIsTimeOptionsOpen(false);
+                        setIsDateDropdownOpen(false);
+                      }}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Date range picker */}
+              <div className="filter-date-picker">
+                <h3>Chọn khoảng thời gian</h3>
+                <div className="filter-date-inputs">
+                  <div className="filter-date-input">
+                    <DatePicker
+                      selected={dateRange.from}
+                      onChange={(date) =>
+                        setDateRange({ ...dateRange, from: date })
+                      }
+                      placeholderText="Từ ngày"
+                      dateFormat="dd/MM/yyyy"
+                    />
+                  </div>
+                  <div className="filter-date-input">
+                    <DatePicker
+                      selected={dateRange.to}
+                      onChange={(date) =>
+                        setDateRange({ ...dateRange, to: date })
+                      }
+                      placeholderText="Đến ngày"
+                      dateFormat="dd/MM/yyyy"
+                      minDate={dateRange.from}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Action buttons */}
+              <div className="filter-date-actions">
+                <button
+                  className="filter-date-cancel"
+                  onClick={() => {
+                    setIsDateDropdownOpen(false);
+                    setIsTimeOptionsOpen(false);
+                  }}
+                >
+                  Hủy
+                </button>
+                <button
+                  className="filter-date-confirm"
+                  onClick={() => {
+                    setIsDateDropdownOpen(false);
+                    setIsTimeOptionsOpen(false);
+                  }}
+                >
+                  Xác nhận
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Component MessageList
+const MessageList = ({ filteredSearchMessages }) => (
+  <div className="">
+    <div className="title-tabpane">
+      Tin nhắn (
+      {filteredSearchMessages.length > 99
+        ? "99+"
+        : filteredSearchMessages.length}
+      )
+    </div>
+    <List
+      itemLayout="horizontal"
+      dataSource={filteredSearchMessages}
+      renderItem={renderMessageItem}
+    />
+  </div>
+);
+
+// Component FileFilter
+const FileFilter = ({
+  selectedType,
+  setSelectedType,
+  dateRange,
+  setDateRange,
+}) => {
+  // Thêm các state quản lý dropdown
+  const [isDateDropdownOpen, setIsDateDropdownOpen] = useState(false);
+  const [isTimeOptionsOpen, setIsTimeOptionsOpen] = useState(false);
+
+  // Options lọc nhanh
+  const timeOptions = [
+    { label: "7 ngày trước", value: 7 },
+    { label: "30 ngày trước", value: 30 },
+    { label: "3 tháng trước", value: 90 },
+  ];
+
+  // Hàm clear bộ lọc ngày
+  const clearDateFilter = (e) => {
+    e.stopPropagation();
+    setDateRange({ from: null, to: null });
+  };
+
+  return (
+    <div className="filter-container">
+      <span className="filter-label">Lọc theo:</span>
+      <Select
+        defaultValue="all"
+        onChange={(value) => setSelectedType(value)}
+        style={{ width: 120, marginRight: 10, borderRadius: 4, border: "none" }}
+      >
+        <Option value="all">Tất cả</Option>
+        <Option value="word">Word</Option>
+        <Option value="pdf">PDF</Option>
+        <Option value="excel">Excel</Option>
+        <Option value="video">Video</Option>
+      </Select>
+
+      {/* Date dropdown */}
+      <div className="filter-date-dropdown">
+        <button style={{ border: 'none' }}
+          onClick={() => {
+            setIsDateDropdownOpen(!isDateDropdownOpen);
+            setIsTimeOptionsOpen(false);
+          }}
+        >
+          {dateRange.from ? (
+            <div className="filter-date-selected">
+              <FaCalendar className="filter-date-icon" />
+              <span className="filter-date-range">{`${dateRange.from} - ${dateRange.to}`}</span>
+              <button onClick={clearDateFilter} className="filter-date-clear">
+                ×
+              </button>
+            </div>
+          ) : (
+            <div className="filter-date-default">
+              <FaCalendar className="filter-date-icon" />
+              <span>Ngày gửi</span>
+              <FaChevronDown className="filter-date-chevron" />
+            </div>
+          )}
+        </button>
+
+        {isDateDropdownOpen && (
+          <div className="filter-date-dropdown-menu">
+            {/* Quick time suggestions */}
+            <div className="filter-date-suggestions">
+              <div
+                className="filter-date-suggestions-header"
+                onClick={() => setIsTimeOptionsOpen(!isTimeOptionsOpen)}
+              >
+                <h3>Gợi ý thời gian</h3>
+                <FaChevronRight className="filter-date-suggestions-chevron" />
+              </div>
+            </div>
+
+            {/* Time options dropdown */}
+            {isTimeOptionsOpen && (
+              <div className="filter-time-options">
+                {timeOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    className="filter-time-option"
+                    onClick={() => {
+                      const to = new Date();
+                      const from = new Date();
+                      from.setDate(from.getDate() - option.value);
+                      setDateRange({ from, to });
+                      setIsTimeOptionsOpen(false);
+                      setIsDateDropdownOpen(false);
+                    }}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Date range picker */}
+            <div className="filter-date-picker">
+              <h3>Chọn khoảng thời gian</h3>
+              <div className="filter-date-inputs">
+                <div className="filter-date-input">
+                  <DatePicker
+                    selected={dateRange.from}
+                    onChange={(date) =>
+                      setDateRange({ ...dateRange, from: date })
+                    }
+                    placeholderText="Từ ngày"
+                    dateFormat="dd/MM/yyyy"
+                  />
+                </div>
+                <div className="filter-date-input">
+                  <DatePicker
+                    selected={dateRange.to}
+                    onChange={(date) =>
+                      setDateRange({ ...dateRange, to: date })
+                    }
+                    placeholderText="Đến ngày"
+                    dateFormat="dd/MM/yyyy"
+                    minDate={dateRange.from}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Action buttons */}
+            <div className="filter-date-actions">
+              <button
+                className="filter-date-cancel"
+                onClick={() => {
+                  setIsDateDropdownOpen(false);
+                  setIsTimeOptionsOpen(false);
+                }}
+              >
+                Hủy
+              </button>
+              <button
+                className="filter-date-confirm"
+                onClick={() => {
+                  setIsDateDropdownOpen(false);
+                  setIsTimeOptionsOpen(false);
+                }}
+              >
+                Xác nhận
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// Component FileList
+const FileList = ({ filteredFiles }) => (
+  <div className="">
+    <div className="title-tabpane">File ({filteredFiles.length})</div>
+    <List
+      itemLayout="horizontal"
+      dataSource={filteredFiles}
+      renderItem={renderFileItem}
+    />
+  </div>
+);
+
 // Component chính
-const ComponentLeftSearch = ({ userList, onSelectUser, onClose }) => {
+const ComponentLeftSearch = ({ userList, onClose,onSelectChat,user,onSelectUser }) => {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+   // Add this state for dropdown visibility if not already defined
+  const [dropdownVisible, setDropdownVisible] = useState(false);
   const [searchText, setSearchText] = useState("");
+  const [searchSenderFilteredMessage, setSearchSenderFilteredMessage] =
+    useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [filteredRecentlyUser, setFilteredRecentlyUser] = useState(userList);
+  const [filteredRecentlyUser, setFilteredRecentlyUser] = useState(
+    userList || users
+  );
   const [selectedType, setSelectedType] = useState("all");
-  const [dateRange, setDateRange] = useState([null, null]);
+  const [dateRange, setDateRange] = useState({ from: null, to: null });
+
+  // Thêm state cho filter tin nhắn
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [messageDateRange, setMessageDateRange] = useState({ from: null, to: null });
 
   const handleDropdownVisibleChange = (flag) => setDropdownOpen(flag);
-
-  const handleDelete = (id) => {
+  
+  const handleDelete = (receiver_id) => {
     setFilteredRecentlyUser(
-      filteredRecentlyUser.filter((item) => item.id !== id)
+      filteredRecentlyUser.filter((item) => item.receiver_id !== receiver_id)
     );
   };
 
   const filteredSearchUser = contacts.filter((user) =>
-    user.name.toLowerCase().includes(searchText.toLowerCase())
+    user.name?.toLowerCase().includes(searchText.toLowerCase())
   );
 
-  const filteredSearchMessages = messages.filter((msg) =>
-    msg.name.toLowerCase().includes(searchText.toLowerCase())
-  );
+  // Logic filter tin nhắn
+  const filteredSearchMessages = messages.filter((msg) => {
+    const matchesSearch = msg.name.toLowerCase().includes(searchText.toLowerCase()) ||
+      msg.content.toLowerCase().includes(searchText.toLowerCase());
+    const matchesUser = selectedUser
+      ? msg.name === selectedUser.name
+      : true;
+    let matchesDate = true;
+    if (messageDateRange.from && messageDateRange.to) {
+      const msgDate = parseDate(msg.time); // Giả sử msg.time có định dạng date
+      matchesDate = msgDate >= messageDateRange.from && msgDate <= messageDateRange.to;
+    }
+    return matchesSearch && matchesUser && matchesDate;
+  });
 
   const filteredFiles = files.filter((file) => {
     if (selectedType !== "all" && file.type !== selectedType) return false;
-    if (dateRange[0] && dateRange[1]) {
+    if (dateRange.from && dateRange.to) {
       const fileDate = parseDate(file.date);
-      const startDate = dateRange[0].toDate();
-      const endDate = dateRange[1].toDate();
-      if (fileDate < startDate || fileDate > endDate) return false;
+      if (!(fileDate instanceof Date) || isNaN(fileDate.getTime()))
+        return false;
+
+      if (
+        !(dateRange.from instanceof Date) ||
+        isNaN(dateRange.from.getTime()) ||
+        !(dateRange.to instanceof Date) ||
+        isNaN(dateRange.to.getTime())
+      ) {
+        return true;
+      }
+
+      if (fileDate < dateRange.from || fileDate > dateRange.to) return false;
     }
-    return true;
+    return file.name.toLowerCase().includes(searchText.toLowerCase());
   });
+  // Add this function to handle user selection
+const handleUserSelect = (selectedUser) => {
+  console.log("Selected user from handleUserSelect :", selectedUser);
+  
+  // Get current user from localStorage or your auth state
+  const currentUser = JSON.parse(localStorage.getItem('user')) || {};
+  
+  // Fetch chat messages between current user and selected user
+  dispatch(fetchChatMessages({
+    senderId: currentUser.id,      // Current logged-in user
+    receiverId: selectedUser.id    // User selected from search
+  }));
+   // Create a properly formatted object for the chat header
+   const formattedChat = {
+    id: selectedUser.id,
+    name: selectedUser.name, 
+    avatar_path: selectedUser.avatar || selectedUser.avatar_path,
+    receiver_id: selectedUser.id,
+    // Add any other properties needed by your UI
+  };
+  
+  // Update the UI to show this chat (using prop passed from parent)
+  if (typeof onSelectChat === 'function') {
+    onSelectChat(selectedUser);
+  } else {
+    // Fallback to navigation if onSelectChat is not available
+    // navigate(`/messages/${selectedUser.id}`);
+  }
+  
+  // Close the dropdown menu
+  setDropdownVisible(false);
+  
+  // Close the search panel if needed
+  if (typeof onClose === 'function') {
+    onClose();
+  }
+};
 
   const userMenu = (
     <Menu>
       <Menu.Item key="search">
         <Input
           prefix={<SearchOutlined />}
-          placeholder="Tìm kiếm"
+          placeholder="Tìm kiếm "
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
+          onClick={(e) => e.stopPropagation()} // Prevent menu from closing when clicking input
         />
       </Menu.Item>
       {users
@@ -450,8 +909,8 @@ const ComponentLeftSearch = ({ userList, onSelectUser, onClose }) => {
           user.name.toLowerCase().includes(searchText.toLowerCase())
         )
         .map((user) => (
-          <Menu.Item key={user.id}>
-            <Avatar src={user.avatar} size={24} /> {user.name}
+          <Menu.Item key={user.id}  onClick={() => handleUserSelect(user)}>
+            <Avatar src={user.avatar} size={24} /> {user.name} 
           </Menu.Item>
         ))}
     </Menu>
@@ -478,15 +937,24 @@ const ComponentLeftSearch = ({ userList, onSelectUser, onClose }) => {
   );
 
   return (
-    <Layout className="chat-sidebar">
+    <div className="chat-sidebar">
       <SearchComponent
         searchText={searchText}
         setSearchText={setSearchText}
-        onClose={onClose}
+        onClose={onClose} 
+        onSelectUser={onSelectUser}
+        user={user}        
       />
-      {searchText !== "" ? (
+      {searchText === "" ? (
+        <RecentlySearched
+          filteredRecentlyUser={filteredRecentlyUser}
+          handleDelete={handleDelete}
+          handleUserSelect={handleUserSelect} 
+        />
+      ) : (
         <SearchResults
           filteredSearchUser={filteredSearchUser}
+          filteredSearchMessages={filteredSearchMessages}
           messages={messages}
           filteredFiles={filteredFiles}
           selectedType={selectedType}
@@ -498,15 +966,21 @@ const ComponentLeftSearch = ({ userList, onSelectUser, onClose }) => {
           userMenu={userMenu}
           dateMenu={dateMenu}
           fileDateMenu={fileDateMenu}
-        />
-      ) : (
-        <RecentlySearched
-          filteredRecentlyUser={filteredRecentlyUser}
-          handleDelete={handleDelete}
+
+          //messagefilter
+          selectedUser={selectedUser}
+          setSelectedUser={setSelectedUser}
+          messageDateRange={messageDateRange}
+          setMessageDateRange={setMessageDateRange}
+          // filteredSearchMessages={filteredSearchMessages}
+
         />
       )}
-    </Layout>
+    </div>
   );
 };
 
+<div>
+  <div></div>
+</div>;
 export default ComponentLeftSearch;

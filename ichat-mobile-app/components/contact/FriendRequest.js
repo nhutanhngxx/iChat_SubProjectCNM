@@ -15,7 +15,7 @@ import { IconButton } from "react-native-paper";
 import { StatusBar } from "expo-status-bar";
 import settingIcon from "../../assets/icons/setting.png";
 
-import { UserContext } from "../../context/UserContext";
+import { UserContext } from "../../config/context/UserContext";
 import friendService from "../../services/friendService";
 
 // Tab "Đã nhận"
@@ -42,27 +42,47 @@ const RequestRecieve = () => {
 
   // Chấp nhận lời mời kết bạn
   const handleAcceptRequest = (item) => {
-    const newListRequest = listRequest.filter(
-      (request) => request.id !== item.id
-    );
-    setListRequest(newListRequest);
-    Alert.alert(
-      "Chấp nhận lời mời kết bạn",
-      `Bạn đã chấp nhận lời mời kết bạn từ ${item.full_name}`,
-      [{ text: "OK" }]
-    );
+    Alert.alert("Thông báo", `Bạn có muốn kết bạn với ${item.full_name}?`, [
+      { text: "Hủy" },
+      {
+        text: "Đồng ý",
+        onPress: async () => {
+          try {
+            await friendService.acceptFriendRequest({
+              senderId: item.id,
+              receiverId: user.id,
+            });
+            setListRequest((prev) => prev.filter((r) => r.id !== item.id));
+          } catch (error) {
+            Alert.alert("Lỗi", error.message || "Lỗi chưa rõ");
+          }
+        },
+      },
+    ]);
   };
 
   // Từ chối lời mời kết bạn
   const handleDeclineRequest = (item) => {
-    const newListRequest = listRequest.filter(
-      (request) => request.id !== item.id
-    );
-    setListRequest(newListRequest);
     Alert.alert(
-      "Từ chối lời mời kết bạn",
-      `Bạn đã từ chối lời mời kết bạn từ ${item.full_name}`,
-      [{ text: "OK" }]
+      "Thông báo",
+      `Bạn có muốn từ chối lời mời kết bạn từ ${item.full_name}?`,
+      [
+        { text: "Hủy" },
+        {
+          text: "Đồng ý",
+          onPress: async () => {
+            try {
+              await friendService.cancelFriendRequest({
+                senderId: item.id,
+                receiverId: user.id,
+              });
+              setListRequest((prev) => prev.filter((r) => r.id !== item.id));
+            } catch (error) {
+              Alert.alert("Lỗi", error.message || "Lỗi chưa rõ");
+            }
+          },
+        },
+      ]
     );
   };
 
@@ -142,15 +162,27 @@ const RequestSend = () => {
   };
 
   // Thu hồi lời mời kết bạn (có thể hiện modal xác nhận)
-  const handleRecallRequest = (item) => {
-    const newListRequest = listRequest.filter(
-      (request) => request.id !== item.id
-    );
-    setListRequest(newListRequest);
+  const handleRecallRequest = async (item) => {
     Alert.alert(
-      "Thu hồi lời mời kết bạn",
-      `Bạn đã thu hồi lời mời kết bạn từ ${item.full_name}`,
-      [{ text: "OK" }]
+      "Thông báo",
+      `Bạn có muốn thu hồi lời mời kết bạn cho ${item.full_name}?`,
+      [
+        { text: "Hủy" },
+        {
+          text: "Đồng ý",
+          onPress: async () => {
+            try {
+              await friendService.cancelFriendRequest({
+                senderId: user.id,
+                receiverId: item.id,
+              });
+              setListRequest((prev) => prev.filter((r) => r.id !== item.id));
+            } catch (error) {
+              Alert.alert("Lỗi", error.message || "Lỗi chưa rõ");
+            }
+          },
+        },
+      ]
     );
   };
 

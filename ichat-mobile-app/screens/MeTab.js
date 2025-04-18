@@ -7,17 +7,52 @@ import {
   SafeAreaView,
   StyleSheet,
   TextInput,
+  Modal,
 } from "react-native";
 
 import HeaderPersonalProfile from "../components/header/HeaderPersonalProfile";
-import { UserContext } from "../context/UserContext";
+import { UserContext } from "../config/context/UserContext";
 import * as ImageManipulator from "expo-image-manipulator"; // Thư viện nén ảnh
+import * as ImagePicker from "expo-image-picker";
 import { StatusBar } from "expo-status-bar";
 
 const MeTab = () => {
   const { user } = useContext(UserContext);
   const userData = useMemo(() => user, [user]);
   const [compressedAvatar, setCompressedAvatar] = useState(null);
+  const [isAvatarModalVisible, setAvatarModalVisible] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
+
+  const avatar =
+    "https://nhutanhngxx.s3.ap-southeast-1.amazonaws.com/zcr5-1744474558209-blob.png";
+
+  const pickImageFromLibrary = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert(
+        "Quyền bị từ chối",
+        "Vui lòng cấp quyền truy cập thư viện ảnh trong cài đặt!"
+      );
+      return;
+    }
+
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 0.5,
+      });
+
+      if (!result.canceled && result.assets.length > 0) {
+        setSelectedImage(result.assets[0].uri);
+      }
+    } catch (err) {
+      console.error("Lỗi khi chọn ảnh:", err);
+      Alert.alert("Lỗi", "Đã xảy ra lỗi khi chọn ảnh.");
+    }
+  };
+
   useEffect(() => {
     const compressImage = async () => {
       if (userData?.avatar_path) {
@@ -39,42 +74,26 @@ const MeTab = () => {
     <View style={styles.container}>
       <StatusBar style="dark" />
       <HeaderPersonalProfile />
-      {/* <TouchableOpacity
-        style={{
-          position: "absolute",
-          top: 50,
-          right: 20,
-          zIndex: 10,
-          elevation: 10,
-        }}
-        onPress={() => Alert.alert("Chức năng này chưa được phát triển")}
-      >
+      <View style={styles.headerBackground}>
         <Image
-          source={require("../assets/icons/setting.png")}
-          style={{ height: 25, width: 25 }}
+          source={user.cover_path ? { uri: user.cover_path } : avatar}
+          style={styles.headerBackground}
         />
-      </TouchableOpacity> */}
-      <View style={styles.headerBackground} />
+      </View>
       {/* Tài khoản */}
       <View style={styles.profileContainer}>
-        {userData ? (
-          <>
-            <View>
-              <Image
-                source={
-                  compressedAvatar
-                    ? { uri: compressedAvatar }
-                    : require("../assets/icons/new-logo.png")
-                }
-                style={styles.avatar}
-              />
-            </View>
-            <Text style={styles.name}>{userData.full_name}</Text>
-            <Text style={styles.updateText}>Cập nhật tiểu sử</Text>
-          </>
-        ) : (
-          <Text style={styles.name}>Người dùng chưa đăng nhập</Text>
-        )}
+        <TouchableOpacity onPress={() => setAvatarModalVisible(true)}>
+          <Image
+            source={user.avatar_path ? { uri: user.avatar_path } : avatar}
+            style={{ width: 200, height: 200, borderRadius: 1000 }}
+            onError={(e) =>
+              console.log("Lỗi khi tải ảnh:", e.nativeEvent.error)
+            }
+          />
+        </TouchableOpacity>
+
+        <Text style={styles.name}>{userData.full_name}</Text>
+        <Text style={styles.updateText}>Cập nhật tiểu sử</Text>
       </View>
 
       {/* Lọc nội dung đăng tải */}
@@ -120,6 +139,48 @@ const MeTab = () => {
           <Text style={styles.noPostText}>Không có bài đăng nào.</Text>
         </View>
       </View>
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isAvatarModalVisible}
+        onRequestClose={() => setAvatarModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Ảnh đại diện</Text>
+            <Image
+              source={
+                selectedImage
+                  ? { uri: selectedImage }
+                  : user.avatar_path
+                  ? { uri: user.avatar_path }
+                  : avatar
+              }
+              style={{
+                width: 150,
+                height: 150,
+                borderRadius: 100,
+                marginBottom: 15,
+              }}
+            />
+
+            <TouchableOpacity
+              style={styles.button}
+              onPress={pickImageFromLibrary}
+            >
+              <Text style={styles.buttonText}>Chọn ảnh từ thư viện</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.button, { backgroundColor: "gray" }]}
+              onPress={() => setAvatarModalVisible(false)}
+            >
+              <Text style={styles.buttonText}>Xong</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -132,7 +193,7 @@ const styles = StyleSheet.create({
   headerBackground: {
     height: 200,
     width: "100%",
-    backgroundColor: "rgba(217, 217, 217, 0.5)",
+    // backgroundColor: "rgba(217, 217, 217, 0.5)",
   },
   profileContainer: {
     alignItems: "center",
@@ -199,6 +260,34 @@ const styles = StyleSheet.create({
   },
   noPostText: {
     color: "gray",
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "flex-end",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  modalContent: {
+    backgroundColor: "white",
+    padding: 20,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    alignItems: "center",
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 10,
+  },
+  button: {
+    backgroundColor: "#007bff",
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 10,
+    marginVertical: 5,
+  },
+  buttonText: {
+    color: "white",
+    fontSize: 16,
   },
 });
 

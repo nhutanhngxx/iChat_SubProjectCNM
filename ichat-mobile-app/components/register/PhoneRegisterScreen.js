@@ -39,16 +39,24 @@ const RegisterScreen = () => {
     }
     setIsLoading(true);
     try {
-      const result = await authService.sendOTP(phone, recaptchaVerifier);
+      const isExisted = await authService.checkExistedPhone(phone);
+      if (isExisted.result === true) {
+        const result = await authService.sendOTP(phone, recaptchaVerifier);
 
-      if (result.status === "ok")
-        navigation.navigate("EnterOTP", {
-          phone: result.phoneNumber,
-          verificationId: result.verificationId,
-        });
-      else {
-        Alert.alert("Thông báo", result.message);
-        return;
+        if (result.status === "ok")
+          navigation.navigate("EnterOTP", {
+            phone: result.phoneNumber,
+            verificationId: result.verificationId,
+          });
+        else {
+          Alert.alert("Thông báo", result.message);
+          return;
+        }
+      } else {
+        Alert.alert(
+          "Thông báo",
+          isExisted.message || "Số điện thoại đã tồn tại!"
+        );
       }
     } catch (error) {
       console.error("Unexpected error during OTP verification:", error);

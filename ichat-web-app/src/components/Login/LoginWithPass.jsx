@@ -8,6 +8,13 @@ import { useDispatch, useSelector } from "react-redux";
 import { loginUser } from "../../redux/slices/authSlice";
 import { useNavigate } from "react-router-dom";
 import "./LoginWithPass.css";
+import { Modal, Spinner } from "react-bootstrap";
+import LoginWithQR from "./LoginWithQR"
+import RegisterModal from "../Register/register.jsx";
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
+import ForgotPasswordModal from "../ForgetPassword/ForgotPasswordModal.jsx"
+import { parsePhoneNumberFromString } from "libphonenumber-js";
+
 
 export default function LoginWithPass() {
   // Khai báo state cho form đăng nhập
@@ -16,21 +23,37 @@ export default function LoginWithPass() {
   //   Lấy dữ liệu phone và pass từ form
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+
   //  Lấy dữ liệu từ store
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
+  const [countryCode, setCountryCode] = useState("VN");
+  const [isPhoneValid, setIsPhoneValid] = useState(false);
+  const [phoneError, setPhoneError] = useState("Số điện thoại không hợp lệ");
+
+  // Open Register
+  const [showRegister, setShowRegister] = useState(false);
+  // Open Forgot Password
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const validVnPrefixes = [
+    "032", "033", "034", "035", "036", "037", "038", "039", // Viettel
+    "070", "076", "077", "078", "079", "089", "090", "093", // Mobifone
+    "081", "082", "083", "084", "085", "088", "091", "094", // Vinaphone
+    "056", "058", "092",                                     // Vietnamobile
+    "059", "099",                                            // Gmobile
+    "086", "096", "097", "098",                              // Viettel (cũ)
+  ];
+
   // Sửa lỗi khai báo `error` bị trùng
   const { user, token, loading, error } = useSelector((state) => state.auth);
   //  Hàm xử lý đăng nhập
-  // const handleLogin = (e) => {
-  //     e.preventDefault();
-  //     dispatch(loginUser({ phone, password }));
-  // };
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      await dispatch(loginUser({ phone, password })).unwrap(); // unwrap để lấy dữ liệu từ createAsyncThunk
+      const phoneNumber = parsePhoneNumberFromString(phone, countryCode);
+      await dispatch(loginUser({ phone: phoneNumber.number, password })).unwrap(); // unwrap để lấy dữ liệu từ createAsyncThunk
       if (token || localStorage.getItem("token")) {
         navigate("/home");
       }
@@ -39,19 +62,48 @@ export default function LoginWithPass() {
     }
   };
 
-  // Điều hướng khi đăng nhập thành công
-  // useEffect(() => {
-  //     if (token) {
-  //     navigate("/home");
-  //     }
-  // }, [token, navigate]);
-  //   useEffect(() => {
-  //     const storedToken = localStorage.getItem("token");
-  //     if (token || storedToken) {
-  //       navigate("/home");
-  //     }
-  //   }, [token, navigate]);
 
+  const validatePhone = (value) => {
+    const isVietnam = countryCode === "+84";
+
+    if (!/^\d*$/.test(value)) {
+      return "Chỉ được nhập số";
+    }
+
+    if (isVietnam) {
+      if (value.length < 10) {
+        return "Số điện thoại Việt Nam phải đủ 10 số";
+      }
+      if (value.length > 10) {
+        return "Số điện thoại Việt Nam không được quá 10 số";
+      }
+
+      if (!/^0\d{9}$/.test(value)) {
+        return "Số Việt Nam phải bắt đầu bằng 0";
+      }
+
+      // const prefix = value.substring(0, 3);
+      // if (!validVnPrefixes.includes(prefix)) {
+      //   return "Đầu số Việt Nam không hợp lệ";
+      // }
+      const phoneNumber = parsePhoneNumberFromString(value, countryCode);
+      if (!phoneNumber || !phoneNumber.isValid()) {
+        return "Số điện thoại không hợp lệ";
+      }
+    } else {
+      if (value.length < 6) return "Số điện thoại quá ngắn";
+      if (value.length > 15) return "Số điện thoại quá dài";
+    }
+
+    return ""; // ✅ Hợp lệ
+  };
+
+  const handleChange = (e) => {
+    const value = e.target.value.replace(/\D/g, ""); // Chỉ cho phép nhập số
+    setPhone(value);
+    const error = validatePhone(value);
+    setPhoneError(error);
+  };
   console.log("User:", user);
   console.log("Token:", token);
 
@@ -60,7 +112,9 @@ export default function LoginWithPass() {
       <div className="container-header">
         <div className="container-header-logo">
           <img
-            src="https://i.ibb.co/LVnMJ5t/i-Chat-removebg-preview.png"
+            // src="https://i.ibb.co/LVnMJ5t/i-Chat-removebg-preview.png"
+            src="https://i.ibb.co/TGJ0mZm/logo-ichat-removebg.png"
+            style={{ width: "160px", height: "160px" }}
             alt="logo_ichat"
           />
         </div>
@@ -101,10 +155,11 @@ export default function LoginWithPass() {
         </div>
 
         {loginWithQR ? (
-          <div className="qr-container">
-            <IoMdQrScanner className="qr-icon" />
-            <p>Chỉ dùng đăng nhập iChat trên máy tính</p>
-          </div>
+          // <div className="qr-container">
+          //   <IoMdQrScanner className="qr-icon" />
+          //   <p>Chỉ dùng đăng nhập iChat trên máy tính</p>
+          // </div>
+          <LoginWithQR />
         ) : (
           <>
             <div className="input-container">
@@ -113,23 +168,55 @@ export default function LoginWithPass() {
                   <MdPhoneAndroid className="icon" />
                 </div>
                 <div className="country-code-wrapper">
-                  <select className="country-code">
-                    <option value="+84">+84</option>
-                    <option value="+1">+1</option>
-                    <option value="+44">+44</option>
-                    <option value="+91">+91</option>
+                  {/* <select value={countryCode} onChange={(e) => {
+                    setCountryCode(e.target.value);
+                    setPhoneError(validatePhone(phone)); // Revalidate khi đổi mã quốc gia
+                  }}
+                    style={{ width: "30px", border: "none", }}
+
+                  >
+                    <option value="+84">+84 (Việt Nam)</option>
+                    <option value="+1">+1 (Mỹ)</option>
+                    <option value="+44">+44 (Anh)</option>
+                    <option value="+91">+91 (Ấn Độ)</option>
+                    <option value="+81">+81 (Nhật)</option>
+                  </select> */}
+                  <select value={countryCode} onChange={(e) => setCountryCode(e.target.value)} style={{ width: "30px", border: "none", }}>
+                    <option value="VN">+84 (VN)</option>
+                    <option value="US">+1 (US)</option>
+                    <option value="KR">+82 (KR)</option>
+                    <option value="JP">+81 (JP)</option>
+                    <option value="CN">+86 (CN)</option>
                   </select>
                   <div className="icons">
                     <FaCaretDown className="icon" />
                   </div>
                 </div>
+
                 <input
                   type="text"
-                  className="input-field"
-                  placeholder="Nhập số điện thoại"
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  onChange={handleChange}
+                  placeholder="Nhập số điện thoại"
+                  style={{ marginBottom: "0px" }}
+                  className={`phone-input ${phone === "" ? "" : phoneError ? "error" : "success"}`}
                 />
+
+                <style jsx>{`
+                  .input-field {
+                    width: 100%;
+                    padding: 8px;
+                    font-size: 16px;
+                    border: 2px solid ${error ? "red" : "#ccc"};
+                    border-radius: 5px;
+                    outline: none;
+                  }
+                  .error-message {
+                    color: red;
+                    font-size: 14px;
+                    margin-top: 5px;
+                  }
+                `}</style>
               </div>
 
               <div className="input-wrapper">
@@ -137,24 +224,45 @@ export default function LoginWithPass() {
                   <IoLockClosedOutline className="icon" />
                 </div>
                 <input
-                  type="password"
+                  // type="password"
+                  type={showPassword ? 'text' : 'password'}
                   className="input-field"
                   placeholder="Nhập mật khẩu"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
+                <span
+                  onClick={() => setShowPassword(!showPassword)}
+
+                >
+                  {showPassword ? <FaEyeSlash /> : <FaEye />}
+                </span>
               </div>
             </div>
-
+            {phone !== "" && phoneError && (
+              <p className="error-text" style={{ color: "red", marginLeft: "30px", fontSize: "10px" }}>{phoneError}</p>
+            )}
             {error && (
-              <p className="error" style={{ color: "red", marginLeft: "30px" }}>
+              <p className="error" style={{ color: "red", marginLeft: "30px", fontSize: "10px" }}>
                 {error}
               </p>
             )}
             {loading && (
-              <p className="loading" style={{ marginLeft: "30px" }}>
-                Đang xử lý...
-              </p>
+              // <p className="loading" style={{ marginLeft: "30px" }}>
+              //   Đang xử lý...
+              // </p>
+
+              <div className="loading-overlay">
+                <div className="loading-spinner">
+                  <div className="loader-dots">
+                    <div className="dot"></div>
+                    <div className="dot"></div>
+                    <div className="dot"></div>
+                    <div className="dot"></div>
+                  </div>
+                  <div className="loading-text">Đang xử lý...</div>
+                </div>
+              </div>
             )}
 
             <div className="container-body-button">
@@ -164,8 +272,19 @@ export default function LoginWithPass() {
             </div>
 
             <div className="container-body-link">
-              <a href="#">Quên mật khẩu?</a>
+              <button style={{}} onClick={() => setShowForgotPassword(true)} >Quên mật khẩu?</button>
+              <button onClick={() => setShowRegister(true)}>
+                Đăng ký ngay
+              </button>
+              <ForgotPasswordModal
+                visible={showForgotPassword} onClose={() => setShowForgotPassword(false)}
+              />
+              <RegisterModal
+                visible={showRegister} onClose={() => setShowRegister(false)}
+              // onRegister={handleRegister}
+              />
             </div>
+
 
             <div className="container-body-link_QR">
               <a href="#" onClick={() => setLoginWithQR(!loginWithQR)}>

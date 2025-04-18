@@ -13,7 +13,7 @@ import {
   Keyboard,
 } from "react-native";
 import CustomButton from "../components/common/CustomButton";
-import { UserContext } from "../context/UserContext";
+import { UserContext } from "../config/context/UserContext";
 import authService from "../services/authService";
 
 const LoginScreen = ({ navigation }) => {
@@ -24,7 +24,7 @@ const LoginScreen = ({ navigation }) => {
 
   const handleLogin = async () => {
     if (!phone.trim() || !password.trim()) {
-      Alert.alert("Lỗi", "Vui lòng nhập số điện thoại và mật khẩu!");
+      Alert.alert("Thông báo", "Vui lòng nhập số điện thoại và mật khẩu!");
       return;
     }
     setLoading(true);
@@ -35,12 +35,12 @@ const LoginScreen = ({ navigation }) => {
         setUser(user);
         Alert.alert("Đăng nhập thành công!", `Chào mừng ${user?.full_name}`);
       } else {
-        Alert.alert("Lỗi", "Sai số điện thoại hoặc mật khẩu!");
+        Alert.alert("Thông báo", "Sai số điện thoại hoặc mật khẩu!");
       }
     } catch (error) {
       console.error("Login error:", error);
       if (error.response?.status === 401) {
-        Alert.alert("Lỗi", "Số điện thoại hoặc mật khẩu không đúng!");
+        Alert.alert("Thông báo", "Số điện thoại hoặc mật khẩu không đúng!");
       } else {
         const errorMessage =
           error.response?.data?.message || "Có lỗi xảy ra! Vui lòng thử lại.";

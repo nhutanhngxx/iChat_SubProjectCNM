@@ -12,7 +12,7 @@ import {
   Keyboard,
   Image,
 } from "react-native";
-import { UserContext } from "../../context/UserContext";
+import { UserContext } from "../../config/context/UserContext";
 import { useNavigation } from "@react-navigation/native";
 import goBackIcon from "../../assets/icons/go-back.png";
 import { StatusBar } from "expo-status-bar";

@@ -17,13 +17,13 @@ import downIcon from "../../assets/icons/down.png";
 import searchIcon from "../../assets/icons/search.png";
 import qrIcon from "../../assets/icons/qr.png";
 import { StatusBar } from "expo-status-bar";
-import { UserContext } from "../../context/UserContext";
+import { UserContext } from "../../config/context/UserContext";
 import axios from "axios";
 import { getHostIP } from "../../services/api";
 
 const AddFriend = () => {
   const ipAdr = getHostIP();
-  const API_iChat = `http://${ipAdr}:5001`;
+  const API_iChat = `http://${ipAdr}:5001/api`;
   const { user } = useContext(UserContext);
   const [countryCode, setCountryCode] = useState("+84");
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -33,6 +33,7 @@ const AddFriend = () => {
   const fetchUsers = async () => {
     try {
       const response = await axios.get(`${API_iChat}/users`);
+      console.log("Response:", response.data);
 
       if (response.data.status === "ok" && Array.isArray(response.data.users)) {
         setUsers(response.data.users); // Cập nhật state users
@@ -58,25 +59,21 @@ const AddFriend = () => {
         `${API_iChat}/users?search=${encodedPhone}`
       );
 
-      console.log("Response:", response.data);
+      console.log(("Response tìm kiếm:", response.data));
 
       if (response.data.status === "ok" && response.data) {
-        const foundUser = response.data.users?.[0]; // Lấy người dùng đầu tiên từ danh sách
-        console.log("Found user:", foundUser);
-
-        navigation.navigate(
-          "ViewProfile",
-          {
-            name: foundUser.full_name,
-            avatar: foundUser.avatar_path,
-          },
-          { foundUser }
-        );
+        const foundUser = response.data.users?.[0];
+        // console.log("Found user:", foundUser);
+        if (!foundUser) {
+          Alert.alert("Không tìm thấy", "Số điện thoại này chưa có tài khoản!");
+          return;
+        }
+        navigation.navigate("ViewProfile", { foundUser });
       } else {
         Alert.alert("Không tìm thấy", "Số điện thoại này chưa có tài khoản!");
       }
     } catch (error) {
-      console.error("Lỗi khi tìm kiếm:", error);
+      // console.error("Lỗi khi tìm kiếm:", error);
       Alert.alert("Lỗi", "Không thể kết nối đến server.");
     }
   };

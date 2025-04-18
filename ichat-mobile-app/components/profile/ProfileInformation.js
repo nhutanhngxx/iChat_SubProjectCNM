@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from "react";
 import { Text, View, Image, TouchableOpacity, StyleSheet } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { UserContext } from "../../context/UserContext";
+import { UserContext } from "../../config/context/UserContext";
 import { StatusBar } from "expo-status-bar";
 
 import avatar from "../../assets/images/avatars/avatar1.png";

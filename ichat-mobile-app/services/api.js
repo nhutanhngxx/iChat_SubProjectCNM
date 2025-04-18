@@ -37,10 +37,9 @@ const createApi = async () => {
   const PORT = 5001;
 
   const hostIP = getHostIP();
-  console.log("Host IP:", hostIP);
 
   const api = axios.create({
-    baseURL: `http://${hostIP || DEFAULT_IP}:${PORT}`,
+    baseURL: `http://${hostIP || DEFAULT_IP}:${PORT}/api`,
     // timeout: 10000, // Request sẽ bị hủy nếu quá x giây
     headers: { "Content-Type": "application/json" },
   });

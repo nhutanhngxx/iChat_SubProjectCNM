@@ -52,9 +52,9 @@ const groupService = {
   getAllGroupsByUserId: async (userId) => {
     try {
       const response = await apiService.get(`/${PREFIX}/${userId}`);
-      return formatGroupList(response.data);
+      return formatGroupList(response.data.data);
     } catch (error) {
-      console.log("Group Service Error: ", error);
+      // console.log("Group Service Error: ", error);
       return [];
     }
   },

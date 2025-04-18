@@ -5,28 +5,86 @@ import {
   Image,
   TouchableOpacity,
   StyleSheet,
+  Text,
+  Platform,
 } from "react-native";
+
+import attachmentIcon from "../../assets/icons/attachment.png";
 
 const MessageInputBar = ({
   inputMessage,
   setInputMessage,
   selectedImage,
   setSelectedImage,
+  selectedFile,
+  setSelectedFile,
   sendMessage,
   pickImage,
+  pickFile,
 }) => {
   const hasText = inputMessage.trim();
-  const canSend = hasText || selectedImage;
+  const canSend = hasText || selectedImage || selectedFile;
+
+  // Hàm cắt ngắn tên file nếu quá dài
+  const truncateFileName = (name, maxLength = 20) => {
+    if (name.length <= maxLength) return name;
+    const extension = name.split(".").pop();
+    const nameWithoutExt = name.substring(
+      0,
+      name.length - extension.length - 1
+    );
+    return `${nameWithoutExt.substring(
+      0,
+      maxLength - extension.length - 3
+    )}...${extension}`;
+  };
+
+  // Hàm định dạng kích thước file
+  const formatFileSize = (size) => {
+    if (!size) return "";
+    if (size < 1024) return `${size} B`;
+    if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
+    return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+  };
 
   return (
     <View style={styles.wrapper}>
+      {/* Hiển thị tệp đã chọn nếu có */}
+      {selectedFile && (
+        <View style={styles.filePreviewContainer}>
+          <View style={styles.fileInfo}>
+            <Image
+              source={require("../../assets/icons/attachment.png")}
+              style={styles.fileIcon}
+            />
+            <View>
+              <Text style={styles.fileName}>
+                {truncateFileName(selectedFile.name)}
+              </Text>
+              <Text style={styles.fileSize}>
+                {formatFileSize(selectedFile.size)}
+              </Text>
+            </View>
+          </View>
+          <TouchableOpacity
+            style={styles.closeButton}
+            onPress={() => setSelectedFile(null)}
+          >
+            <Image
+              source={require("../../assets/icons/close.png")}
+              style={styles.closeIcon}
+            />
+          </TouchableOpacity>
+        </View>
+      )}
+
       {/* Hiển thị ảnh đã chọn nếu có */}
       {selectedImage && (
         <View style={styles.previewContainer}>
           <Image source={{ uri: selectedImage }} style={styles.previewImage} />
           <TouchableOpacity onPress={() => setSelectedImage(null)}>
             <Image
-              source={require("../../assets/icons/close.png")} // Nên có icon "X" nhỏ
+              source={require("../../assets/icons/close.png")}
               style={styles.closeIcon}
             />
           </TouchableOpacity>
@@ -34,7 +92,13 @@ const MessageInputBar = ({
       )}
 
       {/* Thanh nhập tin nhắn */}
-      <View style={styles.inputContainer}>
+      <View
+        style={
+          Platform.OS === "ios"
+            ? [styles.inputContainer, { paddingVertical: 10 }]
+            : [styles.inputContainer, { paddingVertical: 5 }]
+        }
+      >
         <TouchableOpacity>
           <Image
             source={require("../../assets/icons/gif.png")}
@@ -65,6 +129,9 @@ const MessageInputBar = ({
                 style={styles.icon}
               />
             </TouchableOpacity>
+            <TouchableOpacity onPress={pickFile}>
+              <Image source={attachmentIcon} style={styles.icon} />
+            </TouchableOpacity>
           </>
         )}
 
@@ -86,8 +153,9 @@ export default MessageInputBar;
 const styles = StyleSheet.create({
   wrapper: {
     paddingHorizontal: 10,
-    paddingVertical: 8,
+    paddingBottom: 25,
     backgroundColor: "#f9f9f9",
+    paddingTop: 10,
   },
   inputContainer: {
     flexDirection: "row",
@@ -95,7 +163,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderRadius: 25,
     paddingHorizontal: 10,
-    paddingVertical: 10,
+    // paddingVertical: 10, // android 5
     shadowColor: "#000",
     shadowOpacity: 0.05,
     shadowOffset: { width: 0, height: 1 },
@@ -108,8 +176,8 @@ const styles = StyleSheet.create({
     color: "#333",
   },
   icon: {
-    width: 24,
-    height: 24,
+    width: 25,
+    height: 25,
     marginHorizontal: 6,
   },
   previewContainer: {
@@ -118,14 +186,47 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   previewImage: {
-    width: 50,
-    height: 50,
+    height: 100,
+    width: 100,
     borderRadius: 8,
     marginRight: 8,
+  },
+  filePreviewContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    padding: 8,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+  },
+  fileInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+  },
+  fileIcon: {
+    width: 30,
+    height: 30,
+    marginRight: 8,
+  },
+  fileName: {
+    fontSize: 14,
+    color: "#333",
+    fontWeight: "500",
+  },
+  fileSize: {
+    fontSize: 12,
+    color: "#666",
+  },
+  closeButton: {
+    padding: 4,
   },
   closeIcon: {
     width: 20,
     height: 20,
-    tintColor: "red",
+    tintColor: "#ff4d4d",
   },
 });

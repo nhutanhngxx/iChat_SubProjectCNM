@@ -28,3 +28,103 @@
   font-size: 16px;
   padding: 0 4px;
 }
+.search-component {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.search-container {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.search-bar {
+  flex: 1;
+}
+
+.search-icon {
+  color: #999;
+}
+
+.clear-icon {
+  cursor: pointer;
+  color: #999;
+}
+
+.close {
+  margin-left: 8px;
+}
+
+.search-results {
+  flex: 1;
+  overflow-y: auto;
+  max-height: calc(100vh - 120px);
+}
+
+.search-result-item {
+  cursor: pointer;
+  padding: 8px 16px;
+  transition: background-color 0.3s;
+}
+
+.search-result-item:hover {
+  background-color: #f5f5f5;
+}
+
+/* User Profile Modal Styles */
+.user-profile-modal .ant-modal-body {
+  padding: 0;
+}
+
+.profile-card {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.profile-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 0;
+}
+
+.profile-avatar {
+  margin-bottom: 16px;
+}
+
+.profile-name {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.profile-phone {
+  color: #666;
+  margin: 0;
+}
+
+.profile-actions {
+  display: flex;
+  justify-content: space-around;
+  padding: 16px 0;
+}
+
+.action-button {
+  width: 170px;
+  border-radius: 10px;
+  height: auto;
+}
+.action-button .ant-btn-icon{
+  font-size: 12px;
+}
+:where(.css-dev-only-do-not-override-1htoz2s).ant-modal .ant-modal-content{
+  background: none;
+  height: fit-content;
+}
+:where(.css-dev-only-do-not-override-1htoz2s).ant-modal .ant-modal-close{
+  right: 22px;
+  top: auto;
+}

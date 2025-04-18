@@ -12,7 +12,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
-import { UserContext } from "../../context/UserContext";
+import { UserContext } from "../../config/context/UserContext";
 import goBackIcon from "../../assets/icons/go-back.png";
 import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
@@ -88,7 +88,7 @@ const ChangePhoneNumber = () => {
       const isExistedPhone = await authService.checkExistedPhone(formatted);
       if (isExistedPhone.result) {
         const result = await authService.sendOTPWithoutCheck(
-          user.phone,
+          newPhone,
           recaptchaVerifier
         );
         if (result.status === "ok") {
@@ -121,7 +121,7 @@ const ChangePhoneNumber = () => {
     try {
       setIsLoading(true);
       const result = await authService.validateOTP(
-        user.phone,
+        newPhone,
         otp,
         verificationId
       );
@@ -190,7 +190,6 @@ const ChangePhoneNumber = () => {
 
                 <TouchableOpacity
                   style={[styles.button, isLoading && { opacity: 0.6 }]}
-                  // onPress={() => setStep(2)}
                   onPress={() => handleVerifyPassword(user?.phone, password)}
                   disabled={isLoading}
                 >
@@ -268,7 +267,7 @@ const ChangePhoneNumber = () => {
                 <Text style={styles.label}>
                   Mã xác thực đã được gửi đến số:{" "}
                   <Text style={{ fontWeight: "400" }}>
-                    {maskPhoneNumber(user?.phone)}
+                    {maskPhoneNumber(formatPhoneNumber(newPhone))}
                   </Text>
                 </Text>
 

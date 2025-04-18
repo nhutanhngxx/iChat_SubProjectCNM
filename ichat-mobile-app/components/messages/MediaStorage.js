@@ -7,7 +7,8 @@ import {
   TouchableOpacity,
 } from "react-native";
 
-import { TabView, TabBar } from "react-native-tab-view";
+import { Tab } from "@rneui/themed";
+import { TabView } from "@rneui/base";
 
 import HeaderMediaStorage from "../header/HeaderMediaStorage";
 import FilterButton from "../common/ButtonFilter";
@@ -15,37 +16,14 @@ import ImageTab from "../messages/media/Image";
 import FileTab from "../messages/media/File";
 import LinkTab from "../messages/media/Link";
 import VoiceTab from "../messages/media/Voice";
-import { Colors } from "react-native/Libraries/NewAppScreen";
 
 const MediaStorage = () => {
   const [selectedFilter, setSelectedFilter] = useState("");
-  const [indexTab, setIndexTab] = useState(0);
+  const [index, setIndex] = useState(0);
   const layout = useWindowDimensions();
 
-  const routes = [
-    { key: "image", title: "Ảnh" },
-    { key: "file", title: "File" },
-    { key: "link", title: "Link" },
-    { key: "voice", title: "Voice" },
-  ];
-
-  const renderScene = ({ route }) => {
-    switch (route.key) {
-      case "image":
-        return indexTab === 0 ? <ImageTab /> : null;
-      case "file":
-        return indexTab === 1 ? <FileTab /> : null;
-      case "link":
-        return indexTab === 2 ? <LinkTab /> : null;
-      case "voice":
-        return indexTab === 3 ? <VoiceTab /> : null;
-      default:
-        return null;
-    }
-  };
-
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
+    <View style={{ flex: 1, backgroundColor: "#fff" }}>
       {/* Header */}
       <HeaderMediaStorage />
 
@@ -54,8 +32,7 @@ const MediaStorage = () => {
         style={{
           flexDirection: "row",
           justifyContent: "space-around",
-          paddingVertical: 5,
-          paddingBottom: 10,
+          padding: 10,
         }}
       >
         <FilterButton
@@ -79,22 +56,62 @@ const MediaStorage = () => {
       </View>
 
       {/* Tabs */}
-      <TabView
-        navigationState={{ index: indexTab, routes }}
-        renderScene={renderScene}
-        onIndexChange={setIndexTab}
-        initialLayout={{ width: layout.width }}
-        renderTabBar={(props) => (
-          <TabBar
-            {...props}
-            style={{ backgroundColor: "white" }} // Màu nền
-            indicatorStyle={{ backgroundColor: "blue" }} // Thanh gạch dưới
-            activeColor="blue" // Màu chữ khi tab được chọn
-            inactiveColor="gray" // Màu chữ khi tab không được chọn
-          />
-        )}
-      />
-    </SafeAreaView>
+      <Tab
+        value={index}
+        onChange={setIndex}
+        indicatorStyle={{
+          backgroundColor: "#6166EE",
+          width: "15%",
+          marginHorizontal: "5%",
+        }}
+        variant="default"
+        dense
+      >
+        <Tab.Item
+          title="Hình ảnh"
+          titleStyle={{
+            color: index === 0 ? "#6166EE" : "gray",
+            fontWeight: index === 0 ? "bold" : null,
+          }}
+        />
+        <Tab.Item
+          title="Tệp tin"
+          titleStyle={{
+            color: index === 1 ? "#6166EE" : "gray",
+            fontWeight: index === 1 ? "bold" : null,
+          }}
+        />
+        <Tab.Item
+          title="Liên kết"
+          titleStyle={{
+            color: index === 2 ? "#6166EE" : "gray",
+            fontWeight: index === 2 ? "bold" : null,
+          }}
+        />
+        <Tab.Item
+          title="Ghi âm"
+          titleStyle={{
+            color: index === 3 ? "#6166EE" : "gray",
+            fontWeight: index === 3 ? "bold" : null,
+          }}
+        />
+      </Tab>
+
+      <TabView value={index} onChange={setIndex} animationType="spring">
+        <TabView.Item style={{ width: "100%" }}>
+          <ImageTab />
+        </TabView.Item>
+        <TabView.Item style={{ width: "100%" }}>
+          <FileTab />
+        </TabView.Item>
+        <TabView.Item style={{ width: "100%" }}>
+          <LinkTab />
+        </TabView.Item>
+        <TabView.Item style={{ width: "100%" }}>
+          <VoiceTab />
+        </TabView.Item>
+      </TabView>
+    </View>
   );
 };
 

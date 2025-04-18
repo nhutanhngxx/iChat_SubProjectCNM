@@ -60,7 +60,17 @@ const messageService = {
   sendMessage: async (message) => {},
 
   // Thu hồi tin nhắn
-  recallMessage: async (messageId) => {},
+  recallMessage: async (messageId, userId) => {
+    try {
+      const response = await apiService.put(`/${PREFIX}/recall/${messageId}`, {
+        userId,
+      });
+      return response.data;
+    } catch (error) {
+      console.log("Message Service Error: ", error);
+      return null;
+    }
+  },
 
   // Xóa tin nhắn giữa 2 người
   deleteChatHistory: async (userId, chatId) => {
@@ -68,6 +78,8 @@ const messageService = {
       const response = await apiService.delete(
         `/${PREFIX}/${userId}/${chatId}`
       );
+      console.log("response: ", response.data);
+
       if (response.data.status === "ok")
         return {
           status: response.data.status,
@@ -84,6 +96,86 @@ const messageService = {
         status: "error",
         message: "Không thể xóa lịch sử trò chuyện",
       };
+    }
+  },
+
+  searchMessages: async (keyword, userId) => {
+    try {
+      if (!keyword || !userId) {
+        throw new Error("Từ khóa tìm kiếm và ID người dùng là bắt buộc");
+      }
+      const response = await apiService.get(`/${PREFIX}/search/${userId}`, {
+        params: { search: keyword },
+      });
+
+      if (response.data.status === "ok") {
+        return {
+          messages: response.data.messages || [],
+          message: response.data.message || "",
+        };
+      }
+      throw new Error(response.data.message || "Lỗi khi tìm kiếm tin nhắn");
+    } catch (error) {
+      console.log("Message Service Error: ", error);
+      throw new Error(
+        error.message || "Không thể tìm kiếm tin nhắn. Vui lòng thử lại."
+      );
+    }
+  },
+
+  replyMessage: async (message) => {
+    try {
+      const response = await apiService.post(`/${PREFIX}/reply`, message);
+      return response.data;
+    } catch (error) {
+      console.log("Message Service Error: ", error);
+      return null;
+    }
+  },
+
+  // Thả reaction cho tin nhắn
+  addReaction: async (messageId, userId, reactionType) => {
+    try {
+      const response = await apiService.post(
+        `/${PREFIX}/${messageId}/reactions`,
+        {
+          user_id: userId,
+          reaction_type: reactionType,
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.log("Lỗi thả reaction tin nhắn ở Message Service: ", error);
+      return null;
+    }
+  },
+
+  // Chuyển tiếp tin nhắn
+  forwardMessage: async (messageId, receiverId, currentUserId) => {
+    try {
+      const response = await apiService.post(`/${PREFIX}/forward`, {
+        messageId,
+        receiverId,
+        currentUserId,
+      });
+
+      return response.data;
+    } catch (error) {
+      console.log("Lỗi chuyển tiếp tin nhắn ở Message Service: ", error);
+      return null;
+    }
+  },
+
+  softDeleteMessagesForUser: async (userId, messageId) => {
+    try {
+      const response = await apiService.post(`/${PREFIX}/softDelete`, {
+        userId,
+        messageId,
+      });
+      return response.data;
+    } catch (error) {
+      console.log("Lỗi xoá tin nhắn 1 phía ở Message Service: ", error);
+      return null;
     }
   },
 };
