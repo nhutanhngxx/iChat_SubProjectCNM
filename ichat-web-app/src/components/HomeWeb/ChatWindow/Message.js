@@ -822,7 +822,7 @@ const Message = ({
   }, [selectedChat?.id, user?.id, dispatch]);
   return (
     <>
-      {!isFriendWithReceiver && !isSender && (
+      {/* {!isFriendWithReceiver && !isSender && (
         <div className="not-friend-banner">
           <Alert
             message="Hai bạn chưa là bạn bè"
@@ -848,7 +848,7 @@ const Message = ({
             className="not-friend-alert"
           />
         </div>
-      )}
+      )} */}
       <div
         className={`message ${isSender ? "sent" : "received"} ${
           !isFriendWithReceiver && !isSender ? "not-friend-message" : ""

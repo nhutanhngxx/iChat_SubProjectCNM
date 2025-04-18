@@ -988,6 +988,17 @@ const MessageArea = ({ selectedChat, user }) => {
 
         <Content className="message-area-content">
           <div className="message-container">
+            {!isFriendWithReceiver && (
+              <div className="not-friend-banner">
+                <Alert
+                  message="Hai bạn chưa là bạn bè"
+                  description="Kết bạn để mở khóa tính năng tin nhắn đầy đủ."
+                  type="warning"
+                  showIcon
+                  className="not-friend-alert"
+                />
+              </div>
+            )}
             {Array.isArray(chatMessages) ? (
               chatMessages
                 .filter((message) => {
