@@ -70,7 +70,7 @@ const Message = ({
       fetchFriends();
     }
   }, [dispatch, user._id, user.id]);
-  console.log("friends from Message component", user._id || user.id, friends);
+  // console.log("friends from Message component", user._id || user.id, friends);
   // Kiêm tra xem người dùng đã là bạn hay chưa
   const isFriend = (userId) => {
     return friends.friends.some((friend) => friend.id === userId);
@@ -130,53 +130,145 @@ const Message = ({
   // Disabled all interaction if not friends
   const isInteractionDisabled = !isFriendWithReceiver;
   //Thu hồi tin nhắn
+  // const handleRecall = async () => {
+  //   try {
+  //     // Show loading notification
+  //     const key = "recallMessage";
+  //     antMessage.loading({ content: "Đang thu hồi tin nhắn...", key });
+
+  //     //Gọi action thu hồi tin nhắn
+
+  //     const result = await dispatch(recallToMessage(message._id)).unwrap();
+  //     console.log("Recall result:", result);
+
+  //     if (result && result.data) {
+  //       const sentMessage = result.data; // The recalled message from API
+
+  //       // Sử dụng socket để gửi tin nhắn thu hồi đến server
+  //       // Tạo roomId từ userId và selectedChatId
+  //       const userIds = [user.id, selectedChat.id].sort();
+  //       const roomId = `chat_${userIds[0]}_${userIds[1]}`;
+
+  //       // Gửi tin nhắn thu hồi đến server
+  //       socket.emit("recall-message", {
+  //         chatId: roomId,
+  //         messageId: message._id,
+  //         senderId: user.id,
+  //         newContent: "Tin nhắn đã được thu hồi",
+  //       });
+
+  //       // Thông báo thành công
+  //       antMessage.success({
+  //         content: "Đã thu hồi tin nhắn",
+  //         key,
+  //         duration: 2,
+  //       });
+  //       dispatch(fetchMessages(user.id)); // Fetch updated messages
+  //       // Close menus
+  //       closeContextMenu();
+  //       setThreeDotsMenuVisible(false);
+  //     }
+  //   } catch (error) {
+  //     // Show error message
+  //     antMessage.error({
+  //       content: "Không thể thu hồi tin nhắn. Vui lòng thử lại.",
+  //       duration: 2,
+  //     });
+  //     console.error("Error recalling message:", error);
+  //   }
+  // };
+
   const handleRecall = async () => {
     try {
-      // Show loading notification
       const key = "recallMessage";
       antMessage.loading({ content: "Đang thu hồi tin nhắn...", key });
 
-      //Gọi action thu hồi tin nhắn
+      if (!message._id) {
+        console.error("Missing message ID:", message);
+        antMessage.error("Không thể thu hồi: ID tin nhắn không hợp lệ");
+        return;
+      }
 
-      const result = await dispatch(recallToMessage(message._id)).unwrap();
+      console.log("Attempting to recall message:", {
+        messageId: message._id,
+        userId: user?.id || user?._id,
+      });
+
+      // Pass both IDs as an object
+      const result = await dispatch(
+        recallToMessage({
+          messageId: message._id,
+          userId: user?.id || user?._id,
+        })
+      ).unwrap();
+
       console.log("Recall result:", result);
 
-      if (result && result.data) {
-        const sentMessage = result.data; // The recalled message from API
+      // Notify other users via socket
+      const userIds = [user.id, selectedChat.id].sort();
+      const roomId = `chat_${userIds[0]}_${userIds[1]}`;
 
-        // Sử dụng socket để gửi tin nhắn thu hồi đến server
-        // Tạo roomId từ userId và selectedChatId
-        const userIds = [user.id, selectedChat.id].sort();
-        const roomId = `chat_${userIds[0]}_${userIds[1]}`;
+      socket.emit("recall-message", {
+        chatId: roomId,
+        messageId: message._id,
+        senderId: user.id || user._id,
+        newContent: "Tin nhắn đã được thu hồi",
+      });
 
-        // Gửi tin nhắn thu hồi đến server
-        socket.emit("recall-message", {
-          chatId: roomId,
-          messageId: message._id,
-          senderId: user.id,
-          newContent: "Tin nhắn đã được thu hồi",
-        });
-
-        // Thông báo thành công
-        antMessage.success({
-          content: "Đã thu hồi tin nhắn",
-          key,
-          duration: 2,
-        });
-        dispatch(fetchMessages(user.id)); // Fetch updated messages
-        // Close menus
-        closeContextMenu();
-        setThreeDotsMenuVisible(false);
-      }
-    } catch (error) {
-      // Show error message
-      antMessage.error({
-        content: "Không thể thu hồi tin nhắn. Vui lòng thử lại.",
+      // Show success message
+      antMessage.success({
+        content: "Đã thu hồi tin nhắn",
+        key,
         duration: 2,
       });
+
+      // Refresh messages
+      dispatch(fetchMessages(user.id || user._id));
+      closeContextMenu();
+      setThreeDotsMenuVisible(false);
+    } catch (error) {
       console.error("Error recalling message:", error);
+      antMessage.error({
+        content:
+          error.message || "Không thể thu hồi tin nhắn. Vui lòng thử lại.",
+        duration: 2,
+      });
     }
   };
+  // Add this back to your useEffect socket setup
+  useEffect(() => {
+    if (!selectedChat?.id || !user?.id) return;
+
+    const userIds = [user.id, selectedChat.id].sort();
+    const roomId = `chat_${userIds[0]}_${userIds[1]}`;
+
+    // Join the consistent room
+    socket.emit("join-room", roomId);
+
+    const handleRecalledMessage = (data) => {
+      console.log("Message recalled event received:", data);
+
+      // Update the recalled message in your Redux store
+      if (data.messageId) {
+        // Create an updated message object
+        const updatedMessage = {
+          _id: data.messageId,
+          content: data.newContent || "Tin nhắn đã được thu hồi",
+          recall: true,
+        };
+
+        dispatch(updateMessages(updatedMessage));
+        dispatch(fetchMessages(user.id));
+      }
+    };
+
+    socket.on("message-recalled", handleRecalledMessage);
+
+    return () => {
+      console.log("Cleaning up socket listener");
+      socket.off("message-recalled", handleRecalledMessage);
+    };
+  }, [selectedChat?.id, user?.id, dispatch]);
   // Kiểm tra xem người dùng có phải là người gửi tin nhắn không
   const canRecall =
     isSender && new Date() - new Date(message.timestamp) < 30 * 60 * 1000;
@@ -192,27 +284,6 @@ const Message = ({
     extension: "",
     size: "",
   });
-  // useEffect(() => {
-  //   const fetchFileInfo = () => {
-  //     try {
-  //       const fileUrl = message.content;
-  //       const fileName = decodeURIComponent(fileUrl.split("/").pop()); // Lấy tên file cuối URL
-  //       const fileExtension = fileName.split(".").pop();
-  //       const parts = fileName.split("-");
-  //       const originalName = parts.slice(2).join("-"); // Bỏ random + timestamp
-
-  //       setFileInfo({
-  //         name: originalName,
-  //         extension: fileExtension,
-  //         size: "Không xác định (CORS bị chặn)", // fallback
-  //       });
-  //     } catch (error) {
-  //       console.error("Lỗi khi xử lý file:", error);
-  //     }
-  //   };
-
-  //   fetchFileInfo();
-  // }, [message.content]);
   useEffect(() => {
     const fetchFileInfo = async () => {
       try {
@@ -619,7 +690,7 @@ const Message = ({
       );
     }
   }, [message, allMessages]);
-  console.log("Kiểm tra isFriendWithReceiver:", isFriendWithReceiver);
+  // console.log("Kiểm tra isFriendWithReceiver:", isFriendWithReceiver);
   // Add this to your existing useEffect socket setup
   useEffect(() => {
     if (!selectedChat?.id || !user?.id) return;

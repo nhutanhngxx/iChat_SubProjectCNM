@@ -165,17 +165,51 @@ export const sendImageMessage = createAsyncThunk(
 // Thu hồi tin nhắn
 export const recallToMessage = createAsyncThunk(
   "messages/recallToMessage",
-  async (messageId) => {
-    const response = await fetch(`${API_URL}recall/${messageId}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-    if (!response.ok) {
-      throw new Error("Failed to recall message");
+  async (arg, { rejectWithValue }) => {
+    try {
+      // Handle both formats: single messageId or {messageId, userId} object
+      let messageId, userId;
+
+      if (typeof arg === "object") {
+        // If called with an object containing both IDs
+        messageId = arg.messageId;
+        userId = arg.userId;
+      } else {
+        // If called with just messageId (backward compatibility)
+        messageId = arg;
+        // userId will be undefined, which will cause a validation error in the backend
+      }
+
+      console.log("Recalling message:", { messageId, userId });
+
+      if (!messageId) {
+        return rejectWithValue("Missing message ID");
+      }
+
+      // Add userId to the request body since your backend needs it
+      const response = await fetch(`${API_URL}recall/${messageId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userId }), // Include userId in the body
+      });
+
+      // Parse response first so we can handle errors properly
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error("Recall API error:", data);
+        return rejectWithValue(data);
+      }
+
+      console.log("Successful recall response:", data);
+      return data;
+    } catch (err) {
+      console.error("Error in recall thunk:", err);
+      // Safely convert error to string to avoid toString() on undefined
+      return rejectWithValue(err ? err.toString() : "Unknown error");
     }
-    return messageId;
   }
 );
 // Xoá mềm tin nhắn giữa 2 người và trả về lại danh sách đã lọc
@@ -308,30 +342,6 @@ const messagesSlice = createSlice({
     error: null,
   },
   reducers: {
-    // updateMessages: (state, action) => {
-    //   const newMessage = action.payload;
-
-    //   // Check if message with same ID already exists in state
-    //   const messageExists = state.chatMessages.some(
-    //     (msg) => msg._id === newMessage._id
-    //   );
-    //   const index = state.chatMessages.findIndex(
-    //     (msg) => msg._id === newMessage._id
-    //   );
-
-    //   // Only add if it doesn't exist
-    //   if (!messageExists) {
-    //     state.chatMessages.push(newMessage);
-    //     console.log("Added new message to state:", newMessage._id);
-    //   } else {
-    //     console.log("Prevented duplicate message:", newMessage._id);
-    //     state.chatMessages[index] = {
-    //       ...state.chatMessages[index],
-    //       ...newMessage, // ghi đè các field cũ bằng cái mới
-    //     };
-    //     console.log("♻️ Updated recalled message:", newMessage._id);
-    //   }
-    // },
     updateMessages: (state, action) => {
       const newMessage = action.payload;
 
@@ -442,13 +452,34 @@ const messagesSlice = createSlice({
         }
       })
       .addCase(recallToMessage.fulfilled, (state, action) => {
-        const messageId = action.payload;
+        // Check the structure of the response
+        const recalledMessage = action.payload?.data || action.payload;
+
+        if (!recalledMessage || !recalledMessage._id) {
+          console.error("Invalid recalled message data:", recalledMessage);
+          return;
+        }
+
+        const messageId = recalledMessage._id;
+
+        // Find and update the message in chatMessages
         const messageIndex = state.chatMessages.findIndex(
           (msg) => msg._id === messageId
         );
+
         if (messageIndex !== -1) {
-          state.chatMessages[messageIndex].content = "Tin nhắn đã bị thu hồi";
-          state.chatMessages[messageIndex].recall = true;
+          // Update with all properties from the recalled message
+          state.chatMessages[messageIndex] = {
+            ...state.chatMessages[messageIndex],
+            ...recalledMessage,
+            content: "Tin nhắn đã bị thu hồi",
+            type: "text",
+            recall: true,
+            reactions: [],
+          };
+          console.log("✅ Message recalled successfully:", messageId);
+        } else {
+          console.warn("Could not find message to recall:", messageId);
         }
       })
       .addCase(handleSoftDelete.pending, (state) => {
