@@ -4,14 +4,19 @@ import { useDispatch } from "react-redux";
 import { searchUsersByPhone } from "../../../redux/slices/userSlide";
 import "./AddFriend.css";
 import UserInfoCard from "./UserInfoCard";
+import { useSelector } from "react-redux";
+import ProfileModal from "../DropDownList/ProfileModal/ProfileModal";
 
 const AddFriend = ({ visible, onClose }) => {
   const dispatch = useDispatch();
+  const currentUser = useSelector((state) => state.auth.user);
   const [phone, setPhone] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [showUserInfo, setShowUserInfo] = useState(false);
   const [userResult, setUserResult] = useState(null);
   const [phoneError, setPhoneError] = useState("");
+
+  const [showProfileModal, setShowProfileModal] = useState(false);
 
   const validatePhone = (value) => {
     if (!value) {
@@ -40,6 +45,14 @@ const AddFriend = ({ visible, onClose }) => {
     try {
       // Chuyển đổi số điện thoại sang format +84
       const formattedPhone = '+84' + phone.substring(1);
+
+      // Kiểm tra nếu số điện thoại trùng với user hiện tại
+      if (formattedPhone === currentUser.phone) {
+        setShowProfileModal(true);
+        setIsSearching(false);
+        return;
+      }
+
       const result = await dispatch(searchUsersByPhone(formattedPhone)).unwrap();
 
       if (result && result.length > 0) {
@@ -75,6 +88,22 @@ const AddFriend = ({ visible, onClose }) => {
     onClose();
   };
 
+  const handleCloseProfileModal = () => {
+    setShowProfileModal(false);
+    setPhone("");
+    setPhoneError("");
+  };
+
+  // Render ProfileModal nếu showProfileModal là true
+  if (showProfileModal) {
+    return (
+      <ProfileModal
+        visible={showProfileModal}
+        onClose={handleCloseProfileModal}
+        user={currentUser}
+      />
+    );
+  }
 
   const suggestedFriends = [
     {

@@ -3,6 +3,7 @@ import { FaUserFriends, FaUserPlus } from "react-icons/fa";
 import { FaUsers } from "react-icons/fa6";
 import { BsFillPersonLinesFill } from "react-icons/bs";
 import { BsPersonAdd } from "react-icons/bs";
+import { FaBan } from "react-icons/fa";
 
 import "./index.css"; // Import CSS
 import FriendList from "./FriendList";
@@ -10,6 +11,7 @@ import GroupList from "./GroupList";
 import RequestList from "./RequestList";
 import ComponentLeftSearch from "../ChatWindow/ComponentLeftSearch";
 import SearchBar from "../Common/SearchBar";
+import BlockerUserList from "./BlockerUserList";
 
 const userList = [
   {
@@ -70,6 +72,16 @@ const PhoneBookWindow = () => {
                 <BsPersonAdd className="text-gray-600 mr-2 icons" />
                 <span>Lời mời kết bạn</span>
               </div>
+              {/* Thêm tab mới cho danh sách người dùng bị chặn */}
+              <div
+                className={`menu-item ${
+                  activeTab === "blockUsers" ? "active" : ""
+                }`}
+                onClick={() => setActiveTab("blockUsers")}
+              >
+                <FaBan className="text-gray-600 mr-2 icons" />
+                <span>Danh sách chặn liên lạc</span>
+              </div>
             </div>
           </div>
         )}
@@ -78,6 +90,7 @@ const PhoneBookWindow = () => {
       {/* Nội dung chính */}
       <div className="content">
         {activeTab === "friends" && <FriendList />}
+        {activeTab === "blockUsers" && <BlockerUserList />}
         {activeTab === "groups" && <GroupList />}
         {activeTab === "requests" && <RequestList />}
       </div>
