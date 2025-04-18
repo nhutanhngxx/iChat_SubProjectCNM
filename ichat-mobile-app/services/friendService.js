@@ -172,7 +172,7 @@ const friendService = {
         return { status: "error", message: response.data.message };
       }
       if (response.data.status === "ok") {
-        return { status: "ok", message: response.data.message };
+        return { status: "ok", data: response.data.blockedUsers };
       }
     } catch (error) {
       console.log("Không thể lấy danh sách người dùng bị chặn: ", error);

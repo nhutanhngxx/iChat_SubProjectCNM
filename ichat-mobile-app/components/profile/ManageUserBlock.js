@@ -27,7 +27,10 @@ const ManageUserBlock = () => {
   const fetchBlockedUsers = async () => {
     try {
       setIsLoading(true);
-      const response = await friendService.getBlockedUsers(user.id);
+      const response = await friendService.getBlockedUsersByUserId(user.id);
+      console.log("Blocked users:", response.data);
+
+      console.log("Response:", response.data);
       setBlockedUsers(response.data || []);
     } catch (error) {
       console.error("Lỗi khi lấy danh sách chặn:", error);
@@ -76,10 +79,7 @@ const ManageUserBlock = () => {
 
   const renderBlockedUser = ({ item }) => (
     <View style={styles.userItem}>
-      <Image
-        source={{ uri: item.avatar_url || "https://default-avatar-url.com" }}
-        style={styles.avatar}
-      />
+      <Image source={{ uri: item.avatar_path }} style={styles.avatar} />
       <View style={styles.userInfo}>
         <Text style={styles.userName}>{item.full_name}</Text>
         <Text style={styles.userPhone}>{item.phone}</Text>

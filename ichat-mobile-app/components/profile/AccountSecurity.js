@@ -31,6 +31,11 @@ const AccountSecurity = () => {
           onPress={() => navigation.navigate("ChangePhoneNumber")}
         />
         <SecurityItem
+          icon="list-outline"
+          label="Danh sách chặn"
+          onPress={() => navigation.navigate("BlockList")}
+        />
+        <SecurityItem
           icon="qr-code-outline"
           label="Mã QR đăng nhập"
           onPress={() => navigation.navigate("AddFriend")}

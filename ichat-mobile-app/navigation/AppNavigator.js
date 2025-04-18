@@ -93,6 +93,11 @@ export default function AppNavigator() {
             options={{ animation: "none" }}
           />
           <Stack.Screen
+            name="BlockList"
+            component={ManageUserBlock}
+            options={{ animation: "none" }}
+          />
+          <Stack.Screen
             name="ChangePhoneNumber"
             component={ChangePhoneNumber}
             options={{ animation: "none" }}
