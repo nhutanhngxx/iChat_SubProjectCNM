@@ -15,11 +15,6 @@ router.get(
   FriendshipController.checkFriendStatus
 );
 
-router.post("/unblock-user", FriendshipController.unblockUser);
-
-// Lấy danh sách người dùng bị chặn
-router.get("/blocked-users/:userId", FriendshipController.getBlockedUsers);
-
 // Danh sách bạn bè
 router.get("/:userId", FriendshipController.getFriendListByUserId);
 
