@@ -34,6 +34,7 @@ import MessageInputBar from "../../components/messages/MessageInputBar";
 import { getHostIP } from "../../services/api";
 import friendService from "../../services/friendService";
 import socketService from "../../services/socketService";
+// import { SocketContext } from "../../config/context/SocketContext";
 
 const renderReactionIcons = (reactions) => {
   const icons = {
@@ -62,6 +63,8 @@ const renderReactionIcons = (reactions) => {
 };
 
 const Chatting = ({ route }) => {
+  const ipAdr = getHostIP();
+  const API_iChat = `http://${ipAdr}:5001/api/messages/`;
   const navigation = useNavigation();
   const { user } = useContext(UserContext);
   const { chat } = route.params || {};
@@ -75,7 +78,6 @@ const Chatting = ({ route }) => {
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [groupMembers, setGroupMembers] = useState([]);
-
   // Kiểm tra trạng thái chặn giữa 2 người dùng
   const [blockStatus, setBlockStatus] = useState({
     isBlocked: false,
@@ -83,8 +85,67 @@ const Chatting = ({ route }) => {
     blockedByUser: false,
   });
 
-  const ipAdr = getHostIP();
-  const API_iChat = `http://${ipAdr}:5001/api/messages/`;
+  const [socketConnected, setSocketConnected] = useState(false);
+
+  // Thêm useEffect để quản lý socket connection và events
+  useEffect(() => {
+    if (!user?.id || !chat?.id) return;
+
+    // Tạo roomId cho chat
+    const userIds = [user.id, chat.id].sort();
+    const roomId = `chat_${userIds[0]}_${userIds[1]}`;
+
+    console.log("Joining room:", roomId);
+
+    // Lắng nghe sự kiện kết nối
+    socketService.connect(() => {
+      console.log("Socket connected to room:", roomId);
+      setSocketConnected(true);
+    });
+
+    // Join room
+    socketService.joinRoom(roomId);
+
+    // Lắng nghe tin nhắn mới
+    socketService.onReceiveMessage((data) => {
+      console.log("Received new message:", data);
+      if (data.chatId === roomId) {
+        setMessages((prevMessages) => {
+          // Kiểm tra tin nhắn đã tồn tại chưa
+          const messageExists = prevMessages.some(
+            (msg) => msg._id === data._id
+          );
+          if (!messageExists) {
+            return [...prevMessages, data];
+          }
+          return prevMessages;
+        });
+      }
+    });
+
+    // Gửi tin nhắn
+    socketService.handleSendMessage((messageData, roomId) => {
+      console.log("Sending message:", messageData);
+      socketService.handleSendMessage(messageData, roomId);
+    });
+
+    socketService.handleRecallMessage((data) => {
+      console.log("Recalled message event received:", data);
+      if (data.chatId === roomId) {
+        setMessages((prevMessages) =>
+          prevMessages.map((msg) => (msg._id === data.messageId ? data : msg))
+        );
+      }
+    });
+
+    // Cleanup function
+    return () => {
+      console.log("Leaving room:", roomId);
+      socketService.leaveRoom(roomId);
+      socketService.removeAllListeners();
+      socketService.disconect();
+    };
+  }, [user?.id, chat?.id]);
 
   const getFileNameFromUrl = (url) => {
     // Tách URL theo dấu '/' và lấy phần cuối cùng
@@ -178,6 +239,8 @@ const Chatting = ({ route }) => {
 
   // Thu hồi tin nhắn (Xóa nội dung tin nhắn đã gửi)
   const handleRecallMessage = async () => {
+    const userIds = [user.id, chat.id].sort();
+    const roomId = `chat_${userIds[0]}_${userIds[1]}`;
     if (!selectedMessage) return;
 
     if (typeChat === "not-friend" || typeChat === "blocked") {
@@ -208,17 +271,27 @@ const Chatting = ({ route }) => {
         }
       );
 
-      if (response.data?.status === "ok") {
-        setMessages((prevMessages) =>
-          prevMessages.map((msg) =>
-            msg._id === selectedMessage._id
-              ? { ...msg, content: "Tin nhắn đã được thu hồi" }
-              : msg
-          )
-        );
-      } else {
-        console.error("Thu hồi tin nhắn thất bại:", response.data);
+      if (response.data.data) {
+        const recalledMessage = {
+          ...response.data.data,
+          chatId: roomId,
+        };
+        console.log(socketService.handleRecallMessage(recalledMessage));
+
+        socketService.handleSendMessage(recalledMessage);
       }
+
+      // if (response.data?.status === "ok") {
+      //   setMessages((prevMessages) =>
+      //     prevMessages.map((msg) =>
+      //       msg._id === selectedMessage._id
+      //         ? { ...msg, content: "Tin nhắn đã được thu hồi" }
+      //         : msg
+      //     )
+      //   );
+      // } else {
+      //   console.error("Thu hồi tin nhắn thất bại:", response.data);
+      // }
     } catch (error) {
       // console.error("Lỗi khi thu hồi tin nhắn:", error);
       Alert.alert("Thông báo", "Tin nhắn này không thể thu hồi.");
@@ -228,6 +301,9 @@ const Chatting = ({ route }) => {
   };
 
   const handleReaction = async (reactionType) => {
+    const userIds = [user.id, chat.id].sort();
+    const roomId = `chat_${userIds[0]}_${userIds[1]}`;
+
     if (!selectedMessage) return;
 
     if (typeChat !== "not-friend") {
@@ -238,14 +314,26 @@ const Chatting = ({ route }) => {
           reactionType
         );
 
-        if (response?.updatedMessage) {
-          // Cập nhật lại toàn bộ object message theo kết quả từ server
-          setMessages((prevMessages) =>
-            prevMessages.map((msg) =>
-              msg._id === selectedMessage._id ? response.updatedMessage : msg
-            )
-          );
+        console.log("Phản hồi từ server:", response.updatedMessage);
+        // console.log("Room: ", roomId);
+
+        if (response.updatedMessage) {
+          socketService.handleAddReaction({
+            chatId: roomId,
+            messageId: selectedMessage._id,
+            userId: user.id,
+            reaction: reactionType,
+          });
         }
+
+        // if (response?.updatedMessage) {
+        //   // Cập nhật lại toàn bộ object message theo kết quả từ server
+        //   setMessages((prevMessages) =>
+        //     prevMessages.map((msg) =>
+        //       msg._id === selectedMessage._id ? response.updatedMessage : msg
+        //     )
+        //   );
+        // }
       } catch (error) {
         console.error("Lỗi khi gửi reaction:", error);
         Alert.alert("Lỗi", "Không thể gửi reaction.");
@@ -261,19 +349,8 @@ const Chatting = ({ route }) => {
     }
   };
 
-  if (chat?.chatType === "group") {
-    useEffect(() => {
-      const fetchMessages = async () => {
-        const messages = await messageService.getMessagesByGroupId(chat.id);
-        const members = await groupService.getGroupMembers(chat.id);
-        setMessages(messages);
-        setGroupMembers(members);
-      };
-      fetchMessages();
-      const interval = setInterval(fetchMessages, 1000);
-      return () => clearInterval(interval);
-    }, [user, chat]);
-  } else {
+  // Load tin nhắn trò chuyện
+  if (chat?.chatType === "private") {
     useEffect(() => {
       if (chat?.id && user?.id) {
         const fetchMessages = async () => {
@@ -301,9 +378,22 @@ const Chatting = ({ route }) => {
             console.error("Lỗi khi lấy tin nhắn:", error);
           }
         };
-        const interval = setInterval(fetchMessages, 100);
+        fetchMessages();
+        const interval = setInterval(fetchMessages, 500);
         return () => clearInterval(interval);
       }
+    }, [user, chat]);
+  } else {
+    useEffect(() => {
+      const fetchMessages = async () => {
+        const messages = await messageService.getMessagesByGroupId(chat.id);
+        const members = await groupService.getGroupMembers(chat.id);
+        setMessages(messages);
+        setGroupMembers(members);
+      };
+      fetchMessages();
+      const interval = setInterval(fetchMessages, 500);
+      return () => clearInterval(interval);
     }, [user, chat]);
   }
 
@@ -357,6 +447,10 @@ const Chatting = ({ route }) => {
   }, [chat, user]);
 
   const sendMessage = async () => {
+    if (!socketService.connect()) {
+      Alert.alert("Thông báo", "Đang kết nối lại với server...");
+      return;
+    }
     // Kiểm tra trạng thái trò chuyện
     if (typeChat === "not-friend" || typeChat === "blocked") {
       let message = "Bạn không thể gửi tin nhắn trong cuộc trò chuyện này.";
@@ -377,6 +471,7 @@ const Chatting = ({ route }) => {
       // Tạo roomId cho chat
       const userIds = [user.id, chat.id].sort();
       const roomId = `chat_${userIds[0]}_${userIds[1]}`;
+
       // Gửi tin nhắn văn bản hoặc reply
       if (inputMessage.trim() || replyMessage) {
         console.log("Gửi tin nhắn văn bản/reply...");
@@ -396,13 +491,21 @@ const Chatting = ({ route }) => {
           : `${API_iChat}/send-message`;
 
         const textResponse = await axios.post(apiEndpoint, textMessage);
-        // Gửi tin nhắn qua socket
-        socketService.sendMessage({
-          ...textResponse.data.message,
-          chatId: roomId,
-        });
-        // Cập nhật danh sách tin nhắn
-        setMessages((prev) => [...prev, textResponse.data.message]);
+
+        console.log("Phản hồi từ server:", textResponse.data.data);
+
+        if (textResponse.data.data) {
+          const messageToSend = {
+            ...textResponse.data.data,
+            chatId: roomId,
+          };
+          console.log(socketService.handleSendMessage(messageToSend));
+
+          socketService.handleSendMessage(messageToSend);
+        }
+
+        // Cập nhật danh sách tin nhắn // Tạm thời khóa lại
+        // setMessages((prev) => [...prev, textResponse.data.message]);
         setInputMessage("");
         setReplyMessage(null);
         console.log("Gửi tin nhắn văn bản thành công");
@@ -460,15 +563,18 @@ const Chatting = ({ route }) => {
             },
           }
         );
-        console.log("Phản hồi từ server:", uploadResponse.data);
-        // Kiểm tra phản hồi từ server
-        if (uploadResponse.data.status === "error") {
-          throw new Error(uploadResponse.data.message || "Lỗi từ server");
+        console.log("Phản hồi từ server:", uploadResponse.data.data);
+
+        if (uploadResponse.data.data) {
+          const messageToSend = {
+            ...uploadResponse.data.data,
+            chatId: roomId,
+          };
+          console.log(socketService.handleSendMessage(messageToSend));
+
+          socketService.handleSendMessage(messageToSend);
         }
-        // Cập nhật danh sách tin nhắn
-        if (uploadResponse.data.message) {
-          setMessages((prev) => [...prev, uploadResponse.data.message]);
-        }
+
         // Xóa trạng thái ảnh/file sau khi gửi thành công
         setSelectedImage(null);
         setSelectedFile(null);
@@ -679,7 +785,9 @@ const Chatting = ({ route }) => {
                       <Text style={styles.replySender}>
                         {repliedMessage.sender_id === user.id
                           ? "Bạn"
-                          : getMemberName(repliedMessage.sender_id)}
+                          : chat.chatType === "group"
+                          ? getMemberName(repliedMessage.sender_id)
+                          : chat.name}
                         :
                       </Text>
 

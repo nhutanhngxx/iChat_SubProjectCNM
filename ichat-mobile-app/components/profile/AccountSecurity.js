@@ -41,8 +41,8 @@ const AccountSecurity = () => {
           onPress={() => navigation.navigate("ChangePassword")}
         />
         <SecurityItem
-          icon="time-outline"
-          label="Danh sách chặn người dùng"
+          icon="list-outline"
+          label="Danh sách chặn"
           onPress={() => navigation.navigate("ManageUserBlock")}
         />
         <SecurityItem

@@ -1,116 +1,149 @@
 import io from "socket.io-client";
 import { getHostIP } from "./api";
 
-const ipAdr = getHostIP();
-const API_iChat = `http://${ipAdr}:5001`;
-
 class SocketService {
-  socket = null;
+  constructor() {
+    this.socket = null;
+    this.ipAdr = getHostIP();
+    this.API_URL = `http://${this.ipAdr}:5001/`;
+    this.messageHandlers = new Map();
+  }
 
   connect() {
     if (!this.socket) {
-      this.socket = io(API_iChat, {
+      this.socket = io(this.API_URL, {
         transports: ["websocket"],
-        autoConnect: true,
         reconnection: true,
         reconnectionAttempts: 5,
-        reconnectionDelay: 1000,
       });
 
-      this.socket.on("connect", () => {
-        console.log("Socket connected:", this.socket.id);
-      });
-
-      this.socket.on("connect_error", (error) => {
-        console.error("Socket connection error:", error);
-      });
-
-      this.socket.on("disconnect", () => {
-        console.log("Socket disconnected");
-        // Attempt to reconnect after 3 seconds
-        setTimeout(() => {
-          this.connect();
-        }, 3000);
-      });
+      this.setupSocketEvents();
     }
     return this.socket;
   }
 
-  disconnect() {
+  disconect() {
     if (this.socket) {
       this.socket.disconnect();
       this.socket = null;
     }
   }
 
-  joinRoom(chatId) {
-    if (this.socket) {
-      this.socket.emit("join-room", chatId);
+  setupSocketEvents() {
+    if (!this.socket) return;
+
+    // Connection events
+    this.socket.on("connect", () => {
+      console.log("Socket connected on Socket Service:", this.socket.id);
+    });
+
+    this.socket.on("connect_error", (error) => {
+      console.error("Connection error:", error);
+      this.reconnect();
+    });
+  }
+
+  joinRoom(roomId) {
+    if (this.ensureConnection()) {
+      this.socket.emit("join-room", roomId);
     }
   }
 
-  leaveRoom(chatId) {
+  leaveRoom(roomId) {
     if (this.socket) {
-      this.socket.emit("leave-room", chatId);
+      this.socket.emit("leave-room", roomId);
     }
   }
 
-  sendMessage(messageData) {
-    if (this.socket) {
+  handleSendMessage(messageData) {
+    if (this.ensureConnection()) {
       this.socket.emit("send-message", messageData);
     }
   }
 
   onReceiveMessage(callback) {
-    if (this.socket) {
+    if (this.ensureConnection()) {
+      this.socket.off("receive-message");
       this.socket.on("receive-message", callback);
     }
   }
 
-  onMessageStatus(callback) {
-    if (this.socket) {
-      this.socket.on("message-status", callback);
+  handleRecallMessage(data) {
+    if (this.ensureConnection()) {
+      this.socket.emit("recall-message", data);
     }
   }
 
-  markMessageAsSeen(messageId, userId) {
-    if (this.socket) {
-      this.socket.emit("mark-message-seen", { messageId, userId });
+  handleAddReaction({ chatId, messageId, userId, reaction }) {
+    console.log(chatId, messageId, userId, reaction);
+
+    if (this.ensureConnection()) {
+      this.socket.emit("add-reaction", {
+        chatId,
+        messageId,
+        userId,
+        reaction,
+      });
     }
   }
 
-  // Typing indicators
+  onReactionUpdate(callback) {
+    if (this.ensureConnection()) {
+      this.socket.off("reaction-added");
+      this.socket.off("reaction-removed");
+
+      this.socket.on("reaction-added", callback);
+      this.socket.on("reaction-removed", callback);
+    }
+  }
+
   sendTypingStatus(chatId, userId, isTyping) {
-    if (this.socket) {
-      this.socket.emit("typing-status", { chatId, userId, isTyping });
+    if (this.ensureConnection()) {
+      this.socket.emit("typing-status", {
+        chatId,
+        userId,
+        isTyping,
+      });
     }
   }
 
   onTypingStatus(callback) {
-    if (this.socket) {
-      this.socket.on("typing-status", callback);
+    if (this.ensureConnection()) {
+      this.socket.off("user-typing");
+      this.socket.on("user-typing", callback);
     }
   }
 
-  // Online status
-  updateOnlineStatus(userId, status) {
-    if (this.socket) {
-      this.socket.emit("user-status", { userId, status });
+  ensureConnection() {
+    if (!this.socket?.connected) {
+      this.connect();
     }
+    return this.socket?.connected;
   }
 
-  onUserStatusChange(callback) {
-    if (this.socket) {
-      this.socket.on("user-status", callback);
-    }
+  reconnect() {
+    setTimeout(() => {
+      if (this.socket) {
+        this.socket.connect();
+      }
+    }, 3000);
   }
 
-  // Remove all listeners
   removeAllListeners() {
     if (this.socket) {
-      this.socket.removeAllListeners();
+      const events = [
+        "receive-message",
+        "message-recalled",
+        "reaction-added",
+        "reaction-removed",
+        "user-typing",
+      ];
+
+      events.forEach((event) => this.socket.off(event));
     }
   }
 }
 
-export default new SocketService();
+const socketService = new SocketService();
+
+export default socketService;
