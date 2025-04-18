@@ -120,10 +120,12 @@ const ChatWindow = ({ user }) => {
         userList={userListFromState}
         setUserList={setUserListFromState}
         onSelectUser={handleSelectUser} // Truyền hàm callback để chọn user
+        user={user}
       />
       {/* Hiển thị màn hình chat hoặc màn hình chào */}{" "}
       {selectedUser ? (
         <MessageArea
+          key={selectedUser.id} // Thêm key để React nhận diện component
           selectedChat={selectedUser}
           messages={chatMessages}
           onUpdateMessages={handleUpdateMessages} // Truyền hàm callback

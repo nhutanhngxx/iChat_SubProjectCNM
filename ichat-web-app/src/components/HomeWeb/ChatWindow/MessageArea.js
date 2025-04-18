@@ -8,6 +8,7 @@ import {
   Modal,
   Input,
   Checkbox,
+  message,
 } from "antd";
 import {
   VideoCameraOutlined,
@@ -38,6 +39,8 @@ import SearchRight from "./SearchRight";
 import { set } from "lodash";
 import "./MessageArea.css";
 import socket from "../../services/socket";
+import { getUserFriends } from "../../../redux/slices/friendSlice";
+import VideoCallModal from "./CallVideo/VideoCallModal";
 
 const { Header, Content } = Layout;
 
@@ -605,7 +608,10 @@ const CreateGroupModal = ({ visible, onCancel, onOk }) => {
 const MessageArea = ({ selectedChat, user }) => {
   const dispatch = useDispatch();
   const chatMessages = useSelector((state) => state.messages.chatMessages);
-
+  // Gọi video
+  const [isCalling, setIsCalling] = useState(false);
+  const [meetingId, setMeetingId] = useState(null);
+  const [token, setToken] = useState("");
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState("");
   // Hiển thị thông tin hội thoại
@@ -616,6 +622,63 @@ const MessageArea = ({ selectedChat, user }) => {
   const [modalVisible, setModalVisible] = useState(false);
   // Trả lời tin nhắn
   const [replyingTo, setReplyingTo] = useState(null);
+  // Lấy token từ server
+  // Hàm xử lý khi bấm icon Video
+  const handleStartCall = async () => {
+    try {
+      // Lấy token từ backend của bạn
+      const res = await fetch(
+        "http://localhost:5001/api/video-call/get-token",
+        {
+          method: "GET",
+        }
+      );
+
+      if (!res.ok) {
+        throw new Error("Failed to fetch token");
+      }
+
+      const data = await res.json();
+      console.log("Token received:", data.token); // Kiểm tra token nhận được
+      setToken(data.token);
+
+      // Kiểm tra xem token có hợp lệ không
+      if (!data.token) {
+        throw new Error("No token received from the server");
+      }
+
+      // Tạo room (hoặc lấy room ID từ DB nếu đã có)
+      const createRoom = await fetch("https://api.videosdk.live/v2/rooms", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${data.token}`, // Đảm bảo token có tiền tố 'Bearer'
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: "Tên phòng", // Thêm thông tin tên phòng nếu cần
+        }),
+      });
+
+      // Kiểm tra phản hồi từ API
+      if (!createRoom.ok) {
+        const errorData = await createRoom.json(); // Lấy lỗi chi tiết
+        console.error("Error response from VideoSDK:", errorData);
+        throw new Error(
+          `Error creating room: ${
+            errorData.error || errorData.message || "Unknown error"
+          }`
+        );
+      }
+
+      const roomData = await createRoom.json();
+      setMeetingId(roomData.roomId);
+      setIsCalling(true);
+    } catch (err) {
+      console.error("Error starting video call", err);
+      // Hiển thị lỗi chi tiết ra console để dễ dàng theo dõi
+      alert(`Error: ${err.message}`);
+    }
+  };
 
   //  handler function
   const handleReplyToMessage = (messageToReply) => {
@@ -675,7 +738,38 @@ const MessageArea = ({ selectedChat, user }) => {
     }
   }, [dispatch, user?.id, selectedChat?.receiver_id]);
   console.log("Chat Messages in MessageArea", chatMessages);
+  // Near the top of your component
+  const [isFriendWithReceiver, setIsFriendWithReceiver] = useState(true);
+  const [friends, setFriends] = useState({ friends: [] });
 
+  // Add this useEffect to fetch friends
+  useEffect(() => {
+    const fetchFriends = async () => {
+      try {
+        const result = await dispatch(
+          getUserFriends(user._id || user.id)
+        ).unwrap();
+        setFriends(result);
+
+        // Check if the selected user is a friend
+        if (result && result.friends && selectedChat) {
+          const isFriend = result.friends.some(
+            (friend) =>
+              friend.id === selectedChat.id ||
+              friend._id === selectedChat.id ||
+              String(friend.id) === String(selectedChat.id)
+          );
+          setIsFriendWithReceiver(isFriend);
+        }
+      } catch (err) {
+        console.error("Error fetching friends:", err);
+      }
+    };
+
+    if (user?._id || user?.id) {
+      fetchFriends();
+    }
+  }, [dispatch, user, selectedChat]);
   const handleSendMessage = async (
     text = "",
     image = null,
@@ -683,6 +777,16 @@ const MessageArea = ({ selectedChat, user }) => {
     content,
     replyToId = null // ID của tin nhắn được trả lời (nếu có)
   ) => {
+    if (!isFriendWithReceiver && selectedChat.id !== user.id) {
+      message.warning("Bạn cần kết bạn để gửi tin nhắn.");
+      return;
+    }
+
+    // Always check if you have a valid selected chat and message ID before using
+    if (!selectedChat || !selectedChat.id) {
+      console.error("No selected chat or invalid chat", selectedChat);
+      return;
+    }
     console.log("ReplyToId in MessageArea", replyToId);
 
     if ((text.trim() || image || file) && selectedChat) {
@@ -750,26 +854,6 @@ const MessageArea = ({ selectedChat, user }) => {
     }
   };
 
-  // const handleFileUpload = (file) => {
-  //   if (selectedChat) {
-  //     const newMessage = {
-  //       id: messages.length + 1,
-  //       text: "",
-  //       sender: "You",
-  //       timestamp: new Date().toLocaleTimeString([], {
-  //         hour: "2-digit",
-  //         minute: "2-digit",
-  //       }),
-  //       type: "sent",
-  //       file: {
-  //         name: file.name,
-  //         size: `${(file.size / 1024).toFixed(2)} KB`,
-  //         type: file.type || "application/octet-stream",
-  //       },
-  //     };
-  //     setMessages([...messages, newMessage]);
-  //   }
-  // };
   // Tự động cuộn xuống cuối khi có tin nhắn mới
   const handleFileUpload = async (file) => {
     if (selectedChat) {
@@ -778,7 +862,7 @@ const MessageArea = ({ selectedChat, user }) => {
           sendImageMessage({
             sender_id: user?.id,
             receiver_id: selectedChat?.id,
-            image: file, // ✅ chính là file object
+            image: file,
           })
         ).unwrap();
 
@@ -903,7 +987,10 @@ const MessageArea = ({ selectedChat, user }) => {
                 setModalVisible(false);
               }}
             />
-            <VideoCameraOutlined className="header-icon-message" />
+            <VideoCameraOutlined
+              className="header-icon-message"
+              onClick={handleStartCall}
+            />
             <SearchOutlined
               className="header-icon"
               onClick={handleShowSearchRight}
@@ -914,6 +1001,12 @@ const MessageArea = ({ selectedChat, user }) => {
             />
           </div>
         </Header>
+        <VideoCallModal
+          isCalling={isCalling}
+          setIsCalling={setIsCalling}
+          token={token}
+          meetingId={meetingId}
+        />
 
         <Content className="message-area-content">
           <div className="message-container">
@@ -964,6 +1057,8 @@ const MessageArea = ({ selectedChat, user }) => {
           showConversation={showConversation} // Truyền showConversation
           replyingTo={replyingTo} // Add this prop
           clearReplyingTo={clearReplyingTo} // Add this prop
+          user={user}
+          selectedChat={selectedChat} // Thêm prop selectedChat
         />
       </Layout>
 

@@ -1,69 +1,132 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+
+import { useDispatch, useSelector } from "react-redux";
+import { getUserFriends, unfriendUser, getBlockedUsers, blockUser } from "../../../redux/slices/friendSlice";
 import { BsFillPersonLinesFill } from "react-icons/bs";
 import { FaEllipsisV } from "react-icons/fa";
+import { Menu, Dropdown, Modal, message } from 'antd';
+import { ExclamationCircleOutlined } from '@ant-design/icons';
+import { EyeOutlined, TagsOutlined, EditOutlined, StopOutlined, DeleteOutlined } from '@ant-design/icons';
 import "./FriendList.css"; // Import file CSS
 
-const friendsData = [
-  {
-    name: "Anh Trai",
-    color: "red",
-    url: "https://i.ibb.co/4ngTYr7C/z5031681384600-ab5b44caa4076421b825ae215dd76958.jpg",
-  },
-  {
-    name: "Anh Hai",
-    color: "blue",
-    url: "https://i.ibb.co/wNmwL0bW/z5031681385418-29df7773d689107692c787f227cc84c4.jpg",
-  },
-  {
-    name: "Ba",
-    color: "blue",
-    url: "https://i.ibb.co/23n6GN8X/z5031681390608-cff50a647f157e4733d7f6463432e36d.jpg",
-  },
-  {
-    name: "Em gái",
-    color: "blue",
-    url: "https://i.ibb.co/4ngTYr7C/z5031681384600-ab5b44caa4076421b825ae215dd76958.jpg",
-  },
-  {
-    name: "Mẹ",
-    color: "blue",
-    url: "https://i.ibb.co/4ngTYr7C/z5031681384600-ab5b44caa4076421b825ae215dd76958.jpg",
-  },
-  {
-    name: "Thành Cương",
-    color: "blue",
-    url: "https://i.ibb.co/4ngTYr7C/z5031681384600-ab5b44caa4076421b825ae215dd76958.jpg",
-  },
-  {
-    name: "Xuân Mai",
-    color: "blue",
-    url: "https://i.ibb.co/4ngTYr7C/z5031681384600-ab5b44caa4076421b825ae215dd76958.jpg",
-  },
-  {
-    name: "Your Love",
-    color: "blue",
-    url: "https://i.ibb.co/4ngTYr7C/z5031681384600-ab5b44caa4076421b825ae215dd76958.jpg",
-  },
-];
-
 const FriendList = () => {
+  const dispatch = useDispatch();
+  const currentUser = useSelector((state) => state.auth.user);
+  const { confirm } = Modal;
   const [searchTerm, setSearchTerm] = useState("");
   const [sortOrder, setSortOrder] = useState("asc");
+  const [friendsData, setFriendsData] = useState([]);
+  const [blockedUsersData, setBlockedUsersData] = useState([]);
 
-  // Lọc danh sách theo từ khóa tìm kiếm
-  const filteredFriends = friendsData
+
+
+  const handleUnfriend = async (friendId) => {
+    confirm({
+      title: 'Xác nhận xóa bạn',
+      icon: <ExclamationCircleOutlined />,
+      content: 'Bạn có chắc chắn muốn xóa người này khỏi danh sách bạn bè?',
+      okText: 'Xóa',
+      cancelText: 'Hủy',
+      okButtonProps: { danger: true },
+      async onOk() {
+        try {
+          const result = await dispatch(unfriendUser({
+            user_id: currentUser.id,
+            friend_id: friendId
+          })).unwrap();
+
+          if (result.status === 'ok') {
+            message.success('Đã xóa bạn thành công');
+            // Cập nhật lại danh sách bạn bè ở đây nếu cần
+          }
+        } catch (error) {
+          message.error(error.message || 'Có lỗi xảy ra khi xóa bạn');
+        }
+      }
+    });
+  };
+
+  const handleBlock = async (friendId) => {
+    try {
+      const result = await dispatch(blockUser({
+        blocker_id: currentUser.id,
+        blocked_id: friendId
+      })).unwrap();
+
+      if (result.status === 'ok') {
+        message.success(result.message);
+        dispatch(getUserFriends(currentUser.id));
+      }
+    } catch (error) {
+      message.error(error.message || 'Có lỗi xảy ra khi chặn người dùng');
+    }
+  };
+
+
+  const friendActionMenu = (friendId) => (
+    <Menu>
+      <Menu.Item key="view" icon={<EyeOutlined />}>
+        Xem thông tin
+      </Menu.Item>
+      <Menu.Item key="category" icon={<TagsOutlined />}>
+        Phân loại
+        <span style={{ float: 'right', marginLeft: '8px' }}>{'>'}</span>
+      </Menu.Item>
+      <Menu.Item key="nickname" icon={<EditOutlined />}>
+        Đặt tên gọi nhớ
+      </Menu.Item>
+
+      <Menu.Item
+        key="block"
+        icon={<StopOutlined />}
+        onClick={() => handleBlock(friendId)}
+      >
+        Chặn người này
+      </Menu.Item>
+      <Menu.Divider />
+      <Menu.Item
+        key="delete"
+        icon={<DeleteOutlined />}
+        danger
+        onClick={() => handleUnfriend(friendId)}
+      >
+        Xóa bạn
+      </Menu.Item>
+    </Menu>
+  );
+
+  useEffect(() => {
+    const fetchList = async () => {
+      try {
+        const resultFriends = await dispatch(getUserFriends(currentUser.id)).unwrap();
+        setFriendsData(resultFriends.friends);
+
+        const resultBlockedUsers = await dispatch(getBlockedUsers(currentUser.id)).unwrap();
+        setBlockedUsersData(resultBlockedUsers.blockedUsers);
+      } catch (error) {
+        console.error("Lỗi khi fetch danh sách :", error);
+      }
+    }
+
+    if (currentUser?.id) {
+      fetchList();
+    }
+  }, [dispatch, currentUser, friendsData]);
+
+  const filteredFriends = (friendsData || [])
     .filter((friend) =>
-      friend.name.toLowerCase().includes(searchTerm.toLowerCase())
+      (friend?.full_name || '').toLowerCase().includes((searchTerm || '').toLowerCase())
     )
     .sort((a, b) =>
       sortOrder === "asc"
-        ? a.name.localeCompare(b.name)
-        : b.name.localeCompare(a.name)
+        ? (a?.full_name || '').localeCompare(b?.full_name || '')
+        : (b?.full_name || '').localeCompare(a?.full_name || '')
     );
 
   // Nhóm bạn bè theo chữ cái đầu tiên
   const groupedFriends = filteredFriends.reduce((acc, friend) => {
-    const firstLetter = friend.name.charAt(0).toUpperCase();
+    const firstLetter = (friend?.full_name || '').charAt(0).toUpperCase();
+
     if (!acc[firstLetter]) acc[firstLetter] = [];
     acc[firstLetter].push(friend);
     return acc;
@@ -118,12 +181,20 @@ const FriendList = () => {
                     <li key={index} className="friend-item">
                       {/* <span className={`avatar ${friend.color}`}></span> */}
                       <img
-                        src={friend.url}
+                        src={friend.avatar_path}
                         alt={friend.name}
                         className="avatar"
                       />
-                      <span className="friend-name">{friend.name}</span>
-                      <FaEllipsisV className="menu-icon" />
+                      <span className="friend-name">{friend.full_name}</span>
+
+                      <Dropdown
+                        overlay={friendActionMenu(friend.id)}
+                        trigger={['click']}
+                        placement="bottomRight"
+                      >
+                        <FaEllipsisV className="menu-icon" />
+
+                      </Dropdown>
                     </li>
                   ))}
                 </ul>

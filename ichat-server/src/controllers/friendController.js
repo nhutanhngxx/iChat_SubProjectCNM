@@ -4,6 +4,32 @@ const Friendship = require("../schemas/Friendship");
 require("dotenv").config();
 
 const FriendshipController = {
+  //Lấy danh sách chặn của người dùng
+  getBlockListByUserId: async (req, res) => {
+    const { userId } = req.params;
+
+    try {
+      const friendships = await Friendship.find({
+        $or: [
+          { sender_id: userId, status: "blocked" },
+          { receiver_id: userId, status: "blocked" },
+        ],
+      });
+
+      const friendIds = friendships.map((friendship) =>
+        friendship.sender_id.toString() === userId
+          ? friendship.receiver_id
+          : friendship.sender_id
+      );
+
+      const blockedUsers = await User.find({ _id: { $in: friendIds } });
+
+      res.json({ status: "ok", blockedUsers });
+    } catch (error) {
+      res.status(500).json({ status: "error", message: error.message });
+    }
+  },
+
   // Lấy danh sách bạn bè của người dùng
   getFriendListByUserId: async (req, res) => {
     const { userId } = req.params;

@@ -113,5 +113,18 @@
 }
 
 .action-button {
-  min-width: 140px;
+  width: 170px;
+  border-radius: 10px;
+  height: auto;
+}
+.action-button .ant-btn-icon{
+  font-size: 12px;
+}
+:where(.css-dev-only-do-not-override-1htoz2s).ant-modal .ant-modal-content{
+  background: none;
+  height: fit-content;
+}
+:where(.css-dev-only-do-not-override-1htoz2s).ant-modal .ant-modal-close{
+  right: 22px;
+  top: auto;
 }

@@ -206,7 +206,7 @@ const ConversationDetails = ({
 
             <div className="action-buttons">
               <div className="notification-layout">
-                <button className="action-button">
+                <button className="conversation-action-button">
                   <BellOutlined className="icon-notification" />
                 </button>
                 <span>
@@ -214,7 +214,7 @@ const ConversationDetails = ({
                 </span>
               </div>
               <div>
-                <button className="action-button">
+                <button className="conversation-action-button">
                   <PushpinOutlined />
                 </button>
                 <span>
@@ -222,7 +222,7 @@ const ConversationDetails = ({
                 </span>
               </div>
               <div>
-                <button className="action-button">
+                <button className="conversation-action-button">
                   <UsergroupAddOutlined />
                 </button>
                 <span>

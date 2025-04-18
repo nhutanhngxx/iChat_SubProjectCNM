@@ -789,7 +789,7 @@ const FileList = ({ filteredFiles }) => (
 );
 
 // Component chính
-const ComponentLeftSearch = ({ userList, onClose,onSelectChat }) => {
+const ComponentLeftSearch = ({ userList, onClose,onSelectChat,user,onSelectUser }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
    // Add this state for dropdown visibility if not already defined
@@ -942,6 +942,8 @@ const handleUserSelect = (selectedUser) => {
         searchText={searchText}
         setSearchText={setSearchText}
         onClose={onClose} 
+        onSelectUser={onSelectUser}
+        user={user}        
       />
       {searchText === "" ? (
         <RecentlySearched
