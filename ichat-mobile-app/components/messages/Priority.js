@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect } from "react";
+import React, { useContext, useState, useEffect, useRef } from "react";
 import {
   Text,
   View,
@@ -7,6 +7,8 @@ import {
   TouchableOpacity,
   FlatList,
   AppState,
+  Modal,
+  Alert,
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { UserContext } from "../../config/context/UserContext";
@@ -17,6 +19,7 @@ import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import "dayjs/locale/vi";
 import friendService from "../../services/friendService";
+import socketService from "../../services/socketService";
 
 dayjs.extend(relativeTime);
 dayjs.locale("vi");
@@ -33,9 +36,57 @@ const Priority = () => {
   const [groupList, setGroupList] = useState([]);
   const [allUser, setAllUser] = useState([]);
   const [friendList, setFriendList] = useState([]);
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [showOptions, setShowOptions] = useState(false);
+  const longPressTimeout = useRef(null);
+  const isLongPress = useRef(false);
+
+  useEffect(() => {
+    // Lắng nghe sự kiện nhận tin nhắn mới
+    socketService.onReceiveMessage((messageData) => {
+      if (!messageData) return;
+
+      setChatList((prevChats) => {
+        return prevChats
+          .map((chat) => {
+            // Kiểm tra nếu tin nhắn thuộc về chat này
+            if (
+              chat.id === messageData.sender_id ||
+              chat.id === messageData.receiver_id
+            ) {
+              // Định dạng nội dung tin nhắn cuối
+              let lastMessageContent = messageData.content;
+              if (messageData.type === "file") {
+                lastMessageContent = "Tệp đính kèm";
+              } else if (messageData.type === "image") {
+                lastMessageContent = "Hình ảnh";
+              }
+
+              // Cập nhật thông tin chat
+              return {
+                ...chat,
+                lastMessage: lastMessageContent,
+                lastMessageTime: new Date(messageData.timestamp).getTime(),
+                time: getTimeAgo(new Date(messageData.timestamp)),
+              };
+            }
+            return chat;
+          })
+          .sort((a, b) => b.lastMessageTime - a.lastMessageTime); // Sắp xếp lại theo thời gian
+      });
+    });
+
+    // Cleanup function
+    return () => {
+      socketService.removeAllListeners();
+    };
+  }, []);
 
   // Nhận selectedChat từ SearchScreen
-  const selectedChat = route.params?.selectedChat;
+  const selectedChat = route.params?.selectedChat || null;
+
+  // console.log("Selected chat: ", selectedChat);
+  // console.log("Route params: ", route.params);
 
   // Gộp danh sách chat và group chat và sắp xếp theo thời gian tin nhắn cuối cùng
   const listChat = chatList.concat(groupList);
@@ -143,10 +194,10 @@ const Priority = () => {
               id: chatUserId,
               name: fullName,
               lastMessage:
-                msg.type === "image"
-                  ? "Hình ảnh"
-                  : msg.type === "file"
+                msg.type === "file"
                   ? "Tệp đính kèm"
+                  : msg.type === "image"
+                  ? "Hình ảnh"
                   : msg.content,
               lastMessageTime: lastMessageTime,
               time: timeDiff,
@@ -211,12 +262,43 @@ const Priority = () => {
     }
   };
 
+  const handlePress = (item) => {
+    if (!isLongPress.current) {
+      handleOpenChatting(item);
+    }
+    isLongPress.current = false;
+  };
+
+  const handleLongPress = (item) => {
+    isLongPress.current = true;
+    setSelectedItem(item);
+    setShowOptions(true);
+  };
+
+  const handlePressIn = (item) => {
+    longPressTimeout.current = setTimeout(() => {
+      handleLongPress(item);
+    }, 200);
+  };
+
+  const handlePressOut = () => {
+    if (longPressTimeout.current) {
+      clearTimeout(longPressTimeout.current);
+    }
+  };
+
   const renderItem = ({ item }) => {
     if (!item) return null;
     return (
       <TouchableOpacity
-        style={styles.container}
-        onPress={() => handleOpenChatting(item)}
+        style={[
+          styles.container,
+          selectedItem?.id === item.id && showOptions && styles.selectedItem,
+        ]}
+        onPress={() => handlePress(item)}
+        onPressIn={() => handlePressIn(item)}
+        onPressOut={handlePressOut}
+        delayLongPress={200}
       >
         <View style={styles.infoContainer}>
           {item.avatar && <Image source={item.avatar} style={styles.avatar} />}
@@ -231,6 +313,102 @@ const Priority = () => {
       </TouchableOpacity>
     );
   };
+
+  const handleDeleteChat = async (chatId) => {
+    setShowOptions(false);
+    try {
+      // Lấy tất cả tin nhắn giữa 2 người
+      const messages = await messageService.getPrivateMessages({
+        userId: user.id,
+        chatId,
+      });
+      const chatMessages = messages.filter(
+        (msg) =>
+          (msg.sender_id === chatId && msg.receiver_id === user.id) ||
+          (msg.sender_id === user.id && msg.receiver_id === chatId)
+      );
+
+      // Xóa từng tin nhắn một
+      for (const message of chatMessages) {
+        await messageService.softDeleteMessagesForUser(user.id, message._id);
+      }
+
+      // Cập nhật lại danh sách chat
+      setChatList((prevChats) =>
+        prevChats.filter((chat) => chat.id !== chatId)
+      );
+
+      // Đóng modal
+      setShowOptions(false);
+
+      // Thông báo thành công
+      Alert.alert("Thông báo", "Đã xóa cuộc trò chuyện thành công");
+    } catch (error) {
+      console.error("Lỗi khi xóa cuộc trò chuyện:", error);
+      Alert.alert(
+        "Thông báo",
+        "Không thể xóa cuộc trò chuyện. Vui lòng thử lại sau."
+      );
+    }
+  };
+
+  const renderOptionsModal = () => (
+    <Modal
+      transparent={true}
+      visible={showOptions}
+      onRequestClose={() => setShowOptions(false)}
+      animationType="fade"
+    >
+      <TouchableOpacity
+        style={styles.modalOverlay}
+        activeOpacity={1}
+        onPress={() => setShowOptions(false)}
+      >
+        <View style={styles.modalContent}>
+          <TouchableOpacity
+            style={styles.optionItem}
+            onPress={() => {
+              setShowOptions(false);
+            }}
+          >
+            <Text>Đánh dấu chưa đọc</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.optionItem}
+            onPress={() => {
+              setShowOptions(false);
+            }}
+          >
+            <Text>Ghim cuộc trò chuyện</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.optionItem, styles.deleteOption]}
+            onPress={() => {
+              Alert.alert(
+                "Xác nhận",
+                "Bạn có chắc chắn muốn xóa cuộc trò chuyện này?",
+                [
+                  {
+                    text: "Hủy",
+                    style: "cancel",
+                  },
+                  {
+                    text: "Xóa",
+                    style: "destructive",
+                    onPress: () => handleDeleteChat(selectedItem.id),
+                  },
+                ]
+              );
+            }}
+          >
+            <Text style={styles.deleteText}>Xóa cuộc trò chuyện</Text>
+          </TouchableOpacity>
+        </View>
+      </TouchableOpacity>
+    </Modal>
+  );
 
   return (
     <View style={styles.wrapper}>
@@ -249,6 +427,7 @@ const Priority = () => {
           keyboardShouldPersistTaps="handled"
         />
       )}
+      {renderOptionsModal()}
     </View>
   );
 };
@@ -293,6 +472,33 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 16,
     color: "#888",
+  },
+  selectedItem: {
+    backgroundColor: "#f0f0f0",
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContent: {
+    backgroundColor: "white",
+    borderRadius: 10,
+    padding: 20,
+    width: "75%",
+    gap: 15,
+  },
+  optionItem: {
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+  },
+  deleteOption: {
+    borderBottomWidth: 0,
+  },
+  deleteText: {
+    color: "#ff4d4f",
   },
 });
 
