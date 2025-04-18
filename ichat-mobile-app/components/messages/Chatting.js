@@ -263,6 +263,18 @@ const Chatting = ({ route }) => {
 
   if (chat?.chatType === "group") {
     useEffect(() => {
+      const fetchMessages = async () => {
+        const messages = await messageService.getMessagesByGroupId(chat.id);
+        const members = await groupService.getGroupMembers(chat.id);
+        setMessages(messages);
+        setGroupMembers(members);
+      };
+      fetchMessages();
+      const interval = setInterval(fetchMessages, 1000);
+      return () => clearInterval(interval);
+    }, [user, chat]);
+  } else {
+    useEffect(() => {
       if (chat?.id && user?.id) {
         const fetchMessages = async () => {
           try {
@@ -284,24 +296,14 @@ const Chatting = ({ route }) => {
                 (id) => id === user.id || id === String(user.id)
               );
             });
-            console.log("filteredMessages:", filteredMessages);
             setMessages(filteredMessages);
           } catch (error) {
             console.error("Lỗi khi lấy tin nhắn:", error);
           }
         };
-        fetchMessages();
+        const interval = setInterval(fetchMessages, 100);
+        return () => clearInterval(interval);
       }
-    }, [user, chat]);
-  } else {
-    useEffect(() => {
-      const fetchMessages = async () => {
-        const messages = await messageService.getMessagesByGroupId(chat.id);
-        const members = await groupService.getGroupMembers(chat.id);
-        setMessages(messages);
-        setGroupMembers(members);
-      };
-      fetchMessages();
     }, [user, chat]);
   }
 
@@ -354,119 +356,6 @@ const Chatting = ({ route }) => {
     checkIfBlocked();
   }, [chat, user]);
 
-  // const sendMessage = async () => {
-  //   if (typeChat === "not-friend" || typeChat === "blocked") {
-  //     let message = "Bạn không thể gửi tin nhắn trong cuộc trò chuyện này.";
-
-  //     if (typeChat === "blocked") {
-  //       if (blockStatus.blockedByTarget) {
-  //         message = `Bạn không thể gửi tin nhắn cho ${chat.name} vì bạn đã bị chặn.`;
-  //       } else if (blockStatus.blockedByUser) {
-  //         message = `Bạn không thể gửi tin nhắn cho ${chat.name} vì bạn đã chặn người này.`;
-  //       }
-  //     }
-
-  //     Alert.alert("Thông báo", message);
-  //     return;
-  //   }
-  //   try {
-  //     // Gửi tin nhắn văn bản hoặc reply
-  //     if (inputMessage.trim() || replyMessage) {
-  //       console.log("replyMessage:", replyMessage);
-
-  //       const textMessage = {
-  //         sender_id: user.id,
-  //         receiver_id: chat.id,
-  //         content: inputMessage.trim() || replyMessage.content,
-  //         type: "text",
-  //         chat_type: chat?.chatType === "group" ? "group" : "private",
-  //         reply_to: replyMessage?._id || null,
-  //       };
-
-  //       const apiEndpoint = replyMessage
-  //         ? `${API_iChat}/reply`
-  //         : `${API_iChat}/send-message`;
-
-  //       const textResponse = await axios.post(apiEndpoint, textMessage);
-  //       setMessages((prev) => [...prev, textResponse.data.message]);
-  //       setInputMessage("");
-  //       setReplyMessage(null);
-  //     }
-
-  //     // Gửi hình ảnh hoặc file nếu có
-  //     if (selectedImage || selectedFile) {
-  //       console.log("selectedImage:", selectedImage);
-  //       console.log("selectedFile:", selectedFile);
-
-  //       const formData = new FormData();
-
-  //       if (selectedImage) {
-  //         formData.append("image", {
-  //           uri: selectedImage,
-  //           name: `photo-${Date.now()}.jpg`,
-  //           type: "image/jpeg",
-  //         });
-  //       }
-
-  //       if (selectedFile) {
-  //         formData.append("file", {
-  //           uri: selectedFile.uri,
-  //           name: selectedFile.name,
-  //           type: selectedFile.type,
-  //         });
-  //       }
-
-  //       formData.append("sender_id", user.id);
-  //       formData.append("receiver_id", chat.id);
-  //       formData.append(
-  //         "type",
-  //         selectedImage && selectedFile
-  //           ? "media"
-  //           : selectedImage
-  //           ? "image"
-  //           : "file"
-  //       );
-  //       formData.append(
-  //         "chat_type",
-  //         chat?.chatType === "group" ? "group" : "private"
-  //       );
-  //       formData.append("reply_to", replyMessage ? replyMessage._id : null);
-
-  //       console.log("formData:", formData);
-
-  //       const uploadResponse = await axios.post(
-  //         `${API_iChat}/send-message`,
-  //         formData,
-  //         {
-  //           headers: {
-  //             "Content-Type": "multipart/form-data",
-  //           },
-  //         }
-  //       );
-
-  //       console.log("formData:", formData);
-
-  //       console.log(`${API_iChat}/send-message`);
-
-  //       console.log("Upload Response:", uploadResponse);
-
-  //       if (uploadResponse.data.status === "error") {
-  //         throw new Error(uploadResponse.data.message);
-  //       }
-
-  //       if (uploadResponse.data.message) {
-  //         setMessages((prev) => [...prev, uploadResponse.data.message]);
-  //       }
-
-  //       setSelectedImage(null);
-  //       setSelectedFile(null);
-  //     }
-  //   } catch (error) {
-  //     console.error("Lỗi khi gửi tin nhắn:", error);
-  //     Alert.alert("Lỗi", error.message || "Không thể gửi tin nhắn hoặc tệp.");
-  //   }
-  // };
-
   const sendMessage = async () => {
     // Kiểm tra trạng thái trò chuyện
     if (typeChat === "not-friend" || typeChat === "blocked") {
@@ -494,9 +383,9 @@ const Chatting = ({ route }) => {
         console.log("replyMessage:", replyMessage);
 
         const textMessage = {
-          sender_id: user.id.toString(),
-          receiver_id: chat.id.toString(),
-          content: inputMessage.trim() || replyMessage.content || "",
+          sender_id: user.id,
+          receiver_id: chat.id,
+          content: inputMessage.trim() || replyMessage.content,
           type: "text",
           chat_type: chat?.chatType === "group" ? "group" : "private",
           reply_to: replyMessage?._id || null,
@@ -513,7 +402,7 @@ const Chatting = ({ route }) => {
           chatId: roomId,
         });
         // Cập nhật danh sách tin nhắn
-        // setMessages((prev) => [...prev, textResponse.data.message]);
+        setMessages((prev) => [...prev, textResponse.data.message]);
         setInputMessage("");
         setReplyMessage(null);
         console.log("Gửi tin nhắn văn bản thành công");
@@ -555,7 +444,11 @@ const Chatting = ({ route }) => {
           "chat_type",
           chat?.chatType === "group" ? "group" : "private"
         );
-        formData.append("reply_to", replyMessage ? replyMessage._id : null);
+
+        // In formData
+        for (let [key, value] of formData.entries()) {
+          console.log(key, value);
+        }
 
         const uploadResponse = await axios.post(
           `${API_iChat}/send-message`,
@@ -576,7 +469,6 @@ const Chatting = ({ route }) => {
         if (uploadResponse.data.message) {
           setMessages((prev) => [...prev, uploadResponse.data.message]);
         }
-
         // Xóa trạng thái ảnh/file sau khi gửi thành công
         setSelectedImage(null);
         setSelectedFile(null);

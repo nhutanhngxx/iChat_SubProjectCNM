@@ -15,6 +15,7 @@ const MessageController = {
         receiver_id: req.body.receiver_id,
         chat_type: req.body.chat_type,
         file: req.file,
+        reply_to: req.body.reply_to || null,
       });
 
       res.status(201).json({
