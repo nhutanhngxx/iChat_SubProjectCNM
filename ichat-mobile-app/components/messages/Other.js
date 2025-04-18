@@ -80,9 +80,9 @@ const Other = () => {
         }
         setChatList(finalChats);
 
-        const groupsResponse = await groupService.getAllGroupsByUserId(user.id);
-        // setGroupList(groupsResponse || []);
-        setGroupList([...(groupsResponse || [])]);
+        // const groupsResponse = await groupService.getAllGroupsByUserId(user.id);
+        // // setGroupList(groupsResponse || []);
+        // setGroupList([...(groupsResponse || [])]);
       } catch (error) {
         console.error("Lỗi khi tải dữ liệu:", error);
       }
@@ -123,7 +123,7 @@ const Other = () => {
           const avatarPath =
             chatUser?.avatar_path ||
             "https://i.ibb.co/9k8sPRMx/best-seller.png";
-          const lastMessageTime = new Date(msg.timestamp).getTime();
+          const lastMessageTime = new Date(msg?.timestamp).getTime();
           const timeDiff = getTimeAgo(lastMessageTime);
 
           if (
