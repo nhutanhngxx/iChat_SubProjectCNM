@@ -23,6 +23,7 @@ import {
   PlusOutlined,
   DeleteOutlined,
   CloseOutlined,
+  UserAddOutlined,
 } from "@ant-design/icons";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -42,6 +43,8 @@ import "./MessageArea.css";
 import socket from "../../services/socket";
 import { getUserFriends } from "../../../redux/slices/friendSlice";
 import VideoCallModal from "./CallVideo/VideoCallModal";
+import { message as antMessage } from "antd";
+import { sendFriendRequest } from "../../../redux/slices/friendSlice";
 
 const { Header, Content } = Layout;
 
@@ -568,6 +571,8 @@ const MessageArea = ({ selectedChat, user }) => {
   const [token, setToken] = useState("");
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState("");
+  const [friendRequestSent, setFriendRequestSent] = useState(false);
+
   // Hiển thị thông tin hội thoại
   const [showConversation, setShowConversation] = useState(false);
   const [showSearchRight, setShowSearchRight] = useState(false);
@@ -929,6 +934,41 @@ const MessageArea = ({ selectedChat, user }) => {
       socket.off("receive-message", handleReceiveMessage);
     };
   }, [selectedChat?.id, user?.id, dispatch]);
+  // Keets ban
+  const handleSendFriendRequest = async () => {
+    try {
+      antMessage.loading({
+        content: "Đang gửi lời mời kết bạn...",
+        key: "friendRequest",
+      });
+
+      const result = await dispatch(
+        sendFriendRequest({
+          senderId: user.id,
+          receiverId: selectedChat.id,
+        })
+      ).unwrap();
+
+      if (result.status === "ok") {
+        antMessage.success({
+          content: result.message,
+          key: "friendRequest",
+          duration: 2,
+        });
+        setFriendRequestSent(true);
+      } else {
+        throw new Error(result.message);
+      }
+    } catch (error) {
+      antMessage.error({
+        content:
+          error.message ||
+          "Không thể gửi lời mời kết bạn. Vui lòng thử lại sau.",
+        key: "friendRequest",
+      });
+      console.error("Error sending friend request:", error);
+    }
+  };
 
   if (!selectedChat) return null;
 
@@ -988,6 +1028,44 @@ const MessageArea = ({ selectedChat, user }) => {
 
         <Content className="message-area-content">
           <div className="message-container">
+            {/* {!isFriendWithReceiver && (
+              <div className="not-friend-banner">
+                <Alert
+                  message="Hai bạn chưa là bạn bè"
+                  description="Kết bạn để mở khóa tính năng tin nhắn đầy đủ."
+                  type="warning"
+                  showIcon
+                  className="not-friend-alert"
+                />
+              </div>
+            )} */}
+            {!isFriendWithReceiver && (
+              <div className="not-friend-banner">
+                <Alert
+                  message="Hai bạn chưa là bạn bè"
+                  description="Kết bạn để mở khóa tính năng tin nhắn đầy đủ."
+                  type="warning"
+                  showIcon
+                  action={
+                    friendRequestSent ? (
+                      <Button size="small" disabled>
+                        Đã gửi lời mời
+                      </Button>
+                    ) : (
+                      <Button
+                        type="primary"
+                        size="small"
+                        icon={<UserAddOutlined />}
+                        onClick={handleSendFriendRequest}
+                      >
+                        Kết bạn
+                      </Button>
+                    )
+                  }
+                  className="not-friend-alert"
+                />
+              </div>
+            )}
             {Array.isArray(chatMessages) ? (
               chatMessages
                 .filter((message) => {

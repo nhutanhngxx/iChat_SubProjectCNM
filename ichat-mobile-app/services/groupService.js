@@ -29,7 +29,7 @@ const formatGroupList = async (groups) => {
   );
 
   return groups.map((group) => {
-    const lastMessageTime = new Date(group.lastMessage.timestamp).getTime();
+    const lastMessageTime = new Date(group.lastMessage?.timestamp).getTime();
     return {
       id: group._id,
       name: group.name,

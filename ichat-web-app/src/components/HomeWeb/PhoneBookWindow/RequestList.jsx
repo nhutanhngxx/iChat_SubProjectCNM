@@ -16,7 +16,27 @@ import { cancelFriendRequest } from "../../../redux/slices/friendSlice";
 import { acceptFriendRequest } from "../../../redux/slices/friendSlice";
 
 const initialSuggestedFriends = [
-
+  // {
+  //   id: 6,
+  //   full_name: "Lê Hoàng Châu",
+  //   avatar_path: "https://i.ibb.co/B2S2WVRX/Pamela2.jpg",
+  //   cover_path: "https://i.ibb.co/B2S2WVRX/Pamela2.jpg",
+  //   group: 11,
+  // },
+  // {
+  //   id: 7,
+  //   full_name: "Trần Minh Tuyết",
+  //   avatar_path: "https://i.ibb.co/B2S2WVRX/Pamela2.jpg",
+  //   cover_path: "https://i.ibb.co/B2S2WVRX/Pamela2.jpg",
+  //   group: 6,
+  // },
+  // {
+  //   id: 8,
+  //   full_name: "Phạm Thị Vy",
+  //   avatar_path: "https://i.ibb.co/B2S2WVRX/Pamela2.jpg",
+  //   cover_path: "https://i.ibb.co/B2S2WVRX/Pamela2.jpg",
+  //   group: 3,
+  // },
 ];
 
 const RequestList = () => {

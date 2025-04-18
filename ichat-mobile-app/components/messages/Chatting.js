@@ -648,6 +648,64 @@ const Chatting = ({ route }) => {
     }
   };
 
+  // Gửi lời mời kết bạn
+  const handleSendFriendRequest = async (chatId) => {
+    try {
+      const response = await friendService.sendFriendRequest({
+        senderId: user.id,
+        receiverId: chatId,
+      });
+      if (response.status === "ok") {
+        Alert.alert("Thông báo", "Đã gửi lời mời kết bạn thành công.", [
+          {
+            text: "OK",
+            onPress: () => navigation.navigate("Home", { screen: "Messages" }),
+          },
+        ]);
+      } else {
+        Alert.alert("Thông báo", response.message);
+      }
+    } catch (error) {
+      console.error("Lỗi khi gửi lời mời kết bạn:", error);
+      Alert.alert("Lỗi", "Không thể gửi lời mời kết bạn.");
+    }
+  };
+
+  // Hủy chặn
+  const handleUnblockUser = async (chatId) => {
+    Alert.alert(
+      "Xác nhận",
+      `Bạn có chắc chắn muốn hủy chặn ${chat.name} không?`,
+      [
+        { text: "Hủy" },
+        {
+          text: "Xác nhận",
+          onPress: async () => {
+            try {
+              const response = await friendService.unblockUser({
+                userId: user.id,
+                blockedUserId: chatId,
+              });
+              if (response.status === "ok") {
+                setBlockStatus((prev) => ({
+                  ...prev,
+                  // isBlocked: false,
+                  // blockedByTarget: false,
+                  blockedByUser: false,
+                }));
+                setTypeChat("not-friend"); // Cập nhật lại trạng thái chat
+              } else {
+                Alert.alert("Lỗi", response.message);
+              }
+            } catch (error) {
+              console.error("Lỗi khi hủy chặn:", error);
+            }
+          },
+        },
+      ]
+    );
+  };
+
   return (
     <View style={styles.container}>
       <StatusBar style="dark" />
@@ -712,6 +770,7 @@ const Chatting = ({ route }) => {
           </View>
         </View>
       </View>
+
       {typeChat === "blocked" && (
         <View
           style={
@@ -721,9 +780,28 @@ const Chatting = ({ route }) => {
           }
         >
           <Text style={styles.blockedText}>
-            {blockStatus.blockedByTarget
-              ? `Bạn đã bị ${chat.name} chặn`
-              : `Bạn đã chặn ${chat.name}`}
+            {blockStatus.blockedByTarget ? (
+              `Bạn đã bị ${chat.name} chặn`
+            ) : (
+              <>
+                <TouchableOpacity disabled>
+                  <Text style={styles.blockedText}>
+                    Bạn đã chặn {chat.name}.{" "}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => handleUnblockUser(chat.id)}>
+                  <Text
+                    style={{
+                      textDecorationLine: "underline",
+                      fontWeight: "600",
+                      fontSize: 16,
+                    }}
+                  >
+                    Hủy chặn
+                  </Text>
+                </TouchableOpacity>
+              </>
+            )}
           </Text>
         </View>
       )}
@@ -735,9 +813,20 @@ const Chatting = ({ route }) => {
               : [styles.blockedContainer, { padding: 5 }]
           }
         >
-          <Text style={styles.blockedText}>
-            Bạn không thể gửi tin nhắn trong cuộc trò chuyện này.
-          </Text>
+          <View style={styles.blockedText}>
+            <Text style={styles.blockedText}>Kết bạn để nhắn tin. </Text>
+            <TouchableOpacity onPress={() => handleSendFriendRequest(chat.id)}>
+              <Text
+                style={{
+                  textDecorationLine: "underline",
+                  fontWeight: "600",
+                  fontSize: 16,
+                }}
+              >
+                Kết bạn
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
       )}
 
@@ -1453,7 +1542,9 @@ const styles = StyleSheet.create({
   },
   blockedText: {
     color: "#d32f2f",
-    fontSize: 14,
+    fontSize: 16,
+    flexDirection: "row",
+    alignItems: "center",
   },
   notFriendContainer: {
     backgroundColor: "#f0f0f0",

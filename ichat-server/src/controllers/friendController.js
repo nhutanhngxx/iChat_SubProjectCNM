@@ -355,11 +355,7 @@ const FriendshipController = {
         ],
       });
 
-      if (friendship) {
-        friendship.status = "blocked";
-        friendship.blocked_by = blocker_id; // Lưu người chặn
-        await friendship.save();
-      } else {
+      if (!friendship) {
         // Nếu chưa có quan hệ trước đó, tạo mới với trạng thái "blocked"
         friendship = await Friendship.create({
           sender_id: blocker_id,
@@ -367,9 +363,30 @@ const FriendshipController = {
           blocked_by: blocker_id,
           status: "blocked",
         });
+        return res.json({
+          status: "ok",
+          message: "Chặn người dùng thành công!",
+          friendship,
+        });
       }
 
-      res.json({ status: "ok", message: "Người dùng đã bị chặn", friendship });
+      if (!friendship.blocked_by) {
+        friendship.status = "blocked";
+        friendship.blocked_by = blocker_id; // Lưu người chặn
+        await friendship.save();
+        return res.json({
+          status: "ok",
+          message: "Chặn người dùng thành công!",
+          friendship,
+        });
+      }
+
+      // Nếu đã bị chặn trước đó thì thông báo đã bị chặn
+      return res.json({
+        status: "error",
+        message:
+          "Bạn đã bị người dùng này chặn trước đó. Không thể thực hiện thao tác này.",
+      });
     } catch (error) {
       res.status(500).json({ status: "error", message: error.message });
     }

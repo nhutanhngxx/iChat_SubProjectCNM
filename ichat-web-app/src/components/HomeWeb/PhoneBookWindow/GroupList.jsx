@@ -5,38 +5,38 @@ import "./GroupList.css"; // Import file CSS
 import "./FriendList.css"; // Import file CSS
 
 const GroupListData = [
-  { name: "Nhóm 1", url: "https://i.ibb.co/B2S2WVRX/Pamela2.jpg", members: 5 },
-  { name: "Nhóm 2", url: "https://i.ibb.co/B2S2WVRX/Pamela2.jpg", members: 8 },
-  {
-    name: "Gia đình",
-    url: "https://i.ibb.co/B2S2WVRX/Pamela2.jpg",
-    members: 4,
-  },
-  {
-    name: "Bạn thân",
-    url: "https://i.ibb.co/B2S2WVRX/Pamela2.jpg",
-    members: 6,
-  },
-  {
-    name: "Đồng nghiệp",
-    url: "https://i.ibb.co/B2S2WVRX/Pamela2.jpg",
-    members: 10,
-  },
-  {
-    name: "Câu lạc bộ sách",
-    url: "https://i.ibb.co/B2S2WVRX/Pamela2.jpg",
-    members: 7,
-  },
-  {
-    name: "Nhóm thể thao",
-    url: "https://i.ibb.co/B2S2WVRX/Pamela2.jpg",
-    members: 9,
-  },
-  {
-    name: "Lớp đại học",
-    url: "https://i.ibb.co/B2S2WVRX/Pamela2.jpg",
-    members: 12,
-  },
+  // { name: "Nhóm 1", url: "https://i.ibb.co/B2S2WVRX/Pamela2.jpg", members: 5 },
+  // { name: "Nhóm 2", url: "https://i.ibb.co/B2S2WVRX/Pamela2.jpg", members: 8 },
+  // {
+  //   name: "Gia đình",
+  //   url: "https://i.ibb.co/B2S2WVRX/Pamela2.jpg",
+  //   members: 4,
+  // },
+  // {
+  //   name: "Bạn thân",
+  //   url: "https://i.ibb.co/B2S2WVRX/Pamela2.jpg",
+  //   members: 6,
+  // },
+  // {
+  //   name: "Đồng nghiệp",
+  //   url: "https://i.ibb.co/B2S2WVRX/Pamela2.jpg",
+  //   members: 10,
+  // },
+  // {
+  //   name: "Câu lạc bộ sách",
+  //   url: "https://i.ibb.co/B2S2WVRX/Pamela2.jpg",
+  //   members: 7,
+  // },
+  // {
+  //   name: "Nhóm thể thao",
+  //   url: "https://i.ibb.co/B2S2WVRX/Pamela2.jpg",
+  //   members: 9,
+  // },
+  // {
+  //   name: "Lớp đại học",
+  //   url: "https://i.ibb.co/B2S2WVRX/Pamela2.jpg",
+  //   members: 12,
+  // },
 ];
 
 const GroupList = () => {

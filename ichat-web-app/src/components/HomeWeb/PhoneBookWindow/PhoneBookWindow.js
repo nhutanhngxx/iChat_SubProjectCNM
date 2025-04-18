@@ -39,6 +39,7 @@ const PhoneBookWindow = () => {
             onClose={() => setShowInterface(false)}
             userList={userList}
             onSelectUser={setSelectedUser}
+            user
           />
         ) : (
           <div>
