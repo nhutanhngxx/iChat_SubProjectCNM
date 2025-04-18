@@ -245,7 +245,7 @@ const RequestList = () => {
                 className="btn cancel"
                 onClick={() => handleCancelRequest(currentUser.id, request.id)}
               >
-                {request.message_request ? (
+                {request.message && request.message === "Đã thu hồi lời mời" ? (
                   <>
                     <CiRedo />
                     <p> Đã thu hồi lời mời</p>

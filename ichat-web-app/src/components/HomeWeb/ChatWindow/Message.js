@@ -737,6 +737,8 @@ const Message = ({
     if (!reply) return null;
 
     const repliedMessage = findRepliedMessage(reply);
+    console.log("Replied message found:", repliedMessage);
+
     // if (!repliedMessage) return null;
     if (!repliedMessage) {
       // Return a fallback UI when the replied message can't be found
@@ -827,22 +829,22 @@ const Message = ({
             description="Kết bạn để mở khóa tính năng tin nhắn đầy đủ."
             type="warning"
             showIcon
-            action={
-              friendRequestSent ? (
-                <Button size="small" disabled>
-                  Đã gửi lời mời
-                </Button>
-              ) : (
-                <Button
-                  type="primary"
-                  size="small"
-                  icon={<UserAddOutlined />}
-                  onClick={handleSendFriendRequest}
-                >
-                  Kết bạn
-                </Button>
-              )
-            }
+            // action={
+            //   friendRequestSent ? (
+            //     <Button size="small" disabled>
+            //       Đã gửi lời mời
+            //     </Button>
+            //   ) : (
+            //     <Button
+            //       type="primary"
+            //       size="small"
+            //       icon={<UserAddOutlined />}
+            //       onClick={handleSendFriendRequest}
+            //     >
+            //       Kết bạn
+            //     </Button>
+            //   )
+            // }
             className="not-friend-alert"
           />
         </div>
@@ -863,7 +865,13 @@ const Message = ({
           isInteractionDisabled && !isSender ? null : () => setIsHovered(false)
         }
         ref={messageRef}
-        style={{ display: "flex" }}
+        style={{
+          display: "flex",
+          marginBottom:
+            message.reactions && message.reactions.length > 0
+              ? "15px"
+              : undefined,
+        }}
       >
         {!isSender && (
           <div className="avatar-message">

@@ -9,6 +9,7 @@ import {
   Input,
   Checkbox,
   message,
+  Alert,
 } from "antd";
 import {
   VideoCameraOutlined,
@@ -1038,7 +1039,6 @@ const MessageArea = ({ selectedChat, user }) => {
           selectedChat={selectedChat} // Thêm prop selectedChat
         />
       </Layout>
-
       {showConversation && (
         <Layout className="conversation-details">
           <ConversationDetails
