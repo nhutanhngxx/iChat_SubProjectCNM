@@ -50,60 +50,166 @@ export const sendMessage = createAsyncThunk(
   }
 );
 // Gửi ảnh
+// export const sendImageMessage = createAsyncThunk(
+//   "messages/sendImageMessage",
+//   async ({ sender_id, receiver_id, image }, { rejectWithValue }) => {
+//     try {
+//       const formData = new FormData();
+//       formData.append("sender_id", sender_id);
+//       formData.append("receiver_id", receiver_id);
+//       formData.append("content", ""); // server sẽ tự xử lý content từ file
+//       // Tự động xác định type
+//       const mimeType = image.type;
+//       const isImage = mimeType.startsWith("image/");
+//       const fileType = isImage ? "image" : "file";
+
+//       formData.append("type", fileType);
+//       formData.append("chat_type", "private");
+
+//       formData.append("file", image); // đơn giản là File gốc từ input
+//       console.log("formData", formData);
+//       const response = await fetch(`${API_URL}send-message`, {
+//         method: "POST",
+//         body: formData,
+//         // headers: {
+//         //   "Content-Type": "multipart/form-data",
+//         // },
+//       });
+
+//       if (!response.ok) {
+//         const errorData = await response.text();
+//         console.error("Error data send image:", errorData);
+
+//         return rejectWithValue(errorData);
+//       }
+
+//       return await response.json();
+//     } catch (err) {
+//       console.error("Error sending image:", err);
+//       return rejectWithValue({ message: "Network Error" });
+//     }
+//   }
+// );
+// Update the function to handle all media types properly
 export const sendImageMessage = createAsyncThunk(
   "messages/sendImageMessage",
-  async ({ sender_id, receiver_id, image }, { rejectWithValue }) => {
+  async (
+    { sender_id, receiver_id, image, type: forcedType },
+    { rejectWithValue }
+  ) => {
     try {
       const formData = new FormData();
       formData.append("sender_id", sender_id);
       formData.append("receiver_id", receiver_id);
-      formData.append("content", ""); // server sẽ tự xử lý content từ file
-      // Tự động xác định type
-      const mimeType = image.type;
-      const isImage = mimeType.startsWith("image/");
-      const fileType = isImage ? "image" : "file";
+      formData.append("content", ""); // server will handle content from file
+
+      // Determine file type based on MIME type
+      let fileType;
+
+      // If type is explicitly provided from the caller, use that
+      if (forcedType) {
+        fileType = forcedType;
+      } else {
+        const mimeType = image.type;
+
+        // Better type detection
+        if (mimeType.startsWith("image/")) {
+          fileType = "image";
+        } else if (mimeType.startsWith("video/")) {
+          fileType = "video";
+        } else if (mimeType.startsWith("audio/")) {
+          fileType = "audio";
+        } else {
+          fileType = "file";
+        }
+      }
+
+      // Log for debugging
+      console.log("Sending file as type:", fileType, "MIME:", image.type);
 
       formData.append("type", fileType);
       formData.append("chat_type", "private");
+      formData.append("file", image);
 
-      formData.append("file", image); // đơn giản là File gốc từ input
-      console.log("formData", formData);
+      // Set content field to avoid validation error
+      // This is a temporary value that will be replaced by the server
+      formData.append("content", "Uploading media...");
+
       const response = await fetch(`${API_URL}send-message`, {
         method: "POST",
         body: formData,
-        // headers: {
-        //   "Content-Type": "multipart/form-data",
-        // },
       });
 
       if (!response.ok) {
-        const errorData = await response.text();
-        console.error("Error data send image:", errorData);
+        const errorText = await response.text();
+        console.error("Error data send media:", errorText);
 
-        return rejectWithValue(errorData);
+        try {
+          // Try to parse as JSON if possible
+          const errorJson = JSON.parse(errorText);
+          return rejectWithValue(errorJson);
+        } catch {
+          // Fall back to text if not JSON
+          return rejectWithValue(errorText);
+        }
       }
 
-      return await response.json();
+      const data = await response.json();
+      return data;
     } catch (err) {
-      console.error("Error sending image:", err);
-      return rejectWithValue({ message: "Network Error" });
+      console.error("Error sending media:", err);
+      return rejectWithValue({ message: err.message || "Network Error" });
     }
   }
 );
 // Thu hồi tin nhắn
 export const recallToMessage = createAsyncThunk(
   "messages/recallToMessage",
-  async (messageId) => {
-    const response = await fetch(`${API_URL}recall/${messageId}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-    if (!response.ok) {
-      throw new Error("Failed to recall message");
+  async (arg, { rejectWithValue }) => {
+    try {
+      // Handle both formats: single messageId or {messageId, userId} object
+      let messageId, userId;
+
+      if (typeof arg === "object") {
+        // If called with an object containing both IDs
+        messageId = arg.messageId;
+        userId = arg.userId;
+      } else {
+        // If called with just messageId (backward compatibility)
+        messageId = arg;
+        // userId will be undefined, which will cause a validation error in the backend
+      }
+
+      console.log("Recalling message:", { messageId, userId });
+
+      if (!messageId) {
+        return rejectWithValue("Missing message ID");
+      }
+
+      // Add userId to the request body since your backend needs it
+      const response = await fetch(`${API_URL}recall/${messageId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userId }), // Include userId in the body
+      });
+
+      // Parse response first so we can handle errors properly
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error("Recall API error:", data);
+        return rejectWithValue(data);
+      }
+
+      console.log("Successful recall response:", data);
+      return data;
+    } catch (err) {
+      console.error("Error in recall thunk:", err);
+      // Safely convert error to string to avoid toString() on undefined
+      return rejectWithValue(err ? err.toString() : "Unknown error");
     }
-    return messageId;
   }
 );
 // Xoá mềm tin nhắn giữa 2 người và trả về lại danh sách đã lọc
@@ -236,30 +342,6 @@ const messagesSlice = createSlice({
     error: null,
   },
   reducers: {
-    // updateMessages: (state, action) => {
-    //   const newMessage = action.payload;
-
-    //   // Check if message with same ID already exists in state
-    //   const messageExists = state.chatMessages.some(
-    //     (msg) => msg._id === newMessage._id
-    //   );
-    //   const index = state.chatMessages.findIndex(
-    //     (msg) => msg._id === newMessage._id
-    //   );
-
-    //   // Only add if it doesn't exist
-    //   if (!messageExists) {
-    //     state.chatMessages.push(newMessage);
-    //     console.log("Added new message to state:", newMessage._id);
-    //   } else {
-    //     console.log("Prevented duplicate message:", newMessage._id);
-    //     state.chatMessages[index] = {
-    //       ...state.chatMessages[index],
-    //       ...newMessage, // ghi đè các field cũ bằng cái mới
-    //     };
-    //     console.log("♻️ Updated recalled message:", newMessage._id);
-    //   }
-    // },
     updateMessages: (state, action) => {
       const newMessage = action.payload;
 
@@ -370,13 +452,34 @@ const messagesSlice = createSlice({
         }
       })
       .addCase(recallToMessage.fulfilled, (state, action) => {
-        const messageId = action.payload;
+        // Check the structure of the response
+        const recalledMessage = action.payload?.data || action.payload;
+
+        if (!recalledMessage || !recalledMessage._id) {
+          console.error("Invalid recalled message data:", recalledMessage);
+          return;
+        }
+
+        const messageId = recalledMessage._id;
+
+        // Find and update the message in chatMessages
         const messageIndex = state.chatMessages.findIndex(
           (msg) => msg._id === messageId
         );
+
         if (messageIndex !== -1) {
-          state.chatMessages[messageIndex].content = "Tin nhắn đã bị thu hồi";
-          state.chatMessages[messageIndex].recall = true;
+          // Update with all properties from the recalled message
+          state.chatMessages[messageIndex] = {
+            ...state.chatMessages[messageIndex],
+            ...recalledMessage,
+            content: "Tin nhắn đã bị thu hồi",
+            type: "text",
+            recall: true,
+            reactions: [],
+          };
+          console.log("✅ Message recalled successfully:", messageId);
+        } else {
+          console.warn("Could not find message to recall:", messageId);
         }
       })
       .addCase(handleSoftDelete.pending, (state) => {

@@ -8,7 +8,7 @@ import {
 import "./SearchBar.css";
 import AddFriend from "../ChatWindow/AddFriend";
 
-const SearchBar = ({ onFocus }) => {
+const SearchBar = ({ onFocus ,onSelectUser}) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const showModal = () => {
     setIsModalVisible(true);
@@ -27,7 +27,7 @@ const SearchBar = ({ onFocus }) => {
       />
       <div className="icons">
         <UserOutlined className="user-icon" onClick={showModal} />
-        <AddFriend visible={isModalVisible} onClose={handleClose} />
+        <AddFriend visible={isModalVisible} onClose={handleClose} onSelectUser={onSelectUser} />
 
         <UsergroupAddOutlined className="group-icon" />
       </div>

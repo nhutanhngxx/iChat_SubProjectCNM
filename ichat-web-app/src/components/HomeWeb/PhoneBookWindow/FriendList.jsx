@@ -1,16 +1,28 @@
 import React, { useEffect, useState } from "react";
-
 import { useDispatch, useSelector } from "react-redux";
-import { getUserFriends, unfriendUser, getBlockedUsers, blockUser } from "../../../redux/slices/friendSlice";
+import { useNavigate } from "react-router-dom";
+import {
+  getUserFriends,
+  unfriendUser,
+  getBlockedUsers,
+  blockUser,
+} from "../../../redux/slices/friendSlice";
 import { BsFillPersonLinesFill } from "react-icons/bs";
 import { FaEllipsisV } from "react-icons/fa";
-import { Menu, Dropdown, Modal, message } from 'antd';
-import { ExclamationCircleOutlined } from '@ant-design/icons';
-import { EyeOutlined, TagsOutlined, EditOutlined, StopOutlined, DeleteOutlined } from '@ant-design/icons';
+import { Menu, Dropdown, Modal, message } from "antd";
+import { ExclamationCircleOutlined } from "@ant-design/icons";
+import {
+  EyeOutlined,
+  TagsOutlined,
+  EditOutlined,
+  StopOutlined,
+  DeleteOutlined,
+} from "@ant-design/icons";
 import "./FriendList.css"; // Import file CSS
 
 const FriendList = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const currentUser = useSelector((state) => state.auth.user);
   const { confirm } = Modal;
   const [searchTerm, setSearchTerm] = useState("");
@@ -18,50 +30,71 @@ const FriendList = () => {
   const [friendsData, setFriendsData] = useState([]);
   const [blockedUsersData, setBlockedUsersData] = useState([]);
 
-
-
   const handleUnfriend = async (friendId) => {
     confirm({
-      title: 'Xác nhận xóa bạn',
+      title: "Xác nhận xóa bạn",
       icon: <ExclamationCircleOutlined />,
-      content: 'Bạn có chắc chắn muốn xóa người này khỏi danh sách bạn bè?',
-      okText: 'Xóa',
-      cancelText: 'Hủy',
+      content: "Bạn có chắc chắn muốn xóa người này khỏi danh sách bạn bè?",
+      okText: "Xóa",
+      cancelText: "Hủy",
       okButtonProps: { danger: true },
       async onOk() {
         try {
-          const result = await dispatch(unfriendUser({
-            user_id: currentUser.id,
-            friend_id: friendId
-          })).unwrap();
+          const result = await dispatch(
+            unfriendUser({
+              user_id: currentUser.id,
+              friend_id: friendId,
+            })
+          ).unwrap();
 
-          if (result.status === 'ok') {
-            message.success('Đã xóa bạn thành công');
+          if (result.status === "ok") {
+            message.success("Đã xóa bạn thành công");
             // Cập nhật lại danh sách bạn bè ở đây nếu cần
           }
         } catch (error) {
-          message.error(error.message || 'Có lỗi xảy ra khi xóa bạn');
+          message.error(error.message || "Có lỗi xảy ra khi xóa bạn");
         }
-      }
+      },
     });
   };
 
   const handleBlock = async (friendId) => {
     try {
-      const result = await dispatch(blockUser({
-        blocker_id: currentUser.id,
-        blocked_id: friendId
-      })).unwrap();
+      const result = await dispatch(
+        blockUser({
+          blocker_id: currentUser.id,
+          blocked_id: friendId,
+        })
+      ).unwrap();
 
-      if (result.status === 'ok') {
+      if (result.status === "ok") {
         message.success(result.message);
         dispatch(getUserFriends(currentUser.id));
       }
     } catch (error) {
-      message.error(error.message || 'Có lỗi xảy ra khi chặn người dùng');
+      message.error(error.message || "Có lỗi xảy ra khi chặn người dùng");
     }
   };
 
+  const handleFriendClick = (friend) => {
+    // Format the friend object to match what handleSelectUser in ChatWindow expects
+    const chatUser = {
+      id: friend.id,
+      name: friend.full_name,
+      user_status: friend.user_status || "Offline",
+      avatar_path:
+        friend.avatar_path || "https://default-avatar.com/avatar.jpg",
+      receiver_id: friend.id,
+    };
+
+    // Store the selected friend in localStorage to retrieve in ChatWindow
+    localStorage.setItem("selectedFriend", JSON.stringify(chatUser));
+
+    // Navigate to home with a chatwindow parameter to indicate opening chat window
+    navigate("/home", {
+      state: { activateChat: true, selectedFriend: chatUser },
+    });
+  };
 
   const friendActionMenu = (friendId) => (
     <Menu>
@@ -70,7 +103,7 @@ const FriendList = () => {
       </Menu.Item>
       <Menu.Item key="category" icon={<TagsOutlined />}>
         Phân loại
-        <span style={{ float: 'right', marginLeft: '8px' }}>{'>'}</span>
+        <span style={{ float: "right", marginLeft: "8px" }}>{">"}</span>
       </Menu.Item>
       <Menu.Item key="nickname" icon={<EditOutlined />}>
         Đặt tên gọi nhớ
@@ -98,15 +131,19 @@ const FriendList = () => {
   useEffect(() => {
     const fetchList = async () => {
       try {
-        const resultFriends = await dispatch(getUserFriends(currentUser.id)).unwrap();
+        const resultFriends = await dispatch(
+          getUserFriends(currentUser.id)
+        ).unwrap();
         setFriendsData(resultFriends.friends);
 
-        const resultBlockedUsers = await dispatch(getBlockedUsers(currentUser.id)).unwrap();
+        const resultBlockedUsers = await dispatch(
+          getBlockedUsers(currentUser.id)
+        ).unwrap();
         setBlockedUsersData(resultBlockedUsers.blockedUsers);
       } catch (error) {
         console.error("Lỗi khi fetch danh sách :", error);
       }
-    }
+    };
 
     if (currentUser?.id) {
       fetchList();
@@ -115,17 +152,19 @@ const FriendList = () => {
 
   const filteredFriends = (friendsData || [])
     .filter((friend) =>
-      (friend?.full_name || '').toLowerCase().includes((searchTerm || '').toLowerCase())
+      (friend?.full_name || "")
+        .toLowerCase()
+        .includes((searchTerm || "").toLowerCase())
     )
     .sort((a, b) =>
       sortOrder === "asc"
-        ? (a?.full_name || '').localeCompare(b?.full_name || '')
-        : (b?.full_name || '').localeCompare(a?.full_name || '')
+        ? (a?.full_name || "").localeCompare(b?.full_name || "")
+        : (b?.full_name || "").localeCompare(a?.full_name || "")
     );
 
   // Nhóm bạn bè theo chữ cái đầu tiên
   const groupedFriends = filteredFriends.reduce((acc, friend) => {
-    const firstLetter = (friend?.full_name || '').charAt(0).toUpperCase();
+    const firstLetter = (friend?.full_name || "").charAt(0).toUpperCase();
 
     if (!acc[firstLetter]) acc[firstLetter] = [];
     acc[firstLetter].push(friend);
@@ -178,8 +217,12 @@ const FriendList = () => {
                 <ul key={letter} className="friend-group">
                   <li className="group-header">{letter}</li>
                   {groupedFriends[letter].map((friend, index) => (
-                    <li key={index} className="friend-item">
-                      {/* <span className={`avatar ${friend.color}`}></span> */}
+                    <li
+                      key={index}
+                      className="friend-item"
+                      onClick={() => handleFriendClick(friend)}
+                      style={{ cursor: "pointer" }}
+                    >
                       <img
                         src={friend.avatar_path}
                         alt={friend.name}
@@ -189,11 +232,11 @@ const FriendList = () => {
 
                       <Dropdown
                         overlay={friendActionMenu(friend.id)}
-                        trigger={['click']}
+                        trigger={["click"]}
                         placement="bottomRight"
+                        onClick={(e) => e.stopPropagation()} // Prevent clicking dropdown from triggering parent onClick
                       >
                         <FaEllipsisV className="menu-icon" />
-
                       </Dropdown>
                     </li>
                   ))}

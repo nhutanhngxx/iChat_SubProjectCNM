@@ -21,6 +21,7 @@ import {
   DownOutlined,
   PushpinOutlined,
   MoreOutlined,
+  MutedOutlined 
 } from "@ant-design/icons";
 import { MdMoreHoriz } from "react-icons/md";
 import "./ComponentLeft.css";
@@ -162,12 +163,16 @@ const ChatItem = ({ item, onSelectUser, onPin }) => {
           <Col>
             <span className={`last-message ${item.type || "text"}`}>
               {item.type === "video" && <VideoCameraOutlined />}
-              {item.type === "audio" && <PhoneOutlined />}
+              {item.type === "audio" && <MutedOutlined />}
               {item.type === "notification" && <NotificationOutlined />}
               {`${item.isLastMessageFromMe === true ? "Bạn: " : `${item.name}: `}${item.type === "image"
                 ? "Đã gửi một ảnh"
                 : item.type === "file"
                   ? "Đã gửi một tệp tin"
+                  : item.type === "video"
+                    ? "Đã gửi một video"
+                    : item.type === "audio"
+                      ? "Đã gửi một audio"
                   : item.lastMessage?.length > 30
                     ? item.lastMessage.slice(0, 30) + "..."
                     : item.lastMessage || "Tin nhắn trống"
@@ -303,7 +308,7 @@ const ComponentLeft = ({ userList, setUserList, onSelectUser,user }) => {
         />
       ) : (
         <Layout className="chat-sidebar">
-          <SearchBar onFocus={() => setShowInterface(true)} />
+          <SearchBar onFocus={() => setShowInterface(true)} onSelectUser={onSelectUser} />
           {/* <ChatList filteredChatList={userList} onSelectUser={onSelectUser} /> */}
           <div className="conversations-container">
             <div className="classification-conversation-container">

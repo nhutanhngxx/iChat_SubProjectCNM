@@ -56,33 +56,33 @@ const CATEGORY_COLORS = [
   "#a855f7",
 ];
 
-const mockMessagesByUser = {
-  1: [
-    {
-      id: 1,
-      text: "Hi, is the watch still up for sale?",
-      sender: "George Alan",
-      timestamp: "2:30 PM",
-      type: "received",
-    },
-    {
-      id: 2,
-      text: "Awesome! Can I see a couple of pictures?",
-      sender: "You",
-      timestamp: "2:31 PM",
-      type: "sent",
-    },
-  ],
-  2: [
-    {
-      id: 3,
-      text: "Your ride is arriving",
-      sender: "Uber Cars",
-      timestamp: "1:45 PM",
-      type: "received",
-    },
-  ],
-};
+// const mockMessagesByUser = {
+//   1: [
+//     {
+//       id: 1,
+//       text: "Hi, is the watch still up for sale?",
+//       sender: "George Alan",
+//       timestamp: "2:30 PM",
+//       type: "received",
+//     },
+//     {
+//       id: 2,
+//       text: "Awesome! Can I see a couple of pictures?",
+//       sender: "You",
+//       timestamp: "2:31 PM",
+//       type: "sent",
+//     },
+//   ],
+//   2: [
+//     {
+//       id: 3,
+//       text: "Your ride is arriving",
+//       sender: "Uber Cars",
+//       timestamp: "1:45 PM",
+//       type: "received",
+//     },
+//   ],
+// };
 
 // Sub-components
 const AddCategoryModal = ({ setCategories }) => {
@@ -553,57 +553,10 @@ const CreateGroupModal = ({ visible, onCancel, onOk }) => {
             </div>
           </div>
         </div>
-
-        {/* Counter
-        {selectedContacts.length > 0 && (
-          <div
-            style={{
-              position: "absolute",
-              bottom: "5rem",
-              right: "3.5rem",
-              backgroundColor: "#2563eb",
-              color: "white",
-              padding: "8px 16px",
-              borderRadius: "8px",
-              fontWeight: "500",
-            }}
-          >
-            Đã chọn {selectedContacts.length}/100
-          </div>
-        )} */}
       </div>
     </Modal>
   );
 };
-// Mock messages for different users
-// const mockMessagesByUser = {
-//   1: [
-//     {
-//       id: 1,
-//       text: "Hi, is the watch still up for sale?",
-//       sender: "George Alan",
-//       timestamp: "2:30 PM",
-//       type: "received",
-//     },
-//     {
-//       id: 2,
-//       text: "Awesome! Can I see a couple of pictures?",
-//       sender: "You",
-//       timestamp: "2:31 PM",
-//       type: "sent",
-//     },
-//   ],
-//   2: [
-//     {
-//       id: 3,
-//       text: "Your ride is arriving",
-//       sender: "Uber Cars",
-//       timestamp: "1:45 PM",
-//       type: "received",
-//     },
-//   ],
-// };
-// At the top of your component
 
 const MessageArea = ({ selectedChat, user }) => {
   const dispatch = useDispatch();
@@ -800,9 +753,6 @@ const MessageArea = ({ selectedChat, user }) => {
       };
 
       try {
-        // await dispatch(sendMessage(newMessage)).unwrap(); // Chờ gửi thành công
-        // await dispatch(fetchMessages(user?.id)); // Cập nhật danh sách người nhận
-        // dispatch(fetchChatMessages({ senderId: user.id, receiverId: selectedChat.receiver_id })); // Cập nhật tin nhắn giữa sender và receiver'
         const response = await dispatch(sendMessage(newMessage)).unwrap(); // Chờ gửi thành công
 
         const sentMessage = response.data; // Tin nhắn vừa gửi
@@ -815,11 +765,6 @@ const MessageArea = ({ selectedChat, user }) => {
           ...sentMessage, // Tin nhắn vừa gửi
           chatId: roomId, // ID phòng chat
         });
-
-        // Cập nhật danh sách tin nhắn chatMessages ngay lập tức
-        // dispatch(updateMessages(sentMessage));
-
-        // Cập nhật danh sách người nhận gần nhất
         dispatch(fetchMessages(user?.id));
       } catch (error) {
         console.log("Error sending message:", error);
@@ -855,14 +800,28 @@ const MessageArea = ({ selectedChat, user }) => {
   };
 
   // Tự động cuộn xuống cuối khi có tin nhắn mới
-  const handleFileUpload = async (file) => {
+  const handleFileUpload = async (file, mediaType) => {
     if (selectedChat) {
       try {
+        message.loading({ content: "Đang tải lên...", key: "uploadMedia" });
+        // Determine file type if not provided
+        const fileType = mediaType || determineFileType(file);
+
+        console.log("Uploading file type:", fileType, file.name);
+
+        // Create form data
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("sender_id", user?.id);
+        formData.append("receiver_id", selectedChat?.id);
+        formData.append("type", fileType); // Important: specify file type
+
         const result = await dispatch(
           sendImageMessage({
             sender_id: user?.id,
             receiver_id: selectedChat?.id,
             image: file,
+            fileType: fileType, // Specify the file type
           })
         ).unwrap();
 
@@ -877,18 +836,36 @@ const MessageArea = ({ selectedChat, user }) => {
         });
 
         dispatch(fetchMessages(user?.id)); // Optional
+        // Show success message
+        message.success({
+          content: `${
+            fileType.charAt(0).toUpperCase() + fileType.slice(1)
+          } đã được gửi thành công!`,
+          key: "uploadMedia",
+        });
       } catch (error) {
         console.log("Error sending file message:", error);
+        message.error({
+          content: "Không thể gửi tệp. Vui lòng thử lại.",
+          key: "uploadMedia",
+        });
       }
     }
   };
+  const determineFileType = (file) => {
+    const mimeType = file.type;
+
+    if (mimeType.startsWith("video/")) return "video";
+    if (mimeType.startsWith("audio/")) return "audio";
+    if (mimeType.startsWith("image/")) return "image";
+    return "file";
+  };
+  // Tự động cuộn xuống cuối khi có tin nhắn mới
   useEffect(() => {
     if (messageEndRef.current) {
       messageEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [selectedChat, messages]);
-  console.log("Selected Chat in MessageArea", selectedChat);
-  console.log("Messages in MessageArea", messages);
 
   const handleScrollToBottom = () => {
     if (messageEndRef.current) {

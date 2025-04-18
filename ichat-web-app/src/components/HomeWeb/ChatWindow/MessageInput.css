@@ -234,3 +234,28 @@
 .reply-preview-close:hover {
   color: #666;
 }
+.media-preview {
+  border-radius: 8px;
+  background-color: #f0f2f5;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+.media-preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.media-preview-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.media-preview video,
+.media-preview audio {
+  border-radius: 4px;
+}

@@ -494,7 +494,7 @@
     left: 0;
 }
 
-.reaction-badge {
+/* .reaction-badge {
   display: inline-flex;
   align-items: center;
   padding: 2px 8px;
@@ -512,4 +512,122 @@
 
 .reaction-badge:hover {
   background-color: #e6f7ff;
+} */
+ /* Add this to your Message.css file */
+.reaction-badge {
+  display: inline-flex;
+  align-items: center;
+  background: #f0f2f5;
+  border-radius: 10px;
+  padding: 2px 6px;
+  margin-right: 4px;
+  margin-bottom: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  font-size: 13px;
+}
+
+.reaction-badge.user-reacted {
+  background-color: #e6f7ff;
+  border: 1px solid #91d5ff;
+}
+
+.reaction-badge:hover {
+  background-color: #e6e8eb;
+}
+
+.user-reacted:hover {
+  background-color: #d9eeff;
+}
+/* Video message styling */
+.message-video-container {
+  max-width: 300px;
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+  background: #000;
+  margin-bottom: 5px;
+}
+
+.message-video {
+  width: 100%;
+  max-height: 250px;
+  border-radius: 8px;
+  display: block;
+}
+
+.video-controls {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  display: flex;
+  align-items: center;
+}
+
+.video-timestamp {
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 12px;
+}
+
+/* Audio message styling */
+.message-audio-container {
+  min-width: 240px;
+  max-width: 300px;
+  border-radius: 8px;
+  padding: 8px 12px;
+  background-color: #f0f2f5;
+  position: relative;
+  margin-bottom: 5px;
+}
+
+.audio-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.audio-icon {
+  font-size: 20px;
+}
+
+.audio-player {
+  flex-grow: 1;
+  margin-left: 5px;
+}
+
+.message-audio {
+  width: 100%;
+}
+
+.audio-timestamp {
+  display: block;
+  text-align: right;
+  font-size: 12px;
+  color: #999;
+  margin-top: 4px;
+}
+
+/* Reply styles for video and audio */
+.replied-video, 
+.replied-audio {
+  display: flex;
+  align-items: center;
+  padding: 2px 5px;
+  background: #edf2f7;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+/* Message display differences for sender vs receiver */
+.sent .message-video-container,
+.sent .message-audio-container {
+  background-color: #e6f7ff;
+}
+
+.received .message-video-container,
+.received .message-audio-container {
+  background-color: #f0f2f5;
 }
