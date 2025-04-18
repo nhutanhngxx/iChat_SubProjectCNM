@@ -195,11 +195,13 @@ const Priority = () => {
               name: fullName,
               lastMessage:
                 msg.type === "file"
-                  ? "Tệp đính kèm"
+                  ? "[Tệp đính kèm]"
                   : msg.type === "image"
-                  ? "Hình ảnh"
+                  ? "[Hình ảnh]"
                   : msg.type === "video"
-                  ? "Video"
+                  ? "[Video]"
+                  : msg.type === "audio"
+                  ? "[Tệp âm thanh]"
                   : msg.content,
               lastMessageTime: lastMessageTime,
               time: timeDiff,

@@ -14,6 +14,7 @@ const MessageModel = {
     try {
       const query = {
         $and: [
+          { type: "text" },
           { content: { $regex: keyword, $options: "i" } }, // Tìm kiếm không phân biệt hoa thường
           { content: { $ne: "Tin nhắn đã được thu hồi" } }, // Loại bỏ tin nhắn thu hồi
           {
