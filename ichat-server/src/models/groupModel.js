@@ -81,7 +81,7 @@ const GroupModel = {
   searchGroup: async (keyword) => {
     try {
       const groups = await GroupChat.find({
-        name: { $regex: search, $options: "i" }, // Tìm kiếm không phân biệt hoa thường
+        name: { $regex: keyword, $options: "i" }, // Tìm kiếm không phân biệt hoa thường
       }).sort({ created_at: -1 });
       return groups;
     } catch (error) {
