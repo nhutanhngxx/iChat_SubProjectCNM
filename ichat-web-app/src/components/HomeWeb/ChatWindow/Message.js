@@ -18,7 +18,7 @@ import {
   addReactionToMessage,
   removeReactionFromMessage,
 } from "../../../redux/slices/messagesSlice";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import socket from "../../services/socket";
 import { getUserFriends } from "../../../redux/slices/friendSlice";
 import { SmileOutlined } from "@ant-design/icons";
@@ -45,7 +45,51 @@ const Message = ({
   const [isHovered, setIsHovered] = useState(false);
   const [threeDotsMenuVisible, setThreeDotsMenuVisible] = useState(false);
   const messageRef = useRef(null);
+  const chatMessages = useSelector((state) => state.messages.chatMessages);
   const dispatch = useDispatch();
+  const findRepliedMessage = (replyId) => {
+    if (!replyId) return null;
+    if (!Array.isArray(allMessages)) return null;
+
+    // Chuẩn hóa ID thành chuỗi để so sánh
+    const replyIdStr = String(replyId).trim();
+    console.log("Finding replied message:", replyIdStr);
+
+    // Thử một số cách định dạng ID khác nhau
+    const exactMatch = allMessages.find((msg) => {
+      const msgId = String(msg._id || msg.id || "").trim();
+      return msgId === replyIdStr;
+    });
+
+    if (exactMatch) {
+      console.log("Exact match found:", exactMatch.content);
+      return exactMatch;
+    }
+
+    // Thử tìm trong chatMessages - FIX HERE
+    if (Array.isArray(chatMessages)) {
+      const messageFromRedux = chatMessages.find(
+        (msg) => String(msg._id) === replyIdStr
+      );
+
+      if (messageFromRedux) {
+        console.log("Found in Redux state:", messageFromRedux);
+        return messageFromRedux;
+      }
+    }
+
+    // Debug info
+    console.log("Reply message not found:", {
+      replyId,
+      replyIdType: typeof replyId,
+      allMessagesCount: allMessages?.length || 0,
+      sampleIds: (allMessages || [])
+        .slice(0, 3)
+        .map((m) => ({ id: m._id, content: m.content?.substring(0, 20) })),
+    });
+
+    return null;
+  };
   const [friends, setFriends] = useState([]);
   // Lấy danh sách bạn bè
   useEffect(() => {
@@ -491,22 +535,22 @@ const Message = ({
   //     }
   //   };
 
-  const handleReactionRemoved = (data) => {
-    debugSocketEvent("reaction-removed", data);
-    // Check all possible paths to get messageId
-    console.log("Reaction removed data:", data);
+  // const handleReactionRemoved = (data) => {
+  //   debugSocketEvent("reaction-removed", data);
+  //   // Check all possible paths to get messageId
+  //   console.log("Reaction removed data:", data);
 
-    const messageId = data?.messageId || data?.message_id;
-    if (messageId) {
-      // Use more specific fetch rather than fetching all messages
-      dispatch(
-        fetchChatMessages({
-          senderId: user.id,
-          receiverId: selectedChat.id,
-        })
-      );
-    }
-  };
+  //   const messageId = data?.messageId || data?.message_id;
+  //   if (messageId) {
+  //     // Use more specific fetch rather than fetching all messages
+  //     dispatch(
+  //       fetchChatMessages({
+  //         senderId: user.id,
+  //         receiverId: selectedChat.id,
+  //       })
+  //     );
+  //   }
+  // };
 
   //   // Set up all event listeners
   //   socket.on("reaction-added", handleReactionAdded);
@@ -580,45 +624,52 @@ const Message = ({
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [contextMenuVisible, threeDotsMenuVisible]); // Add threeDotsMenuVisible to dependencies
-  const findRepliedMessage = (replyId) => {
-    if (!replyId) return null;
-    if (!Array.isArray(allMessages)) return null;
+  // Khi fetch tin nhắn cho cuộc trò chuyện, thêm tham số để lấy cả tin nhắn đã reply
+  const fetchMessagesData = async () => {
+    if (user?.id && selectedChat?.id) {
+      try {
+        const response = await dispatch(
+          fetchChatMessages({
+            senderId: user.id,
+            receiverId: selectedChat.id,
+            includeRepliedMessages: true, // Thêm tham số này
+          })
+        ).unwrap();
 
-    // Convert IDs to strings for comparison
-    const replyIdStr = String(replyId);
-    console.log("Finding replied message:", replyIdStr);
-
-    // First try exact match
-    const exactMatch = allMessages.find(
-      (msg) => String(msg._id) === replyIdStr
-    );
-    console.log("Exact match found:", exactMatch);
-
-    if (exactMatch) return exactMatch;
-
-    // Log debugging info if not found
-    console.log("Reply message not found:", {
-      replyId,
-      allMessagesCount: allMessages.length,
-      sampleIds: allMessages.slice(0, 3).map((m) => m._id),
-    });
-
-    return null;
+        // Xử lý thành công
+      } catch (error) {
+        // Xử lý lỗi
+      }
+    }
   };
+
+  // Thêm state để lưu tin nhắn reply đã fetch riêng
+  const [repliedMessageData, setRepliedMessageData] = useState(null);
+
+  // Sửa lại component RepliedMessage để sử dụng state
   const RepliedMessage = ({ reply }) => {
+    const [fetchedMessage, setFetchedMessage] = useState(null);
+    const [isLoading, setIsLoading] = useState(false);
+    const [fetchAttempted, setFetchAttempted] = useState(false);
+
     if (!reply) return null;
 
-    const repliedMessage = findRepliedMessage(reply);
-    console.log("Replied message found:", repliedMessage);
+    // Sử dụng tin nhắn từ allMessages hoặc từ fetch riêng
+    const repliedMessage = findRepliedMessage(reply) || fetchedMessage;
 
-    // if (!repliedMessage) return null;
+    // if (isLoading) {
+    //   return (
+    //     <div className="replied-message" style={{ opacity: 0.7 }}>
+    //       <div className="replied-content">
+    //         <p className="replied-text-loading">Đang tải tin nhắn...</p>
+    //       </div>
+    //     </div>
+    //   );
+    // }
+
     if (!repliedMessage) {
-      // Return a fallback UI when the replied message can't be found
       return (
-        <div
-          className="replied-message"
-          style={{ opacity: 0.5, position: "relative" }}
-        >
+        <div className="replied-message" style={{ opacity: 0.5 }}>
           <div className="replied-content">
             <p className="replied-text-not-found">
               Tin nhắn đã bị xóa hoặc thu hồi

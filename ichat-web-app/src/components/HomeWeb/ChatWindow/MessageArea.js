@@ -934,9 +934,42 @@ const MessageArea = ({ selectedChat, user }) => {
       console.error("Error sending friend request:", error);
     }
   };
+  useEffect(() => {
+    // Đảm bảo tất cả tin nhắn đã reply đều được tải
+    const loadAllRepliedMessages = async () => {
+      if (!selectedChat?.id || !user?.id || !messages || messages.length === 0)
+        return;
 
+      // Lấy danh sách các ID tin nhắn đã reply
+      const repliedIds = messages
+        .filter((msg) => msg.reply_to)
+        .map((msg) => msg.reply_to)
+        .filter((id) => id); // Lọc ra các ID hợp lệ
+
+      if (repliedIds.length > 0) {
+        console.log("Fetching replied messages:", repliedIds);
+
+        try {
+          // API call với danh sách ID để lấy tất cả tin nhắn cùng lúc
+          const response = await dispatch(
+            fetchChatMessages({
+              senderId: user.id,
+              receiverId: selectedChat.id,
+              includeRepliedMessages: true,
+              repliedIds: repliedIds, // Truyền danh sách ID cần lấy
+            })
+          ).unwrap();
+
+          console.log("Fetched all messages including replies:", response);
+        } catch (error) {
+          console.error("Failed to fetch replies:", error);
+        }
+      }
+    };
+
+    loadAllRepliedMessages();
+  }, [messages, user?.id, selectedChat?.id, dispatch]);
   if (!selectedChat) return null;
-
   return (
     <div className="message-wrapper">
       <Layout className="message-area-container">

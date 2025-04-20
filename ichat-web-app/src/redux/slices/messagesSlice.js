@@ -16,13 +16,46 @@ export const fetchMessages = createAsyncThunk(
   }
 );
 
-// Lấy tin nhắn giữa sender và receiver
+// Lấy tin nhắn giữa sender và receiver, có thêm option để lấy tin nhắn đã reply
 export const fetchChatMessages = createAsyncThunk(
   "messages/fetchChatMessages",
-  async ({ senderId, receiverId }) => {
-    const response = await fetch(`${API_URL}${senderId}/${receiverId}`);
-    const data = await response.json();
-    return data.data;
+  async (
+    { senderId, receiverId, includeRepliedMessages = false, repliedIds = [] },
+    { rejectWithValue }
+  ) => {
+    try {
+      let url = `${API_URL}${senderId}/${receiverId}`;
+
+      // Thêm query params nếu cần
+      const params = new URLSearchParams();
+
+      if (includeRepliedMessages) {
+        params.append("includeReplies", "true");
+      }
+
+      if (repliedIds && repliedIds.length > 0) {
+        params.append("replyIds", repliedIds.join(","));
+      }
+
+      // Chỉ thêm ? nếu có params
+      if (params.toString()) {
+        url += "?" + params.toString();
+      }
+
+      console.log("Fetching messages from URL:", url);
+
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        return rejectWithValue(await response.json());
+      }
+
+      const data = await response.json();
+      return data.data;
+    } catch (error) {
+      console.error("Error fetching chat messages:", error);
+      return rejectWithValue(error.message);
+    }
   }
 );
 // Gửi tin nhắn
