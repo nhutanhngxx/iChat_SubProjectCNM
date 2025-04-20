@@ -92,7 +92,29 @@ const ChatWindow = ({ user, selectedFriend }) => {
         );
       }
     };
+    const handleReactionEvent = (data) => {
+      console.log("Reaction event received:", data);
 
+      // Luôn cập nhật danh sách sidebar
+      dispatch(fetchMessages(user.id));
+
+      // Nếu không có selectedUser, chỉ cập nhật sidebar
+      if (!selectedUser || !data.chatId) return;
+
+      // Xác định xem reaction có thuộc cuộc trò chuyện hiện tại hay không
+      const currentUserIds = [user.id, selectedUser.id].sort();
+      const currentRoomId = `chat_${currentUserIds[0]}_${currentUserIds[1]}`;
+
+      if (data.chatId === currentRoomId) {
+        console.log("Reaction belongs to current conversation, updating chat");
+        dispatch(
+          fetchChatMessages({
+            senderId: user.id,
+            receiverId: selectedUser.id,
+          })
+        );
+      }
+    };
     console.log("Setting up socket listeners for user:", user.id);
     console.log("Selected user:", selectedUser);
 
@@ -102,6 +124,9 @@ const ChatWindow = ({ user, selectedFriend }) => {
 
     // Register listeners
     socket.on("receive-message", handleReceiveMessage);
+    socket.on("reaction-added", handleReactionEvent);
+    socket.on("reaction-removed", handleReactionEvent);
+    socket.on("message-reaction-update", handleReactionEvent);
 
     // Join user's global room
     // socket.emit("join-user-room", user.id);
@@ -109,8 +134,12 @@ const ChatWindow = ({ user, selectedFriend }) => {
     return () => {
       console.log("Cleaning up global socket listeners");
       socket.off("receive-message", handleReceiveMessage);
+      socket.off("reaction-added", handleReactionEvent);
+      socket.off("reaction-removed", handleReactionEvent);
+      socket.off("message-reaction-update", handleReactionEvent);
     };
   }, [user?.id, selectedUser, dispatch]);
+
   // useEffect(() => {
   //   if (!user?.id) return;
 

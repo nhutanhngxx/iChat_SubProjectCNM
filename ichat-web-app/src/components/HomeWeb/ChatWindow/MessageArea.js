@@ -881,31 +881,7 @@ const MessageArea = ({ selectedChat, user }) => {
       messageEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   };
-  // useEffect(() => {
-  //   if (!selectedChat?.id || !user?.id) return;
-
-  //   // Fetch ALL messages, not just recent ones
-  //   const fetchAllMessages = async () => {
-  //     try {
-  //       // You might need to modify your API to support pagination or fetching all messages
-  //       const result = await dispatch(
-  //         fetchChatMessages({
-  //           senderId: user.id,
-  //           receiverId: selectedChat.id,
-  //           limit: 100, // Fetch more messages than needed to ensure replied messages are included
-  //         })
-  //       ).unwrap();
-
-  //       setMessages(result);
-  //     } catch (error) {
-  //       console.error("Error fetching messages:", error);
-  //     }
-  //   };
-
-  //   fetchAllMessages();
-  // }, [selectedChat?.id, user?.id, dispatch]);
-
-  // Kết nối socket và lắng nghe sự kiện nhận tin nhắn
+  // // Kết nối socket và lắng nghe sự kiện nhận tin nhắn
   // useEffect(() => {
   //   if (!selectedChat?.id || !user?.id) return;
 
@@ -918,22 +894,6 @@ const MessageArea = ({ selectedChat, user }) => {
 
   //   // Join the consistent room
   //   socket.emit("join-room", roomId);
-
-  //   const handleReceiveMessage = (message) => {
-  //     console.log("Received message:", message);
-
-  //     // Only process if message involves current user
-  //     if (message.sender_id === user.id || message.receiver_id === user.id) {
-  //       if (message.sender_id === selectedChat.receiver_id) {
-  //         dispatch(updateMessages(message));
-  //         dispatch(fetchMessages(user.id)); // Cập nhật danh sách người nhận gần nhất
-  //       }
-  //     }
-  //   };
-
-  //   socket.on("receive-message", handleReceiveMessage);
-
-  //   // IMPORTANT: Proper cleanup to prevent memory leaks
   //   return () => {
   //     console.log("Cleaning up socket listener");
   //     socket.off("receive-message", handleReceiveMessage);

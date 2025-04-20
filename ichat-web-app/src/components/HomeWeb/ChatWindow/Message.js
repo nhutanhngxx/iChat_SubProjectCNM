@@ -537,61 +537,61 @@ const Message = ({
     // No return cleanup needed for joining
   }, [selectedChat?.id, user?.id]);
 
-  // 2. Now handle all socket listeners in a separate useEffect
-  useEffect(() => {
-    if (!selectedChat?.id || !user?.id) return;
+  // // 2. Now handle all socket listeners in a separate useEffect
+  // useEffect(() => {
+  //   if (!selectedChat?.id || !user?.id) return;
 
-    const userIds = [user.id, selectedChat.id].sort();
-    const roomId = `chat_${userIds[0]}_${userIds[1]}`;
+  //   const userIds = [user.id, selectedChat.id].sort();
+  //   const roomId = `chat_${userIds[0]}_${userIds[1]}`;
 
-    // Debug helper to see all incoming socket events
-    const debugSocketEvent = (eventName, data) => {
-      console.log(`Socket event received: ${eventName}`, data);
-    };
+  //   // Debug helper to see all incoming socket events
+  //   const debugSocketEvent = (eventName, data) => {
+  //     console.log(`Socket event received: ${eventName}`, data);
+  //   };
 
-    // Reaction handlers
-    const handleReactionAdded = (data) => {
-      debugSocketEvent("reaction-added", data);
-      // Check all possible paths to get messageId
-      const messageId = data?.messageId || data?.message_id;
-      if (messageId) {
-        // Use more specific fetch rather than fetching all messages
-        dispatch(
-          fetchChatMessages({
-            senderId: user.id,
-            receiverId: selectedChat.id,
-          })
-        );
-      }
-    };
+  //   // Reaction handlers
+  //   const handleReactionAdded = (data) => {
+  //     debugSocketEvent("reaction-added", data);
+  //     // Check all possible paths to get messageId
+  //     const messageId = data?.messageId || data?.message_id;
+  //     if (messageId) {
+  //       // Use more specific fetch rather than fetching all messages
+  //       dispatch(
+  //         fetchChatMessages({
+  //           senderId: user.id,
+  //           receiverId: selectedChat.id,
+  //         })
+  //       );
+  //     }
+  //   };
 
-    const handleReactionRemoved = (data) => {
-      debugSocketEvent("reaction-removed", data);
-      // Check all possible paths to get messageId
-      const messageId = data?.messageId || data?.message_id;
-      if (messageId) {
-        // Use more specific fetch rather than fetching all messages
-        dispatch(
-          fetchChatMessages({
-            senderId: user.id,
-            receiverId: selectedChat.id,
-          })
-        );
-      }
-    };
+  //   const handleReactionRemoved = (data) => {
+  //     debugSocketEvent("reaction-removed", data);
+  //     // Check all possible paths to get messageId
+  //     const messageId = data?.messageId || data?.message_id;
+  //     if (messageId) {
+  //       // Use more specific fetch rather than fetching all messages
+  //       dispatch(
+  //         fetchChatMessages({
+  //           senderId: user.id,
+  //           receiverId: selectedChat.id,
+  //         })
+  //       );
+  //     }
+  //   };
 
-    // Set up all event listeners
-    socket.on("reaction-added", handleReactionAdded);
-    socket.on("reaction-removed", handleReactionRemoved);
+  //   // Set up all event listeners
+  //   socket.on("reaction-added", handleReactionAdded);
+  //   socket.on("reaction-removed", handleReactionRemoved);
 
-    // Clean up ALL listeners when component unmounts
-    return () => {
-      console.log("Cleaning up socket listeners for reactions");
-      socket.off("reaction-added", handleReactionAdded);
-      socket.off("reaction-removed", handleReactionRemoved);
-      socket.off("message-reaction-update"); // Remove any legacy listeners
-    };
-  }, [selectedChat?.id, user?.id, dispatch]);
+  //   // Clean up ALL listeners when component unmounts
+  //   return () => {
+  //     console.log("Cleaning up socket listeners for reactions");
+  //     socket.off("reaction-added", handleReactionAdded);
+  //     socket.off("reaction-removed", handleReactionRemoved);
+  //     socket.off("message-reaction-update"); // Remove any legacy listeners
+  //   };
+  // }, [selectedChat?.id, user?.id, dispatch]);
   const getReactionEmoji = (type) => {
     const map = {
       like: "👍",
@@ -784,19 +784,21 @@ const Message = ({
 
     const userIds = [user.id, selectedChat.id].sort();
     const roomId = `chat_${userIds[0]}_${userIds[1]}`;
-
+    console.log("Message component joining room:", roomId);
+    socket.emit("join-room", roomId);
     // Handle reaction updates from other users
-    const handleMessageReaction = (data) => {
-      if (data.messageId) {
-        // Fetch updated messages to get the latest reaction data
-        dispatch(fetchMessages(user.id));
-      }
-    };
+    // const handleMessageReaction = (data) => {
+    //   if (data.messageId) {
+    //     // Fetch updated messages to get the latest reaction data
+    //     dispatch(fetchMessages(user.id));
+    //   }
+    // };
 
-    socket.on("message-reaction-update", handleMessageReaction);
+    // socket.on("message-reaction-update", handleMessageReaction);
 
     return () => {
-      socket.off("message-reaction-update", handleMessageReaction);
+      // socket.off("message-reaction-update", handleMessageReaction);
+      console.log("Cleaning up socket listener for message reactions");
     };
   }, [selectedChat?.id, user?.id, dispatch]);
   return (
