@@ -147,7 +147,33 @@ const GroupController = {
       res.status(500).json({ status: "error", message: e.message });
     }
   },
+  // Thêm nhiều thành viên cùng lúc
+  addMembers: async (req, res) => {
+    try {
+      const { groupId, userIds } = req.body;
 
+      if (!groupId) {
+        return res
+          .status(400)
+          .json({ status: "error", message: "Thiếu groupId" });
+      }
+
+      if (!userIds || (Array.isArray(userIds) && userIds.length === 0)) {
+        return res
+          .status(400)
+          .json({ status: "error", message: "Thiếu userIds" });
+      }
+
+      const result = await GroupModel.addMembers(groupId, userIds);
+
+      res.json({
+        status: "ok",
+        data: result,
+      });
+    } catch (e) {
+      res.status(500).json({ status: "error", message: e.message });
+    }
+  },
   // 3. Remove member / leave group
   removeMember: async (req, res) => {
     try {
@@ -233,6 +259,41 @@ const GroupController = {
       res.json({ status: "ok", data: list });
     } catch (e) {
       res.status(500).json({ status: "error", message: e.message });
+    }
+  },
+  // 9. Trả về thông tin nhóm
+  getGroupById: async (req, res) => {
+    try {
+      const { groupId } = req.params;
+      const group = await GroupModel.getGroupById(groupId);
+      if (!group) {
+        return res
+          .status(404)
+          .json({ status: "error", message: "Group not found" });
+      }
+      return res.json({ status: "ok", data: group });
+    } catch (e) {
+      console.error("Lỗi lấy thông tin nhóm:", e);
+      return res.status(500).json({ status: "error", message: e.message });
+    }
+  },
+  // Controller để kiểm tra người dùng có phải admin chính/ phụ không
+  isGroupSubAdmin: async (req, res) => {
+    try {
+      const { groupId, userId } = req.params; // hoặc req.body
+
+      const result = await GroupModel.isGroupSubAdmin(groupId, userId);
+
+      return res.status(200).json({
+        status: "ok",
+        data: result,
+      });
+    } catch (error) {
+      console.error("Lỗi kiểm tra admin phụ:", error);
+      return res.status(500).json({
+        status: "error",
+        message: error.message,
+      });
     }
   },
 };

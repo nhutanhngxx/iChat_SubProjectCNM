@@ -4,6 +4,7 @@ const User = require("../schemas/UserDetails");
 const Message = require("../schemas/Messages");
 const mongoose = require("mongoose");
 const { uploadFile } = require("../services/upload-file");
+const { get } = require("http");
 
 const GroupModel = {
   //   Lấy danh sách nhóm mà người dùng tham gia
@@ -20,21 +21,59 @@ const GroupModel = {
   },
 
   //   Lấy danh sách thành viên của nhóm
+  // Lấy danh sách thành viên của nhóm với thông tin đầy đủ
   getGroupMembers: async (groupId) => {
     try {
-      const members = await GroupMember.find(
-        { group_id: groupId },
-        { user_id: 1 }
-      ).lean();
-      const memberIds = members.map(({ user_id }) => user_id);
-      const memberDetails = await User.find(
-        { _id: { $in: memberIds } },
-        { full_name: 1 }
-      ).lean();
-      return memberDetails;
+      // Chuyển đổi ID thành ObjectId nếu cần
+      const groupObjectId = mongoose.isValidObjectId(groupId)
+        ? new mongoose.Types.ObjectId(groupId)
+        : groupId;
+
+      // Sử dụng aggregate để join dữ liệu từ GroupMember và UserInfo
+      const members = await GroupMember.aggregate([
+        // Lọc theo group_id
+        { $match: { group_id: groupObjectId } },
+
+        // Join với collection UserInfo để lấy thông tin user
+        {
+          $lookup: {
+            from: "UserInfo",
+            localField: "user_id",
+            foreignField: "_id",
+            as: "userDetails",
+          },
+        },
+
+        // Giải phẳng mảng userDetails
+        { $unwind: "$userDetails" },
+
+        // Định dạng kết quả trả về
+        {
+          $project: {
+            _id: 1,
+            user_id: 1,
+            group_id: 1,
+            role: 1,
+            joined_at: 1,
+            full_name: "$userDetails.full_name",
+            avatar_path: "$userDetails.avatar_path",
+            status: "$userDetails.status",
+            phone: "$userDetails.phone",
+          },
+        },
+
+        // Sắp xếp: admin trước, sau đó theo thứ tự gia nhập
+        { $sort: { role: -1, joined_at: 1 } },
+      ]);
+
+      if (!members || members.length === 0) {
+        console.log("Không tìm thấy thành viên nào trong nhóm:", groupId);
+      }
+
+      return members;
     } catch (error) {
-      console.error("Không tìm thấy các thành viên của nhóm:", error);
-      throw new Error("Không tìm thấy các thành viên của nhóm");
+      console.error("Lỗi khi lấy thành viên nhóm:", error);
+      throw new Error("Không thể lấy danh sách thành viên của nhóm");
     }
   },
 
@@ -75,6 +114,7 @@ const GroupModel = {
             name,
             admin_id,
             avatar: avatarUrl,
+            created_by: admin_id,
           },
         ],
         { session }
@@ -121,6 +161,60 @@ const GroupModel = {
   // 2. Thêm thành viên
   addMember: async (groupId, userId) => {
     return GroupMember.create({ group_id: groupId, user_id: userId });
+  },
+  // Thêm nhiều thành viên cùng lúc
+  addMembers: async (groupId, userIds) => {
+    try {
+      // Chuyển đổi thành mảng nếu chỉ là một ID
+      const userIdArray = Array.isArray(userIds) ? userIds : [userIds];
+
+      // Chuyển đổi tất cả ID thành chuỗi để so sánh
+      const userIdStrings = userIdArray.map((id) => String(id));
+
+      // Kiểm tra các thành viên đã tồn tại trong nhóm
+      const existingMembers = await GroupMember.find({
+        group_id: groupId,
+        user_id: { $in: userIdArray },
+      });
+
+      // Tạo danh sách ID đã tồn tại để lọc ra
+      const existingIds = existingMembers.map((member) =>
+        String(member.user_id)
+      );
+
+      // Lọc ra các ID chưa tồn tại trong nhóm
+      const newUserIds = userIdStrings.filter(
+        (id) => !existingIds.includes(id)
+      );
+
+      // Nếu không có thành viên mới để thêm
+      if (newUserIds.length === 0) {
+        return {
+          added: [],
+          skipped: existingIds,
+          message: "Tất cả thành viên đã có trong nhóm",
+        };
+      }
+
+      // Tạo mảng các đối tượng thành viên mới để thêm vào
+      const membersToAdd = newUserIds.map((userId) => ({
+        group_id: groupId,
+        user_id: new mongoose.Types.ObjectId(userId),
+      }));
+
+      // Thêm các thành viên mới
+      const result = await GroupMember.insertMany(membersToAdd);
+
+      return {
+        // added: result.map((m) => String(m.user_id)),
+        result,
+        // skipped: existingIds,
+        // message: `Đã thêm ${result.length} thành viên mới, bỏ qua ${existingIds.length} thành viên đã tồn tại`,
+      };
+    } catch (error) {
+      console.error("Lỗi khi thêm nhiều thành viên:", error);
+      throw error;
+    }
   },
 
   // 3. Xóa thành viên / Rời nhóm
@@ -193,6 +287,83 @@ const GroupModel = {
       receiver_id: groupId,
       content: { $regex: keyword, $options: "i" },
     }).sort({ timestamp: -1 });
+  },
+  // 9 Lấy thông tin nhóm theo ID
+  getGroupById: async (groupId) => {
+    try {
+      const group = await GroupChat.findById(groupId);
+      if (!group) {
+        throw new Error("Nhóm không tồn tại");
+      }
+      return group;
+    } catch (error) {
+      console.error("Lỗi khi lấy thông tin nhóm:", error);
+      throw error;
+    }
+  },
+  // 10. Kiểm tra xem người dùng có phải là admin phụ (phó nhóm) của nhóm không
+  isGroupSubAdmin: async (groupId, userId) => {
+    try {
+      // Chuyển đổi ID thành ObjectId nếu cần
+      const groupObjectId = mongoose.isValidObjectId(groupId)
+        ? new mongoose.Types.ObjectId(groupId)
+        : groupId;
+
+      const userObjectId = mongoose.isValidObjectId(userId)
+        ? new mongoose.Types.ObjectId(userId)
+        : userId;
+
+      // Kiểm tra role trong GroupMember
+      const memberInfo = await GroupMember.findOne({
+        group_id: groupObjectId,
+        user_id: userObjectId,
+      });
+
+      if (!memberInfo) {
+        return {
+          isSubAdmin: false,
+          message: "Người dùng không phải là thành viên của nhóm",
+        };
+      }
+
+      // Kiểm tra xem là admin phụ không (role là admin trong GroupMember)
+      if (memberInfo.role === "admin") {
+        // Kiểm tra xem có phải admin chính không
+        const group = await GroupChat.findById(groupObjectId);
+
+        if (!group) {
+          return {
+            isSubAdmin: false,
+            message: "Nhóm không tồn tại",
+          };
+        }
+
+        // Nếu không phải admin chính nhưng có role admin => admin phụ
+        const isMainAdmin = String(group.admin_id) === String(userObjectId);
+        const isSubAdmin = !isMainAdmin && memberInfo.role === "admin";
+
+        return {
+          isSubAdmin: isSubAdmin,
+          isMainAdmin: isMainAdmin,
+          role: memberInfo.role,
+          message: isSubAdmin
+            ? "Người dùng là admin phụ của nhóm"
+            : isMainAdmin
+            ? "Người dùng là admin chính của nhóm"
+            : "Người dùng là thành viên thường của nhóm",
+        };
+      }
+
+      // Nếu role không phải admin
+      return {
+        isSubAdmin: false,
+        role: memberInfo.role,
+        message: "Người dùng là thành viên thường của nhóm",
+      };
+    } catch (error) {
+      console.error("Lỗi khi kiểm tra quyền admin phụ:", error);
+      throw new Error("Không thể kiểm tra quyền admin phụ của nhóm");
+    }
   },
 };
 
