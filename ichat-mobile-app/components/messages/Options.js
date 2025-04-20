@@ -38,26 +38,26 @@ const Option = ({ route }) => {
     fetchReceiverInfo();
   }, []);
 
-  useEffect(() => {
-    const fetchSharedGroups = async () => {
-      try {
-        const res = await groupService.getAllGroupsByUserId(user.id);
-        if (res.status === "ok") {
-          const groups = res.groups || [];
-          // Tìm các nhóm có receiver (id đang chat)
-          const filtered = groups.filter((group) => group.members.includes(id));
-          setSharedGroups(filtered);
-          console.log("Nhóm chung:", filtered);
-        }
-      } catch (err) {
-        console.error("Lỗi khi lấy nhóm:", err);
-      }
-    };
+  // useEffect(() => {
+  //   const fetchSharedGroups = async () => {
+  //     try {
+  //       const res = await groupService.getAllGroupsByUserId(user.id);
+  //       if (res.status === "ok") {
+  //         const groups = res.groups || [];
+  //         // Tìm các nhóm có receiver (id đang chat)
+  //         const filtered = groups.filter((group) => group.members.includes(id));
+  //         setSharedGroups(filtered);
+  //         console.log("Nhóm chung:", filtered);
+  //       }
+  //     } catch (err) {
+  //       console.error("Lỗi khi lấy nhóm:", err);
+  //     }
+  //   };
 
-    if (user?.id && id) {
-      fetchSharedGroups();
-    }
-  }, [user?.id, id]);
+  //   if (user?.id && id) {
+  //     fetchSharedGroups();
+  //   }
+  // }, [user?.id, id]);
 
   useEffect(() => {
     // console.log("avatar: ", avatar);
