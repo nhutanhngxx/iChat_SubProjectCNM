@@ -188,14 +188,17 @@ const MessageController = {
   recentReceivers: async (req, res) => {
     try {
       const senderId = req.params.senderId;
+      const senderObjectId = new mongoose.Types.ObjectId(senderId);
 
       const recentReceivers = await Messages.aggregate([
         {
           $match: {
             $or: [
-              { sender_id: new mongoose.Types.ObjectId(senderId) },
-              { receiver_id: new mongoose.Types.ObjectId(senderId) },
+              { sender_id: senderObjectId },
+              { receiver_id: senderObjectId },
             ],
+            // Thêm điều kiện: không lấy tin nhắn mà người dùng hiện tại đã xóa mềm
+            isdelete: { $not: { $elemMatch: { $eq: senderObjectId } } },
           },
         },
         { $sort: { timestamp: -1 } },
@@ -218,8 +221,8 @@ const MessageController = {
         {
           $match: {
             $or: [
-              { "_id.sender": new mongoose.Types.ObjectId(senderId) },
-              { "_id.receiver": new mongoose.Types.ObjectId(senderId) },
+              { "_id.sender": senderObjectId },
+              { "_id.receiver": senderObjectId },
             ],
           },
         },
@@ -227,7 +230,7 @@ const MessageController = {
           $addFields: {
             otherUserId: {
               $cond: [
-                { $eq: ["$_id.sender", new mongoose.Types.ObjectId(senderId)] },
+                { $eq: ["$_id.sender", senderObjectId] },
                 "$_id.receiver",
                 "$_id.sender",
               ],
@@ -248,7 +251,7 @@ const MessageController = {
             from: "Message",
             let: {
               otherId: "$otherUserId",
-              me: new mongoose.Types.ObjectId(senderId),
+              me: senderObjectId,
             },
             pipeline: [
               {
@@ -258,6 +261,8 @@ const MessageController = {
                       { $eq: ["$receiver_id", "$$me"] },
                       { $eq: ["$sender_id", "$$otherId"] },
                       { $ne: ["$status", "Viewed"] },
+                      // Thêm điều kiện loại bỏ tin nhắn đã xóa mềm
+                      { $not: [{ $in: ["$$me", "$isdelete"] }] },
                     ],
                   },
                 },
@@ -273,10 +278,7 @@ const MessageController = {
               $ifNull: [{ $arrayElemAt: ["$unreadMessages.unread", 0] }, 0],
             },
             isLastMessageFromMe: {
-              $eq: [
-                "$lastMessageSender",
-                new mongoose.Types.ObjectId(senderId),
-              ],
+              $eq: ["$lastMessageSender", senderObjectId],
             },
           },
         },
