@@ -24,10 +24,6 @@ import socketService from "../../services/socketService";
 dayjs.extend(relativeTime);
 dayjs.locale("vi");
 
-const getTimeAgo = (timestamp) => {
-  return dayjs(timestamp).fromNow();
-};
-
 const Priority = () => {
   const navigation = useNavigation();
   const route = useRoute();
@@ -40,6 +36,10 @@ const Priority = () => {
   const [showOptions, setShowOptions] = useState(false);
   const longPressTimeout = useRef(null);
   const isLongPress = useRef(false);
+
+  const getTimeAgo = (timestamp) => {
+    return dayjs(timestamp).fromNow();
+  };
 
   useEffect(() => {
     // Lắng nghe sự kiện nhận tin nhắn mới
@@ -66,8 +66,8 @@ const Priority = () => {
               return {
                 ...chat,
                 lastMessage: lastMessageContent,
-                lastMessageTime: new Date(messageData.timestamp).getTime(),
-                time: getTimeAgo(new Date(messageData.timestamp)),
+                lastMessageTime: new Date(messageData?.timestamp).getTime(),
+                time: getTimeAgo(new Date(messageData?.timestamp)),
               };
             }
             return chat;
@@ -130,9 +130,8 @@ const Priority = () => {
         }
         setChatList(finalChats);
 
-        const groupsResponse = await groupService.getAllGroupsByUserId(user.id);
-        // setGroupList(groupsResponse || []);
-        setGroupList([...(groupsResponse || [])]);
+        // const groupsResponse = await groupService.getAllGroupsByUserId(user.id);
+        // setGroupList([...(groupsResponse || [])]);
       } catch (error) {
         console.error("Lỗi khi tải dữ liệu:", error);
       }
@@ -182,7 +181,7 @@ const Priority = () => {
           const avatarPath =
             chatUser?.avatar_path ||
             "https://i.ibb.co/9k8sPRMx/best-seller.png";
-          const lastMessageTime = new Date(msg.timestamp).getTime();
+          const lastMessageTime = new Date(msg?.timestamp).getTime();
           const timeDiff = getTimeAgo(lastMessageTime);
 
           // Kiểm tra xem đã có chat trong Map chưa

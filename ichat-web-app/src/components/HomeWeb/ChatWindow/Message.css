@@ -156,7 +156,7 @@
   max-width: 200px;
 }
 
-.file-size, 
+.file-size,
 .file-type {
   font-size: 12px;
   color: #666;
@@ -240,7 +240,7 @@
 /* Position reaction icons */
 .message.received .reaction-icons {
   bottom: -5px;
-  left:57px;
+  left: 57px;
   width: 20px;
   height: 20px;
   align-items: center;
@@ -487,11 +487,11 @@
   gap: 4px;
   margin-top: 4px;
   position: absolute;
-  bottom: -10px;
+  bottom: -20px;
   right: 0;
 }
-.message.sent .message-reactions{
-    left: 0;
+.message.sent .message-reactions {
+  left: 0;
 }
 
 /* .reaction-badge {
@@ -513,7 +513,7 @@
 .reaction-badge:hover {
   background-color: #e6f7ff;
 } */
- /* Add this to your Message.css file */
+/* Add this to your Message.css file */
 .reaction-badge {
   display: inline-flex;
   align-items: center;
@@ -611,7 +611,7 @@
 }
 
 /* Reply styles for video and audio */
-.replied-video, 
+.replied-video,
 .replied-audio {
   display: flex;
   align-items: center;

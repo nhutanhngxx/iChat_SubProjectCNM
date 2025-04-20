@@ -102,29 +102,33 @@ const ViewProfile = ({ route }) => {
         </Text>
 
         <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={styles.messageButton}
-            onPress={handleSendMessage}
-          >
-            <Text style={styles.buttonText}>Nhắn tin</Text>
-          </TouchableOpacity>
+          {foundUser.id !== user.id && (
+            <>
+              <TouchableOpacity
+                style={styles.messageButton}
+                onPress={handleSendMessage}
+              >
+                <Text style={styles.buttonText}>Nhắn tin</Text>
+              </TouchableOpacity>
 
-          {!isFriend && !hasSentRequest && (
-            <TouchableOpacity
-              style={styles.addFriendButton}
-              onPress={handleAddFriend}
-            >
-              <Text style={styles.buttonText}>Kết bạn</Text>
-            </TouchableOpacity>
-          )}
+              {!isFriend && !hasSentRequest && (
+                <TouchableOpacity
+                  style={styles.addFriendButton}
+                  onPress={handleAddFriend}
+                >
+                  <Text style={styles.buttonText}>Kết bạn</Text>
+                </TouchableOpacity>
+              )}
 
-          {!isFriend && hasSentRequest && (
-            <TouchableOpacity
-              style={styles.cancelRequestButton}
-              onPress={handleCancelRequest}
-            >
-              <Text style={styles.buttonText}>Thu hồi</Text>
-            </TouchableOpacity>
+              {!isFriend && hasSentRequest && (
+                <TouchableOpacity
+                  style={styles.cancelRequestButton}
+                  onPress={handleCancelRequest}
+                >
+                  <Text style={styles.buttonText}>Thu hồi</Text>
+                </TouchableOpacity>
+              )}
+            </>
           )}
         </View>
       </View>

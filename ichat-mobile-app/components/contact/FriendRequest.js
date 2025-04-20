@@ -48,10 +48,13 @@ const RequestRecieve = () => {
         text: "Đồng ý",
         onPress: async () => {
           try {
-            await friendService.acceptFriendRequest({
+            const response = await friendService.acceptFriendRequest({
               senderId: item.id,
               receiverId: user.id,
             });
+            if (response.status === "ok") {
+              Alert.alert("Thông báo", "Đã kết bạn thành công");
+            }
             setListRequest((prev) => prev.filter((r) => r.id !== item.id));
           } catch (error) {
             Alert.alert("Lỗi", error.message || "Lỗi chưa rõ");
@@ -250,40 +253,45 @@ const FriendRequest = () => {
   };
 
   return (
-    <View style={{ flex: 1, paddingTop: 40, backgroundColor: "white" }}>
+    <View style={{ flex: 1, backgroundColor: "white" }}>
       <StatusBar style="dark" />
       {/* Header */}
       <View
         style={{
           flexDirection: "row",
-          alignItems: "center",
-          height: 50,
-          backgroundColor: "#fff",
-          justifyContent: "space-between",
-          paddingRight: 10,
+          alignItems: "flex-end",
+          height: 90,
+          backgroundColor: "#3083F9",
+          padding: 10,
         }}
       >
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
-          <TouchableOpacity onPress={onClose}>
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            flex: 1,
+          }}
+        >
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
+            <TouchableOpacity onPress={onClose}>
+              <Image
+                source={require("../../assets/icons/go-back.png")}
+                style={{ width: 25, height: 25, tintColor: "white" }}
+              />
+            </TouchableOpacity>
+
+            <Text style={{ fontWeight: "bold", fontSize: 20, color: "white" }}>
+              Lời mời kết bạn
+            </Text>
+          </View>
+          <TouchableOpacity onPress={() => handleOpenSettingRequest()}>
             <Image
-              source={require("../../assets/icons/go-back.png")}
-              style={{ width: 25, height: 25 }}
+              source={settingIcon}
+              style={{ height: 25, width: 25, tintColor: "white" }}
             />
           </TouchableOpacity>
-
-          <Text style={{ fontWeight: "bold", fontSize: 20 }}>
-            Lời mời kết bạn
-          </Text>
         </View>
-        <TouchableOpacity onPress={() => handleOpenSettingRequest()}>
-          <Image source={settingIcon} style={{ height: 25, width: 25 }} />
-        </TouchableOpacity>
-        {/* <IconButton
-          style={{ position: "absolute", right: 0 }}
-          icon={"cog-outline"}
-          size={20}
-          onPress={() => handleOpenSettingRequest()}
-        /> */}
       </View>
 
       {/* List Friend Request */}

@@ -153,6 +153,7 @@ const FriendTab = () => {
           data={friendList}
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
+          contentContainerStyle={{ paddingBottom: "100%" }}
         />
       </View>
     </View>

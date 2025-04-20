@@ -55,11 +55,11 @@ const Message = ({
           getUserFriends(user._id || user.id)
         ).unwrap();
         setFriends(result);
-        console.log(
-          "friends from Search component",
-          user._id || user.id,
-          result
-        );
+        // console.log(
+        //   "friends from Search component",
+        //   user._id || user.id,
+        //   result
+        // );
       } catch (err) {
         console.error("Lỗi khi lấy danh sách bạn bè:", err);
       }
@@ -103,27 +103,6 @@ const Message = ({
   // State reaction
   const [showReactionPicker, setShowReactionPicker] = useState(false);
   // Function to send friend request
-  const handleSendFriendRequest = async () => {
-    try {
-      antMessage.loading({
-        content: "Đang gửi lời mời kết bạn...",
-        key: "friendRequest",
-      });
-
-      // Mock successful request
-      setTimeout(() => {
-        antMessage.success({
-          content: "Đã gửi lời mời kết bạn!",
-          key: "friendRequest",
-          duration: 2,
-        });
-        setFriendRequestSent(true);
-      }, 1000);
-    } catch (error) {
-      antMessage.error("Không thể gửi lời mời kết bạn. Vui lòng thử lại sau.");
-      console.error("Error sending friend request:", error);
-    }
-  };
 
   // Disabled all interaction if not friends
   const isInteractionDisabled = !isFriendWithReceiver;
@@ -484,63 +463,63 @@ const Message = ({
     // No return cleanup needed for joining
   }, [selectedChat?.id, user?.id]);
 
-  // 2. Now handle all socket listeners in a separate useEffect
-  useEffect(() => {
-    if (!selectedChat?.id || !user?.id) return;
+  // // 2. Now handle all socket listeners in a separate useEffect
+  // useEffect(() => {
+  //   if (!selectedChat?.id || !user?.id) return;
 
-    const userIds = [user.id, selectedChat.id].sort();
-    const roomId = `chat_${userIds[0]}_${userIds[1]}`;
+  //   const userIds = [user.id, selectedChat.id].sort();
+  //   const roomId = `chat_${userIds[0]}_${userIds[1]}`;
 
-    // Debug helper to see all incoming socket events
-    const debugSocketEvent = (eventName, data) => {
-      console.log(`Socket event received: ${eventName}`, data);
-    };
+  //   // Debug helper to see all incoming socket events
+  //   const debugSocketEvent = (eventName, data) => {
+  //     console.log(`Socket event received: ${eventName}`, data);
+  //   };
 
-    // Reaction handlers
-    const handleReactionAdded = (data) => {
-      debugSocketEvent("reaction-added", data);
-      // Check all possible paths to get messageId
-      const messageId = data?.messageId || data?.message_id;
-      if (messageId) {
-        // Use more specific fetch rather than fetching all messages
-        dispatch(
-          fetchChatMessages({
-            senderId: user.id,
-            receiverId: selectedChat.id,
-          })
-        );
-      }
-    };
+  //   // Reaction handlers
+  //   const handleReactionAdded = (data) => {
+  //     debugSocketEvent("reaction-added", data);
+  //     // Check all possible paths to get messageId
+  //     const messageId = data?.messageId || data?.message_id;
+  //     if (messageId) {
+  //       // Use more specific fetch rather than fetching all messages
+  //       dispatch(
+  //         fetchChatMessages({
+  //           senderId: user.id,
+  //           receiverId: selectedChat.id,
+  //         })
+  //       );
+  //     }
+  //   };
 
-    const handleReactionRemoved = (data) => {
-      debugSocketEvent("reaction-removed", data);
-      // Check all possible paths to get messageId
-      console.log("Reaction removed data:", data);
+  const handleReactionRemoved = (data) => {
+    debugSocketEvent("reaction-removed", data);
+    // Check all possible paths to get messageId
+    console.log("Reaction removed data:", data);
 
-      const messageId = data?.messageId || data?.message_id;
-      if (messageId) {
-        // Use more specific fetch rather than fetching all messages
-        dispatch(
-          fetchChatMessages({
-            senderId: user.id,
-            receiverId: selectedChat.id,
-          })
-        );
-      }
-    };
+    const messageId = data?.messageId || data?.message_id;
+    if (messageId) {
+      // Use more specific fetch rather than fetching all messages
+      dispatch(
+        fetchChatMessages({
+          senderId: user.id,
+          receiverId: selectedChat.id,
+        })
+      );
+    }
+  };
 
-    // Set up all event listeners
-    socket.on("reaction-added", handleReactionAdded);
-    socket.on("reaction-removed", handleReactionRemoved);
+  //   // Set up all event listeners
+  //   socket.on("reaction-added", handleReactionAdded);
+  //   socket.on("reaction-removed", handleReactionRemoved);
 
-    // Clean up ALL listeners when component unmounts
-    return () => {
-      console.log("Cleaning up socket listeners for reactions");
-      socket.off("reaction-added", handleReactionAdded);
-      socket.off("reaction-removed", handleReactionRemoved);
-      socket.off("message-reaction-update"); // Remove any legacy listeners
-    };
-  }, [selectedChat?.id, user?.id, dispatch]);
+  //   // Clean up ALL listeners when component unmounts
+  //   return () => {
+  //     console.log("Cleaning up socket listeners for reactions");
+  //     socket.off("reaction-added", handleReactionAdded);
+  //     socket.off("reaction-removed", handleReactionRemoved);
+  //     socket.off("message-reaction-update"); // Remove any legacy listeners
+  //   };
+  // }, [selectedChat?.id, user?.id, dispatch]);
   const getReactionEmoji = (type) => {
     const map = {
       like: "👍",
@@ -630,6 +609,8 @@ const Message = ({
     if (!reply) return null;
 
     const repliedMessage = findRepliedMessage(reply);
+    console.log("Replied message found:", repliedMessage);
+
     // if (!repliedMessage) return null;
     if (!repliedMessage) {
       // Return a fallback UI when the replied message can't be found
@@ -674,11 +655,11 @@ const Message = ({
     );
   };
   useEffect(() => {
-    console.log("Message component rendered with:", {
-      messageId: message._id,
-      replyTo: message.reply_to || null,
-      allMessagesCount: allMessages?.length || 0,
-    });
+    // console.log("Message component rendered with:", {
+    //   messageId: message._id,
+    //   replyTo: message.reply_to || null,
+    //   allMessagesCount: allMessages?.length || 0,
+    // });
 
     if (message.reply_to) {
       const found = findRepliedMessage(message.reply_to);
@@ -694,50 +675,25 @@ const Message = ({
 
     const userIds = [user.id, selectedChat.id].sort();
     const roomId = `chat_${userIds[0]}_${userIds[1]}`;
-
+    console.log("Message component joining room:", roomId);
+    socket.emit("join-room", roomId);
     // Handle reaction updates from other users
-    const handleMessageReaction = (data) => {
-      if (data.messageId) {
-        // Fetch updated messages to get the latest reaction data
-        dispatch(fetchMessages(user.id));
-      }
-    };
+    // const handleMessageReaction = (data) => {
+    //   if (data.messageId) {
+    //     // Fetch updated messages to get the latest reaction data
+    //     dispatch(fetchMessages(user.id));
+    //   }
+    // };
 
-    socket.on("message-reaction-update", handleMessageReaction);
+    // socket.on("message-reaction-update", handleMessageReaction);
 
     return () => {
-      socket.off("message-reaction-update", handleMessageReaction);
+      // socket.off("message-reaction-update", handleMessageReaction);
+      console.log("Cleaning up socket listener for message reactions");
     };
   }, [selectedChat?.id, user?.id, dispatch]);
   return (
     <>
-      {!isFriendWithReceiver && !isSender && (
-        <div className="not-friend-banner">
-          <Alert
-            message="Hai bạn chưa là bạn bè"
-            description="Kết bạn để mở khóa tính năng tin nhắn đầy đủ."
-            type="warning"
-            showIcon
-            action={
-              friendRequestSent ? (
-                <Button size="small" disabled>
-                  Đã gửi lời mời
-                </Button>
-              ) : (
-                <Button
-                  type="primary"
-                  size="small"
-                  icon={<UserAddOutlined />}
-                  onClick={handleSendFriendRequest}
-                >
-                  Kết bạn
-                </Button>
-              )
-            }
-            className="not-friend-alert"
-          />
-        </div>
-      )}
       <div
         className={`message ${isSender ? "sent" : "received"} ${
           !isFriendWithReceiver && !isSender ? "not-friend-message" : ""
@@ -754,7 +710,13 @@ const Message = ({
           isInteractionDisabled && !isSender ? null : () => setIsHovered(false)
         }
         ref={messageRef}
-        style={{ display: "flex" }}
+        style={{
+          display: "flex",
+          marginBottom:
+            message.reactions && message.reactions.length > 0
+              ? "15px"
+              : undefined,
+        }}
       >
         {!isSender && (
           <div className="avatar-message">

@@ -399,6 +399,8 @@ const Chatting = ({ route }) => {
 
   // Click vào để reply
   const handleReply = (selectedMessage) => {
+    console.log("Reply message:", selectedMessage);
+
     setReplyMessage(selectedMessage);
     setModalVisible(false); // Ẩn modal sau khi chọn reply
   };
@@ -410,9 +412,7 @@ const Chatting = ({ route }) => {
       navigation.getParent()?.setOptions({
         tabBarStyle: {
           backgroundColor: "white",
-          height: 60,
-          paddingBottom: 10,
-          paddingTop: 10,
+          height: 0,
         },
       });
     };
@@ -648,6 +648,64 @@ const Chatting = ({ route }) => {
     }
   };
 
+  // Gửi lời mời kết bạn
+  const handleSendFriendRequest = async (chatId) => {
+    try {
+      const response = await friendService.sendFriendRequest({
+        senderId: user.id,
+        receiverId: chatId,
+      });
+      if (response.status === "ok") {
+        Alert.alert("Thông báo", "Đã gửi lời mời kết bạn thành công.", [
+          {
+            text: "OK",
+            onPress: () => navigation.navigate("Home", { screen: "Messages" }),
+          },
+        ]);
+      } else {
+        Alert.alert("Thông báo", response.message);
+      }
+    } catch (error) {
+      console.error("Lỗi khi gửi lời mời kết bạn:", error);
+      Alert.alert("Lỗi", "Không thể gửi lời mời kết bạn.");
+    }
+  };
+
+  // Hủy chặn
+  const handleUnblockUser = async (chatId) => {
+    Alert.alert(
+      "Xác nhận",
+      `Bạn có chắc chắn muốn hủy chặn ${chat.name} không?`,
+      [
+        { text: "Hủy" },
+        {
+          text: "Xác nhận",
+          onPress: async () => {
+            try {
+              const response = await friendService.unblockUser({
+                userId: user.id,
+                blockedUserId: chatId,
+              });
+              if (response.status === "ok") {
+                setBlockStatus((prev) => ({
+                  ...prev,
+                  // isBlocked: false,
+                  // blockedByTarget: false,
+                  blockedByUser: false,
+                }));
+                setTypeChat("not-friend"); // Cập nhật lại trạng thái chat
+              } else {
+                Alert.alert("Lỗi", response.message);
+              }
+            } catch (error) {
+              console.error("Lỗi khi hủy chặn:", error);
+            }
+          },
+        },
+      ]
+    );
+  };
+
   return (
     <View style={styles.container}>
       <StatusBar style="dark" />
@@ -670,9 +728,9 @@ const Chatting = ({ route }) => {
 
             <View style={{ marginLeft: 10, gap: 2 }}>
               <Text style={styles.name}>{chat.name}</Text>
-              <Text style={{ fontSize: 12, color: "gray" }}>
+              {/* <Text style={{ fontSize: 12, color: "gray" }}>
                 {chat.status === "Online" ? "Đang hoạt động" : "Ngoại tuyến"}
-              </Text>
+              </Text> */}
             </View>
           </View>
           <View
@@ -712,6 +770,7 @@ const Chatting = ({ route }) => {
           </View>
         </View>
       </View>
+
       {typeChat === "blocked" && (
         <View
           style={
@@ -721,9 +780,28 @@ const Chatting = ({ route }) => {
           }
         >
           <Text style={styles.blockedText}>
-            {blockStatus.blockedByTarget
-              ? `Bạn đã bị ${chat.name} chặn`
-              : `Bạn đã chặn ${chat.name}`}
+            {blockStatus.blockedByTarget ? (
+              `Bạn đã bị ${chat.name} chặn`
+            ) : (
+              <>
+                <TouchableOpacity disabled>
+                  <Text style={styles.blockedText}>
+                    Bạn đã chặn {chat.name}.{" "}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => handleUnblockUser(chat.id)}>
+                  <Text
+                    style={{
+                      textDecorationLine: "underline",
+                      fontWeight: "600",
+                      fontSize: 16,
+                    }}
+                  >
+                    Hủy chặn
+                  </Text>
+                </TouchableOpacity>
+              </>
+            )}
           </Text>
         </View>
       )}
@@ -735,9 +813,20 @@ const Chatting = ({ route }) => {
               : [styles.blockedContainer, { padding: 5 }]
           }
         >
-          <Text style={styles.blockedText}>
-            Bạn không thể gửi tin nhắn trong cuộc trò chuyện này.
-          </Text>
+          <View style={styles.blockedText}>
+            <Text style={styles.blockedText}>Kết bạn để nhắn tin. </Text>
+            <TouchableOpacity onPress={() => handleSendFriendRequest(chat.id)}>
+              <Text
+                style={{
+                  textDecorationLine: "underline",
+                  fontWeight: "600",
+                  fontSize: 16,
+                }}
+              >
+                Kết bạn
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
       )}
 
@@ -788,7 +877,6 @@ const Chatting = ({ route }) => {
                           : chat.chatType === "group"
                           ? getMemberName(repliedMessage.sender_id)
                           : chat.name}
-                        :
                       </Text>
 
                       {repliedMessage.type === "text" && (
@@ -816,7 +904,8 @@ const Chatting = ({ route }) => {
                             numberOfLines={1}
                             ellipsizeMode="tail"
                           >
-                            {repliedMessage.fileName || "Tệp đính kèm"}
+                            {getFileNameFromUrl(repliedMessage.content) ||
+                              "Tệp đính kèm"}
                           </Text>
                         </View>
                       )}
@@ -890,7 +979,7 @@ const Chatting = ({ route }) => {
                           styles.reactionsContainer,
                           isMyMessage
                             ? styles.reactionsRight
-                            : styles.reactionsRight,
+                            : styles.reactionsLeft,
                         ]}
                       >
                         <TouchableOpacity
@@ -937,12 +1026,11 @@ const Chatting = ({ route }) => {
                   <View
                     style={{
                       backgroundColor: "white",
-                      width: "100%",
                       borderRadius: 10,
-                      padding: 10,
+                      paddingTop: 10,
                     }}
                   >
-                    <View style={styles.row}>
+                    <View style={{}}>
                       <TouchableOpacity
                         style={styles.actionButton}
                         onPress={handleSoftDelete}
@@ -1198,7 +1286,7 @@ const styles = StyleSheet.create({
     borderRadius: 25,
   },
   name: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "bold",
   },
   messagesContainer: {
@@ -1272,7 +1360,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#f0f0f0",
     paddingVertical: 10,
     paddingHorizontal: 10,
-    height: 70,
+    minHeight: 70,
+    maxHeight: 120,
   },
   replyPreviewText: {
     flex: 1,
@@ -1453,7 +1542,9 @@ const styles = StyleSheet.create({
   },
   blockedText: {
     color: "#d32f2f",
-    fontSize: 14,
+    fontSize: 16,
+    flexDirection: "row",
+    alignItems: "center",
   },
   notFriendContainer: {
     backgroundColor: "#f0f0f0",

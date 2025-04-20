@@ -53,30 +53,30 @@ const MeTab = () => {
     }
   };
 
-  useEffect(() => {
-    const compressImage = async () => {
-      if (userData?.avatar_path) {
-        try {
-          const manipulatedImage = await ImageManipulator.manipulateAsync(
-            userData.avatar_path,
-            [{ resize: { width: 200, height: 200 } }],
-            { compress: 0.9, format: ImageManipulator.SaveFormat.JPEG }
-          );
-          setCompressedAvatar(manipulatedImage.uri);
-        } catch (error) {
-          console.log("Lỗi nén ảnh:", error);
-        }
-      }
-    };
-    compressImage();
-  }, [userData]);
+  // useEffect(() => {
+  //   const compressImage = async () => {
+  //     if (userData?.avatar_path) {
+  //       try {
+  //         const manipulatedImage = await ImageManipulator.manipulateAsync(
+  //           userData.avatar_path,
+  //           [{ resize: { width: 200, height: 200 } }],
+  //           { compress: 0.9, format: ImageManipulator.SaveFormat.JPEG }
+  //         );
+  //         setCompressedAvatar(manipulatedImage.uri);
+  //       } catch (error) {
+  //         console.log("Lỗi nén ảnh:", error);
+  //       }
+  //     }
+  //   };
+  //   compressImage();
+  // }, [userData]);
   return (
     <View style={styles.container}>
       <StatusBar style="dark" />
       <HeaderPersonalProfile />
       <View style={styles.headerBackground}>
         <Image
-          source={user.cover_path ? { uri: user.cover_path } : avatar}
+          source={{ uri: user.cover_path }}
           style={styles.headerBackground}
         />
       </View>
@@ -84,7 +84,7 @@ const MeTab = () => {
       <View style={styles.profileContainer}>
         <TouchableOpacity onPress={() => setAvatarModalVisible(true)}>
           <Image
-            source={user.avatar_path ? { uri: user.avatar_path } : avatar}
+            source={{ uri: user.avatar_path }}
             style={{ width: 200, height: 200, borderRadius: 1000 }}
             onError={(e) =>
               console.log("Lỗi khi tải ảnh:", e.nativeEvent.error)
