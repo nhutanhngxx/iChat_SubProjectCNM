@@ -55,11 +55,11 @@ const Message = ({
           getUserFriends(user._id || user.id)
         ).unwrap();
         setFriends(result);
-        console.log(
-          "friends from Search component",
-          user._id || user.id,
-          result
-        );
+        // console.log(
+        //   "friends from Search component",
+        //   user._id || user.id,
+        //   result
+        // );
       } catch (err) {
         console.error("Lỗi khi lấy danh sách bạn bè:", err);
       }
@@ -762,11 +762,11 @@ const Message = ({
     );
   };
   useEffect(() => {
-    console.log("Message component rendered with:", {
-      messageId: message._id,
-      replyTo: message.reply_to || null,
-      allMessagesCount: allMessages?.length || 0,
-    });
+    // console.log("Message component rendered with:", {
+    //   messageId: message._id,
+    //   replyTo: message.reply_to || null,
+    //   allMessagesCount: allMessages?.length || 0,
+    // });
 
     if (message.reply_to) {
       const found = findRepliedMessage(message.reply_to);
