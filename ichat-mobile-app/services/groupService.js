@@ -147,7 +147,16 @@ const groupService = {
     }
   },
 
-  getGroupById: async (groupId) => {},
+  getGroupById: async (groupId) => {
+    try {
+      const response = await apiService.get(`/${PREFIX}/group/${groupId}`);
+      console.log(response.data.data);
+      return response.data.data;
+    } catch (error) {
+      console.log("Group Service Error: ", error);
+      return null;
+    }
+  },
 
   createGroup: async () => {},
 };

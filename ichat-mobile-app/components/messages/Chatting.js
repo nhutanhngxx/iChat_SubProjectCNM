@@ -78,6 +78,7 @@ const Chatting = ({ route }) => {
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [groupMembers, setGroupMembers] = useState([]);
+
   // Kiểm tra trạng thái chặn giữa 2 người dùng
   const [blockStatus, setBlockStatus] = useState({
     isBlocked: false,
@@ -219,7 +220,7 @@ const Chatting = ({ route }) => {
   // Hàm lấy tên thành viên từ ID để hiển thị trên tin nhắn nhóm
   const getMemberName = useCallback(
     (memberId) => {
-      const member = groupMembers.find((m) => m._id === memberId);
+      const member = groupMembers.find((m) => m.user_id === memberId);
       return member?.full_name || "Unknown";
     },
     [groupMembers]
@@ -668,103 +669,6 @@ const Chatting = ({ route }) => {
     }
   };
 
-  // const handleSoftDelete = async () => {
-  //   if (typeChat === "not-friend" || typeChat === "blocked") {
-  //     let message = "Bạn không thể xóa tin nhắn trong cuộc trò chuyện này.";
-
-  //     if (typeChat === "blocked") {
-  //       if (blockStatus.blockedByTarget) {
-  //         message = `Bạn không thể xóa tin nhắn vì bạn đã bị chặn.`;
-  //       } else if (blockStatus.blockedByUser) {
-  //         message = `Bạn không thể xóa tin nhắn vì bạn đã chặn người này.`;
-  //       }
-  //     }
-
-  //     Alert.alert("Thông báo", message);
-  //     return;
-  //   }
-
-  //   try {
-  //     // Kiểm tra xem tin nhắn được chọn có phải là tin nhắn cuối cùng không
-  //     const isLastMessage =
-  //       selectedMessage._id === messages[messages.length - 1]._id;
-
-  //     const response = await messageService.softDeleteMessagesForUser(
-  //       user.id,
-  //       selectedMessage._id
-  //     );
-
-  //     if (response.data !== null) {
-  //       setMessages((prevMessages) =>
-  //         prevMessages.filter((msg) => msg._id !== selectedMessage._id)
-  //       );
-
-  //       // Nếu là tin nhắn cuối cùng, cập nhật lại tin nhắn cuối
-  //       if (isLastMessage) {
-  //         let updatedMessages;
-  //         let chatId;
-
-  //         if (chat?.chatType === "private") {
-  //           updatedMessages = await messageService.getPrivateMessages({
-  //             userId: user.id,
-  //             chatId: chat.id,
-  //           });
-  //           chatId = chat.id;
-  //         } else {
-  //           // Xử lý cho tin nhắn nhóm
-  //           updatedMessages = await messageService.getMessagesByGroupId(
-  //             chat.id
-  //           );
-  //           chatId = chat.id;
-  //         }
-
-  //         // Lọc tin nhắn chưa bị xóa
-  //         const availableMessages = updatedMessages.filter(
-  //           (msg) => !msg.isdelete?.includes(user.id)
-  //         );
-
-  //         // Tìm tin nhắn cuối cùng hợp lệ
-  //         const lastMessage = availableMessages[availableMessages.length - 1];
-
-  //         // Định dạng nội dung tin nhắn cuối
-  //         const formatMessageContent = (msg) => {
-  //           if (!msg) return "";
-  //           switch (msg.type) {
-  //             case "file":
-  //               return "[Tệp đính kèm]";
-  //             case "image":
-  //               return "[Hình ảnh]";
-  //             case "video":
-  //               return "[Video]";
-  //             case "audio":
-  //               return "[Tệp âm thanh]";
-  //             default:
-  //               return msg.content;
-  //           }
-  //         };
-
-  //         // Emit event để Priority cập nhật
-  //         socketService.emit("update_last_message", {
-  //           chatId,
-  //           isGroup: chat?.chatType !== "private",
-  //           lastMessage: lastMessage
-  //             ? {
-  //                 content: formatMessageContent(lastMessage),
-  //                 timestamp: lastMessage.timestamp,
-  //                 type: lastMessage.type,
-  //                 sender_id: lastMessage.sender_id, // Thêm sender_id cho tin nhắn nhóm
-  //               }
-  //             : null,
-  //         });
-  //       }
-  //     }
-  //   } catch (error) {
-  //     console.error("Lỗi khi xóa mềm tin nhắn:", error);
-  //   } finally {
-  //     setModalVisible(false);
-  //   }
-  // };
-
   // Gửi lời mời kết bạn
   const handleSendFriendRequest = async (chatId) => {
     try {
@@ -876,6 +780,7 @@ const Chatting = ({ route }) => {
                   id: chat.id,
                   name: chat.name,
                   avatar: chat.avatar,
+                  //
                 });
               }}
             >
