@@ -8,11 +8,6 @@ const groupChatSchema = new mongoose.Schema(
       required: true,
     },
     avatar: { type: String, default: "" },
-    created_by: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "UserInfo",
-      required: true,
-    },
     created_at: { type: Date, default: Date.now },
   },
   {

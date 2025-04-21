@@ -24,7 +24,5 @@ router.post(
 router.get("/:groupId/messages/search", GroupController.searchMessages); // Tìm kiếm tin nhắn trong nhóm
 router.put("/:groupId/members/:userId/role", GroupController.setRole); // Cập nhật quyền thành viên trong nhóm
 router.get("/group/:groupId", GroupController.getGroupById); // Lấy danh sách tin nhắn trong nhóm
-// Kiểm tra quyền admin (Phụ hay chính)
-router.get("/:groupId/admin-check/:userId", GroupController.isGroupSubAdmin);
-
+router.get("/:groupId/admin-check/:userId", GroupController.isGroupSubAdmin); // Kiểm tra quyền admin (Phụ hay chính)
 module.exports = router;

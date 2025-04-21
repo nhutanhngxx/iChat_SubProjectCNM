@@ -710,8 +710,13 @@ const MessageArea = ({ selectedChat, user }) => {
         ).unwrap();
         setFriends(result);
 
-        // Check if the selected user is a friend
-        if (result && result.friends && selectedChat) {
+        // Chỉ kiểm tra nếu không phải chat nhóm
+        if (
+          result &&
+          result.friends &&
+          selectedChat &&
+          selectedChat.chat_type !== "group"
+        ) {
           const isFriend = result.friends.some(
             (friend) =>
               friend.id === selectedChat.id ||
@@ -719,6 +724,9 @@ const MessageArea = ({ selectedChat, user }) => {
               String(friend.id) === String(selectedChat.id)
           );
           setIsFriendWithReceiver(isFriend);
+        } else if (selectedChat?.chat_type === "group") {
+          // Nếu là chat nhóm, luôn set là true
+          setIsFriendWithReceiver(true);
         }
       } catch (err) {
         console.error("Error fetching friends:", err);
@@ -736,7 +744,12 @@ const MessageArea = ({ selectedChat, user }) => {
     content,
     replyToId = null // ID của tin nhắn được trả lời (nếu có)
   ) => {
-    if (!isFriendWithReceiver && selectedChat.id !== user.id) {
+    // Kiểm tra xem có phải là chat nhóm không
+    const isGroupChat = selectedChat?.chat_type === "group";
+    console.log("Is group chat?", isGroupChat);
+
+    // Chỉ kiểm tra bạn bè nếu là chat private
+    if (!isGroupChat && !isFriendWithReceiver && selectedChat.id !== user.id) {
       message.warning("Bạn cần kết bạn để gửi tin nhắn.");
       return;
     }
@@ -754,7 +767,7 @@ const MessageArea = ({ selectedChat, user }) => {
         receiver_id: selectedChat?.id, // ID người nhận
         content: text ? text : content || "",
         type: "text", // Loại tin nhắn (text, image, file)
-        chat_type: "private",
+        chat_type: selectedChat.chat_type || "private",
         ...(replyToId && { reply_to: replyToId }), // ID tin nhắn được trả lời (nếu có)
       };
 
@@ -1037,7 +1050,7 @@ const MessageArea = ({ selectedChat, user }) => {
                 />
               </div>
             )} */}
-            {!isFriendWithReceiver && (
+            {!isFriendWithReceiver && selectedChat.chat_type !== "group" && (
               <div className="not-friend-banner">
                 <Alert
                   message="Hai bạn chưa là bạn bè"

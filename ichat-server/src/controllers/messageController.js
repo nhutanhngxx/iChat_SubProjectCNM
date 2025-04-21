@@ -185,19 +185,140 @@ const MessageController = {
     }
   },
 
+  // recentReceivers: async (req, res) => {
+  //   try {
+  //     const senderId = req.params.senderId;
+  //     const senderObjectId = new mongoose.Types.ObjectId(senderId);
+
+  //     const recentReceivers = await Messages.aggregate([
+  //       {
+  //         $match: {
+  //           $or: [
+  //             { sender_id: senderObjectId },
+  //             { receiver_id: senderObjectId },
+  //           ],
+  //           // Thêm điều kiện: không lấy tin nhắn mà người dùng hiện tại đã xóa mềm
+  //           isdelete: { $not: { $elemMatch: { $eq: senderObjectId } } },
+  //         },
+  //       },
+  //       { $sort: { timestamp: -1 } },
+  //       {
+  //         $group: {
+  //           _id: {
+  //             $cond: [
+  //               { $lt: ["$sender_id", "$receiver_id"] },
+  //               { sender: "$sender_id", receiver: "$receiver_id" },
+  //               { sender: "$receiver_id", receiver: "$sender_id" },
+  //             ],
+  //           },
+  //           lastMessage: { $first: "$content" },
+  //           timestamp: { $first: "$timestamp" },
+  //           status: { $first: "$status" },
+  //           type: { $first: "$type" },
+  //           lastMessageSender: { $first: "$sender_id" },
+  //         },
+  //       },
+  //       {
+  //         $match: {
+  //           $or: [
+  //             { "_id.sender": senderObjectId },
+  //             { "_id.receiver": senderObjectId },
+  //           ],
+  //         },
+  //       },
+  //       {
+  //         $addFields: {
+  //           otherUserId: {
+  //             $cond: [
+  //               { $eq: ["$_id.sender", senderObjectId] },
+  //               "$_id.receiver",
+  //               "$_id.sender",
+  //             ],
+  //           },
+  //         },
+  //       },
+  //       {
+  //         $lookup: {
+  //           from: "UserInfo",
+  //           localField: "otherUserId",
+  //           foreignField: "_id",
+  //           as: "receiverInfo",
+  //         },
+  //       },
+  //       { $unwind: "$receiverInfo" },
+  //       {
+  //         $lookup: {
+  //           from: "Message",
+  //           let: {
+  //             otherId: "$otherUserId",
+  //             me: senderObjectId,
+  //           },
+  //           pipeline: [
+  //             {
+  //               $match: {
+  //                 $expr: {
+  //                   $and: [
+  //                     { $eq: ["$receiver_id", "$$me"] },
+  //                     { $eq: ["$sender_id", "$$otherId"] },
+  //                     { $ne: ["$status", "Viewed"] },
+  //                     // Thêm điều kiện loại bỏ tin nhắn đã xóa mềm
+  //                     { $not: [{ $in: ["$$me", "$isdelete"] }] },
+  //                   ],
+  //                 },
+  //               },
+  //             },
+  //             { $count: "unread" },
+  //           ],
+  //           as: "unreadMessages",
+  //         },
+  //       },
+  //       {
+  //         $addFields: {
+  //           unread: {
+  //             $ifNull: [{ $arrayElemAt: ["$unreadMessages.unread", 0] }, 0],
+  //           },
+  //           isLastMessageFromMe: {
+  //             $eq: ["$lastMessageSender", senderObjectId],
+  //           },
+  //         },
+  //       },
+  //       {
+  //         $project: {
+  //           _id: 0,
+  //           receiver_id: "$receiverInfo._id",
+  //           name: "$receiverInfo.full_name",
+  //           avatar_path: "$receiverInfo.avatar_path",
+  //           lastMessage: 1,
+  //           timestamp: 1,
+  //           status: 1,
+  //           user_status: "$receiverInfo.status",
+  //           type: 1,
+  //           unread: 1,
+  //           isLastMessageFromMe: 1,
+  //         },
+  //       },
+  //       { $sort: { timestamp: -1 } },
+  //     ]);
+
+  //     res.status(200).json({ success: true, data: recentReceivers });
+  //   } catch (error) {
+  //     res.status(500).json({ success: false, message: error.message });
+  //   }
+  // },
   recentReceivers: async (req, res) => {
     try {
       const senderId = req.params.senderId;
       const senderObjectId = new mongoose.Types.ObjectId(senderId);
 
-      const recentReceivers = await Messages.aggregate([
+      // PHẦN 1: LẤY TIN NHẮN PRIVATE GẦN NHẤT
+      const recentPrivateReceivers = await Messages.aggregate([
         {
           $match: {
             $or: [
               { sender_id: senderObjectId },
               { receiver_id: senderObjectId },
             ],
-            // Thêm điều kiện: không lấy tin nhắn mà người dùng hiện tại đã xóa mềm
+            chat_type: "private", // Chỉ lấy tin nhắn private
             isdelete: { $not: { $elemMatch: { $eq: senderObjectId } } },
           },
         },
@@ -216,6 +337,7 @@ const MessageController = {
             status: { $first: "$status" },
             type: { $first: "$type" },
             lastMessageSender: { $first: "$sender_id" },
+            chat_type: { $first: "$chat_type" },
           },
         },
         {
@@ -261,7 +383,6 @@ const MessageController = {
                       { $eq: ["$receiver_id", "$$me"] },
                       { $eq: ["$sender_id", "$$otherId"] },
                       { $ne: ["$status", "Viewed"] },
-                      // Thêm điều kiện loại bỏ tin nhắn đã xóa mềm
                       { $not: [{ $in: ["$$me", "$isdelete"] }] },
                     ],
                   },
@@ -295,17 +416,119 @@ const MessageController = {
             type: 1,
             unread: 1,
             isLastMessageFromMe: 1,
+            chat_type: 1,
+          },
+        },
+      ]);
+
+      // PHẦN 2: LẤY TIN NHẮN NHÓM GẦN NHẤT
+      // 1. Tìm tất cả nhóm mà người dùng là thành viên
+      const userGroups = await GroupMembers.find({
+        user_id: senderObjectId,
+      }).distinct("group_id");
+
+      const groupObjectIds = userGroups.map(
+        (id) => new mongoose.Types.ObjectId(id)
+      );
+
+      // 2. Lấy tin nhắn gần nhất của mỗi nhóm
+      const recentGroupMessages = await Messages.aggregate([
+        {
+          $match: {
+            chat_type: "group",
+            receiver_id: { $in: groupObjectIds },
+            isdelete: { $not: { $elemMatch: { $eq: senderObjectId } } },
           },
         },
         { $sort: { timestamp: -1 } },
+        {
+          $group: {
+            _id: "$receiver_id", // Group by group_id (stored in receiver_id for group messages)
+            lastMessage: { $first: "$content" },
+            timestamp: { $first: "$timestamp" },
+            status: { $first: "$status" },
+            type: { $first: "$type" },
+            lastMessageSender: { $first: "$sender_id" },
+            chat_type: { $first: "$chat_type" },
+          },
+        },
+        // Lấy thông tin của nhóm
+        {
+          $lookup: {
+            from: "GroupChat",
+            localField: "_id",
+            foreignField: "_id",
+            as: "groupInfo",
+          },
+        },
+        { $unwind: "$groupInfo" },
+        // Đếm tin nhắn chưa đọc trong nhóm
+        {
+          $lookup: {
+            from: "Message",
+            let: {
+              groupId: "$_id",
+              me: senderObjectId,
+            },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $and: [
+                      { $eq: ["$chat_type", "group"] },
+                      { $eq: ["$receiver_id", "$$groupId"] },
+                      { $ne: ["$sender_id", "$$me"] }, // Không đếm tin nhắn của chính người dùng
+                      { $ne: ["$status", "Viewed"] },
+                      { $not: [{ $in: ["$$me", "$isdelete"] }] },
+                    ],
+                  },
+                },
+              },
+              { $count: "unread" },
+            ],
+            as: "unreadMessages",
+          },
+        },
+        {
+          $addFields: {
+            unread: {
+              $ifNull: [{ $arrayElemAt: ["$unreadMessages.unread", 0] }, 0],
+            },
+            isLastMessageFromMe: {
+              $eq: ["$lastMessageSender", senderObjectId],
+            },
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            receiver_id: "$_id",
+            name: "$groupInfo.name",
+            avatar_path: "$groupInfo.avatar",
+            lastMessage: 1,
+            timestamp: 1,
+            status: 1,
+            user_status: "online", // Nhóm luôn "online"
+            type: 1,
+            unread: 1,
+            isLastMessageFromMe: 1,
+            chat_type: 1,
+          },
+        },
       ]);
 
-      res.status(200).json({ success: true, data: recentReceivers });
+      // PHẦN 3: KẾT HỢP CẢ HAI VÀ SẮP XẾP
+      const allRecentMessages = [
+        ...recentPrivateReceivers,
+        ...recentGroupMessages,
+      ].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+      res.status(200).json({ success: true, data: allRecentMessages });
     } catch (error) {
+      console.error("Lỗi khi lấy danh sách tin nhắn gần đây:", error);
       res.status(500).json({ success: false, message: error.message });
     }
   },
-
   replyToMessage: async (req, res) => {
     try {
       const { sender_id, receiver_id, content, type, chat_type, reply_to } =

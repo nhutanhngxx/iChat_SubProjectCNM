@@ -140,102 +140,6 @@ const ChatWindow = ({ user, selectedFriend }) => {
     };
   }, [user?.id, selectedUser, dispatch]);
 
-  // useEffect(() => {
-  //   if (!user?.id) return;
-
-  //   console.log("Setting up socket listeners for user:", user.id);
-
-  //   // Global listener for any message to this user
-  //   const handleReceiveMessage = (message) => {
-  //     console.log("Received message globally:", message);
-
-  //     // Only process if message involves current user
-  //     if (message.sender_id === user.id || message.receiver_id === user.id) {
-  //       // 1. ALWAYS update the sidebar message list - this will update ComponentLeft
-  //       dispatch(fetchMessages(user.id));
-
-  //       // 2. Only update current chat messages if this message belongs to the selected conversation
-  //       if (
-  //         selectedUser &&
-  //         ((message.sender_id === selectedUser.id &&
-  //           message.receiver_id === user.id) ||
-  //           (message.sender_id === user.id &&
-  //             message.receiver_id === selectedUser.id))
-  //       ) {
-  //         console.log(
-  //           "Message belongs to current conversation - updating chat messages"
-  //         );
-  //         dispatch(
-  //           fetchChatMessages({
-  //             senderId: user.id,
-  //             receiverId: selectedUser.id,
-  //           })
-  //         );
-  //       } else {
-  //         console.log(
-  //           "Message is for a different conversation - only updating sidebar"
-  //         );
-  //         // Only update the message in Redux store if it's NOT for the current conversation
-  //         // This prevents invalid updates to Message.js components
-  //         if (
-  //           !selectedUser ||
-  //           (message.sender_id !== selectedUser.id &&
-  //             message.receiver_id !== selectedUser.id)
-  //         ) {
-  //           dispatch(updateMessages(message));
-  //         }
-  //       }
-  //     }
-  //   };
-
-  //   // Register listeners
-  //   socket.on("receive-message", handleReceiveMessage);
-
-  //   // For reaction events - create a single handler for all reaction events
-  //   const handleReactionEvent = (data) => {
-  //     console.log("Reaction event received:", data);
-
-  //     // If reaction is for the current conversation, update chat messages
-  //     if (selectedUser && data.messageId) {
-  //       // Create a roomId for the current conversation
-  //       const currentUserIds = [user.id, selectedUser.id].sort();
-  //       const currentRoomId = `chat_${currentUserIds[0]}_${currentUserIds[1]}`;
-
-  //       // Only fetch if this reaction belongs to the current conversation
-  //       if (data.chatId === currentRoomId) {
-  //         dispatch(
-  //           fetchChatMessages({
-  //             senderId: user.id,
-  //             receiverId: selectedUser.id,
-  //           })
-  //         );
-  //       } else {
-  //         // If it's another chat, just update the sidebar
-  //         dispatch(fetchMessages(user.id));
-  //       }
-  //     } else {
-  //       // If no user selected, just update sidebar
-  //       dispatch(fetchMessages(user.id));
-  //     }
-  //   };
-
-  //   // Set up unified reaction listeners
-  //   socket.on("reaction-added", handleReactionEvent);
-  //   socket.on("reaction-removed", handleReactionEvent);
-  //   socket.on("message-reaction-update", handleReactionEvent); // Legacy listener
-
-  //   // Join user's global room
-  //   socket.emit("join-user-room", user.id);
-
-  //   return () => {
-  //     console.log("Cleaning up global socket listeners");
-  //     socket.off("receive-message", handleReceiveMessage);
-  //     socket.off("reaction-added", handleReactionEvent);
-  //     socket.off("reaction-removed", handleReactionEvent);
-  //     socket.off("message-reaction-update", handleReactionEvent);
-  //   };
-  // }, [user?.id, selectedUser, dispatch]);
-
   const handleSelectUser = (user) => {
     console.log("Setting selected user to:", user);
 
@@ -256,6 +160,7 @@ const ChatWindow = ({ user, selectedFriend }) => {
       isLastMessageFromMe: user.isLastMessageFromMe || false,
       // This is very important - both fields are needed
       receiver_id: user.receiver_id || user.id,
+      chat_type: user.chat_type || "private",
     };
 
     setSelectedUser(normalizedUser);
@@ -282,6 +187,7 @@ const ChatWindow = ({ user, selectedFriend }) => {
         avatar_path: msg.avatar_path || "https://default-avatar.com/avatar.jpg",
         priority: "priority",
         isLastMessageFromMe: msg.isLastMessageFromMe || false,
+        chat_type: msg.chat_type || "private",
       }));
 
       setUserListFromState(formattedUsers);

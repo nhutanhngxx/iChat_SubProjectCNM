@@ -114,7 +114,6 @@ const GroupModel = {
             name,
             admin_id,
             avatar: avatarUrl,
-            created_by: admin_id,
           },
         ],
         { session }
