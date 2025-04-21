@@ -187,7 +187,6 @@ const MessageModel = {
     await message.save();
     return message;
   },
-
   addReaction: async ({ messageId, user_id, reaction_type }) => {
     const message = await Messages.findById(messageId);
     if (!message)
@@ -201,39 +200,43 @@ const MessageModel = {
       throw { status: 400, message: "Kiểu reaction không hợp lệ!" };
     }
 
-    // Tìm xem user đã từng thả cùng loại reaction này chưa
-    const reactionIndex = message.reactions.findIndex(
-      (r) =>
-        r.user_id.toString() === user_id.toString() &&
-        r.reaction_type === reaction_type
-    );
-
-    if (reactionIndex !== -1) {
-      // Nếu đã thả rồi → gỡ bỏ reaction đó
-      message.reactions.splice(reactionIndex, 1);
-    } else {
-      // Nếu chưa thả → thêm mới reaction này
-      message.reactions.push({
-        user_id,
-        reaction_type,
-        timestamp: new Date(),
-      });
-    }
+    // Instead of checking for existing reactions, just add a new one
+    // Each reaction gets its own entry with a timestamp
+    message.reactions.push({
+      user_id,
+      reaction_type,
+      timestamp: new Date(),
+    });
 
     await message.save();
     return message;
   },
 
-  removeReaction: async (messageId, userId) => {
-    const message = await Messages.findByIdAndUpdate(
-      messageId,
-      { $pull: { reactions: { user_id: userId } } },
-      { new: true }
+  // Update your removeReaction function
+  removeReaction: async ({ messageId, userId, reaction_type }) => {
+    console.log("MessageId:", messageId);
+    const message = await Messages.findById(messageId);
+    if (!message)
+      throw {
+        status: 404,
+        message: "Không tìm thấy tin nhắn!",
+      };
+
+    // Find the index of the FIRST reaction of this type by this user
+    const reactionIndex = message.reactions.findIndex(
+      (r) =>
+        r.user_id.toString() === userId.toString() &&
+        r.reaction_type === reaction_type
     );
-    if (!message) throw { status: 404, message: "Message not found" };
+
+    if (reactionIndex !== -1) {
+      // Remove ONLY this ONE reaction (not all of the same type)
+      message.reactions.splice(reactionIndex, 1);
+      await message.save();
+    }
+
     return message;
   },
-
   pinMessage: async (messageId, is_pinned) => {
     const message = await Messages.findById(messageId);
     if (!message) throw { status: 404, message: "Message not found" };
