@@ -275,7 +275,7 @@ const GroupModel = {
     );
   },
 
-  // 7. Xóa nhóm (chỉ creator)
+  // 7. Xóa nhóm (chỉ creator || admin chính)
   deleteGroup: async (groupId) => {
     await GroupMember.deleteMany({ group_id: groupId });
     return GroupChat.findByIdAndDelete(groupId);

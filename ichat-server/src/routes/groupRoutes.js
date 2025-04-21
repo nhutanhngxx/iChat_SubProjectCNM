@@ -23,6 +23,6 @@ router.post(
 ); //Gửi tin nhắn nhóm
 router.get("/:groupId/messages/search", GroupController.searchMessages); // Tìm kiếm tin nhắn trong nhóm
 router.put("/:groupId/members/:userId/role", GroupController.setRole); // Cập nhật quyền thành viên trong nhóm
-router.get("/group/:groupId", GroupController.getGroupById); // Lấy danh sách tin nhắn trong nhóm
+router.get("/group/:groupId", GroupController.getGroupById); // Lấy thông tin nhóm
 router.get("/:groupId/admin-check/:userId", GroupController.isGroupSubAdmin); // Kiểm tra quyền admin (Phụ hay chính)
 module.exports = router;
