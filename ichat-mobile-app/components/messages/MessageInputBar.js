@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   TextInput,
@@ -8,24 +8,36 @@ import {
   Text,
   Platform,
   ScrollView,
+  Dimensions,
+  ActivityIndicator,
 } from "react-native";
+import { Video } from "expo-av";
+import * as ImagePicker from "expo-image-picker";
 
 import attachmentIcon from "../../assets/icons/attachment.png";
 
 const MessageInputBar = ({
   inputMessage,
   setInputMessage,
-  selectedImages, // Thay đổi từ selectedImage thành selectedImages
-  setSelectedImages, // Thay đổi từ setSelectedImage thành setSelectedImages
+  selectedImages,
+  setSelectedImages,
   selectedFile,
   setSelectedFile,
+  selectedVideo,
+  setSelectedVideo,
   sendMessage,
   pickImage,
   pickFile,
+  isUploading,
 }) => {
+  const [videoStatus, setVideoStatus] = useState({});
+
   const hasText = inputMessage.trim();
   const canSend =
-    hasText || (selectedImages && selectedImages.length > 0) || selectedFile;
+    hasText ||
+    (selectedImages && selectedImages.length > 0) ||
+    selectedFile ||
+    selectedVideo;
 
   // Hàm cắt ngắn tên file nếu quá dài
   const truncateFileName = (name, maxLength = 20) => {
@@ -51,7 +63,38 @@ const MessageInputBar = ({
 
   return (
     <View style={styles.wrapper}>
-      {/* Hiển thị preview nhiều ảnh đã chọn */}
+      {/* Video Preview */}
+      {selectedVideo && (
+        <View style={styles.videoPreviewContainer}>
+          <Video
+            source={{ uri: selectedVideo.uri || selectedVideo }}
+            style={styles.videoPreview}
+            resizeMode="contain"
+            shouldPlay={false}
+            isLooping={true}
+            useNativeControls
+            onPlaybackStatusUpdate={(status) => setVideoStatus(() => status)}
+          />
+          {isUploading ? (
+            <View style={styles.uploadingOverlay}>
+              <ActivityIndicator size="large" color="#ffffff" />
+              <Text style={styles.uploadingText}>Đang tải video...</Text>
+            </View>
+          ) : (
+            <TouchableOpacity
+              style={styles.removeMediaButton}
+              onPress={() => setSelectedVideo(null)}
+            >
+              <Image
+                source={require("../../assets/icons/close.png")}
+                style={styles.closeIcon}
+              />
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
+
+      {/* Image Preview */}
       {selectedImages && selectedImages.length > 0 && (
         <ScrollView
           horizontal
@@ -62,7 +105,7 @@ const MessageInputBar = ({
             <View key={index} style={styles.previewContainer}>
               <Image source={{ uri }} style={styles.previewImage} />
               <TouchableOpacity
-                style={styles.removeImageButton}
+                style={styles.removeMediaButton}
                 onPress={() => {
                   const newImages = selectedImages.filter(
                     (_, i) => i !== index
@@ -79,7 +122,8 @@ const MessageInputBar = ({
           ))}
         </ScrollView>
       )}
-      {/* Hiển thị tệp đã chọn nếu có */}
+
+      {/* File Preview */}
       {selectedFile && (
         <View style={styles.filePreviewContainer}>
           <View style={styles.fileInfo}>
@@ -255,7 +299,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
     position: "relative",
   },
-  removeImageButton: {
+  removeMediaButton: {
     position: "absolute",
     top: -8,
     right: -8,
@@ -267,5 +311,34 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.2,
     shadowRadius: 1,
+  },
+  videoPreviewContainer: {
+    marginBottom: 8,
+    borderRadius: 8,
+    overflow: "hidden",
+    position: "relative",
+    height: 200,
+    backgroundColor: "#000", // Add black background
+    width: "100%",
+  },
+  videoPreview: {
+    flex: 1,
+    width: "100%",
+    height: "100%",
+  },
+  uploadingOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  uploadingText: {
+    color: "#ffffff",
+    marginTop: 10,
+    fontSize: 14,
   },
 });

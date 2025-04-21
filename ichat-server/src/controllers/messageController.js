@@ -32,14 +32,17 @@ const MessageController = {
   sendMessage: async (req, res) => {
     try {
       const imageFile = req.files?.image?.[0] || null;
+      const videoFile = req.files?.video?.[0] || null;
       const docFile = req.files?.file?.[0] || null;
+      const file = videoFile || imageFile || docFile;
+
       const result = await MessageModel.sendMessage({
         sender_id: req.body.sender_id,
         receiver_id: req.body.receiver_id,
         content: req.body.content || "",
         type: req.body.type,
         chat_type: req.body.chat_type,
-        file: imageFile || docFile,
+        file: file,
         reply_to: req.body.reply_to || null,
       });
 
