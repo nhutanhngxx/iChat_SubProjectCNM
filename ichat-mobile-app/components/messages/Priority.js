@@ -85,12 +85,26 @@ const Priority = () => {
   // Nhận selectedChat từ SearchScreen
   const selectedChat = route.params?.selectedChat || null;
 
-  // console.log("Selected chat: ", selectedChat);
-  // console.log("Route params: ", route.params);
-
   // Gộp danh sách chat và group chat và sắp xếp theo thời gian tin nhắn cuối cùng
   const listChat = chatList.concat(groupList);
   listChat.sort((a, b) => b.lastMessageTime - a.lastMessageTime);
+
+  // Hàm helper để format nội dung tin nhắn
+  const formatMessageContent = (msg) => {
+    if (!msg) return "";
+    switch (msg.type) {
+      case "file":
+        return "[Tệp đính kèm]";
+      case "image":
+        return "[Hình ảnh]";
+      case "video":
+        return "[Video]";
+      case "audio":
+        return "[Tệp âm thanh]";
+      default:
+        return msg.content;
+    }
+  };
 
   useEffect(() => {
     if (!user?.id) return;
@@ -100,9 +114,11 @@ const Priority = () => {
         const [usersResponse, friendsResponse] = await Promise.all([
           userService.getAllUser(),
           friendService.getFriendListByUserId(user.id),
+          // groupService.getAllGroupsByUserId(user.id),
         ]);
         setAllUser(usersResponse || []);
         setFriendList(friendsResponse || []);
+        // setGroupList(groupsResponse || []);
 
         const messagesResponse = await messageService.getMessagesByUserId(
           user.id
@@ -118,20 +134,56 @@ const Priority = () => {
           selectedChat &&
           !formattedChats.some((chat) => chat.id === selectedChat.id)
         ) {
-          formattedChats = [
+          finalChats = [
             {
               ...selectedChat,
-              lastMessage: "", // Không có tin nhắn gần đây
-              lastMessageTime: Date.now(), // Sử dụng thời gian hiện tại để xếp đầu
+              lastMessage: "",
+              lastMessageTime: Date.now(),
               time: getTimeAgo(Date.now()),
             },
             ...formattedChats,
           ];
         }
+
         setChatList(finalChats);
 
-        // const groupsResponse = await groupService.getAllGroupsByUserId(user.id);
-        // setGroupList([...(groupsResponse || [])]);
+        // Lấy danh sách nhóm
+        const groupsResponse = await groupService.getAllGroupsByUserId(user.id);
+        if (groupsResponse) {
+          // Format tin nhắn cuối cùng cho mỗi nhóm
+          const formattedGroups = await Promise.all(
+            groupsResponse.map(async (group) => {
+              const groupMessages = await messageService.getMessagesByGroupId(
+                group.id
+              );
+              // Lọc tin nhắn chưa bị xóa
+              const availableMessages = groupMessages.filter(
+                (msg) => !msg.isdelete?.includes(user.id)
+              );
+              const lastMessage =
+                availableMessages[availableMessages.length - 1];
+
+              if (lastMessage) {
+                const sender = usersResponse.find(
+                  (u) => u._id === lastMessage.sender_id
+                );
+                const senderName = sender ? sender.full_name : "Thành viên";
+                const content = formatMessageContent(lastMessage);
+
+                return {
+                  ...group,
+                  lastMessage: `${senderName}: ${content}`,
+                  lastMessageTime: new Date(lastMessage.timestamp).getTime(),
+                  time: getTimeAgo(new Date(lastMessage.timestamp)),
+                };
+              }
+
+              return group;
+            })
+          );
+
+          setGroupList(formattedGroups);
+        }
       } catch (error) {
         console.error("Lỗi khi tải dữ liệu:", error);
       }
@@ -153,21 +205,16 @@ const Priority = () => {
   }, [selectedChat]);
 
   // Lọc lại dữ liệu tin nhắn theo từng người dùng
-  const formatChatList = (messages, allUser, friendListData) => {
+  const formatChatList = (messages, allUser, friendListData, groupListData) => {
     if (!Array.isArray(messages)) return [];
     // if (!Array.isArray(friendList) || friendList.length === 0) return [];
 
     const friendList = friendListData || [];
-
+    const groupList = groupListData || [];
     const chatMap = new Map();
 
     messages.forEach((msg) => {
-      if (msg.chat_type === "private") {
-        // Bỏ qua tin nhắn đã bị xóa với user hiện tại
-        if (msg.isdelete?.includes(user.id)) {
-          return;
-        }
-
+      if (msg.chat_type === "private" && !msg.isdelete?.includes(user.id)) {
         const chatUserId =
           msg.sender_id === user.id ? msg.receiver_id : msg.sender_id;
 
@@ -180,7 +227,7 @@ const Priority = () => {
           const fullName = chatUser ? chatUser.full_name : "Người dùng ẩn danh";
           const avatarPath =
             chatUser?.avatar_path ||
-            "https://i.ibb.co/9k8sPRMx/best-seller.png";
+            "https://i.ibb.co/9k8sPRMx/best-seller.pnghttps://nhutanhngxx.s3.ap-southeast-1.amazonaws.com/root/new-logo.png";
           const lastMessageTime = new Date(msg?.timestamp).getTime();
           const timeDiff = getTimeAgo(lastMessageTime);
 
@@ -192,16 +239,7 @@ const Priority = () => {
             chatMap.set(chatUserId, {
               id: chatUserId,
               name: fullName,
-              lastMessage:
-                msg.type === "file"
-                  ? "[Tệp đính kèm]"
-                  : msg.type === "image"
-                  ? "[Hình ảnh]"
-                  : msg.type === "video"
-                  ? "[Video]"
-                  : msg.type === "audio"
-                  ? "[Tệp âm thanh]"
-                  : msg.content,
+              lastMessage: formatMessageContent(msg),
               lastMessageTime: lastMessageTime,
               time: timeDiff,
               avatar: { uri: avatarPath },
@@ -304,7 +342,7 @@ const Priority = () => {
         delayLongPress={200}
       >
         <View style={styles.infoContainer}>
-          {item.avatar && <Image source={item.avatar} style={styles.avatar} />}
+          <Image source={item.avatar} style={styles.avatar} />
           <View>
             <Text style={styles.name}>{item.name}</Text>
             <Text>{item.lastMessage}</Text>
@@ -424,7 +462,8 @@ const Priority = () => {
       ) : (
         <FlatList
           data={listChat}
-          keyExtractor={(item) => item.id.toString()}
+          // keyExtractor={(item) => item.id.toString()}
+          keyExtractor={(item, index) => `${item.chatType}_${item.id}_${index}`}
           renderItem={({ item }) => renderItem({ item })}
           showsVerticalScrollIndicator={true}
           keyboardShouldPersistTaps="handled"

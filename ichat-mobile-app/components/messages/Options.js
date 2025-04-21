@@ -38,26 +38,42 @@ const Option = ({ route }) => {
     fetchReceiverInfo();
   }, []);
 
-  useEffect(() => {
-    const fetchSharedGroups = async () => {
-      try {
-        const res = await groupService.getAllGroupsByUserId(user.id);
-        if (res.status === "ok") {
-          const groups = res.groups || [];
-          // Tìm các nhóm có receiver (id đang chat)
-          const filtered = groups.filter((group) => group.members.includes(id));
-          setSharedGroups(filtered);
-          console.log("Nhóm chung:", filtered);
-        }
-      } catch (err) {
-        console.error("Lỗi khi lấy nhóm:", err);
-      }
-    };
+  // useEffect(() => {
+  //   const fetchSharedGroups = async () => {
+  //     try {
+  //       const res = await groupService.getAllGroupsByUserId(user.id);
+  //       // Kiểm tra res và res.status tồn tại
+  //       if (res && res.status === "ok") {
+  //         const groups = res.groups || [];
+  //         // Đảm bảo id tồn tại và groups là array trước khi filter
+  //         if (id && Array.isArray(groups)) {
+  //           const filtered = groups.filter((group) => {
+  //             // Kiểm tra group và group.members tồn tại
+  //             return (
+  //               group &&
+  //               Array.isArray(group.members) &&
+  //               group.members.includes(id)
+  //             );
+  //           });
+  //           setSharedGroups(filtered);
+  //           console.log("Nhóm chung:", filtered);
+  //         }
+  //       } else {
+  //         // Nếu không có status ok, set mảng rỗng
+  //         setSharedGroups([]);
+  //       }
+  //     } catch (err) {
+  //       console.error("Lỗi khi lấy nhóm:", err);
+  //       // Trong trường hợp lỗi, set mảng rỗng
+  //       setSharedGroups([]);
+  //     }
+  //   };
 
-    if (user?.id && id) {
-      fetchSharedGroups();
-    }
-  }, [user?.id, id]);
+  //   // Chỉ gọi API khi có đủ user.id và id
+  //   if (user?.id && id) {
+  //     fetchSharedGroups();
+  //   }
+  // }, [user?.id, id]);
 
   useEffect(() => {
     // console.log("avatar: ", avatar);
@@ -157,11 +173,7 @@ const Option = ({ route }) => {
       <StatusBar style="light" />
       <HeaderOption />
       <View style={styles.profileContainer}>
-        <Image
-          source={typeof avatar === "string" ? { uri: avatar } : avatar}
-          style={styles.avatar}
-        />
-
+        <Image source={{ uri: avatar }} style={styles.avatar} />
         <Text style={styles.name}>{name}</Text>
       </View>
 
@@ -264,7 +276,7 @@ const Option = ({ route }) => {
                   style={styles.icon}
                 />
                 <Text style={styles.title}>
-                  Xem các nhóm chung ({sharedGroups.length})
+                  Xem các nhóm chung ({sharedGroups?.length || 0})
                 </Text>
               </TouchableOpacity>
             </View>
