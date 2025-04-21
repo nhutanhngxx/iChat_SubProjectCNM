@@ -110,7 +110,7 @@ export const sendMessage = createAsyncThunk(
 export const sendImageMessage = createAsyncThunk(
   "messages/sendImageMessage",
   async (
-    { sender_id, receiver_id, image, type: forcedType },
+    { sender_id, receiver_id, image, type: forcedType, chat_type },
     { rejectWithValue }
   ) => {
     try {
@@ -144,7 +144,7 @@ export const sendImageMessage = createAsyncThunk(
       console.log("Sending file as type:", fileType, "MIME:", image.type);
 
       formData.append("type", fileType);
-      formData.append("chat_type", "private");
+      formData.append("chat_type", chat_type);
       formData.append("file", image);
 
       // Set content field to avoid validation error

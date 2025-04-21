@@ -98,13 +98,19 @@ const MessageInput = ({
 
         // Check if the selected user is a friend
         if (result && result.friends && selectedChat) {
-          const isFriend = result.friends.some(
-            (friend) =>
-              friend.id === selectedChat.id ||
-              friend._id === selectedChat.id ||
-              String(friend.id) === String(selectedChat.id)
-          );
-          setIsFriendWithReceiver(isFriend);
+          // Nếu là chat nhóm, luôn coi như là bạn bè
+          if (selectedChat.chat_type === "group") {
+            setIsFriendWithReceiver(true);
+          } else {
+            // Chỉ kiểm tra bạn bè đối với chat cá nhân
+            const isFriend = result.friends.some(
+              (friend) =>
+                friend.id === selectedChat.id ||
+                friend._id === selectedChat.id ||
+                String(friend.id) === String(selectedChat.id)
+            );
+            setIsFriendWithReceiver(isFriend);
+          }
         }
       } catch (err) {
         console.error("Error fetching friends:", err);
@@ -117,7 +123,11 @@ const MessageInput = ({
   }, [dispatch, user, selectedChat]);
   const handleShowPickerTop = () => {
     // Check if users are friends before sending
-    if (!isFriendWithReceiver && selectedChat.id !== user.id) {
+    if (
+      !isFriendWithReceiver &&
+      selectedChat.id !== user.id &&
+      selectedChat?.chat_type !== "group"
+    ) {
       message.warning("Bạn cần kết bạn để gửi tin nhắn.");
       return;
     }
@@ -154,7 +164,11 @@ const MessageInput = ({
 
   const handleShowPickerRight = () => {
     // Check if users are friends before sending
-    if (!isFriendWithReceiver && selectedChat.id !== user.id) {
+    if (
+      !isFriendWithReceiver &&
+      selectedChat.id !== user.id &&
+      selectedChat?.chat_type !== "group"
+    ) {
       message.warning("Bạn cần kết bạn để gửi tin nhắn.");
       return;
     }
@@ -169,7 +183,11 @@ const MessageInput = ({
   };
   const onEmojiClick = (event) => {
     // Check if users are friends before sending
-    if (!isFriendWithReceiver && selectedChat.id !== user.id) {
+    if (
+      !isFriendWithReceiver &&
+      selectedChat.id !== user.id &&
+      selectedChat?.chat_type !== "group"
+    ) {
       message.warning("Bạn cần kết bạn để gửi tin nhắn.");
       return;
     }
@@ -189,7 +207,11 @@ const MessageInput = ({
   // Hàm xử lý khi chọn file ảnh (mở hộp thoại tải ảnh trực tiếp)
   const handleImageUpload = (event) => {
     // Check if users are friends before sending
-    if (!isFriendWithReceiver && selectedChat.id !== user.id) {
+    if (
+      !isFriendWithReceiver &&
+      selectedChat.id !== user.id &&
+      selectedChat?.chat_type !== "group"
+    ) {
       message.warning("Bạn cần kết bạn để gửi tin nhắn.");
       return;
     }
@@ -210,32 +232,13 @@ const MessageInput = ({
   };
 
   // Hàm xử lý khi chọn file (mở hộp thoại tải file trực tiếp)
-  // const handleFileUpload = (event) => {
-  //   // Check if users are friends before sending
-  //   if (!isFriendWithReceiver && selectedChat.id !== user.id) {
-  //     message.warning("Bạn cần kết bạn để gửi tin nhắn.");
-  //     return;
-  //   }
-
-  //   // Always check if you have a valid selected chat and message ID before using
-  //   if (!selectedChat || !selectedChat.id) {
-  //     console.error("No selected chat or invalid chat", selectedChat);
-  //     return;
-  //   }
-  //   const file = event.target.files[0];
-  //   if (file) {
-  //     // setSelectedFile(file); // Lưu file object
-  //     onFileUpload(file); // Truyền file lên MessageArea
-  //     message.success(`File "${file.name}" đã được tải lên thành công!`);
-  //   }
-  //   // Reset input để có thể chọn lại cùng file
-  //   event.target.value = null;
-  // };
-  //Hàm xử lý khi chọn file (mở hộp thoại tải file trực tiếp) upload file (audio, video, docx, pdf)
-  // Enhanced file upload handler with media type detection
   const handleFileUpload = (event) => {
     // Check if users are friends before sending
-    if (!isFriendWithReceiver && selectedChat.id !== user.id) {
+    if (
+      !isFriendWithReceiver &&
+      selectedChat.id !== user.id &&
+      selectedChat?.chat_type !== "group"
+    ) {
       message.warning("Bạn cần kết bạn để gửi tin nhắn.");
       return;
     }
@@ -401,7 +404,11 @@ const MessageInput = ({
   // Hàm gửi tin nhắn (bao gồm gửi ảnh hoặc file nếu có)
   const handleSend = () => {
     // Check if users are friends before sending
-    if (!isFriendWithReceiver && selectedChat.id !== user.id) {
+    if (
+      !isFriendWithReceiver &&
+      selectedChat.id !== user.id &&
+      selectedChat?.chat_type !== "group"
+    ) {
       message.warning("Bạn cần kết bạn để gửi tin nhắn.");
       return;
     }
@@ -457,7 +464,11 @@ const MessageInput = ({
   // Hàm gửi danh thiếp
   const handleSendContacts = () => {
     // Check if users are friends before sending
-    if (!isFriendWithReceiver && selectedChat.id !== user.id) {
+    if (
+      !isFriendWithReceiver &&
+      selectedChat.id !== user.id &&
+      selectedChat?.chat_type !== "group"
+    ) {
       message.warning("Bạn cần kết bạn để gửi tin nhắn.");
       return;
     }
@@ -559,7 +570,11 @@ const MessageInput = ({
   const handleGifSelect = async (gifUrl) => {
     try {
       // Check if users are friends before sending
-      if (!isFriendWithReceiver && selectedChat.id !== user.id) {
+      if (
+        !isFriendWithReceiver &&
+        selectedChat.id !== user.id &&
+        selectedChat?.chat_type !== "group"
+      ) {
         message.warning("Bạn cần kết bạn để gửi tin nhắn.");
         return;
       }

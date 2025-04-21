@@ -320,14 +320,14 @@ const MessageController = {
             isdelete: { $not: { $elemMatch: { $eq: senderObjectId } } },
           },
         },
-        { $sort: { timestamp: -1 } },
+        { $sort: { timestamp: -1 } }, // Sắp xếp theo thời gian giảm dần
         {
           $group: {
             _id: "$receiver_id", // Group by group_id (stored in receiver_id for group messages)
             lastMessage: { $first: "$content" },
             timestamp: { $first: "$timestamp" },
             status: { $first: "$status" },
-            type: { $first: "$type" },
+            type: { $first: "$type" }, // Đảm bảo type được giữ lại
             lastMessageSender: { $first: "$sender_id" },
             chat_type: { $first: "$chat_type" },
           },
@@ -342,6 +342,23 @@ const MessageController = {
           },
         },
         { $unwind: "$groupInfo" },
+
+        // Thêm lookup để lấy thông tin người gửi tin nhắn cuối cùng
+        {
+          $lookup: {
+            from: "UserInfo", // Collection chứa thông tin người dùng
+            localField: "lastMessageSender",
+            foreignField: "_id",
+            as: "senderInfo",
+          },
+        },
+        {
+          $unwind: {
+            path: "$senderInfo",
+            preserveNullAndEmptyArrays: true, // Giữ lại các message không có senderInfo
+          },
+        },
+
         // Đếm tin nhắn chưa đọc trong nhóm
         {
           $lookup: {
@@ -377,19 +394,53 @@ const MessageController = {
             isLastMessageFromMe: {
               $eq: ["$lastMessageSender", senderObjectId],
             },
+            // Tạo trường hiển thị "Người gửi: Nội dung" cho tin nhắn
+            displayMessage: {
+              $concat: [
+                { $ifNull: [{ $concat: ["$senderInfo.full_name", ": "] }, ""] },
+                {
+                  $cond: [
+                    { $eq: ["$type", "image"] },
+                    "[Hình ảnh]",
+                    {
+                      $cond: [
+                        { $eq: ["$type", "file"] },
+                        "[Tệp đính kèm]",
+                        {
+                          $cond: [
+                            { $eq: ["$type", "video"] },
+                            "[Video]",
+                            {
+                              $cond: [
+                                { $eq: ["$type", "audio"] },
+                                "[Âm thanh]",
+                                { $ifNull: ["$lastMessage", ""] },
+                              ],
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
           },
         },
         {
           $project: {
             _id: 0,
             receiver_id: "$_id",
-            name: "$groupInfo.name",
+            name: "$groupInfo.name", // Giữ lại tên nhóm
+            group_name: "$groupInfo.name", // Thêm trường tên nhóm
+            sender_name: { $ifNull: ["$senderInfo.full_name", ""] }, // Thêm tên người gửi
             avatar_path: "$groupInfo.avatar",
-            lastMessage: 1,
+            lastMessage: "$displayMessage", // Hiển thị tin nhắn kèm tên người gửi
+            originalMessage: "$lastMessage", // Giữ lại tin nhắn gốc nếu cần
             timestamp: 1,
             status: 1,
             user_status: "online", // Nhóm luôn "online"
-            type: 1,
+            type: 1, // Giữ lại type để frontend có thể hiển thị đúng định dạng
             unread: 1,
             isLastMessageFromMe: 1,
             chat_type: 1,

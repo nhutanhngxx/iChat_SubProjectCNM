@@ -47,6 +47,7 @@ const Message = ({
   const messageRef = useRef(null);
   const chatMessages = useSelector((state) => state.messages.chatMessages);
   const dispatch = useDispatch();
+
   const findRepliedMessage = (replyId) => {
     if (!replyId) return null;
     if (!Array.isArray(allMessages)) return null;
@@ -90,6 +91,50 @@ const Message = ({
 
     return null;
   };
+  // Lấy thông tin thành viên trog nhóm
+  // Thêm state để lưu thông tin người gửi
+  const [senderInfo, setSenderInfo] = useState({
+    full_name: "Đang tải...",
+    avatar_path: null,
+  });
+
+  // Fetch thông tin người gửi khi message thay đổi hoặc khi là tin nhắn nhóm
+  useEffect(() => {
+    // Chỉ fetch khi là tin nhắn nhóm và không phải tin nhắn của mình
+    if (
+      selectedChat?.chat_type === "group" &&
+      !isSender &&
+      message?.sender_id
+    ) {
+      const fetchSenderInfo = async () => {
+        try {
+          // Kiểm tra nếu đã có thông tin người dùng trong cache
+          const response = await fetch(
+            `http://${window.location.hostname}:5001/api/users/${message.sender_id}`
+          );
+
+          if (!response.ok) {
+            throw new Error("Failed to fetch sender info");
+          }
+
+          const data = await response.json();
+
+          if (data && data.user) {
+            setSenderInfo({
+              full_name: data.user.full_name || "Người dùng",
+              avatar_path: data.user.avatar_path,
+            });
+          }
+        } catch (error) {
+          console.error("Error fetching sender info:", error);
+          setSenderInfo({ full_name: "Người dùng", avatar_path: null });
+        }
+      };
+
+      fetchSenderInfo();
+    }
+  }, [selectedChat?.chat_type, isSender, message?.sender_id]);
+
   const [friends, setFriends] = useState([]);
   // Lấy danh sách bạn bè
   useEffect(() => {
@@ -121,6 +166,10 @@ const Message = ({
   const [isFriendWithReceiver, setIsFriendWithReceiver] = useState(true);
   const [friendRequestSent, setFriendRequestSent] = useState(false);
   const checkIsFriend = () => {
+    if (selectedChat?.chat_type === "group") {
+      return true;
+    }
+
     if (!friends || !friends.friends || !Array.isArray(friends.friends)) {
       return false;
     }
@@ -148,8 +197,10 @@ const Message = ({
   const [showReactionPicker, setShowReactionPicker] = useState(false);
   // Function to send friend request
 
-  // Disabled all interaction if not friends
-  const isInteractionDisabled = !isFriendWithReceiver;
+  // const isInteractionDisabled = !isFriendWithReceiver;
+  // Chỉ áp dụng cho chat riêng tư (không phải chat nhóm)
+  const isInteractionDisabled =
+    !isFriendWithReceiver && selectedChat?.chat_type !== "group";
   //Thu hồi tin nhắn
 
   const handleRecall = async () => {
@@ -506,64 +557,6 @@ const Message = ({
 
     // No return cleanup needed for joining
   }, [selectedChat?.id, user?.id]);
-
-  // // 2. Now handle all socket listeners in a separate useEffect
-  // useEffect(() => {
-  //   if (!selectedChat?.id || !user?.id) return;
-
-  //   const userIds = [user.id, selectedChat.id].sort();
-  //   const roomId = `chat_${userIds[0]}_${userIds[1]}`;
-
-  //   // Debug helper to see all incoming socket events
-  //   const debugSocketEvent = (eventName, data) => {
-  //     console.log(`Socket event received: ${eventName}`, data);
-  //   };
-
-  //   // Reaction handlers
-  //   const handleReactionAdded = (data) => {
-  //     debugSocketEvent("reaction-added", data);
-  //     // Check all possible paths to get messageId
-  //     const messageId = data?.messageId || data?.message_id;
-  //     if (messageId) {
-  //       // Use more specific fetch rather than fetching all messages
-  //       dispatch(
-  //         fetchChatMessages({
-  //           senderId: user.id,
-  //           receiverId: selectedChat.id,
-  //         })
-  //       );
-  //     }
-  //   };
-
-  // const handleReactionRemoved = (data) => {
-  //   debugSocketEvent("reaction-removed", data);
-  //   // Check all possible paths to get messageId
-  //   console.log("Reaction removed data:", data);
-
-  //   const messageId = data?.messageId || data?.message_id;
-  //   if (messageId) {
-  //     // Use more specific fetch rather than fetching all messages
-  //     dispatch(
-  //       fetchChatMessages({
-  //         senderId: user.id,
-  //         receiverId: selectedChat.id,
-  //       })
-  //     );
-  //   }
-  // };
-
-  //   // Set up all event listeners
-  //   socket.on("reaction-added", handleReactionAdded);
-  //   socket.on("reaction-removed", handleReactionRemoved);
-
-  //   // Clean up ALL listeners when component unmounts
-  //   return () => {
-  //     console.log("Cleaning up socket listeners for reactions");
-  //     socket.off("reaction-added", handleReactionAdded);
-  //     socket.off("reaction-removed", handleReactionRemoved);
-  //     socket.off("message-reaction-update"); // Remove any legacy listeners
-  //   };
-  // }, [selectedChat?.id, user?.id, dispatch]);
   const getReactionEmoji = (type) => {
     const map = {
       like: "👍",
@@ -728,16 +721,6 @@ const Message = ({
     const roomId = `chat_${userIds[0]}_${userIds[1]}`;
     console.log("Message component joining room:", roomId);
     socket.emit("join-room", roomId);
-    // Handle reaction updates from other users
-    // const handleMessageReaction = (data) => {
-    //   if (data.messageId) {
-    //     // Fetch updated messages to get the latest reaction data
-    //     dispatch(fetchMessages(user.id));
-    //   }
-    // };
-
-    // socket.on("message-reaction-update", handleMessageReaction);
-
     return () => {
       // socket.off("message-reaction-update", handleMessageReaction);
       console.log("Cleaning up socket listener for message reactions");
@@ -773,13 +756,21 @@ const Message = ({
           <div className="avatar-message">
             <Avatar
               size={32}
-              src={selectedChat.avatar_path}
+              src={
+                selectedChat.chat_type === "group" && senderInfo.avatar_path
+                  ? senderInfo.avatar_path
+                  : selectedChat.avatar_path
+              }
               className="profile-avatar-message"
             />
           </div>
         )}
 
         <div className="message-column">
+          {/* Hiển thị tên người gửi nếu là tin nhắn nhóm và không phải người dùng hiện tại */}
+          {selectedChat.chat_type === "group" && !isSender && (
+            <div className="sender-name">{senderInfo.full_name}</div>
+          )}
           {message.reply_to && <RepliedMessage reply={message.reply_to} />}
           {message.type === "image" ? (
             <>

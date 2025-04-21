@@ -463,3 +463,73 @@ select {
   height: 100%;
   background-color: #ffffff;
 }
+
+.no-content-message {
+  text-align: center;
+  padding: 20px;
+  color: #888;
+  font-style: italic;
+}
+
+.group-members-section {
+  margin: 20px 0;
+  background-color: #ffffff;
+  box-shadow: 1px 1px 5px 1px #ddd;
+  padding: 15px;
+}
+
+.group-members-section h3 {
+  font-weight: 500;
+  margin-bottom: 15px;
+  font-size: 16px;
+}
+
+.members-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.member-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-badge {
+  background-color: #1890ff;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-size: 12px;
+  margin-left: 5px;
+}
+
+.footer {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px;
+}
+
+.danger-button {
+  background-color: #fff;
+  border: 1px solid #ff4d4f;
+  color: #ff4d4f;
+  border-radius: 4px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.danger-button:hover {
+  background-color: #fff1f0;
+}
+
+.leave-group {
+  margin-top: 8px;
+}

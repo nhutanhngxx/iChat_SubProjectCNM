@@ -9,6 +9,7 @@ import {
   fetchMessages,
   fetchChatMessages,
   updateMessages,
+  getUserMessages,
 } from "../../../redux/slices/messagesSlice";
 import socket from "../../services/socket";
 import "./ChatWindow.css";
@@ -16,9 +17,8 @@ import "./ChatWindow.css";
 const ChatWindow = ({ user, selectedFriend }) => {
   // Load ttin nhan tu Backend
   const dispatch = useDispatch();
-  const { messages, status, chatMessages, chatStatus } = useSelector(
-    (state) => state.messages
-  );
+  const { messages, status, chatMessages, chatStatus, userMessages } =
+    useSelector((state) => state.messages);
 
   const [userListFromState, setUserListFromState] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
@@ -48,14 +48,20 @@ const ChatWindow = ({ user, selectedFriend }) => {
       console.log("Received message globally:", message);
 
       // Xác định message này thuộc về cuộc trò chuyện nào
-      // Bỏ dòng if (message.receiver_id !== user.id) return;
-
-      // LUÔN cập nhật danh sách người trò chuyện trong sidebar
       // Để ComponentLeft luôn hiển thị tin nhắn mới nhất
       dispatch(fetchMessages(user.id));
 
       // Nếu chưa có cuộc trò chuyện nào được mở, chỉ cập nhật sidebar
       if (!selectedUser) return;
+      // Xử lý tin nhắn nhóm
+      if (message.chat_type === "group" && selectedUser.chat_type === "group") {
+        // Kiểm tra nếu tin nhắn thuộc về nhóm đang được xem
+        if (message.receiver_id === selectedUser.id) {
+          // Cập nhật tin nhắn nhóm
+          dispatch(getUserMessages(selectedUser.id));
+        }
+        return;
+      }
 
       // *** QUAN TRỌNG: Logic xác định đúng cuộc trò chuyện ***
       // Tin nhắn thuộc cuộc trò chuyện hiện tại nếu:
@@ -161,6 +167,8 @@ const ChatWindow = ({ user, selectedFriend }) => {
       // This is very important - both fields are needed
       receiver_id: user.receiver_id || user.id,
       chat_type: user.chat_type || "private",
+      originalMessage: user.originalMessage || "",
+      sender_name: user.sender_name || "",
     };
 
     setSelectedUser(normalizedUser);
@@ -188,6 +196,8 @@ const ChatWindow = ({ user, selectedFriend }) => {
         priority: "priority",
         isLastMessageFromMe: msg.isLastMessageFromMe || false,
         chat_type: msg.chat_type || "private",
+        originalMessage: msg.originalMessage,
+        sender_name: msg.sender_name, // Thêm trường sender_name nếu cần
       }));
 
       setUserListFromState(formattedUsers);
@@ -195,9 +205,33 @@ const ChatWindow = ({ user, selectedFriend }) => {
     }
   }, [messages]);
 
+  // useEffect(() => {
+  //   if (selectedUser) {
+  //     dispatch(fetchChatMessages({ senderId, receiverId: selectedUser.id })); // Fetch tin nhắn giữa sender và receiver
+  //   }
+  // }, [dispatch, senderId, selectedUser]);
   useEffect(() => {
     if (selectedUser) {
-      dispatch(fetchChatMessages({ senderId, receiverId: selectedUser.id })); // Fetch tin nhắn giữa sender và receiver
+      // Kiểm tra loại chat và fetch tin nhắn phù hợp
+      if (selectedUser.chat_type === "group") {
+        // Nếu là chat nhóm, dùng getUserMessages để lấy tin nhắn nhóm
+        console.log("Fetching GROUP messages for:", selectedUser.id);
+        dispatch(getUserMessages(selectedUser.id));
+      } else {
+        // Nếu là chat riêng tư (private), dùng fetchChatMessages
+        console.log(
+          "Fetching PRIVATE messages between:",
+          senderId,
+          "and",
+          selectedUser.id
+        );
+        dispatch(
+          fetchChatMessages({
+            senderId,
+            receiverId: selectedUser.id,
+          })
+        );
+      }
     }
   }, [dispatch, senderId, selectedUser]);
   // Hàm callback để cập nhật messages
