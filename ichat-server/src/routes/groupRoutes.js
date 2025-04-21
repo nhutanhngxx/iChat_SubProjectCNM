@@ -13,14 +13,14 @@ router.post("/add-members", GroupController.addMembers); // Thêm nhiều thành
 router.post("/remove-member", GroupController.removeMember); // Xóa thành viên khỏi nhóm
 router.put("/:groupId", upload.single("avatar"), GroupController.updateGroup); // Cập nhật thông tin nhóm
 router.delete("/:groupId", GroupController.deleteGroup); // Xóa nhóm
-router.post(
-  "/:groupId/messages",
-  upload.fields([
-    { name: "image", maxCount: 1 },
-    { name: "file", maxCount: 1 },
-  ]),
-  GroupController.sendGroupMessage
-); //Gửi tin nhắn nhóm
+// router.post(
+//   "/:groupId/messages",
+//   upload.fields([
+//     { name: "image", maxCount: 1 },
+//     { name: "file", maxCount: 1 },
+//   ]),
+//   GroupController.sendGroupMessage
+// ); //Gửi tin nhắn nhóm
 router.get("/:groupId/messages/search", GroupController.searchMessages); // Tìm kiếm tin nhắn trong nhóm
 router.put("/:groupId/members/:userId/role", GroupController.setRole); // Cập nhật quyền thành viên trong nhóm
 router.get("/group/:groupId", GroupController.getGroupById); // Lấy danh sách tin nhắn trong nhóm
