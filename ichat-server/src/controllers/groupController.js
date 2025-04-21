@@ -39,28 +39,6 @@ const GroupController = {
     }
   },
 
-  //   Lấy danh sách thành viên của nhóm - Cách 2 trả về Map
-  //   getGroupMembers: async (req, res) => {
-  // try {
-  //     const members = await GroupMember.find({ group_id: req.params.groupId });
-  //     const memberIds = members.map((member) => member.user_id);
-  //     const memberDetails = await User.find(
-  //       { _id: { $in: memberIds } },
-  //       { full_name: 1 }
-  //     );
-  //     // Chuyển mảng thành map với key là _id
-  //     const membersMap = {};
-  //     memberDetails.forEach((member) => {
-  //       membersMap[member._id] = member;
-  //     });
-  //     res.json({ status: "ok", data: membersMap });
-  //   } catch (err) {
-  //     res.status(500).json({ message: err });
-  //   } catch (err) {
-  // res.status(500).json({ message: err });
-  // }
-  //   },
-
   //   Tìm kiếm nhóm
   searchGroup: async (req, res) => {
     const { search } = req.query;
@@ -75,6 +53,7 @@ const GroupController = {
       res.status(500).json({ error: "Internal Server Error" });
     }
   },
+
   // 1. Tạo group
   createGroup: async (req, res) => {
     try {
@@ -147,6 +126,7 @@ const GroupController = {
       res.status(500).json({ status: "error", message: e.message });
     }
   },
+
   // Thêm nhiều thành viên cùng lúc
   addMembers: async (req, res) => {
     try {
@@ -174,6 +154,7 @@ const GroupController = {
       res.status(500).json({ status: "error", message: e.message });
     }
   },
+
   // 3. Remove member / leave group
   removeMember: async (req, res) => {
     try {
@@ -184,6 +165,7 @@ const GroupController = {
       res.status(500).json({ status: "error", message: e.message });
     }
   },
+
   // 4. Gửi tin nhắn nhóm
   sendGroupMessage: async (req, res) => {
     try {
@@ -239,7 +221,7 @@ const GroupController = {
     }
   },
 
-  // 7. Hủy nhóm
+  // 7. Xóa nhóm
   deleteGroup: async (req, res) => {
     try {
       const { groupId } = req.params;
@@ -250,7 +232,7 @@ const GroupController = {
     }
   },
 
-  // 8. Tìm kiếm tin nhắn
+  // 8. Tìm kiếm tin nhắn trong nhóm
   searchMessages: async (req, res) => {
     try {
       const { groupId } = req.params;
@@ -261,6 +243,7 @@ const GroupController = {
       res.status(500).json({ status: "error", message: e.message });
     }
   },
+
   // 9. Trả về thông tin nhóm
   getGroupById: async (req, res) => {
     try {
@@ -277,6 +260,7 @@ const GroupController = {
       return res.status(500).json({ status: "error", message: e.message });
     }
   },
+
   // Controller để kiểm tra người dùng có phải admin chính/ phụ không
   isGroupSubAdmin: async (req, res) => {
     try {

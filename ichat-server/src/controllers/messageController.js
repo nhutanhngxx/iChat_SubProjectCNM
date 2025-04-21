@@ -185,126 +185,6 @@ const MessageController = {
     }
   },
 
-  // recentReceivers: async (req, res) => {
-  //   try {
-  //     const senderId = req.params.senderId;
-  //     const senderObjectId = new mongoose.Types.ObjectId(senderId);
-
-  //     const recentReceivers = await Messages.aggregate([
-  //       {
-  //         $match: {
-  //           $or: [
-  //             { sender_id: senderObjectId },
-  //             { receiver_id: senderObjectId },
-  //           ],
-  //           // Thêm điều kiện: không lấy tin nhắn mà người dùng hiện tại đã xóa mềm
-  //           isdelete: { $not: { $elemMatch: { $eq: senderObjectId } } },
-  //         },
-  //       },
-  //       { $sort: { timestamp: -1 } },
-  //       {
-  //         $group: {
-  //           _id: {
-  //             $cond: [
-  //               { $lt: ["$sender_id", "$receiver_id"] },
-  //               { sender: "$sender_id", receiver: "$receiver_id" },
-  //               { sender: "$receiver_id", receiver: "$sender_id" },
-  //             ],
-  //           },
-  //           lastMessage: { $first: "$content" },
-  //           timestamp: { $first: "$timestamp" },
-  //           status: { $first: "$status" },
-  //           type: { $first: "$type" },
-  //           lastMessageSender: { $first: "$sender_id" },
-  //         },
-  //       },
-  //       {
-  //         $match: {
-  //           $or: [
-  //             { "_id.sender": senderObjectId },
-  //             { "_id.receiver": senderObjectId },
-  //           ],
-  //         },
-  //       },
-  //       {
-  //         $addFields: {
-  //           otherUserId: {
-  //             $cond: [
-  //               { $eq: ["$_id.sender", senderObjectId] },
-  //               "$_id.receiver",
-  //               "$_id.sender",
-  //             ],
-  //           },
-  //         },
-  //       },
-  //       {
-  //         $lookup: {
-  //           from: "UserInfo",
-  //           localField: "otherUserId",
-  //           foreignField: "_id",
-  //           as: "receiverInfo",
-  //         },
-  //       },
-  //       { $unwind: "$receiverInfo" },
-  //       {
-  //         $lookup: {
-  //           from: "Message",
-  //           let: {
-  //             otherId: "$otherUserId",
-  //             me: senderObjectId,
-  //           },
-  //           pipeline: [
-  //             {
-  //               $match: {
-  //                 $expr: {
-  //                   $and: [
-  //                     { $eq: ["$receiver_id", "$$me"] },
-  //                     { $eq: ["$sender_id", "$$otherId"] },
-  //                     { $ne: ["$status", "Viewed"] },
-  //                     // Thêm điều kiện loại bỏ tin nhắn đã xóa mềm
-  //                     { $not: [{ $in: ["$$me", "$isdelete"] }] },
-  //                   ],
-  //                 },
-  //               },
-  //             },
-  //             { $count: "unread" },
-  //           ],
-  //           as: "unreadMessages",
-  //         },
-  //       },
-  //       {
-  //         $addFields: {
-  //           unread: {
-  //             $ifNull: [{ $arrayElemAt: ["$unreadMessages.unread", 0] }, 0],
-  //           },
-  //           isLastMessageFromMe: {
-  //             $eq: ["$lastMessageSender", senderObjectId],
-  //           },
-  //         },
-  //       },
-  //       {
-  //         $project: {
-  //           _id: 0,
-  //           receiver_id: "$receiverInfo._id",
-  //           name: "$receiverInfo.full_name",
-  //           avatar_path: "$receiverInfo.avatar_path",
-  //           lastMessage: 1,
-  //           timestamp: 1,
-  //           status: 1,
-  //           user_status: "$receiverInfo.status",
-  //           type: 1,
-  //           unread: 1,
-  //           isLastMessageFromMe: 1,
-  //         },
-  //       },
-  //       { $sort: { timestamp: -1 } },
-  //     ]);
-
-  //     res.status(200).json({ success: true, data: recentReceivers });
-  //   } catch (error) {
-  //     res.status(500).json({ success: false, message: error.message });
-  //   }
-  // },
   recentReceivers: async (req, res) => {
     try {
       const senderId = req.params.senderId;
@@ -529,6 +409,7 @@ const MessageController = {
       res.status(500).json({ success: false, message: error.message });
     }
   },
+
   replyToMessage: async (req, res) => {
     try {
       const { sender_id, receiver_id, content, type, chat_type, reply_to } =
@@ -706,6 +587,7 @@ const MessageController = {
       res.status(500).json({ error: "Lỗi khi chuyển tiếp tin nhắn" });
     }
   },
+
   // Soft delete (ẩn tin nhắn khỏi user hiện tại)
   softDeleteMessagesForUser: async (req, res) => {
     const { userId, messageId } = req.body;

@@ -20,7 +20,6 @@ const GroupModel = {
     }
   },
 
-  //   Lấy danh sách thành viên của nhóm
   // Lấy danh sách thành viên của nhóm với thông tin đầy đủ
   getGroupMembers: async (groupId) => {
     try {
@@ -77,7 +76,7 @@ const GroupModel = {
     }
   },
 
-  //   Tìm kiếm nhóm
+  // Tìm kiếm nhóm
   searchGroup: async (keyword) => {
     try {
       const groups = await GroupChat.find({
@@ -89,6 +88,7 @@ const GroupModel = {
       throw new Error("Lỗi tìm kiếm nhóm");
     }
   },
+
   // 1. Tạo Group mới
   createGroup: async ({ name, admin_id, avatar, participant_ids = [] }) => {
     const session = await mongoose.startSession();
@@ -161,6 +161,7 @@ const GroupModel = {
   addMember: async (groupId, userId) => {
     return GroupMember.create({ group_id: groupId, user_id: userId });
   },
+
   // Thêm nhiều thành viên cùng lúc
   addMembers: async (groupId, userIds) => {
     try {
@@ -220,6 +221,7 @@ const GroupModel = {
   removeMember: async (groupId, userId) => {
     return GroupMember.deleteOne({ group_id: groupId, user_id: userId });
   },
+
   // 4. Gửi tin nhắn nhóm
   sendGroupMessage: async ({ groupId, sender_id, content, type, file }) => {
     let messageContent = content;
@@ -264,7 +266,7 @@ const GroupModel = {
     }
   },
 
-  // 6. Phân quyền (role: "admin"|"moderator"|"member")
+  // 6. Phân quyền (role: "admin"||"member")
   setRole: async (groupId, userId, role) => {
     return GroupMember.findOneAndUpdate(
       { group_id: groupId, user_id: userId },
@@ -273,7 +275,7 @@ const GroupModel = {
     );
   },
 
-  // 7. Hủy nhóm (chỉ creator)
+  // 7. Xóa nhóm (chỉ creator)
   deleteGroup: async (groupId) => {
     await GroupMember.deleteMany({ group_id: groupId });
     return GroupChat.findByIdAndDelete(groupId);
@@ -287,6 +289,7 @@ const GroupModel = {
       content: { $regex: keyword, $options: "i" },
     }).sort({ timestamp: -1 });
   },
+
   // 9 Lấy thông tin nhóm theo ID
   getGroupById: async (groupId) => {
     try {
@@ -300,6 +303,7 @@ const GroupModel = {
       throw error;
     }
   },
+
   // 10. Kiểm tra xem người dùng có phải là admin phụ (phó nhóm) của nhóm không
   isGroupSubAdmin: async (groupId, userId) => {
     try {
