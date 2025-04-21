@@ -54,6 +54,39 @@ const MessageController = {
     }
   },
 
+  // Xử lý gửi nhiều ảnh
+  sendMultipleImages: async (req, res) => {
+    try {
+      const { sender_id, receiver_id, chat_type } = req.body;
+      const files = req.files;
+
+      if (!files || files.length === 0) {
+        return res.status(400).json({
+          status: "error",
+          message: "No images provided",
+        });
+      }
+
+      const messages = await MessageModel.sendMultipleImages({
+        files,
+        sender_id,
+        receiver_id,
+        chat_type,
+      });
+
+      res.status(201).json({
+        status: "ok",
+        data: messages,
+      });
+    } catch (error) {
+      console.error("Error in sendMultipleImages controller:", error);
+      res.status(500).json({
+        status: "error",
+        message: error.message || "Internal server error",
+      });
+    }
+  },
+
   sendGroupMessage: async (req, res) => {
     try {
       const result = await MessageModel.sendGroupMessage(req.body);

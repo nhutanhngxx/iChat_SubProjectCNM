@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Text,
   Platform,
+  ScrollView,
 } from "react-native";
 
 import attachmentIcon from "../../assets/icons/attachment.png";
@@ -14,8 +15,8 @@ import attachmentIcon from "../../assets/icons/attachment.png";
 const MessageInputBar = ({
   inputMessage,
   setInputMessage,
-  selectedImage,
-  setSelectedImage,
+  selectedImages, // Thay đổi từ selectedImage thành selectedImages
+  setSelectedImages, // Thay đổi từ setSelectedImage thành setSelectedImages
   selectedFile,
   setSelectedFile,
   sendMessage,
@@ -23,7 +24,8 @@ const MessageInputBar = ({
   pickFile,
 }) => {
   const hasText = inputMessage.trim();
-  const canSend = hasText || selectedImage || selectedFile;
+  const canSend =
+    hasText || (selectedImages && selectedImages.length > 0) || selectedFile;
 
   // Hàm cắt ngắn tên file nếu quá dài
   const truncateFileName = (name, maxLength = 20) => {
@@ -49,6 +51,34 @@ const MessageInputBar = ({
 
   return (
     <View style={styles.wrapper}>
+      {/* Hiển thị preview nhiều ảnh đã chọn */}
+      {selectedImages && selectedImages.length > 0 && (
+        <ScrollView
+          horizontal
+          style={styles.previewScrollContainer}
+          showsHorizontalScrollIndicator={false}
+        >
+          {selectedImages.map((uri, index) => (
+            <View key={index} style={styles.previewContainer}>
+              <Image source={{ uri }} style={styles.previewImage} />
+              <TouchableOpacity
+                style={styles.removeImageButton}
+                onPress={() => {
+                  const newImages = selectedImages.filter(
+                    (_, i) => i !== index
+                  );
+                  setSelectedImages(newImages);
+                }}
+              >
+                <Image
+                  source={require("../../assets/icons/close.png")}
+                  style={styles.closeIcon}
+                />
+              </TouchableOpacity>
+            </View>
+          ))}
+        </ScrollView>
+      )}
       {/* Hiển thị tệp đã chọn nếu có */}
       {selectedFile && (
         <View style={styles.filePreviewContainer}>
@@ -70,19 +100,6 @@ const MessageInputBar = ({
             style={styles.closeButton}
             onPress={() => setSelectedFile(null)}
           >
-            <Image
-              source={require("../../assets/icons/close.png")}
-              style={styles.closeIcon}
-            />
-          </TouchableOpacity>
-        </View>
-      )}
-
-      {/* Hiển thị ảnh đã chọn nếu có */}
-      {selectedImage && (
-        <View style={styles.previewContainer}>
-          <Image source={{ uri: selectedImage }} style={styles.previewImage} />
-          <TouchableOpacity onPress={() => setSelectedImage(null)}>
             <Image
               source={require("../../assets/icons/close.png")}
               style={styles.closeIcon}
@@ -186,7 +203,8 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   previewImage: {
-    height: 100,
+    maxHeight: 150,
+    minHeight: 70,
     width: 100,
     borderRadius: 8,
     marginRight: 8,
@@ -228,5 +246,26 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     tintColor: "#ff4d4d",
+  },
+  previewScrollContainer: {
+    flexDirection: "row",
+    marginBottom: 8,
+  },
+  previewContainer: {
+    marginRight: 8,
+    position: "relative",
+  },
+  removeImageButton: {
+    position: "absolute",
+    top: -8,
+    right: -8,
+    backgroundColor: "white",
+    borderRadius: 12,
+    padding: 4,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 1,
   },
 });

@@ -1,8 +1,8 @@
 const express = require("express");
 const router = express.Router();
-
 const multer = require("multer");
 const upload = multer({ storage: multer.memoryStorage() });
+const { uploadFile } = require("../services/upload-file");
 
 const MessageController = require("../controllers/messageController");
 
@@ -76,5 +76,12 @@ router.delete("/:userId/:receiverId", MessageController.deleteAllMessages);
 
 // Xoá ẩn tin nhắn giữa người dùng đăng nhập và người nhận
 router.post("/softDelete", MessageController.softDeleteMessagesForUser);
+
+// Gửi nhiều ảnh
+router.post(
+  "/send-multiple-images",
+  upload.array("images", 10), // Giới hạn 10 ảnh
+  MessageController.sendMultipleImages
+);
 
 module.exports = router;

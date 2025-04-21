@@ -87,6 +87,52 @@ class SocketService {
     }
   }
 
+  // Thêm phương thức xử lý gửi nhiều ảnh
+  handleSendMultipleImages(messageData) {
+    if (this.ensureConnection()) {
+      // Thêm thông tin về nhóm ảnh vào messageData
+      const enhancedMessageData = {
+        ...messageData,
+        is_group_images: true,
+        group_id: messageData.group_id,
+        total_images: messageData.total_images,
+      };
+      this.socket.emit("send-multiple-images", enhancedMessageData);
+    }
+  }
+
+  // Lắng nghe sự kiện nhận nhiều ảnh
+  onReceiveMultipleImages(callback) {
+    if (this.ensureConnection()) {
+      this.socket.off("receive-multiple-images");
+      this.socket.on("receive-multiple-images", (data) => {
+        // Đảm bảo thông tin về nhóm ảnh được truyền đến callback
+        callback({
+          ...data,
+          is_group_images: true,
+          group_id: data.group_id,
+          total_images: data.total_images,
+        });
+      });
+    }
+  }
+
+  // Xử lý tiến trình upload ảnh
+  handleImageUploadProgress(callback) {
+    if (this.ensureConnection()) {
+      this.socket.off("image-upload-progress");
+      this.socket.on("image-upload-progress", callback);
+    }
+  }
+
+  // Xử lý lỗi upload ảnh
+  handleImageUploadError(callback) {
+    if (this.ensureConnection()) {
+      this.socket.off("image-upload-error");
+      this.socket.on("image-upload-error", callback);
+    }
+  }
+
   onReactionUpdate(callback) {
     if (this.ensureConnection()) {
       this.socket.off("reaction-added");
@@ -137,6 +183,9 @@ class SocketService {
         "reaction-added",
         "reaction-removed",
         "user-typing",
+        "receive-multiple-images",
+        "image-upload-progress",
+        "image-upload-error",
       ];
 
       events.forEach((event) => this.socket.off(event));
