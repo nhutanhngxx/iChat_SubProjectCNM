@@ -696,7 +696,7 @@ const MessageArea = ({ selectedChat, user }) => {
       );
     }
   }, [dispatch, user?.id, selectedChat?.receiver_id]);
-  console.log("Chat Messages in MessageArea", chatMessages);
+  // console.log("Chat Messages in MessageArea", chatMessages);
   // Near the top of your component
   const [isFriendWithReceiver, setIsFriendWithReceiver] = useState(true);
   const [friends, setFriends] = useState({ friends: [] });
@@ -710,8 +710,13 @@ const MessageArea = ({ selectedChat, user }) => {
         ).unwrap();
         setFriends(result);
 
-        // Check if the selected user is a friend
-        if (result && result.friends && selectedChat) {
+        // Chỉ kiểm tra nếu không phải chat nhóm
+        if (
+          result &&
+          result.friends &&
+          selectedChat &&
+          selectedChat.chat_type !== "group"
+        ) {
           const isFriend = result.friends.some(
             (friend) =>
               friend.id === selectedChat.id ||
@@ -719,6 +724,9 @@ const MessageArea = ({ selectedChat, user }) => {
               String(friend.id) === String(selectedChat.id)
           );
           setIsFriendWithReceiver(isFriend);
+        } else if (selectedChat?.chat_type === "group") {
+          // Nếu là chat nhóm, luôn set là true
+          setIsFriendWithReceiver(true);
         }
       } catch (err) {
         console.error("Error fetching friends:", err);
@@ -736,7 +744,12 @@ const MessageArea = ({ selectedChat, user }) => {
     content,
     replyToId = null // ID của tin nhắn được trả lời (nếu có)
   ) => {
-    if (!isFriendWithReceiver && selectedChat.id !== user.id) {
+    // Kiểm tra xem có phải là chat nhóm không
+    const isGroupChat = selectedChat?.chat_type === "group";
+    console.log("Is group chat?", isGroupChat);
+
+    // Chỉ kiểm tra bạn bè nếu là chat private
+    if (!isGroupChat && !isFriendWithReceiver && selectedChat.id !== user.id) {
       message.warning("Bạn cần kết bạn để gửi tin nhắn.");
       return;
     }
@@ -754,7 +767,7 @@ const MessageArea = ({ selectedChat, user }) => {
         receiver_id: selectedChat?.id, // ID người nhận
         content: text ? text : content || "",
         type: "text", // Loại tin nhắn (text, image, file)
-        chat_type: "private",
+        chat_type: selectedChat.chat_type || "private",
         ...(replyToId && { reply_to: replyToId }), // ID tin nhắn được trả lời (nếu có)
       };
 
@@ -772,6 +785,7 @@ const MessageArea = ({ selectedChat, user }) => {
           chatId: roomId, // ID phòng chat
         });
         dispatch(fetchMessages(user?.id));
+        dispatch(updateMessages(sentMessage)); // Cập nhật tin nhắn vào Redux store
       } catch (error) {
         console.log("Error sending message:", error);
       }
@@ -799,6 +813,7 @@ const MessageArea = ({ selectedChat, user }) => {
         });
 
         dispatch(fetchMessages(user?.id));
+        dispatch(updateMessages(sentMessage)); // Cập nhật tin nhắn vào Redux store
       } catch (err) {
         console.error("Lỗi gửi ảnh:", err);
       }
@@ -842,6 +857,7 @@ const MessageArea = ({ selectedChat, user }) => {
         });
 
         dispatch(fetchMessages(user?.id)); // Optional
+        dispatch(updateMessages(sentMessage)); // Cập nhật tin nhắn vào Redux store
         // Show success message
         message.success({
           content: `${
@@ -878,62 +894,24 @@ const MessageArea = ({ selectedChat, user }) => {
       messageEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   };
-  useEffect(() => {
-    if (!selectedChat?.id || !user?.id) return;
+  // // Kết nối socket và lắng nghe sự kiện nhận tin nhắn
+  // useEffect(() => {
+  //   if (!selectedChat?.id || !user?.id) return;
 
-    // Fetch ALL messages, not just recent ones
-    const fetchAllMessages = async () => {
-      try {
-        // You might need to modify your API to support pagination or fetching all messages
-        const result = await dispatch(
-          fetchChatMessages({
-            senderId: user.id,
-            receiverId: selectedChat.id,
-            limit: 100, // Fetch more messages than needed to ensure replied messages are included
-          })
-        ).unwrap();
+  //   // Create a consistent room ID regardless of who is sender/receiver
+  //   // Sort IDs to ensure same room name for both users
+  //   const userIds = [user.id, selectedChat.id].sort();
+  //   const roomId = `chat_${userIds[0]}_${userIds[1]}`;
 
-        setMessages(result);
-      } catch (error) {
-        console.error("Error fetching messages:", error);
-      }
-    };
+  //   console.log("Joining room:", roomId);
 
-    fetchAllMessages();
-  }, [selectedChat?.id, user?.id, dispatch]);
-
-  // Kết nối socket và lắng nghe sự kiện nhận tin nhắn
-  useEffect(() => {
-    if (!selectedChat?.id || !user?.id) return;
-
-    // Create a consistent room ID regardless of who is sender/receiver
-    // Sort IDs to ensure same room name for both users
-    const userIds = [user.id, selectedChat.id].sort();
-    const roomId = `chat_${userIds[0]}_${userIds[1]}`;
-
-    console.log("Joining room:", roomId);
-
-    // Join the consistent room
-    socket.emit("join-room", roomId);
-
-    const handleReceiveMessage = (message) => {
-      console.log("Received message:", message);
-
-      // Only process if message involves current user
-      if (message.sender_id === user.id || message.receiver_id === user.id) {
-        dispatch(updateMessages(message));
-        dispatch(fetchMessages(user.id)); // Cập nhật danh sách người nhận gần nhất
-      }
-    };
-
-    socket.on("receive-message", handleReceiveMessage);
-
-    // IMPORTANT: Proper cleanup to prevent memory leaks
-    return () => {
-      console.log("Cleaning up socket listener");
-      socket.off("receive-message", handleReceiveMessage);
-    };
-  }, [selectedChat?.id, user?.id, dispatch]);
+  //   // Join the consistent room
+  //   socket.emit("join-room", roomId);
+  //   return () => {
+  //     console.log("Cleaning up socket listener");
+  //     socket.off("receive-message", handleReceiveMessage);
+  //   };
+  // }, [selectedChat?.id, user?.id, dispatch]);
   // Keets ban
   const handleSendFriendRequest = async () => {
     try {
@@ -969,9 +947,42 @@ const MessageArea = ({ selectedChat, user }) => {
       console.error("Error sending friend request:", error);
     }
   };
+  useEffect(() => {
+    // Đảm bảo tất cả tin nhắn đã reply đều được tải
+    const loadAllRepliedMessages = async () => {
+      if (!selectedChat?.id || !user?.id || !messages || messages.length === 0)
+        return;
 
+      // Lấy danh sách các ID tin nhắn đã reply
+      const repliedIds = messages
+        .filter((msg) => msg.reply_to)
+        .map((msg) => msg.reply_to)
+        .filter((id) => id); // Lọc ra các ID hợp lệ
+
+      if (repliedIds.length > 0) {
+        console.log("Fetching replied messages:", repliedIds);
+
+        try {
+          // API call với danh sách ID để lấy tất cả tin nhắn cùng lúc
+          const response = await dispatch(
+            fetchChatMessages({
+              senderId: user.id,
+              receiverId: selectedChat.id,
+              includeRepliedMessages: true,
+              repliedIds: repliedIds, // Truyền danh sách ID cần lấy
+            })
+          ).unwrap();
+
+          console.log("Fetched all messages including replies:", response);
+        } catch (error) {
+          console.error("Failed to fetch replies:", error);
+        }
+      }
+    };
+
+    loadAllRepliedMessages();
+  }, [messages, user?.id, selectedChat?.id, dispatch]);
   if (!selectedChat) return null;
-
   return (
     <div className="message-wrapper">
       <Layout className="message-area-container">
@@ -1039,7 +1050,7 @@ const MessageArea = ({ selectedChat, user }) => {
                 />
               </div>
             )} */}
-            {!isFriendWithReceiver && (
+            {!isFriendWithReceiver && selectedChat.chat_type !== "group" && (
               <div className="not-friend-banner">
                 <Alert
                   message="Hai bạn chưa là bạn bè"

@@ -213,10 +213,10 @@ const AddFriend = ({ visible, onClose, onSelectUser }) => {
       >
         {userResult && (
           <UserInfoCard
-            user={userResult}
-            onClose={handleCloseUserInfo}
-            onSelectUser={onSelectUser}
-          />
+          user={userResult}
+          onClose={handleCloseUserInfo}
+          onSelectUser={onSelectUser}
+        />
         )}
       </Modal>
     </>
@@ -224,3 +224,4 @@ const AddFriend = ({ visible, onClose, onSelectUser }) => {
 };
 
 export default AddFriend;
+
