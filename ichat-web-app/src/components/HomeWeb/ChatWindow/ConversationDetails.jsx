@@ -24,7 +24,9 @@ import {
   LogoutOutlined,
   DeleteOutlined,
   ExclamationCircleOutlined,
+  EyeOutlined,
 } from "@ant-design/icons";
+import { DownloadOutlined,PlayCircleOutlined } from '@ant-design/icons';
 import { 
     UserAddOutlined, 
     SettingOutlined,
@@ -74,9 +76,100 @@ const ConversationDetails = ({
     const [groupAvatar, setGroupAvatar] = useState(null);
     const [requireApproval, setRequireApproval] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
+    const [isOpenMembers, setIsOpenMembers] = useState(true);
+const [showAllMembers, setShowAllMembers] = useState(false);
+// Thêm state cho fileItems đã xử lý
+const [processedFileItems, setFileItems] = useState([]);
+// Thêm state
+const [showAllFiles, setShowAllFiles] = useState(false);
+// Thêm các state mới này vào đầu component
+const [showImageViewerModal, setShowImageViewerModal] = useState(false);
+const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
   // Sử dụng allMessages để lọc ra các hình ảnh, video và file thực tế
-  const mediaItems = allMessages 
+  // Thêm hàm formatBytes ở đầu component
+const formatBytes = (bytes, decimals = 2) => {
+  if (!bytes) return '0 Bytes';
+  
+  const k = 1024;
+  const dm = decimals < 0 ? 0 : decimals;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+  
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+};
+
+// Thay đổi cách xử lý fileItems
+const fileItems = React.useMemo(() => {
+  if (!allMessages) return [];
+  
+  const items = allMessages
+    .filter(msg => msg.type === "file")
+    .map(msg => {
+      const fileUrl = msg.content;
+      const fileName = decodeURIComponent(fileUrl.split("/").pop());
+      const parts = fileName.split("-");
+      const originalName = parts.length > 2 ? parts.slice(2).join("-") : fileName;
+      const fileExt = originalName.split('.').pop().toLowerCase();
+      
+      // Determine file type and color
+      let type = fileExt;
+      let color = "gray";
+      
+      if (fileExt === "pdf") color = "red";
+      else if (["zip", "rar", "7z"].includes(fileExt)) color = "purple";
+      else if (["doc", "docx"].includes(fileExt)) color = "blue";
+      else if (["xls", "xlsx"].includes(fileExt)) color = "green";
+      else if (["ppt", "pptx"].includes(fileExt)) color = "orange";
+      
+      return {
+        id: msg._id,
+        name: originalName,
+        url: fileUrl,
+        type: fileExt,
+        color,
+        date: new Date(msg.timestamp).toLocaleDateString(),
+        msg: msg,  // Store the full message for accessing later
+        size: "Đang lấy kích thước..." // Placeholder, will be updated after fetch
+      };
+    });
+    
+  return items;
+}, [allMessages]);
+
+// Thêm useEffect để lấy kích thước file
+React.useEffect(() => {
+  const fetchFileSizes = async () => {
+    const updatedFileItems = [...fileItems];
+    
+    for (let i = 0; i < updatedFileItems.length; i++) {
+      const fileItem = updatedFileItems[i];
+      try {
+        const response = await fetch(fileItem.url, { method: "HEAD" });
+        const sizeHeader = response.headers.get("Content-Length");
+        
+        if (sizeHeader) {
+          fileItem.size = formatBytes(Number(sizeHeader));
+        } else {
+          fileItem.size = "Không xác định";
+        }
+      } catch (error) {
+        console.error(`Lỗi khi lấy kích thước file ${fileItem.name}:`, error);
+        fileItem.size = "Không xác định";
+      }
+    }
+    
+    // Cập nhật state chỉ khi component vẫn mounted
+    setFileItems(updatedFileItems);
+  };
+  
+  if (fileItems.length > 0) {
+    fetchFileSizes();
+  }
+}, [fileItems.length]);
+
+const mediaItems = allMessages 
     ? allMessages
         .filter(msg => msg.type === "image" || msg.type === "video")
         .map(msg => ({
@@ -87,35 +180,35 @@ const ConversationDetails = ({
         }))
     : [];
 
-  const fileItems = allMessages
-    ? allMessages
-        .filter(msg => msg.type === "file")
-        .map(msg => {
-          // Extract file name and extension from URL
-          const fileName = msg.content.split('/').pop();
-          const fileExt = fileName.split('.').pop().toLowerCase();
+  // const fileItems = allMessages
+  //   ? allMessages
+  //       .filter(msg => msg.type === "file")
+  //       .map(msg => {
+  //         // Extract file name and extension from URL
+  //         const fileName = msg.content.split('/').pop();
+  //         const fileExt = fileName.split('.').pop().toLowerCase();
           
-          // Determine file type and color
-          let type = fileExt;
-          let color = "gray";
+  //         // Determine file type and color
+  //         let type = fileExt;
+  //         let color = "gray";
           
-          if (fileExt === "pdf") color = "red";
-          else if (["zip", "rar", "7z"].includes(fileExt)) color = "purple";
-          else if (["doc", "docx"].includes(fileExt)) color = "blue";
-          else if (["xls", "xlsx"].includes(fileExt)) color = "green";
-          else if (["ppt", "pptx"].includes(fileExt)) color = "orange";
+  //         if (fileExt === "pdf") color = "red";
+  //         else if (["zip", "rar", "7z"].includes(fileExt)) color = "purple";
+  //         else if (["doc", "docx"].includes(fileExt)) color = "blue";
+  //         else if (["xls", "xlsx"].includes(fileExt)) color = "green";
+  //         else if (["ppt", "pptx"].includes(fileExt)) color = "orange";
           
-          return {
-            id: msg._id,
-            name: fileName,
-            size: "Unknown", // We could fetch this info from the file if needed
-            date: new Date(msg.timestamp).toLocaleDateString(),
-            type: type,
-            color: color,
-            url: msg.content
-          };
-        })
-    : [];
+  //         return {
+  //           id: msg._id,
+  //           name: fileName,
+  //           size: "Unknown", // We could fetch this info from the file if needed
+  //           date: new Date(msg.timestamp).toLocaleDateString(),
+  //           type: type,
+  //           color: color,
+  //           url: msg.content
+  //         };
+  //       })
+  //   : [];
 
   const linkItems = allMessages
     ? allMessages
@@ -146,7 +239,9 @@ const ConversationDetails = ({
   // Tìm bạn bè
 const fetchFriends = async () => {
     try {
-      const response = await axios.get(`http://${window.location.hostname}:5001/api/friends/${user.id}`);
+      const response = await axios.get(`http://${window.location.hostname}:5001/api/friendships/${user.id}`);
+      console.log("Friends response:", response.data.friends);
+      
       if (response.data && response.data.friends) {
         // Lọc ra bạn bè chưa có trong nhóm
         const existingMemberIds = groupMembers.map(member => member.user_id);
@@ -363,7 +458,7 @@ const fetchFriends = async () => {
                         >
                         <UserAddOutlined />
                         </button>
-                        <span>
+                        <span style={{width:"74px"}}>
                         Thêm thành viên
                         </span>
                     </div>
@@ -624,22 +719,44 @@ const fetchFriends = async () => {
             
             {/* Hiển thị thành viên nhóm nếu là chat nhóm */}
             {selectedChat.chat_type === "group" && (
-              <div className="group-members-section">
-                <h3>Thành viên nhóm ({groupMembers.length})</h3>
-                <div className="members-list">
-                  {groupMembers.slice(0, 5).map(member => (
-                    <div key={member.user_id} className="member-item">
-                      <Avatar src={member.avatar_path}>
-                        {!member.avatar_path && (member.full_name || 'User').charAt(0).toUpperCase()}
-                      </Avatar>
-                      <span>{member.full_name}</span>
-                      {member.role === "admin" && <span className="admin-badge">Admin</span>}
-                    </div>
-                  ))}
-                  {groupMembers.length > 5 && (
-                    <Button type="link">Xem tất cả {groupMembers.length} thành viên</Button>
+              <div className="group-members-wrapper">
+                <div
+                  className="select-wrapper"
+                  onClick={() => setIsOpenMembers(!isOpenMembers)}
+                >
+                  <h3>Thành viên nhóm ({groupMembers.length})</h3>
+                  {isOpenMembers ? (
+                    <FaCaretDown className="anticon" />
+                  ) : (
+                    <FaCaretRight className="anticon" />
                   )}
                 </div>
+                {isOpenMembers && (
+                  <div className="modal-members-list">
+                    <div className="members-list">
+                      {groupMembers.slice(0, showAllMembers ? groupMembers.length : 5).map(member => (
+                        <div key={member.user_id} className="member-item">
+                          <Avatar src={member.avatar_path}>
+                            {!member.avatar_path && (member.full_name || 'User').charAt(0).toUpperCase()}
+                          </Avatar>
+                          <div className="member-details">
+                            <span className="member-name">{member.full_name}</span>
+                            {member.role === "admin" && <span className="admin-badge">Admin</span>}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    {groupMembers.length > 5 && !showAllMembers && (
+                      <Button 
+                        type="link" 
+                        className="show-all-btn"
+                        onClick={() => setShowAllMembers(true)}
+                      >
+                        Xem tất cả {groupMembers.length} thành viên
+                      </Button>
+                    )}
+                  </div>
+                )}
               </div>
             )}
             
@@ -693,9 +810,18 @@ const fetchFriends = async () => {
                               src={item.url}
                               alt="media"
                               className="media-item"
+                              onClick={() => {
+                                setSelectedImageIndex(mediaItems.findIndex(media => media.id === item.id));
+                                setShowImageViewerModal(true);
+                              }}
+                            style={{ cursor: "pointer" }}
                             />
                           ) : (
-                            <video key={item.id} controls className="media-item">
+                            <video key={item.id} controls className="media-item" onClick={() => {
+                              setSelectedImageIndex(mediaItems.findIndex(media => media.id === item.id));
+                              setShowImageViewerModal(true);
+                            }}
+                            style={{ cursor: 'pointer' }}>
                               <source src={item.url} type="video/mp4" />
                               Trình duyệt không hỗ trợ video.
                             </video>
@@ -719,6 +845,90 @@ const fetchFriends = async () => {
                 </div>
               )}
             </div>
+            {/* Modal xem ảnh chi tiết */}
+              <Modal
+                open={showImageViewerModal}
+                onCancel={() => setShowImageViewerModal(false)}
+                footer={null}
+                width={1000}
+                className="image-viewer-modal"
+                centered
+              >
+                <div className="image-viewer-container" style={{ display: 'flex', height: '80vh' }}>
+                  {/* Phần trung tâm hiển thị ảnh lớn */}
+                  <div className="main-image-container" style={{ flex: '3', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+                    <div style={{ position: 'relative', maxHeight: '80vh', textAlign: 'center' }}>
+                      {mediaItems[selectedImageIndex]?.type === "image" ? (
+                        <img 
+                          src={mediaItems[selectedImageIndex]?.url} 
+                          alt="Selected media" 
+                          style={{ maxHeight: '70vh', maxWidth: '100%', objectFit: 'contain' }} 
+                        />
+                      ) : (
+                        <video controls style={{ maxHeight: '70vh', maxWidth: '100%' }}>
+                          <source src={mediaItems[selectedImageIndex]?.url} type="video/mp4" />
+                          Trình duyệt không hỗ trợ video.
+                        </video>
+                      )}
+                      
+                      {/* Button tải xuống */}
+                      <div style={{ marginTop: '15px' }}>
+                        <Button 
+                          type="primary" 
+                          icon={<DownloadOutlined />} 
+                          onClick={() => window.open(mediaItems[selectedImageIndex]?.url, '_blank')}
+                        >
+                          Tải xuống
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Danh sách ảnh thu nhỏ bên phải */}
+                  <div className="thumbnail-list" style={{ flex: '1', overflowY: 'auto', padding: '0 10px', borderLeft: '1px solid #eee' }}>
+                    {mediaItems.map((item, index) => (
+                      <div 
+                        key={item.id} 
+                        onClick={() => setSelectedImageIndex(index)}
+                        style={{ 
+                          padding: '5px', 
+                          cursor: 'pointer', 
+                          border: selectedImageIndex === index ? '2px solid #1890ff' : '2px solid transparent',
+                          marginBottom: '10px',
+                          borderRadius: '4px'
+                        }}
+                      >
+                        {item.type === "image" ? (
+                          <img 
+                            src={item.url} 
+                            alt={`Thumbnail ${index}`} 
+                            style={{ width: '100%', height: '80px', objectFit: 'cover' }} 
+                          />
+                        ) : (
+                          <div style={{ position: 'relative', width: '100%', height: '80px' }}>
+                            <video style={{ width: '100%', height: '80px', objectFit: 'cover' }}>
+                              <source src={item.url} type="video/mp4" />
+                            </video>
+                            <div style={{ 
+                              position: 'absolute', 
+                              top: 0, 
+                              left: 0, 
+                              right: 0, 
+                              bottom: 0, 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              justifyContent: 'center', 
+                              background: 'rgba(0,0,0,0.5)' 
+                            }}>
+                              <PlayCircleOutlined style={{ fontSize: '24px', color: 'white' }} />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </Modal>
 
             {/* File section */}
             <div className="file-section">
@@ -735,12 +945,12 @@ const fetchFriends = async () => {
               </div>
               {isOpenFile && (
                 <div className="modal-file-list">
-                  {fileItems.length > 0 ? (
+                  {processedFileItems.length > 0 ? (
                     <>
                       <div className="file-list-wrapper">
-                        {fileItems.slice(0, 5).map((file) => (
+                        {processedFileItems.slice(0, 5).map((file) => (
                           <div className="file-item" key={file.id}>
-                            <div className="file-info-wrapper">
+                            <div className="file-info-wrapper" onClick={()=>setShowAllFiles(!showAllFiles)}>
                               {file.type === "pdf" ? (
                                 <BiSolidFilePdf
                                   className="type-icon"
@@ -779,16 +989,31 @@ const fetchFriends = async () => {
                             </div>
                             <div className="file-date-wrapper">
                               <p>{file.date}</p>
-                            </div>
+                              <Button 
+                                type="text"
+                                icon={<DownloadOutlined />} 
+                                size="small"
+                                onClick={() => window.open(file.url, '_blank')}
+                              />
+                            </div> 
                           </div>
                         ))}
                       </div>
-                      {fileItems.length > 5 && (
+                      {processedFileItems.length > 5 && (
                         <div style={{ padding: "0 20px" }}>
-                          <button className="icon-showallFile">Xem tất cả</button>
+                          <button 
+                            className="icon-showallFile"
+                            onClick={() => setShowAllFiles(true)}
+                          >
+                            Xem tất cả
+                          </button>
                         </div>
                       )}
                     </>
+                  ) : fileItems.length > 0 ? (
+                    <div className="loading-files">
+                      <div>Đang tải thông tin file...</div>
+                    </div>
                   ) : (
                     <div className="no-content-message">
                       Chưa có tệp nào được gửi
@@ -797,6 +1022,68 @@ const fetchFriends = async () => {
                 </div>
               )}
             </div>
+            {/* Modal xem tất cả file */}
+              {
+                showAllFiles && (
+                  <Modal
+                title="Tất cả file đã gửi"
+                open={showAllFiles}
+                onCancel={() => setShowAllFiles(false)}
+                footer={null}
+                width={700}
+              >
+                <Input
+                  placeholder="Tìm kiếm file..."
+                  prefix={<SearchOutlined />}
+                  style={{ marginBottom: 15 }}
+                  onChange={(e) => {
+                    // Có thể thêm logic tìm kiếm file ở đây
+                  }}
+                />
+                
+                <div className="all-files-list" style={{ maxHeight: '60vh', overflowY: 'auto' }}>
+                  {processedFileItems.map((file) => (
+                    <div className="file-item" key={file.id} style={{ borderBottom: '1px solid #f0f0f0', padding: '10px 0' }}>
+                      <div className="file-info-wrapper">
+                        {file.type === "pdf" ? (
+                          <BiSolidFilePdf className="type-icon" style={{ color: "red", fontSize: '24px' }} />
+                        ) : ["zip", "rar", "7z"].includes(file.type) ? (
+                          <AiFillFileZip className="type-icon" style={{ color: "violet", fontSize: '24px' }} />
+                        ) : ["doc", "docx"].includes(file.type) ? (
+                          <FaFileWord className="type-icon" style={{ color: "blue", fontSize: '24px' }} />
+                        ) : ["xls", "xlsx"].includes(file.type) ? (
+                          <FaFileExcel className="type-icon" style={{ color: "green", fontSize: '24px' }} />
+                        ) : ["ppt", "pptx"].includes(file.type) ? (
+                          <FaFilePowerpoint className="type-icon" style={{ color: "orange", fontSize: '24px' }} />
+                        ) : (
+                          <FaFileAlt className="type-icon" style={{ color: "gray", fontSize: '24px' }} />
+                        )}
+                        <div className="file-info">
+                          <h4>
+                            <a href={file.url} target="_blank" rel="noopener noreferrer">
+                              {file.name}
+                            </a>
+                          </h4>
+                          <div style={{ display: 'flex', gap: '20px', color: '#888' }}>
+                            <span>{file.size}</span>
+                            <span>{file.date}</span>
+                            <span>Gửi bởi: {file.msg.sender_name || 'Không xác định'}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <Button 
+                        type="primary"
+                        icon={<DownloadOutlined />}
+                        onClick={() => window.open(file.url, '_blank')}
+                      >
+                        Tải về
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </Modal>
+                )
+              }
 
             {/* Link section */}
             <div className="modal-link-section">
