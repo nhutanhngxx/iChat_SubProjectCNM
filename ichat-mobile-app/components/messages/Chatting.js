@@ -385,15 +385,33 @@ const Chatting = ({ route }) => {
     }, [user, chat]);
   } else {
     useEffect(() => {
-      // const fetchMessages = async () => {
-      //   const messages = await messageService.getMessagesByGroupId(chat.id);
-      //   const members = await groupService.getGroupMembers(chat.id);
-      //   setMessages(messages);
-      //   setGroupMembers(members);
-      // };
-      // fetchMessages();
-      // const interval = setInterval(fetchMessages, 500);
-      // return () => clearInterval(interval);
+      const fetchMessages = async () => {
+        try {
+          const messages = await messageService.getMessagesByGroupId(chat.id);
+          const members = await groupService.getGroupMembers(chat.id);
+
+          // Lọc tin nhắn đã bị xóa
+          const filteredMessages = messages.filter((message) => {
+            if (
+              !Array.isArray(message.isdelete) ||
+              message.isdelete.length === 0
+            ) {
+              return true;
+            }
+            return !message.isdelete.some(
+              (id) => id === user.id || id === String(user.id)
+            );
+          });
+
+          setMessages(filteredMessages);
+          setGroupMembers(members);
+        } catch (error) {
+          console.error("Lỗi khi lấy tin nhắn nhóm:", error);
+        }
+      };
+      fetchMessages();
+      const interval = setInterval(fetchMessages, 500);
+      return () => clearInterval(interval);
     }, [user, chat]);
   }
 
@@ -632,6 +650,8 @@ const Chatting = ({ route }) => {
       return;
     }
     try {
+      const isLastMessage =
+        selectedMessage._id === messages[messages.length - 1]._id;
       const response = await messageService.softDeleteMessagesForUser(
         user.id,
         selectedMessage._id
@@ -647,6 +667,103 @@ const Chatting = ({ route }) => {
       setModalVisible(false);
     }
   };
+
+  // const handleSoftDelete = async () => {
+  //   if (typeChat === "not-friend" || typeChat === "blocked") {
+  //     let message = "Bạn không thể xóa tin nhắn trong cuộc trò chuyện này.";
+
+  //     if (typeChat === "blocked") {
+  //       if (blockStatus.blockedByTarget) {
+  //         message = `Bạn không thể xóa tin nhắn vì bạn đã bị chặn.`;
+  //       } else if (blockStatus.blockedByUser) {
+  //         message = `Bạn không thể xóa tin nhắn vì bạn đã chặn người này.`;
+  //       }
+  //     }
+
+  //     Alert.alert("Thông báo", message);
+  //     return;
+  //   }
+
+  //   try {
+  //     // Kiểm tra xem tin nhắn được chọn có phải là tin nhắn cuối cùng không
+  //     const isLastMessage =
+  //       selectedMessage._id === messages[messages.length - 1]._id;
+
+  //     const response = await messageService.softDeleteMessagesForUser(
+  //       user.id,
+  //       selectedMessage._id
+  //     );
+
+  //     if (response.data !== null) {
+  //       setMessages((prevMessages) =>
+  //         prevMessages.filter((msg) => msg._id !== selectedMessage._id)
+  //       );
+
+  //       // Nếu là tin nhắn cuối cùng, cập nhật lại tin nhắn cuối
+  //       if (isLastMessage) {
+  //         let updatedMessages;
+  //         let chatId;
+
+  //         if (chat?.chatType === "private") {
+  //           updatedMessages = await messageService.getPrivateMessages({
+  //             userId: user.id,
+  //             chatId: chat.id,
+  //           });
+  //           chatId = chat.id;
+  //         } else {
+  //           // Xử lý cho tin nhắn nhóm
+  //           updatedMessages = await messageService.getMessagesByGroupId(
+  //             chat.id
+  //           );
+  //           chatId = chat.id;
+  //         }
+
+  //         // Lọc tin nhắn chưa bị xóa
+  //         const availableMessages = updatedMessages.filter(
+  //           (msg) => !msg.isdelete?.includes(user.id)
+  //         );
+
+  //         // Tìm tin nhắn cuối cùng hợp lệ
+  //         const lastMessage = availableMessages[availableMessages.length - 1];
+
+  //         // Định dạng nội dung tin nhắn cuối
+  //         const formatMessageContent = (msg) => {
+  //           if (!msg) return "";
+  //           switch (msg.type) {
+  //             case "file":
+  //               return "[Tệp đính kèm]";
+  //             case "image":
+  //               return "[Hình ảnh]";
+  //             case "video":
+  //               return "[Video]";
+  //             case "audio":
+  //               return "[Tệp âm thanh]";
+  //             default:
+  //               return msg.content;
+  //           }
+  //         };
+
+  //         // Emit event để Priority cập nhật
+  //         socketService.emit("update_last_message", {
+  //           chatId,
+  //           isGroup: chat?.chatType !== "private",
+  //           lastMessage: lastMessage
+  //             ? {
+  //                 content: formatMessageContent(lastMessage),
+  //                 timestamp: lastMessage.timestamp,
+  //                 type: lastMessage.type,
+  //                 sender_id: lastMessage.sender_id, // Thêm sender_id cho tin nhắn nhóm
+  //               }
+  //             : null,
+  //         });
+  //       }
+  //     }
+  //   } catch (error) {
+  //     console.error("Lỗi khi xóa mềm tin nhắn:", error);
+  //   } finally {
+  //     setModalVisible(false);
+  //   }
+  // };
 
   // Gửi lời mời kết bạn
   const handleSendFriendRequest = async (chatId) => {

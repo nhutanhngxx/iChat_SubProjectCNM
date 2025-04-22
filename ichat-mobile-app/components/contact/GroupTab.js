@@ -12,7 +12,6 @@ import { Dimensions } from "react-native";
 import ModalCreateGroup from "./ModalCreateGroup";
 import { useNavigation } from "@react-navigation/native";
 import { UserContext } from "../../config/context/UserContext";
-import { Avatar } from "@rneui/themed";
 import groupService from "../../services/groupService";
 
 const GroupTab = () => {
@@ -24,13 +23,12 @@ const GroupTab = () => {
 
   useEffect(() => {
     if (!user?.id) return;
-
     const fetchGroupList = async () => {
       const groups = await groupService.getAllGroupsByUserId(user.id);
       setGroupList(groups);
     };
     fetchGroupList();
-    const interval = setInterval(fetchGroupList, 1000);
+    const interval = setInterval(fetchGroupList, 2000);
     return () => clearInterval(interval);
   }, [user?.id]);
 
@@ -53,7 +51,7 @@ const GroupTab = () => {
       key={item.id}
     >
       <View style={styles.item_leftSide}>
-        <Avatar size={50} rounded source={item.avatar} />
+        <Image source={item.avatar} style={{ width: 50, height: 50 }} />
         <Text style={{ fontWeight: "500", fontSize: 16 }}>{item.name}</Text>
       </View>
       <View style={{ display: "flex", flexDirection: "row", gap: 20 }}>

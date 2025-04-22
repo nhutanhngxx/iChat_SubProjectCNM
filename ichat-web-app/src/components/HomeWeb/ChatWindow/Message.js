@@ -18,7 +18,7 @@ import {
   addReactionToMessage,
   removeReactionFromMessage,
 } from "../../../redux/slices/messagesSlice";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import socket from "../../services/socket";
 import { getUserFriends } from "../../../redux/slices/friendSlice";
 import { SmileOutlined } from "@ant-design/icons";
@@ -45,7 +45,96 @@ const Message = ({
   const [isHovered, setIsHovered] = useState(false);
   const [threeDotsMenuVisible, setThreeDotsMenuVisible] = useState(false);
   const messageRef = useRef(null);
+  const chatMessages = useSelector((state) => state.messages.chatMessages);
   const dispatch = useDispatch();
+
+  const findRepliedMessage = (replyId) => {
+    if (!replyId) return null;
+    if (!Array.isArray(allMessages)) return null;
+
+    // Chuẩn hóa ID thành chuỗi để so sánh
+    const replyIdStr = String(replyId).trim();
+    console.log("Finding replied message:", replyIdStr);
+
+    // Thử một số cách định dạng ID khác nhau
+    const exactMatch = allMessages.find((msg) => {
+      const msgId = String(msg._id || msg.id || "").trim();
+      return msgId === replyIdStr;
+    });
+
+    if (exactMatch) {
+      console.log("Exact match found:", exactMatch.content);
+      return exactMatch;
+    }
+
+    // Thử tìm trong chatMessages - FIX HERE
+    if (Array.isArray(chatMessages)) {
+      const messageFromRedux = chatMessages.find(
+        (msg) => String(msg._id) === replyIdStr
+      );
+
+      if (messageFromRedux) {
+        console.log("Found in Redux state:", messageFromRedux);
+        return messageFromRedux;
+      }
+    }
+
+    // Debug info
+    console.log("Reply message not found:", {
+      replyId,
+      replyIdType: typeof replyId,
+      allMessagesCount: allMessages?.length || 0,
+      sampleIds: (allMessages || [])
+        .slice(0, 3)
+        .map((m) => ({ id: m._id, content: m.content?.substring(0, 20) })),
+    });
+
+    return null;
+  };
+  // Lấy thông tin thành viên trog nhóm
+  // Thêm state để lưu thông tin người gửi
+  const [senderInfo, setSenderInfo] = useState({
+    full_name: "Đang tải...",
+    avatar_path: null,
+  });
+
+  // Fetch thông tin người gửi khi message thay đổi hoặc khi là tin nhắn nhóm
+  useEffect(() => {
+    // Chỉ fetch khi là tin nhắn nhóm và không phải tin nhắn của mình
+    if (
+      selectedChat?.chat_type === "group" &&
+      !isSender &&
+      message?.sender_id
+    ) {
+      const fetchSenderInfo = async () => {
+        try {
+          // Kiểm tra nếu đã có thông tin người dùng trong cache
+          const response = await fetch(
+            `http://${window.location.hostname}:5001/api/users/${message.sender_id}`
+          );
+
+          if (!response.ok) {
+            throw new Error("Failed to fetch sender info");
+          }
+
+          const data = await response.json();
+
+          if (data && data.user) {
+            setSenderInfo({
+              full_name: data.user.full_name || "Người dùng",
+              avatar_path: data.user.avatar_path,
+            });
+          }
+        } catch (error) {
+          console.error("Error fetching sender info:", error);
+          setSenderInfo({ full_name: "Người dùng", avatar_path: null });
+        }
+      };
+
+      fetchSenderInfo();
+    }
+  }, [selectedChat?.chat_type, isSender, message?.sender_id]);
+
   const [friends, setFriends] = useState([]);
   // Lấy danh sách bạn bè
   useEffect(() => {
@@ -55,11 +144,11 @@ const Message = ({
           getUserFriends(user._id || user.id)
         ).unwrap();
         setFriends(result);
-        console.log(
-          "friends from Search component",
-          user._id || user.id,
-          result
-        );
+        // console.log(
+        //   "friends from Search component",
+        //   user._id || user.id,
+        //   result
+        // );
       } catch (err) {
         console.error("Lỗi khi lấy danh sách bạn bè:", err);
       }
@@ -77,6 +166,10 @@ const Message = ({
   const [isFriendWithReceiver, setIsFriendWithReceiver] = useState(true);
   const [friendRequestSent, setFriendRequestSent] = useState(false);
   const checkIsFriend = () => {
+    if (selectedChat?.chat_type === "group") {
+      return true;
+    }
+
     if (!friends || !friends.friends || !Array.isArray(friends.friends)) {
       return false;
     }
@@ -104,8 +197,10 @@ const Message = ({
   const [showReactionPicker, setShowReactionPicker] = useState(false);
   // Function to send friend request
 
-  // Disabled all interaction if not friends
-  const isInteractionDisabled = !isFriendWithReceiver;
+  // const isInteractionDisabled = !isFriendWithReceiver;
+  // Chỉ áp dụng cho chat riêng tư (không phải chat nhóm)
+  const isInteractionDisabled =
+    !isFriendWithReceiver && selectedChat?.chat_type !== "group";
   //Thu hồi tin nhắn
 
   const handleRecall = async () => {
@@ -367,76 +462,6 @@ const Message = ({
     closeContextMenu();
   };
 
-  // const handleReaction = async (reaction) => {
-  //   try {
-  //     if (isInteractionDisabled && !isSender) {
-  //       return; // Don't allow reactions if interaction is disabled
-  //     }
-
-  //     const userId = user._id || user.id;
-
-  //     // Check if user has THIS SPECIFIC reaction already
-  //     const existingReaction = message.reactions?.find(
-  //       (r) => r.user_id === userId && r.reaction_type === reaction
-  //     );
-
-  //     if (existingReaction) {
-  //       // User clicked a reaction they already added - remove only this specific reaction
-  //       await dispatch(
-  //         removeReactionFromMessage({
-  //           messageId: message._id,
-  //           userId: userId,
-  //           reaction_type: reaction, // Pass the specific reaction to remove
-  //         })
-  //       ).unwrap();
-
-  //       antMessage.success({
-  //         content: `Đã bỏ biểu cảm ${getReactionEmoji(reaction)}`,
-  //         duration: 1,
-  //       });
-  //     } else {
-  //       // Add new reaction (without removing existing ones)
-  //       await dispatch(
-  //         addReactionToMessage({
-  //           messageId: message._id,
-  //           user_id: userId,
-  //           reaction_type: reaction,
-  //         })
-  //       ).unwrap();
-
-  //       antMessage.success({
-  //         content: `Đã thêm biểu cảm ${getReactionEmoji(reaction)}`,
-  //         duration: 1,
-  //       });
-  //     }
-
-  //     // Notify other clients via socket
-  //     const userIds = [user.id, selectedChat.id].sort();
-  //     const roomId = `chat_${userIds[0]}_${userIds[1]}`;
-
-  //     socket.emit("add-reaction", {
-  //       chatId: roomId,
-  //       messageId: message._id,
-  //       userId: userId,
-  //       reaction_type: reaction,
-  //       action: existingReaction ? "remove" : "add",
-  //     });
-
-  //     console.log(
-  //       `${
-  //         existingReaction ? "Removed" : "Added"
-  //       } reaction ${reaction} for message:`,
-  //       message._id
-  //     );
-
-  //     // Close menus
-  //     closeContextMenu();
-  //     setShowReactionPicker(false);
-  //   } catch (error) {
-  //     antMessage.error("Không thể thực hiện biểu cảm. Vui lòng thử lại.");
-  //     console.error("Error handling reaction:", error);
-  //   }
-  // };
   const handleReaction = async (reaction) => {
     try {
       if (isInteractionDisabled && !isSender) {
@@ -444,84 +469,80 @@ const Message = ({
       }
 
       const userId = user._id || user.id;
-      const existingReaction = message.reactions?.find(
-        (r) => r.user_id === userId && r.reaction_type === reaction
-      );
-      const isRemoving = !!existingReaction;
 
-      // Add debug logs
-      console.log("Handling reaction:", {
-        action: isRemoving ? "remove" : "add",
-        reaction,
-        messageId: message._id,
-        existingReaction,
+      // Always ADD the reaction - never remove automatically based on existing reactions
+      await dispatch(
+        addReactionToMessage({
+          messageId: message._id,
+          user_id: userId,
+          reaction_type: reaction,
+        })
+      ).unwrap();
+
+      antMessage.success({
+        content: `Đã thêm biểu cảm ${getReactionEmoji(reaction)}`,
+        duration: 1,
       });
 
-      if (isRemoving) {
-        // Remove reaction
-        await dispatch(
-          removeReactionFromMessage({
-            messageId: message._id,
-            userId: userId,
-            reaction_type: reaction,
-          })
-        ).unwrap();
+      // Create room ID
+      const userIds = [user.id, selectedChat.id].sort();
+      const roomId = `chat_${userIds[0]}_${userIds[1]}`;
 
-        antMessage.success({
-          content: `Đã bỏ biểu cảm ${getReactionEmoji(reaction)}`,
-          duration: 1,
-        });
+      // Emit add-reaction event
+      const payload = {
+        chatId: roomId,
+        messageId: message._id,
+        userId: userId,
+        reaction: reaction, // Match server parameter name
+      };
 
-        // Create room ID
-        const userIds = [user.id, selectedChat.id].sort();
-        const roomId = `chat_${userIds[0]}_${userIds[1]}`;
-
-        // Format payload exactly as server expects it
-        const payload = {
-          chatId: roomId,
-          messageId: message._id,
-          userId: userId,
-        };
-
-        console.log("Emitting remove-reaction with payload:", payload);
-        socket.emit("remove-reaction", payload);
-      } else {
-        // Add reaction
-        await dispatch(
-          addReactionToMessage({
-            messageId: message._id,
-            user_id: userId,
-            reaction_type: reaction,
-          })
-        ).unwrap();
-
-        antMessage.success({
-          content: `Đã thêm biểu cảm ${getReactionEmoji(reaction)}`,
-          duration: 1,
-        });
-
-        // Create room ID
-        const userIds = [user.id, selectedChat.id].sort();
-        const roomId = `chat_${userIds[0]}_${userIds[1]}`;
-
-        // Format payload exactly as server expects it
-        const payload = {
-          chatId: roomId,
-          messageId: message._id,
-          userId: userId,
-          reaction: reaction, // This must match server expectations
-        };
-
-        console.log("Emitting add-reaction with payload:", payload);
-        socket.emit("add-reaction", payload);
-      }
-
+      console.log("Emitting add-reaction with payload:", payload);
+      socket.emit("add-reaction", payload);
+      dispatch(fetchMessages(user.id)); // Fetch updated messages
       // Close menus
       closeContextMenu();
       setShowReactionPicker(false);
     } catch (error) {
       console.error("Reaction error:", error);
       antMessage.error("Không thể thực hiện biểu cảm. Vui lòng thử lại.");
+    }
+  };
+
+  // Add a separate function for removing reactions
+  const handleRemoveReaction = async (reaction) => {
+    try {
+      const userId = user._id || user.id;
+
+      await dispatch(
+        removeReactionFromMessage({
+          messageId: message._id,
+          userId: userId,
+          reaction_type: reaction,
+        })
+      ).unwrap();
+
+      antMessage.success({
+        content: `Đã bỏ biểu cảm ${getReactionEmoji(reaction)}`,
+        duration: 1,
+      });
+
+      // Create room ID
+      const userIds = [user.id, selectedChat.id].sort();
+      const roomId = `chat_${userIds[0]}_${userIds[1]}`;
+
+      // Format payload exactly as server expects it
+      const payload = {
+        chatId: roomId,
+        messageId: message._id,
+        userId: userId,
+      };
+
+      dispatch(fetchMessages(user._id)); // Fetch updated messages
+      console.log("Emitting remove-reaction with payload:", payload);
+      socket.emit("remove-reaction", payload);
+    } catch (error) {
+      console.error("Error removing reaction:", error);
+      antMessage.error("Không thể bỏ biểu cảm. Vui lòng thử lại.");
     }
   };
   // 1. First, separate room joining to its own useEffect that runs first
@@ -536,62 +557,6 @@ const Message = ({
 
     // No return cleanup needed for joining
   }, [selectedChat?.id, user?.id]);
-
-  // 2. Now handle all socket listeners in a separate useEffect
-  useEffect(() => {
-    if (!selectedChat?.id || !user?.id) return;
-
-    const userIds = [user.id, selectedChat.id].sort();
-    const roomId = `chat_${userIds[0]}_${userIds[1]}`;
-
-    // Debug helper to see all incoming socket events
-    const debugSocketEvent = (eventName, data) => {
-      console.log(`Socket event received: ${eventName}`, data);
-    };
-
-    // Reaction handlers
-    const handleReactionAdded = (data) => {
-      debugSocketEvent("reaction-added", data);
-      // Check all possible paths to get messageId
-      const messageId = data?.messageId || data?.message_id;
-      if (messageId) {
-        // Use more specific fetch rather than fetching all messages
-        dispatch(
-          fetchChatMessages({
-            senderId: user.id,
-            receiverId: selectedChat.id,
-          })
-        );
-      }
-    };
-
-    const handleReactionRemoved = (data) => {
-      debugSocketEvent("reaction-removed", data);
-      // Check all possible paths to get messageId
-      const messageId = data?.messageId || data?.message_id;
-      if (messageId) {
-        // Use more specific fetch rather than fetching all messages
-        dispatch(
-          fetchChatMessages({
-            senderId: user.id,
-            receiverId: selectedChat.id,
-          })
-        );
-      }
-    };
-
-    // Set up all event listeners
-    socket.on("reaction-added", handleReactionAdded);
-    socket.on("reaction-removed", handleReactionRemoved);
-
-    // Clean up ALL listeners when component unmounts
-    return () => {
-      console.log("Cleaning up socket listeners for reactions");
-      socket.off("reaction-added", handleReactionAdded);
-      socket.off("reaction-removed", handleReactionRemoved);
-      socket.off("message-reaction-update"); // Remove any legacy listeners
-    };
-  }, [selectedChat?.id, user?.id, dispatch]);
   const getReactionEmoji = (type) => {
     const map = {
       like: "👍",
@@ -652,80 +617,52 @@ const Message = ({
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [contextMenuVisible, threeDotsMenuVisible]); // Add threeDotsMenuVisible to dependencies
-  const findRepliedMessage = (replyId) => {
-    if (!replyId) return null;
-    if (!Array.isArray(allMessages)) return null;
+  // Khi fetch tin nhắn cho cuộc trò chuyện, thêm tham số để lấy cả tin nhắn đã reply
+  const fetchMessagesData = async () => {
+    if (user?.id && selectedChat?.id) {
+      try {
+        const response = await dispatch(
+          fetchChatMessages({
+            senderId: user.id,
+            receiverId: selectedChat.id,
+            includeRepliedMessages: true, // Thêm tham số này
+          })
+        ).unwrap();
 
-    // Convert IDs to strings for comparison
-    const replyIdStr = String(replyId);
-    console.log("Finding replied message:", replyIdStr);
-
-    // First try exact match
-    const exactMatch = allMessages.find(
-      (msg) => String(msg._id) === replyIdStr
-    );
-    console.log("Exact match found:", exactMatch);
-
-    if (exactMatch) return exactMatch;
-
-    // Log debugging info if not found
-    console.log("Reply message not found:", {
-      replyId,
-      allMessagesCount: allMessages.length,
-      sampleIds: allMessages.slice(0, 3).map((m) => m._id),
-    });
-
-    return null;
+        // Xử lý thành công
+      } catch (error) {
+        // Xử lý lỗi
+      }
+    }
   };
-  // Kết nối socket và lắng nghe sự kiện nhận tin nhắn
-  // useEffect(() => {
-  //   if (!selectedChat?.id || !user?.id) return;
 
-  //   const userIds = [user.id, selectedChat.id].sort();
-  //   const roomId = `chat_${userIds[0]}_${userIds[1]}`;
+  // Thêm state để lưu tin nhắn reply đã fetch riêng
+  const [repliedMessageData, setRepliedMessageData] = useState(null);
 
-  //   console.log("Joining room:", roomId);
-
-  //   // Join the consistent room
-  //   socket.emit("join-room", roomId);
-
-  //   const handleRecalledMessage = (data) => {
-  //     console.log("Message recalled event received:", data);
-
-  //     // Update the recalled message in your Redux store
-  //     if (data.messageId) {
-  //       // Create an updated message object
-  //       const updatedMessage = {
-  //         _id: data.messageId,
-  //         content: data.newContent || "Tin nhắn đã được thu hồi",
-  //       };
-
-  //       dispatch(updateMessages(updatedMessage));
-  //       dispatch(fetchMessages(user.id));
-  //     }
-  //   };
-
-  //   socket.on("message-recalled", handleRecalledMessage);
-
-  //   return () => {
-  //     console.log("Cleaning up socket listener");
-  //     socket.off("message-recalled", handleRecalledMessage);
-  //   };
-  // }, [selectedChat?.id, user?.id, dispatch]);
+  // Sửa lại component RepliedMessage để sử dụng state
   const RepliedMessage = ({ reply }) => {
+    const [fetchedMessage, setFetchedMessage] = useState(null);
+    const [isLoading, setIsLoading] = useState(false);
+    const [fetchAttempted, setFetchAttempted] = useState(false);
+
     if (!reply) return null;
 
-    const repliedMessage = findRepliedMessage(reply);
-    console.log("Replied message found:", repliedMessage);
+    // Sử dụng tin nhắn từ allMessages hoặc từ fetch riêng
+    const repliedMessage = findRepliedMessage(reply) || fetchedMessage;
 
-    // if (!repliedMessage) return null;
+    // if (isLoading) {
+    //   return (
+    //     <div className="replied-message" style={{ opacity: 0.7 }}>
+    //       <div className="replied-content">
+    //         <p className="replied-text-loading">Đang tải tin nhắn...</p>
+    //       </div>
+    //     </div>
+    //   );
+    // }
+
     if (!repliedMessage) {
-      // Return a fallback UI when the replied message can't be found
       return (
-        <div
-          className="replied-message"
-          style={{ opacity: 0.5, position: "relative" }}
-        >
+        <div className="replied-message" style={{ opacity: 0.5 }}>
           <div className="replied-content">
             <p className="replied-text-not-found">
               Tin nhắn đã bị xóa hoặc thu hồi
@@ -762,11 +699,11 @@ const Message = ({
     );
   };
   useEffect(() => {
-    console.log("Message component rendered with:", {
-      messageId: message._id,
-      replyTo: message.reply_to || null,
-      allMessagesCount: allMessages?.length || 0,
-    });
+    // console.log("Message component rendered with:", {
+    //   messageId: message._id,
+    //   replyTo: message.reply_to || null,
+    //   allMessagesCount: allMessages?.length || 0,
+    // });
 
     if (message.reply_to) {
       const found = findRepliedMessage(message.reply_to);
@@ -777,26 +714,16 @@ const Message = ({
       );
     }
   }, [message, allMessages]);
-  // console.log("Kiểm tra isFriendWithReceiver:", isFriendWithReceiver);
-  // Add this to your existing useEffect socket setup
   useEffect(() => {
     if (!selectedChat?.id || !user?.id) return;
 
     const userIds = [user.id, selectedChat.id].sort();
     const roomId = `chat_${userIds[0]}_${userIds[1]}`;
-
-    // Handle reaction updates from other users
-    const handleMessageReaction = (data) => {
-      if (data.messageId) {
-        // Fetch updated messages to get the latest reaction data
-        dispatch(fetchMessages(user.id));
-      }
-    };
-
-    socket.on("message-reaction-update", handleMessageReaction);
-
+    console.log("Message component joining room:", roomId);
+    socket.emit("join-room", roomId);
     return () => {
-      socket.off("message-reaction-update", handleMessageReaction);
+      // socket.off("message-reaction-update", handleMessageReaction);
+      console.log("Cleaning up socket listener for message reactions");
     };
   }, [selectedChat?.id, user?.id, dispatch]);
   return (
@@ -829,13 +756,21 @@ const Message = ({
           <div className="avatar-message">
             <Avatar
               size={32}
-              src={selectedChat.avatar_path}
+              src={
+                selectedChat.chat_type === "group" && senderInfo.avatar_path
+                  ? senderInfo.avatar_path
+                  : selectedChat.avatar_path
+              }
               className="profile-avatar-message"
             />
           </div>
         )}
 
         <div className="message-column">
+          {/* Hiển thị tên người gửi nếu là tin nhắn nhóm và không phải người dùng hiện tại */}
+          {selectedChat.chat_type === "group" && !isSender && (
+            <div className="sender-name">{senderInfo.full_name}</div>
+          )}
           {message.reply_to && <RepliedMessage reply={message.reply_to} />}
           {message.type === "image" ? (
             <>
@@ -968,7 +903,7 @@ const Message = ({
             </div>
           )}
           {/* Display reactions */}
-          {message.reactions && message.reactions.length > 0 && (
+          {/* {message.reactions && message.reactions.length > 0 && (
             <div className="message-reactions">
               {Object.entries(countReactions()).map(([type, count]) => (
                 <Tooltip
@@ -980,6 +915,41 @@ const Message = ({
                       hasUserReacted(type) ? "user-reacted" : ""
                     }`}
                     onClick={() => handleReaction(type)}
+                  >
+                    {getReactionEmoji(type)} {count}
+                  </span>
+                </Tooltip>
+              ))}
+            </div>
+          )} */}
+          {message.reactions && message.reactions.length > 0 && (
+            <div className="message-reactions">
+              {Object.entries(countReactions()).map(([type, count]) => (
+                <Tooltip
+                  key={type}
+                  title={
+                    <div>
+                      <div>{`${count} người đã bày tỏ ${getReactionEmoji(
+                        type
+                      )}`}</div>
+                      <div className="reaction-tooltip-actions">
+                        <button onClick={() => handleReaction(type)}>
+                          Thêm
+                        </button>
+                        <button onClick={() => handleRemoveReaction(type)}>
+                          Bỏ
+                        </button>
+                      </div>
+                    </div>
+                  }
+                >
+                  <span
+                    className="reaction-badge"
+                    onClick={() => handleReaction(type)} // Always add on click
+                    onContextMenu={(e) => {
+                      e.preventDefault();
+                      handleRemoveReaction(type); // Remove on right-click
+                    }}
                   >
                     {getReactionEmoji(type)} {count}
                   </span>
@@ -1032,67 +1002,85 @@ const Message = ({
             <div className="reaction-icons">
               <Popover
                 content={
+                  // <div className="reaction-picker">
+                  //   <Tooltip title="Thích">
+                  //     <span
+                  //       className={`reaction-option ${
+                  //         hasUserReacted("like") ? "active" : ""
+                  //       }`}
+                  //       onClick={() => handleReaction("like")}
+                  //     >
+                  //       👍
+                  //     </span>
+                  //   </Tooltip>
+                  //   <Tooltip title="Yêu thích">
+                  //     <span
+                  //       className={`reaction-option ${
+                  //         hasUserReacted("love") ? "active" : ""
+                  //       }`}
+                  //       onClick={() => handleReaction("love")}
+                  //     >
+                  //       ❤️
+                  //     </span>
+                  //   </Tooltip>
+                  //   <Tooltip title="Haha">
+                  //     <span
+                  //       className={`reaction-option ${
+                  //         hasUserReacted("haha") ? "active" : ""
+                  //       }`}
+                  //       onClick={() => handleReaction("haha")}
+                  //     >
+                  //       😂
+                  //     </span>
+                  //   </Tooltip>
+                  //   <Tooltip title="Wow">
+                  //     <span
+                  //       className={`reaction-option ${
+                  //         hasUserReacted("wow") ? "active" : ""
+                  //       }`}
+                  //       onClick={() => handleReaction("wow")}
+                  //     >
+                  //       😮
+                  //     </span>
+                  //   </Tooltip>
+                  //   <Tooltip title="Buồn">
+                  //     <span
+                  //       className={`reaction-option ${
+                  //         hasUserReacted("sad") ? "active" : ""
+                  //       }`}
+                  //       onClick={() => handleReaction("sad")}
+                  //     >
+                  //       😢
+                  //     </span>
+                  //   </Tooltip>
+                  //   <Tooltip title="Giận">
+                  //     <span
+                  //       className={`reaction-option ${
+                  //         hasUserReacted("angry") ? "active" : ""
+                  //       }`}
+                  //       onClick={() => handleReaction("angry")}
+                  //     >
+                  //       😠
+                  //     </span>
+                  //   </Tooltip>
+                  // </div>
                   <div className="reaction-picker">
-                    <Tooltip title="Thích">
-                      <span
-                        className={`reaction-option ${
-                          hasUserReacted("like") ? "active" : ""
-                        }`}
-                        onClick={() => handleReaction("like")}
-                      >
-                        👍
-                      </span>
-                    </Tooltip>
-                    <Tooltip title="Yêu thích">
-                      <span
-                        className={`reaction-option ${
-                          hasUserReacted("love") ? "active" : ""
-                        }`}
-                        onClick={() => handleReaction("love")}
-                      >
-                        ❤️
-                      </span>
-                    </Tooltip>
-                    <Tooltip title="Haha">
-                      <span
-                        className={`reaction-option ${
-                          hasUserReacted("haha") ? "active" : ""
-                        }`}
-                        onClick={() => handleReaction("haha")}
-                      >
-                        😂
-                      </span>
-                    </Tooltip>
-                    <Tooltip title="Wow">
-                      <span
-                        className={`reaction-option ${
-                          hasUserReacted("wow") ? "active" : ""
-                        }`}
-                        onClick={() => handleReaction("wow")}
-                      >
-                        😮
-                      </span>
-                    </Tooltip>
-                    <Tooltip title="Buồn">
-                      <span
-                        className={`reaction-option ${
-                          hasUserReacted("sad") ? "active" : ""
-                        }`}
-                        onClick={() => handleReaction("sad")}
-                      >
-                        😢
-                      </span>
-                    </Tooltip>
-                    <Tooltip title="Giận">
-                      <span
-                        className={`reaction-option ${
-                          hasUserReacted("angry") ? "active" : ""
-                        }`}
-                        onClick={() => handleReaction("angry")}
-                      >
-                        😠
-                      </span>
-                    </Tooltip>
+                    {["like", "love", "haha", "wow", "sad", "angry"].map(
+                      (reactionType) => (
+                        <Tooltip key={reactionType} title={reactionType}>
+                          <span
+                            className="reaction-option"
+                            onClick={() => handleReaction(reactionType)}
+                            onContextMenu={(e) => {
+                              e.preventDefault();
+                              handleRemoveReaction(reactionType);
+                            }}
+                          >
+                            {getReactionEmoji(reactionType)}
+                          </span>
+                        </Tooltip>
+                      )
+                    )}
                   </div>
                 }
                 trigger="hover"

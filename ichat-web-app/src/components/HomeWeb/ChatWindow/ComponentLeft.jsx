@@ -33,6 +33,7 @@ import MenuMdMoreHoriz from "./MenuMdMoreHoriz";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import localizedFormat from "dayjs/plugin/localizedFormat";
+import "dayjs/locale/vi";
 
 const { TabPane } = Tabs;
 
@@ -98,7 +99,7 @@ const HeaderTabs = ({
 //   // Tính thời gian từ timestamp
 dayjs.extend(relativeTime);
 dayjs.extend(localizedFormat);
-
+dayjs.locale("vi"); // đặt ngôn ngữ
 // Component ChatItem: Render từng mục trong danh sách chat
 const ChatItem = ({ item, onSelectUser, onPin }) => {
   const [isClicked, setIsClicked] = useState(false);
@@ -106,23 +107,45 @@ const ChatItem = ({ item, onSelectUser, onPin }) => {
   console.log(typeof item.isLastMessageFromMe, item.isLastMessageFromMe);
 
   // Tính thời gian từ timestamp
+  // const formatTime = (timestamp) => {
+  //   const now = dayjs();
+  //   const messageTime = dayjs(timestamp);
+
+  //   if (messageTime.isSame(now, "day")) {
+  //     // Nếu trong hôm nay, hiển thị giờ:phút AM/PM
+  //     return messageTime.format("h:mm A");
+  //   } else if (messageTime.isSame(now.subtract(1, "day"), "day")) {
+  //     // Nếu là hôm qua
+  //     return "Yesterday";
+  //   } else {
+  //     // Nếu xa hơn, hiển thị tháng/ngày
+  //     return messageTime.format("MMM D");
+  //   }
+  //   // const localTime = new Date(timestamp).toLocaleString();
+  //   // return localTime;
+  // };
   const formatTime = (timestamp) => {
     const now = dayjs();
     const messageTime = dayjs(timestamp);
-
-    if (messageTime.isSame(now, "day")) {
-      // Nếu trong hôm nay, hiển thị giờ:phút AM/PM
-      return messageTime.format("h:mm A");
-    } else if (messageTime.isSame(now.subtract(1, "day"), "day")) {
-      // Nếu là hôm qua
-      return "Yesterday";
+  
+    const diffInSeconds = now.diff(messageTime, "second");
+    const diffInMinutes = now.diff(messageTime, "minute");
+    const diffInHours = now.diff(messageTime, "hour");
+    const diffInDays = now.diff(messageTime, "day");
+  
+    if (diffInSeconds < 60) {
+      return `${diffInSeconds} giây trước`;
+    } else if (diffInMinutes < 60) {
+      return `${diffInMinutes} phút trước`;
+    } else if (diffInHours < 24) {
+      return `${diffInHours} giờ trước`;
+    } else if (diffInDays <= 7) {
+      return `${diffInDays} ngày trước`;
     } else {
-      // Nếu xa hơn, hiển thị tháng/ngày
-      return messageTime.format("MMM D");
+      return messageTime.format("D/M/YY");
     }
-    // const localTime = new Date(timestamp).toLocaleString();
-    // return localTime;
   };
+  
   const handleOnSelectUser = (user) => {
     onSelectUser(user);
     // setIsSearchOpen(false);
@@ -151,7 +174,7 @@ const ChatItem = ({ item, onSelectUser, onPin }) => {
               <Dropdown overlay={<MenuMdMoreHoriz onPin={() => onPin(item.id)} />} trigger={["click"]} >
                 <MdMoreHoriz className="md-more-horiz-icon" />
               </Dropdown>
-              <span className="chat-time">{formatTime(item.time)}</span>
+              <span className="chat-time">{formatTime(item.timestamp)}</span>
             </div>
           </Col>
         </Row>
@@ -161,25 +184,24 @@ const ChatItem = ({ item, onSelectUser, onPin }) => {
           style={{ width: "100%", display: "inline-flex" }}
         >
           <Col>
-            <span className={`last-message ${item.type || "text"}`}>
+          <span className={`last-message ${item.type || "text"}`}>
               {item.type === "video" && <VideoCameraOutlined />}
               {item.type === "audio" && <MutedOutlined />}
               {item.type === "notification" && <NotificationOutlined />}
-              {`${item.isLastMessageFromMe === true ? "Bạn: " : `${item.name}: `}${item.type === "image"
-                ? "Đã gửi một ảnh"
-                : item.type === "file"
-                  ? "Đã gửi một tệp tin"
-                  : item.type === "video"
-                    ? "Đã gửi một video"
-                    : item.type === "audio"
-                      ? "Đã gửi một audio"
-                  : item.lastMessage?.length > 30
-                    ? item.lastMessage.slice(0, 30) + "..."
-                    : item.lastMessage || "Tin nhắn trống"
+              {`${item.isLastMessageFromMe === true ? "Bạn: " : 
+                (item.chat_type === "group" ? `${item.sender_name || "Người dùng"}: ` : `${item.name}: `)
+                }${item.type === "image"
+                  ? "Đã gửi một ảnh"
+                  : item.type === "file"
+                    ? "Đã gửi một tệp tin"
+                    : item.type === "video"
+                      ? "Đã gửi một video"
+                      : item.type === "audio"
+                        ? "Đã gửi một audio"
+                        : item.originalMessage?.length > 30
+                          ? item.originalMessage.slice(0, 30) + "..."
+                          : item.originalMessage || item.lastMessage
                 }`}
-
-
-
             </span>
           </Col>
           <Col>

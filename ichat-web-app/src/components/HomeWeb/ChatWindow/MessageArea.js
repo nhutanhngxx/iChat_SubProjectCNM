@@ -36,7 +36,7 @@ import {
 } from "../../../redux/slices/messagesSlice";
 import Message from "./Message";
 import MessageInput from "./MessageInput";
-import ConversationDetails from "./ConversationDetails";
+import ConversationDetails from "./ConversationDetails.jsx";
 import SearchRight from "./SearchRight";
 import { set } from "lodash";
 import "./MessageArea.css";
@@ -60,35 +60,6 @@ const CATEGORY_COLORS = [
   "#a855f7",
 ];
 
-// const mockMessagesByUser = {
-//   1: [
-//     {
-//       id: 1,
-//       text: "Hi, is the watch still up for sale?",
-//       sender: "George Alan",
-//       timestamp: "2:30 PM",
-//       type: "received",
-//     },
-//     {
-//       id: 2,
-//       text: "Awesome! Can I see a couple of pictures?",
-//       sender: "You",
-//       timestamp: "2:31 PM",
-//       type: "sent",
-//     },
-//   ],
-//   2: [
-//     {
-//       id: 3,
-//       text: "Your ride is arriving",
-//       sender: "Uber Cars",
-//       timestamp: "1:45 PM",
-//       type: "received",
-//     },
-//   ],
-// };
-
-// Sub-components
 const AddCategoryModal = ({ setCategories }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [categoryName, setCategoryName] = useState("");
@@ -565,6 +536,11 @@ const CreateGroupModal = ({ visible, onCancel, onOk }) => {
 const MessageArea = ({ selectedChat, user }) => {
   const dispatch = useDispatch();
   const chatMessages = useSelector((state) => state.messages.chatMessages);
+  const userMessages = useSelector((state) => state.messages.userMessages);
+  // Xác định đúng messages cần sử dụng dựa trên loại chat
+  const displayMessages =
+    selectedChat?.chat_type === "group" ? userMessages : chatMessages;
+
   // Gọi video
   const [isCalling, setIsCalling] = useState(false);
   const [meetingId, setMeetingId] = useState(null);
@@ -578,6 +554,13 @@ const MessageArea = ({ selectedChat, user }) => {
   const [showSearchRight, setShowSearchRight] = useState(false);
   // Tự động cuộn xuống cuối khi có tin nhắn mới
   const messageEndRef = useRef(null);
+  //   const scrollToBottom = () => {
+  //     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  //   };
+  //   // Cuộn xuống khi messages thay đổi hoặc khi chuyển đổi cuộc trò chuyện
+  // useEffect(() => {
+  //   scrollToBottom();
+  // }, [allMessages, selectedChat]);
   const [modalVisible, setModalVisible] = useState(false);
   // Trả lời tin nhắn
   const [replyingTo, setReplyingTo] = useState(null);
@@ -696,7 +679,7 @@ const MessageArea = ({ selectedChat, user }) => {
       );
     }
   }, [dispatch, user?.id, selectedChat?.receiver_id]);
-  console.log("Chat Messages in MessageArea", chatMessages);
+  // console.log("Chat Messages in MessageArea", chatMessages);
   // Near the top of your component
   const [isFriendWithReceiver, setIsFriendWithReceiver] = useState(true);
   const [friends, setFriends] = useState({ friends: [] });
@@ -710,8 +693,13 @@ const MessageArea = ({ selectedChat, user }) => {
         ).unwrap();
         setFriends(result);
 
-        // Check if the selected user is a friend
-        if (result && result.friends && selectedChat) {
+        // Chỉ kiểm tra nếu không phải chat nhóm
+        if (
+          result &&
+          result.friends &&
+          selectedChat &&
+          selectedChat.chat_type !== "group"
+        ) {
           const isFriend = result.friends.some(
             (friend) =>
               friend.id === selectedChat.id ||
@@ -719,6 +707,9 @@ const MessageArea = ({ selectedChat, user }) => {
               String(friend.id) === String(selectedChat.id)
           );
           setIsFriendWithReceiver(isFriend);
+        } else if (selectedChat?.chat_type === "group") {
+          // Nếu là chat nhóm, luôn set là true
+          setIsFriendWithReceiver(true);
         }
       } catch (err) {
         console.error("Error fetching friends:", err);
@@ -736,7 +727,12 @@ const MessageArea = ({ selectedChat, user }) => {
     content,
     replyToId = null // ID của tin nhắn được trả lời (nếu có)
   ) => {
-    if (!isFriendWithReceiver && selectedChat.id !== user.id) {
+    // Kiểm tra xem có phải là chat nhóm không
+    const isGroupChat = selectedChat?.chat_type === "group";
+    console.log("Is group chat?", isGroupChat);
+
+    // Chỉ kiểm tra bạn bè nếu là chat private
+    if (!isGroupChat && !isFriendWithReceiver && selectedChat.id !== user.id) {
       message.warning("Bạn cần kết bạn để gửi tin nhắn.");
       return;
     }
@@ -754,7 +750,7 @@ const MessageArea = ({ selectedChat, user }) => {
         receiver_id: selectedChat?.id, // ID người nhận
         content: text ? text : content || "",
         type: "text", // Loại tin nhắn (text, image, file)
-        chat_type: "private",
+        chat_type: selectedChat.chat_type || "private",
         ...(replyToId && { reply_to: replyToId }), // ID tin nhắn được trả lời (nếu có)
       };
 
@@ -772,6 +768,13 @@ const MessageArea = ({ selectedChat, user }) => {
           chatId: roomId, // ID phòng chat
         });
         dispatch(fetchMessages(user?.id));
+        dispatch(updateMessages(sentMessage)); // Cập nhật tin nhắn vào Redux store
+        // Cuộn xuống sau khi gửi tin nhắn thành công
+        setTimeout(() => {
+          if (messageEndRef.current) {
+            messageEndRef.current.scrollIntoView({ behavior: "smooth" });
+          }
+        }, 100);
       } catch (error) {
         console.log("Error sending message:", error);
       }
@@ -785,6 +788,7 @@ const MessageArea = ({ selectedChat, user }) => {
             sender_id: user?.id,
             receiver_id: selectedChat?.id,
             image: imageFile, // là file thật
+            chat_type: selectedChat.chat_type || "private",
           })
         ).unwrap();
 
@@ -799,13 +803,13 @@ const MessageArea = ({ selectedChat, user }) => {
         });
 
         dispatch(fetchMessages(user?.id));
+        dispatch(updateMessages(sentMessage)); // Cập nhật tin nhắn vào Redux store
       } catch (err) {
         console.error("Lỗi gửi ảnh:", err);
       }
     }
   };
 
-  // Tự động cuộn xuống cuối khi có tin nhắn mới
   const handleFileUpload = async (file, mediaType) => {
     if (selectedChat) {
       try {
@@ -828,6 +832,7 @@ const MessageArea = ({ selectedChat, user }) => {
             receiver_id: selectedChat?.id,
             image: file,
             fileType: fileType, // Specify the file type
+            chat_type: selectedChat.chat_type || "private",
           })
         ).unwrap();
 
@@ -842,6 +847,7 @@ const MessageArea = ({ selectedChat, user }) => {
         });
 
         dispatch(fetchMessages(user?.id)); // Optional
+        dispatch(updateMessages(sentMessage)); // Cập nhật tin nhắn vào Redux store
         // Show success message
         message.success({
           content: `${
@@ -871,69 +877,13 @@ const MessageArea = ({ selectedChat, user }) => {
     if (messageEndRef.current) {
       messageEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
-  }, [selectedChat, messages]);
+  }, [displayMessages, selectedChat]); // Sử dụng displayMessages thay vì messages
 
   const handleScrollToBottom = () => {
     if (messageEndRef.current) {
       messageEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   };
-  useEffect(() => {
-    if (!selectedChat?.id || !user?.id) return;
-
-    // Fetch ALL messages, not just recent ones
-    const fetchAllMessages = async () => {
-      try {
-        // You might need to modify your API to support pagination or fetching all messages
-        const result = await dispatch(
-          fetchChatMessages({
-            senderId: user.id,
-            receiverId: selectedChat.id,
-            limit: 100, // Fetch more messages than needed to ensure replied messages are included
-          })
-        ).unwrap();
-
-        setMessages(result);
-      } catch (error) {
-        console.error("Error fetching messages:", error);
-      }
-    };
-
-    fetchAllMessages();
-  }, [selectedChat?.id, user?.id, dispatch]);
-
-  // Kết nối socket và lắng nghe sự kiện nhận tin nhắn
-  useEffect(() => {
-    if (!selectedChat?.id || !user?.id) return;
-
-    // Create a consistent room ID regardless of who is sender/receiver
-    // Sort IDs to ensure same room name for both users
-    const userIds = [user.id, selectedChat.id].sort();
-    const roomId = `chat_${userIds[0]}_${userIds[1]}`;
-
-    console.log("Joining room:", roomId);
-
-    // Join the consistent room
-    socket.emit("join-room", roomId);
-
-    const handleReceiveMessage = (message) => {
-      console.log("Received message:", message);
-
-      // Only process if message involves current user
-      if (message.sender_id === user.id || message.receiver_id === user.id) {
-        dispatch(updateMessages(message));
-        dispatch(fetchMessages(user.id)); // Cập nhật danh sách người nhận gần nhất
-      }
-    };
-
-    socket.on("receive-message", handleReceiveMessage);
-
-    // IMPORTANT: Proper cleanup to prevent memory leaks
-    return () => {
-      console.log("Cleaning up socket listener");
-      socket.off("receive-message", handleReceiveMessage);
-    };
-  }, [selectedChat?.id, user?.id, dispatch]);
   // Keets ban
   const handleSendFriendRequest = async () => {
     try {
@@ -969,9 +919,42 @@ const MessageArea = ({ selectedChat, user }) => {
       console.error("Error sending friend request:", error);
     }
   };
+  useEffect(() => {
+    // Đảm bảo tất cả tin nhắn đã reply đều được tải
+    const loadAllRepliedMessages = async () => {
+      if (!selectedChat?.id || !user?.id || !messages || messages.length === 0)
+        return;
 
+      // Lấy danh sách các ID tin nhắn đã reply
+      const repliedIds = messages
+        .filter((msg) => msg.reply_to)
+        .map((msg) => msg.reply_to)
+        .filter((id) => id); // Lọc ra các ID hợp lệ
+
+      if (repliedIds.length > 0) {
+        console.log("Fetching replied messages:", repliedIds);
+
+        try {
+          // API call với danh sách ID để lấy tất cả tin nhắn cùng lúc
+          const response = await dispatch(
+            fetchChatMessages({
+              senderId: user.id,
+              receiverId: selectedChat.id,
+              includeRepliedMessages: true,
+              repliedIds: repliedIds, // Truyền danh sách ID cần lấy
+            })
+          ).unwrap();
+
+          console.log("Fetched all messages including replies:", response);
+        } catch (error) {
+          console.error("Failed to fetch replies:", error);
+        }
+      }
+    };
+
+    loadAllRepliedMessages();
+  }, [messages, user?.id, selectedChat?.id, dispatch]);
   if (!selectedChat) return null;
-
   return (
     <div className="message-wrapper">
       <Layout className="message-area-container">
@@ -1028,18 +1011,7 @@ const MessageArea = ({ selectedChat, user }) => {
 
         <Content className="message-area-content">
           <div className="message-container">
-            {/* {!isFriendWithReceiver && (
-              <div className="not-friend-banner">
-                <Alert
-                  message="Hai bạn chưa là bạn bè"
-                  description="Kết bạn để mở khóa tính năng tin nhắn đầy đủ."
-                  type="warning"
-                  showIcon
-                  className="not-friend-alert"
-                />
-              </div>
-            )} */}
-            {!isFriendWithReceiver && (
+            {!isFriendWithReceiver && selectedChat.chat_type !== "group" && (
               <div className="not-friend-banner">
                 <Alert
                   message="Hai bạn chưa là bạn bè"
@@ -1066,8 +1038,8 @@ const MessageArea = ({ selectedChat, user }) => {
                 />
               </div>
             )}
-            {Array.isArray(chatMessages) ? (
-              chatMessages
+            {Array.isArray(displayMessages) ? (
+              displayMessages
                 .filter((message) => {
                   // Simple, direct comparison focusing on string IDs
                   if (!Array.isArray(message.isdelete)) {
@@ -1083,7 +1055,7 @@ const MessageArea = ({ selectedChat, user }) => {
                   <React.Fragment key={message._id || message.id}>
                     <Message
                       message={message}
-                      allMessages={messages}
+                      allMessages={displayMessages}
                       selectedChat={selectedChat}
                       isSender={message.sender_id === user.id}
                       onClick={handleScrollToBottom}
@@ -1122,12 +1094,14 @@ const MessageArea = ({ selectedChat, user }) => {
           <ConversationDetails
             isVisible={showConversation}
             selectedChat={selectedChat}
-            isExpanded={isExpanded} // Truyền state isExpanded
-            handleExpandContract={handleExpandContract} // Thêm dòng này
-            activeTabFromMessageArea={activeTabFromMessageArea} // Truyền activeTabFromMessageArea
-            onImageUpload={handleImageUpload} // Truyền callback để xử lý ảnh
+            isExpanded={isExpanded}
+            handleExpandContract={handleExpandContract}
+            activeTabFromMessageArea={activeTabFromMessageArea}
+            onImageUpload={handleImageUpload}
             setInputMessage={setInputMessage}
-            handleSendMessage={handleSendMessage} // Truyền hàm xử lý gửi tin nhắn
+            handleSendMessage={handleSendMessage}
+            allMessages={displayMessages}
+            user={user}
           />
         </Layout>
       )}

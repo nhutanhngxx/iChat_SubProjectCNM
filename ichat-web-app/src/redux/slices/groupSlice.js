@@ -1,0 +1,548 @@
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+
+// const API_URL = "http://localhost:5001/messages/";
+const API_URL = `http://${window.location.hostname}:5001/api/groups/`;
+
+// Lấy danh sách nhóm mà người dùng tham gia
+export const getUserGroups = createAsyncThunk(
+  "groups/getUserGroups",
+  async (userId, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${API_URL}${userId}`);
+      const data = await response.json();
+
+      if (data.status === "error") {
+        return rejectWithValue(data.message);
+      }
+
+      return data.data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+// Tìm kiếm nhóm
+export const searchGroup = createAsyncThunk(
+  "groups/searchGroup",
+  async (keyword, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${API_URL}search?search=${keyword}`);
+      const data = await response.json();
+
+      if (data.status === "error") {
+        return rejectWithValue(data.message);
+      }
+
+      return data.data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+// Lấy danh sách thành viên của nhóm
+export const getGroupMembers = createAsyncThunk(
+  "groups/getGroupMembers",
+  async (groupId, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${API_URL}${groupId}/members`);
+      const data = await response.json();
+
+      if (data.status === "error") {
+        return rejectWithValue(data.message);
+      }
+
+      return data.data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+// Tạo nhóm mới
+export const createGroup = createAsyncThunk(
+  "groups/createGroup",
+  async ({ name, admin_id, avatar, participant_ids }, { rejectWithValue }) => {
+    try {
+      const formData = new FormData();
+      formData.append("name", name);
+      formData.append("admin_id", admin_id);
+
+      if (avatar) {
+        formData.append("avatar", avatar);
+      }
+
+      // Xử lý participant_ids
+      if (Array.isArray(participant_ids)) {
+        formData.append("participant_ids", JSON.stringify(participant_ids));
+      } else if (participant_ids) {
+        formData.append("participant_ids", participant_ids);
+      }
+
+      const response = await fetch(API_URL, {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (data.status === "error") {
+        return rejectWithValue(data.message);
+      }
+
+      return data.data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+// Thêm thành viên vào nhóm
+export const addMember = createAsyncThunk(
+  "groups/addMember",
+  async ({ groupId, userId }, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${API_URL}add-member`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ groupId, userId }),
+      });
+
+      const data = await response.json();
+
+      if (data.status === "error") {
+        return rejectWithValue(data.message);
+      }
+
+      return data.data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+// Thêm nhiều thành viên vào nhóm
+export const addMembers = createAsyncThunk(
+  "groups/addMembers",
+  async ({ groupId, userIds }, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${API_URL}add-members`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ groupId, userIds }),
+      });
+
+      const data = await response.json();
+
+      if (data.status === "error") {
+        return rejectWithValue(data.message);
+      }
+
+      return data.data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+// Xóa thành viên khỏi nhóm
+export const removeMember = createAsyncThunk(
+  "groups/removeMember",
+  async ({ groupId, userId }, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${API_URL}remove-member`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ groupId, userId }),
+      });
+
+      const data = await response.json();
+
+      if (data.status === "error") {
+        return rejectWithValue(data.message);
+      }
+
+      return { groupId, userId };
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+// Cập nhật thông tin nhóm
+export const updateGroup = createAsyncThunk(
+  "groups/updateGroup",
+  async ({ groupId, name, avatar }, { rejectWithValue }) => {
+    try {
+      const formData = new FormData();
+
+      if (name) {
+        formData.append("name", name);
+      }
+
+      if (avatar) {
+        formData.append("avatar", avatar);
+      }
+
+      const response = await fetch(`${API_URL}${groupId}`, {
+        method: "PUT",
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (data.status === "error") {
+        return rejectWithValue(data.message);
+      }
+
+      return data.data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+// Xóa nhóm
+export const deleteGroup = createAsyncThunk(
+  "groups/deleteGroup",
+  async (groupId, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${API_URL}${groupId}`, {
+        method: "DELETE",
+      });
+
+      const data = await response.json();
+
+      if (data.status === "error") {
+        return rejectWithValue(data.message);
+      }
+
+      return groupId;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+// Gửi tin nhắn nhóm
+export const sendGroupMessage = createAsyncThunk(
+  "groups/sendGroupMessage",
+  async ({ groupId, sender_id, content, type, file }, { rejectWithValue }) => {
+    try {
+      const formData = new FormData();
+
+      formData.append("sender_id", sender_id);
+      formData.append("content", content);
+      formData.append("type", type || "text");
+
+      if (file) {
+        if (type === "image") {
+          formData.append("image", file);
+        } else {
+          formData.append("file", file);
+        }
+      }
+
+      const response = await fetch(`${API_URL}${groupId}/messages`, {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (data.status === "error") {
+        return rejectWithValue(data.message);
+      }
+
+      return data.data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+// Tìm kiếm tin nhắn trong nhóm
+export const searchGroupMessages = createAsyncThunk(
+  "groups/searchGroupMessages",
+  async ({ groupId, keyword }, { rejectWithValue }) => {
+    try {
+      const response = await fetch(
+        `${API_URL}${groupId}/messages/search?q=${keyword}`
+      );
+      const data = await response.json();
+
+      if (data.status === "error") {
+        return rejectWithValue(data.message);
+      }
+
+      return data.data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+// Cập nhật quyền thành viên trong nhóm
+export const setRole = createAsyncThunk(
+  "groups/setRole",
+  async ({ groupId, userId, role }, { rejectWithValue }) => {
+    try {
+      const response = await fetch(
+        `${API_URL}${groupId}/members/${userId}/role`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ role }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (data.status === "error") {
+        return rejectWithValue(data.message);
+      }
+
+      return data.data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+// Lấy thông tin nhóm theo ID
+export const getGroupById = createAsyncThunk(
+  "groups/getGroupById",
+  async (groupId, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${API_URL}group/${groupId}`);
+      const data = await response.json();
+
+      if (data.status === "error") {
+        return rejectWithValue(data.message);
+      }
+
+      return data.data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+// Kiểm tra quyền admin
+export const isGroupSubAdmin = createAsyncThunk(
+  "groups/isGroupSubAdmin",
+  async ({ groupId, userId }, { rejectWithValue }) => {
+    try {
+      const response = await fetch(
+        `${API_URL}${groupId}/admin-check/${userId}`
+      );
+      const data = await response.json();
+
+      if (data.status === "error") {
+        return rejectWithValue(data.message);
+      }
+
+      return data.data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+// Initial state
+const initialState = {
+  userGroups: [],
+  currentGroup: null,
+  groupMembers: [],
+  groupMessages: [],
+  searchResults: [],
+  messageSearchResults: [],
+  adminStatus: null,
+  status: "idle",
+  error: null,
+};
+
+const groupSlice = createSlice({
+  name: "groups",
+  initialState,
+  reducers: {
+    setCurrentGroup: (state, action) => {
+      state.currentGroup = action.payload;
+    },
+    resetGroupState: (state) => {
+      return initialState;
+    },
+    updateGroupMessage: (state, action) => {
+      // Add new message to group messages if it belongs to current group
+      const message = action.payload;
+      if (
+        state.currentGroup &&
+        message.receiver_id === state.currentGroup._id
+      ) {
+        state.groupMessages.push(message);
+      }
+    },
+  },
+  extraReducers: (builder) => {
+    builder
+      // getUserGroups
+      .addCase(getUserGroups.pending, (state) => {
+        state.status = "loading";
+      })
+      .addCase(getUserGroups.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        state.userGroups = action.payload;
+      })
+      .addCase(getUserGroups.rejected, (state, action) => {
+        state.status = "failed";
+        state.error = action.payload || action.error.message;
+      })
+
+      // searchGroup
+      .addCase(searchGroup.pending, (state) => {
+        state.status = "loading";
+      })
+      .addCase(searchGroup.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        state.searchResults = action.payload;
+      })
+      .addCase(searchGroup.rejected, (state, action) => {
+        state.status = "failed";
+        state.error = action.payload || action.error.message;
+      })
+
+      // getGroupMembers
+      .addCase(getGroupMembers.pending, (state) => {
+        state.status = "loading";
+      })
+      .addCase(getGroupMembers.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        state.groupMembers = action.payload;
+      })
+      .addCase(getGroupMembers.rejected, (state, action) => {
+        state.status = "failed";
+        state.error = action.payload || action.error.message;
+      })
+
+      // createGroup
+      .addCase(createGroup.pending, (state) => {
+        state.status = "loading";
+      })
+      .addCase(createGroup.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        state.userGroups.push(action.payload);
+        state.currentGroup = action.payload;
+      })
+      .addCase(createGroup.rejected, (state, action) => {
+        state.status = "failed";
+        state.error = action.payload || action.error.message;
+      })
+
+      // addMember
+      .addCase(addMember.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        // Update members would need a full refresh from server
+      })
+
+      // addMembers
+      .addCase(addMembers.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        // Update members would need a full refresh from server
+      })
+
+      // removeMember
+      .addCase(removeMember.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        // Filter out removed member if we're viewing that group
+        if (
+          state.currentGroup &&
+          action.payload.groupId === state.currentGroup._id
+        ) {
+          state.groupMembers = state.groupMembers.filter(
+            (member) => member.user_id !== action.payload.userId
+          );
+        }
+      })
+
+      // updateGroup
+      .addCase(updateGroup.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        // Update current group if it's the one being updated
+        if (
+          state.currentGroup &&
+          state.currentGroup._id === action.payload._id
+        ) {
+          state.currentGroup = action.payload;
+        }
+        // Update in userGroups list as well
+        state.userGroups = state.userGroups.map((group) =>
+          group._id === action.payload._id ? action.payload : group
+        );
+      })
+
+      // deleteGroup
+      .addCase(deleteGroup.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        // Remove from userGroups
+        state.userGroups = state.userGroups.filter(
+          (group) => group._id !== action.payload
+        );
+        // Reset currentGroup if it was deleted
+        if (state.currentGroup && state.currentGroup._id === action.payload) {
+          state.currentGroup = null;
+          state.groupMembers = [];
+          state.groupMessages = [];
+        }
+      })
+      // sendGroupMessage
+      .addCase(sendGroupMessage.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        state.groupMessages.push(action.payload);
+      })
+
+      // searchGroupMessages
+      .addCase(searchGroupMessages.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        state.messageSearchResults = action.payload;
+      })
+
+      // getGroupById
+      .addCase(getGroupById.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        state.currentGroup = action.payload;
+      })
+
+      // isGroupSubAdmin
+      .addCase(isGroupSubAdmin.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        state.adminStatus = action.payload;
+      })
+
+      // setRole
+      .addCase(setRole.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        // Update the member role in the members list
+        if (state.groupMembers.length > 0) {
+          state.groupMembers = state.groupMembers.map((member) =>
+            member.user_id === action.payload.user_id
+              ? { ...member, role: action.payload.role }
+              : member
+          );
+        }
+      });
+  },
+});
+
+export const { setCurrentGroup, resetGroupState, updateGroupMessage } =
+  groupSlice.actions;
+
+export default groupSlice.reducer;

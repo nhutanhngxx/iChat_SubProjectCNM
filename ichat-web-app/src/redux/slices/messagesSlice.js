@@ -3,6 +3,30 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 // const API_URL = "http://localhost:5001/messages/";
 const API_URL = `http://${window.location.hostname}:5001/api/messages/`;
 
+// Lấy tất cả tin nhắn của một người dùng
+export const getUserMessages = createAsyncThunk(
+  "messages/getUserMessages",
+  async (userId, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${API_URL}${userId}`);
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        return rejectWithValue(errorData);
+      }
+
+      const data = await response.json();
+
+      if (data.status !== "ok") {
+        return rejectWithValue(data.message || "Failed to get user messages");
+      }
+
+      return data.data;
+    } catch (error) {
+      return rejectWithValue(error.message || "Network error");
+    }
+  }
+);
 // Lấy danh sách người nhận gần nhất
 export const fetchMessages = createAsyncThunk(
   "messages/fetchMessages",
@@ -16,13 +40,46 @@ export const fetchMessages = createAsyncThunk(
   }
 );
 
-// Lấy tin nhắn giữa sender và receiver
+// Lấy tin nhắn giữa sender và receiver, có thêm option để lấy tin nhắn đã reply
 export const fetchChatMessages = createAsyncThunk(
   "messages/fetchChatMessages",
-  async ({ senderId, receiverId }) => {
-    const response = await fetch(`${API_URL}${senderId}/${receiverId}`);
-    const data = await response.json();
-    return data.data;
+  async (
+    { senderId, receiverId, includeRepliedMessages = false, repliedIds = [] },
+    { rejectWithValue }
+  ) => {
+    try {
+      let url = `${API_URL}${senderId}/${receiverId}`;
+
+      // Thêm query params nếu cần
+      const params = new URLSearchParams();
+
+      if (includeRepliedMessages) {
+        params.append("includeReplies", "true");
+      }
+
+      if (repliedIds && repliedIds.length > 0) {
+        params.append("replyIds", repliedIds.join(","));
+      }
+
+      // Chỉ thêm ? nếu có params
+      if (params.toString()) {
+        url += "?" + params.toString();
+      }
+
+      console.log("Fetching messages from URL:", url);
+
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        return rejectWithValue(await response.json());
+      }
+
+      const data = await response.json();
+      return data.data;
+    } catch (error) {
+      console.error("Error fetching chat messages:", error);
+      return rejectWithValue(error.message);
+    }
   }
 );
 // Gửi tin nhắn
@@ -49,52 +106,11 @@ export const sendMessage = createAsyncThunk(
     }
   }
 );
-// Gửi ảnh
-// export const sendImageMessage = createAsyncThunk(
-//   "messages/sendImageMessage",
-//   async ({ sender_id, receiver_id, image }, { rejectWithValue }) => {
-//     try {
-//       const formData = new FormData();
-//       formData.append("sender_id", sender_id);
-//       formData.append("receiver_id", receiver_id);
-//       formData.append("content", ""); // server sẽ tự xử lý content từ file
-//       // Tự động xác định type
-//       const mimeType = image.type;
-//       const isImage = mimeType.startsWith("image/");
-//       const fileType = isImage ? "image" : "file";
-
-//       formData.append("type", fileType);
-//       formData.append("chat_type", "private");
-
-//       formData.append("file", image); // đơn giản là File gốc từ input
-//       console.log("formData", formData);
-//       const response = await fetch(`${API_URL}send-message`, {
-//         method: "POST",
-//         body: formData,
-//         // headers: {
-//         //   "Content-Type": "multipart/form-data",
-//         // },
-//       });
-
-//       if (!response.ok) {
-//         const errorData = await response.text();
-//         console.error("Error data send image:", errorData);
-
-//         return rejectWithValue(errorData);
-//       }
-
-//       return await response.json();
-//     } catch (err) {
-//       console.error("Error sending image:", err);
-//       return rejectWithValue({ message: "Network Error" });
-//     }
-//   }
-// );
 // Update the function to handle all media types properly
 export const sendImageMessage = createAsyncThunk(
   "messages/sendImageMessage",
   async (
-    { sender_id, receiver_id, image, type: forcedType },
+    { sender_id, receiver_id, image, type: forcedType, chat_type },
     { rejectWithValue }
   ) => {
     try {
@@ -128,7 +144,7 @@ export const sendImageMessage = createAsyncThunk(
       console.log("Sending file as type:", fileType, "MIME:", image.type);
 
       formData.append("type", fileType);
-      formData.append("chat_type", "private");
+      formData.append("chat_type", chat_type);
       formData.append("file", image);
 
       // Set content field to avoid validation error
@@ -307,12 +323,16 @@ export const addReactionToMessage = createAsyncThunk(
 // Xoá reaction cho tin nhắn
 export const removeReactionFromMessage = createAsyncThunk(
   "messages/removeReaction",
-  async ({ messageId, userId }, { rejectWithValue }) => {
+  async ({ messageId, userId, reaction_type }, { rejectWithValue }) => {
     try {
       const response = await fetch(
         `${API_URL}${messageId}/reactions/${userId}`,
         {
           method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ reaction_type }),
         }
       );
 
@@ -337,8 +357,10 @@ const messagesSlice = createSlice({
   initialState: {
     messages: [],
     chatMessages: [],
+    userMessages: [], // Thêm mảng userMessages
     status: "idle", // 'idle' | 'loading' | 'succeeded' | 'failed'
     chatStatus: "idle",
+    userMessagesStatus: "idle", // Thêm trạng thái
     error: null,
   },
   reducers: {
@@ -375,6 +397,18 @@ const messagesSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      // Thêm các case mới cho getUserMessages
+      .addCase(getUserMessages.pending, (state) => {
+        state.userMessagesStatus = "loading";
+      })
+      .addCase(getUserMessages.fulfilled, (state, action) => {
+        state.userMessagesStatus = "succeeded";
+        state.userMessages = action.payload;
+      })
+      .addCase(getUserMessages.rejected, (state, action) => {
+        state.userMessagesStatus = "failed";
+        state.error = action.payload || "Failed to fetch user messages";
+      })
       .addCase(fetchMessages.pending, (state) => {
         state.status = "loading";
       })

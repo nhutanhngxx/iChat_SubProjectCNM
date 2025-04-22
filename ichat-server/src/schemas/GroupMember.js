@@ -11,6 +11,11 @@ const groupMemberSchema = new mongoose.Schema(
       ref: "UserInfo",
       required: true,
     },
+    role: {
+      type: String,
+      enum: ["admin", "member"],
+      default: "member",
+    },
     joined_at: { type: Date, default: Date.now },
   },
   {
