@@ -557,16 +557,17 @@
 }
 
 .video-controls {
-  position: absolute;
+  position: revert;
   bottom: 8px;
   right: 8px;
   display: flex;
   align-items: center;
+  justify-content: end;
 }
 
 .video-timestamp {
-  background: rgba(0, 0, 0, 0.6);
-  color: white;
+  /* background: rgba(0, 0, 0, 0.6); */
+  color: #999;
   padding: 2px 8px;
   border-radius: 10px;
   font-size: 12px;

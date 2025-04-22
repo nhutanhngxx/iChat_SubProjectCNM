@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Avatar, Button, Modal, Alert } from "antd";
 import { UserAddOutlined, DownloadOutlined } from "@ant-design/icons";
 import { message as antMessage } from "antd";
+import ReactPlayer from "react-player/lazy";
 import "./Message.css";
 import {
   LikeOutlined,
@@ -964,12 +965,23 @@ const Message = ({
                             className="main-image"
                           />
                         ) : allMedia[currentImageIndex].type === "video" ? (
-                          <video
-                            src={allMedia[currentImageIndex].content}
-                            controls
-                            className="main-video"
-                            style={{ maxHeight: "80vh", maxWidth: "100%" }}
-                          />
+                          <div className="video-player-wrapper">
+                            <ReactPlayer
+                              url={allMedia[currentImageIndex].content}
+                              controls
+                              width="100%"
+                              height="80vh"
+                              style={{ maxHeight: "80vh" }}
+                              config={{
+                                file: {
+                                  attributes: {
+                                    controlsList: "nodownload",
+                                    disablePictureInPicture: true,
+                                  },
+                                },
+                              }}
+                            />
+                          </div>
                         ) : null}
                         <div className="image-controls">
                           <button
@@ -1020,24 +1032,28 @@ const Message = ({
               </Modal>
             </>
           ) : message.type === "video" ? (
-            <>
-              <div className="message-video-container">
-                <video
-                  controls
-                  className="message-video"
-                  src={message.content}
-                  preload="metadata"
-                />
-                <span className="video-controls">
-                  <span className="video-timestamp">
-                    {new Date(message.timestamp).toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </span>
-                </span>
-              </div>
-            </>
+            <div className="message-video-container">
+              <ReactPlayer
+                url={message.content}
+                controls
+                width="100%"
+                height="auto"
+                className="message-video-player"
+                config={{
+                  file: {
+                    attributes: {
+                      preload: "metadata",
+                    },
+                  },
+                }}
+              />
+              <span className="video-timestamp">
+                {new Date(message.timestamp).toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </span>
+            </div>
           ) : message.type === "audio" ? (
             <>
               <div className="message-audio-container">
