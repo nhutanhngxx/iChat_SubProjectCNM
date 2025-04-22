@@ -62,10 +62,12 @@ const GroupTab = () => {
 
   return (
     <View style={styles.container}>
-      <ModalCreateGroup isVisible={isShowModal} onClose={handleCloseModal} />
+      {/* <ModalCreateGroup isVisible={isShowModal} onClose={handleCloseModal} /> */}
       <TouchableOpacity
         style={styles.addNewGroupButton}
-        onPress={() => handleOpenModal()}
+        onPress={() => {
+          navigation.navigate("CreateGroup");
+        }}
       >
         <Image
           source={require("../../assets/icons/add-group.png")}

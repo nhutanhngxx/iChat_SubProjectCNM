@@ -17,8 +17,9 @@ import { Checkbox } from "react-native-paper";
 import { StatusBar } from "expo-status-bar";
 import friendService from "../../services/friendService";
 import { UserContext } from "../../config/context/UserContext";
+import { useNavigation } from "@react-navigation/native";
 
-const ModalCreateGroup = ({ isVisible, onClose }) => {
+const ModalCreateGroup = () => {
   const [groupList, setGroupList] = useState([]);
   const [isChecked, setIsChecked] = useState({});
   const [isDisabled, setIsDisabled] = useState(true);
@@ -27,6 +28,16 @@ const ModalCreateGroup = ({ isVisible, onClose }) => {
   const [friendList, setFriendList] = useState([]);
   const [displayedFriendList, setDisplayedFriendList] = useState(friendList);
   const { user } = useContext(UserContext);
+  const navigation = useNavigation();
+
+  const handleCloseModal = () => {
+    setGroupList([]);
+    setIsChecked({});
+    setGroupName("");
+    setSearchText("");
+    setDisplayedFriendList(friendList);
+    navigation.goBack();
+  };
 
   // Lấy danh sách bạn bè
   useEffect(() => {
@@ -82,13 +93,7 @@ const ModalCreateGroup = ({ isVisible, onClose }) => {
         "Danh sách thành viên: " +
         groupList.map((item) => item.id).join(", ")
     );
-    // Reset state
-    setGroupList([]);
-    setIsChecked({});
-    setGroupName("");
-    setSearchText("");
-    setDisplayedFriendList(friendList);
-    onClose();
+    handleCloseModal();
   };
 
   const renderItem = ({ item }) => (
@@ -134,7 +139,7 @@ const ModalCreateGroup = ({ isVisible, onClose }) => {
   );
 
   return (
-    <Modal animationType="slide" transparent={true} visible={isVisible}>
+    <Modal animationType="slide" transparent={true}>
       <View style={styles.container}>
         <StatusBar style="dark" />
         <View style={styles.modalView}>
@@ -148,13 +153,13 @@ const ModalCreateGroup = ({ isVisible, onClose }) => {
                   }
             }
           >
-            <TouchableOpacity onPress={onClose}>
+            <TouchableOpacity onPress={handleCloseModal}>
               <Image
                 source={require("../../assets/icons/go-back.png")}
                 style={{ width: 25, height: 25 }}
               />
             </TouchableOpacity>
-            <TouchableOpacity onPress={onClose}>
+            <TouchableOpacity>
               <Text
                 style={{
                   fontWeight: "bold",
