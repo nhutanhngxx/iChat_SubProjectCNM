@@ -553,7 +553,7 @@ const MessageController = {
               avatar_path: groupInfo.avatar,
               lastMessage: "", // Tin nhắn trống
               originalMessage: "",
-              timestamp: groupInfo.createdAt || new Date(),
+              timestamp: groupInfo.created_at || new Date(),
               status: "none",
               user_status: "online", // Nhóm luôn "online"
               type: "text",
