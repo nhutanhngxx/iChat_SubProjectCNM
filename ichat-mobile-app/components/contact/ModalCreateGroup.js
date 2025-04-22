@@ -95,10 +95,7 @@ const ModalCreateGroup = () => {
     try {
       // Tạo mảng participantIds - chứa id của các thành viên trong nhóm
       const participantIds = groupList.map((item) => item.id);
-      // Thêm admin vào danh sách thành viên nếu chưa có
-      // if (!participantIds.includes(user.id)) {
-      //   participantIds.push(user.id);
-      // }
+      // Gọi API tạo nhóm
       const response = await groupService.createGroup({
         groupName,
         adminId: user.id,
@@ -114,7 +111,6 @@ const ModalCreateGroup = () => {
       } else {
         Alert.alert("Thông báo", "Tạo nhóm thất bại");
       }
-      handleCloseModal();
     } catch (error) {
       console.error("Create group error:", error);
       Alert.alert("Lỗi", "Không thể tạo nhóm. Vui lòng thử lại.");
