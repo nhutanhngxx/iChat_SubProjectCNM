@@ -1,6 +1,6 @@
 import React from "react";
 import { useEffect, useRef, useState } from "react";
-import { Avatar, Button, message, Modal } from "antd"; // Thêm message, Modal
+import { Avatar, Button, message, Modal,Alert} from "antd"; // Thêm message, Modal
 import "./ConversationDetails.css";
 import { FaCaretDown } from "react-icons/fa";
 import { FaCaretRight } from "react-icons/fa";
@@ -25,6 +25,7 @@ import {
   DeleteOutlined,
   ExclamationCircleOutlined,
   EyeOutlined,
+  CloseOutlined
 } from "@ant-design/icons";
 import { DownloadOutlined,PlayCircleOutlined } from '@ant-design/icons';
 import { 
@@ -33,6 +34,10 @@ import {
     UploadOutlined,
     SearchOutlined
   } from "@ant-design/icons";
+  import { CameraOutlined } from "@ant-design/icons";
+import { createGroup } from "../../../redux/slices/groupSlice";
+import { getUserFriends } from "../../../redux/slices/friendSlice";
+
  
 import { GrContract } from "react-icons/gr";
 import GifPicker from "./GifPicker";
@@ -86,7 +91,105 @@ const [showAllFiles, setShowAllFiles] = useState(false);
 const [showImageViewerModal, setShowImageViewerModal] = useState(false);
 const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
-  // Sử dụng allMessages để lọc ra các hình ảnh, video và file thực tế
+const [showCreateGroupModal, setShowCreateGroupModal] = useState(false);
+const [newGroupName, setNewGroupName] = useState("");
+const [newGroupAvatar, setNewGroupAvatar] = useState(null);
+const [newGroupAvatarPreview, setNewGroupAvatarPreview] = useState(null);
+const [selectedFriendsForGroup, setSelectedFriendsForGroup] = useState([]);
+const [friendsList, setFriendsList] = useState([]);
+const [isLoadingFriends, setIsLoadingFriends] = useState(false);
+const [searchFriendTerm, setSearchFriendTerm] = useState("");
+
+// Hàm tạo nhóm trò chuyện với chat 1-1
+const handleCreateGroupClick = async () => {
+  setShowCreateGroupModal(true);
+  setIsLoadingFriends(true);
+  
+  try {
+    // Lấy danh sách bạn bè
+    const friendsResult = await dispatch(getUserFriends(user.id)).unwrap();
+    setFriendsList(friendsResult.friends || []);
+    
+    // Tự động chọn receiver trong chat hiện tại (nếu có)
+    if (selectedChat && selectedChat.id && selectedChat.id !== user.id) {
+      setSelectedFriendsForGroup([selectedChat.id]);
+    }
+  } catch (error) {
+    message.error("Không thể tải danh sách bạn bè");
+    console.error("Error fetching friends:", error);
+  } finally {
+    setIsLoadingFriends(false);
+  }
+};
+
+// Handler xử lý avatar
+const handleGroupAvatarChange = (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    setNewGroupAvatar(file);
+    const fileReader = new FileReader();
+    fileReader.onload = () => {
+      setNewGroupAvatarPreview(fileReader.result);
+    };
+    fileReader.readAsDataURL(file);
+  }
+};
+
+// Handler chọn bạn bè cho nhóm
+const handleSelectFriendForGroup = (friendId) => {
+  if (selectedFriendsForGroup.includes(friendId)) {
+    setSelectedFriendsForGroup(selectedFriendsForGroup.filter(id => id !== friendId));
+  } else {
+    setSelectedFriendsForGroup([...selectedFriendsForGroup, friendId]);
+  }
+};
+
+// Handler tạo nhóm
+const handleCreateGroup = async () => {
+  if (!newGroupName.trim()) {
+    return message.error("Vui lòng nhập tên nhóm");
+  }
+  
+  if (selectedFriendsForGroup.length < 1) {
+    return message.error("Vui lòng chọn ít nhất 1 người bạn khác");
+  }
+  
+  try {
+    message.loading({ content: "Đang tạo nhóm...", key: "createGroup" });
+    
+    // Tạo nhóm mới với danh sách thành viên bao gồm user hiện tại và các bạn bè đã chọn
+    const newGroup = await dispatch(createGroup({
+      name: newGroupName,
+      admin_id: user.id, // Người tạo nhóm là admin
+      avatar: newGroupAvatar, // File avatar đã chọn (có thể null)
+      participant_ids: selectedFriendsForGroup // Danh sách ID những người đã chọn
+    })).unwrap();
+    
+    message.success({
+      content: "Tạo nhóm thành công!",
+      key: "createGroup"
+    });
+    
+    // Đóng modal
+    setShowCreateGroupModal(false);
+    
+    // Reset các state
+    setNewGroupName("");
+    setNewGroupAvatar(null);
+    setNewGroupAvatarPreview(null);
+    setSelectedFriendsForGroup([]);
+    
+    // Chuyển hướng đến nhóm mới tạo (nếu cần)
+    // TODO: Redirect to new group chat
+    
+  } catch (error) {
+    message.error({
+      content: error.message || "Không thể tạo nhóm. Vui lòng thử lại.",
+      key: "createGroup"
+    });
+    console.error("Error creating group:", error);
+  }
+};
   // Thêm hàm formatBytes ở đầu component
 const formatBytes = (bytes, decimals = 2) => {
   if (!bytes) return '0 Bytes';
@@ -476,7 +579,7 @@ const fetchFriends = async () => {
                     </>
                 ) : (
                     <div>
-                    <button className="conversation-action-button">
+                    <button className="conversation-action-button"  onClick={handleCreateGroupClick}>
                         <UsergroupAddOutlined />
                     </button>
                     <span>
@@ -679,7 +782,7 @@ const fetchFriends = async () => {
                             console.log(`Changed ${member.full_name}'s role to ${value}`);
                             }}
                         >
-                            <Select.Option value="admin">Admin</Select.Option>
+                            <Select.Option value="admin">Nhóm trưởng</Select.Option>
                             <Select.Option value="member">Thành viên</Select.Option>
                         </Select>
                         </div>
@@ -741,7 +844,7 @@ const fetchFriends = async () => {
                           </Avatar>
                           <div className="member-details">
                             <span className="member-name">{member.full_name}</span>
-                            {member.role === "admin" && <span className="admin-badge">Admin</span>}
+                            {member.role === "admin" && <span className="admin-badge">Nhóm trưởng</span>}
                           </div>
                         </div>
                       ))}
@@ -1265,6 +1368,209 @@ const fetchFriends = async () => {
         <p>Bạn có chắc chắn muốn xóa lịch sử trò chuyện với "{selectedChat.name}"?</p>
         <p>Hành động này không thể hoàn tác.</p>
       </Modal>
+      // Thêm đoạn code này vào cuối component, trước dòng return cuối cùng
+
+        {/* Modal tạo nhóm mới */}
+        <Modal
+          title="Tạo nhóm trò chuyện mới"
+          open={showCreateGroupModal}
+          onCancel={() => setShowCreateGroupModal(false)}
+          footer={[
+            <Button key="cancel" onClick={() => setShowCreateGroupModal(false)}>
+              Hủy
+            </Button>,
+            <Button 
+              key="create" 
+              type="primary" 
+              onClick={handleCreateGroup}
+              disabled={!newGroupName.trim() || selectedFriendsForGroup.length < 1}
+            >
+              Tạo nhóm
+            </Button>
+          ]}
+          width={550}
+        >
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: 20 }}>
+              <div style={{ marginRight: 20, position: 'relative' }}>
+                <Avatar 
+                  size={64} 
+                  src={newGroupAvatarPreview}
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => document.getElementById('new-group-avatar').click()}
+                >
+                  {!newGroupAvatarPreview && (newGroupName ? newGroupName[0].toUpperCase() : 'G')}
+                </Avatar>
+                <div 
+                  style={{ 
+                    position: 'absolute', 
+                    bottom: 0, 
+                    right: 0, 
+                    background: '#1890ff', 
+                    borderRadius: '50%',
+                    width: 20, 
+                    height: 20,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer' 
+                  }}
+                  onClick={() => document.getElementById('new-group-avatar').click()}
+                >
+                  <CameraOutlined style={{ color: 'white', fontSize: 12 }} />
+                </div>
+                <input
+                  type="file"
+                  id="new-group-avatar"
+                  hidden
+                  accept="image/*"
+                  onChange={handleGroupAvatarChange}
+                />
+              </div>
+              <Input
+                placeholder="Nhập tên nhóm..."
+                value={newGroupName}
+                onChange={(e) => setNewGroupName(e.target.value)}
+                style={{ flex: 1 }}
+              />
+            </div>
+            
+            <Divider orientation="left">Thêm thành viên</Divider>
+            
+            <div style={{ marginBottom: 15 }}>
+              <Input
+                placeholder="Tìm kiếm bạn bè..."
+                prefix={<SearchOutlined />}
+                value={searchFriendTerm}
+                onChange={e => setSearchFriendTerm(e.target.value)}
+              />
+            </div>
+            
+            <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+              {isLoadingFriends ? (
+                <div style={{ textAlign: 'center', padding: '20px 0' }}>Đang tải danh sách bạn bè...</div>
+              ) : (
+                <>
+                  {/* Hiển thị người nhận hiện tại (receiver) đã được chọn */}
+                  {selectedChat && selectedChat.id !== user.id && (
+                    <div 
+                      style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        padding: '10px', 
+                        borderBottom: '1px solid #f0f0f0',
+                        background: '#f6f6f6'
+                      }}
+                    >
+                      <Checkbox 
+                        checked={selectedFriendsForGroup.includes(selectedChat.id)}
+                        onChange={() => handleSelectFriendForGroup(selectedChat.id)}
+                      />
+                      <Avatar 
+                        src={selectedChat.avatar_path} 
+                        style={{ marginLeft: 10, marginRight: 10 }}
+                      >
+                        {!selectedChat.avatar_path && (selectedChat.name || 'U').charAt(0).toUpperCase()}
+                      </Avatar>
+                      <span>{selectedChat.name} (Đang trò chuyện)</span>
+                    </div>
+                  )}
+                  
+                  {/* Danh sách bạn bè */}
+                  {friendsList
+                    .filter(friend => 
+                      friend.id !== selectedChat.id && // Loại trừ receiver đã hiển thị ở trên
+                      (friend.full_name?.toLowerCase().includes(searchFriendTerm.toLowerCase()) || 
+                      friend.name?.toLowerCase().includes(searchFriendTerm.toLowerCase()))
+                    )
+                    .map(friend => (
+                      <div 
+                        key={friend.id || friend._id} 
+                        style={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          padding: '10px', 
+                          borderBottom: '1px solid #f0f0f0',
+                          cursor: 'pointer'
+                        }}
+                        onClick={() => handleSelectFriendForGroup(friend.id || friend._id)}
+                      >
+                        <Checkbox 
+                          checked={selectedFriendsForGroup.includes(friend.id || friend._id)}
+                          onChange={() => {}} // Handled by parent div click
+                        />
+                        <Avatar 
+                          src={friend.avatar_path} 
+                          style={{ marginLeft: 10, marginRight: 10 }}
+                        >
+                          {!friend.avatar_path && (friend.full_name || friend.name || 'U').charAt(0).toUpperCase()}
+                        </Avatar>
+                        <span>{friend.full_name || friend.name}</span>
+                      </div>
+                    ))
+                  }
+                  
+                  {friendsList.length === 0 && (
+                    <div style={{ textAlign: 'center', padding: '20px 0', color: '#999' }}>
+                      Không tìm thấy bạn bè nào
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+            
+            <div style={{ marginTop: 15 }}>
+              <Alert 
+                message="Lưu ý" 
+                description="Nhóm cần có ít nhất 3 thành viên (bạn, người trò chuyện hiện tại và ít nhất 1 bạn bè khác)."
+                type="info" 
+                showIcon 
+              />
+            </div>
+            
+            {selectedFriendsForGroup.length > 0 && (
+              <div style={{ marginTop: 15 }}>
+                <div style={{ marginBottom: 5 }}>Đã chọn ({selectedFriendsForGroup.length + 1} thành viên):</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                  <span style={{ 
+                    padding: '2px 8px', 
+                    background: '#e6f7ff', 
+                    borderRadius: 4,
+                    border: '1px solid #91d5ff'
+                  }}>
+                    Bạn (Nhóm trưởng)
+                  </span>
+                  {selectedFriendsForGroup.map(friendId => {
+                    const friend = [...friendsList, selectedChat].find(f => (f.id || f._id) === friendId);
+                    return friend ? (
+                      <span 
+                        key={friendId} 
+                        style={{ 
+                          padding: '2px 8px', 
+                          background: '#e6f7ff', 
+                          borderRadius: 4,
+                          border: '1px solid #91d5ff',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 5
+                        }}
+                      >
+                        {friend.name || friend.full_name}
+                        <CloseOutlined 
+                          style={{ cursor: 'pointer', fontSize: 10 }} 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleSelectFriendForGroup(friendId);
+                          }} 
+                        />
+                      </span>
+                    ) : null;
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        </Modal>
     </div>
   );
 };
