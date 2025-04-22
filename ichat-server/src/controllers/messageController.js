@@ -337,6 +337,54 @@ const MessageController = {
         },
       ]);
 
+      // PHẦN MỚI: LẤY DANH SÁCH BẠN BÈ CHƯA CÓ TIN NHẮN
+      // Lấy ID của những người đã có tin nhắn (để loại trừ)
+      const existingChatPartnerIds = recentPrivateReceivers.map((chat) =>
+        chat.receiver_id.toString()
+      );
+
+      // Lấy danh sách bạn bè của user hiện tại
+      const friendships = await mongoose.connection
+        .collection("Friendship")
+        .find({
+          $or: [
+            { user_id: senderObjectId, status: "accepted" },
+            { friend_id: senderObjectId, status: "accepted" },
+          ],
+        })
+        .toArray();
+
+      // Lọc ra những bạn bè chưa có tin nhắn
+      const friendsWithNoMessages = [];
+
+      for (const friendship of friendships) {
+        // Xác định ID của người bạn
+        const friendId = friendship.user_id.equals(senderObjectId)
+          ? friendship.friend_id
+          : friendship.user_id;
+
+        // Kiểm tra nếu chưa có trong danh sách tin nhắn
+        if (!existingChatPartnerIds.includes(friendId.toString())) {
+          // Lấy thông tin chi tiết của người bạn
+          const friendInfo = await Users.findById(friendId);
+          if (friendInfo) {
+            friendsWithNoMessages.push({
+              receiver_id: friendId,
+              name: friendInfo.full_name,
+              avatar_path: friendInfo.avatar_path,
+              lastMessage: "", // Tin nhắn trống
+              timestamp: friendship.createdAt || new Date(),
+              status: "none",
+              user_status: friendInfo.status || "offline",
+              type: "text",
+              unread: 0,
+              isLastMessageFromMe: false,
+              chat_type: "private",
+            });
+          }
+        }
+      }
+
       // PHẦN 2: LẤY TIN NHẮN NHÓM GẦN NHẤT
       // 1. Tìm tất cả nhóm mà người dùng là thành viên
       const userGroups = await GroupMembers.find({
@@ -484,10 +532,46 @@ const MessageController = {
         },
       ]);
 
+      // PHẦN MỚI: LẤY DANH SÁCH NHÓM CHƯA CÓ TIN NHẮN
+      // Lấy ID của các nhóm đã có tin nhắn
+      const existingGroupChatIds = recentGroupMessages.map((group) =>
+        group.receiver_id.toString()
+      );
+
+      // Tìm các nhóm chưa có tin nhắn
+      const groupsWithNoMessages = [];
+
+      for (const groupId of groupObjectIds) {
+        if (!existingGroupChatIds.includes(groupId.toString())) {
+          // Lấy thông tin của nhóm
+          const groupInfo = await GroupChat.findById(groupId);
+          if (groupInfo) {
+            groupsWithNoMessages.push({
+              receiver_id: groupId,
+              name: groupInfo.name,
+              group_name: groupInfo.name,
+              avatar_path: groupInfo.avatar,
+              lastMessage: "", // Tin nhắn trống
+              originalMessage: "",
+              timestamp: groupInfo.createdAt || new Date(),
+              status: "none",
+              user_status: "online", // Nhóm luôn "online"
+              type: "text",
+              unread: 0,
+              isLastMessageFromMe: false,
+              chat_type: "group",
+              sender_name: "",
+            });
+          }
+        }
+      }
+
       // PHẦN 3: KẾT HỢP CẢ HAI VÀ SẮP XẾP
       const allRecentMessages = [
         ...recentPrivateReceivers,
+        ...friendsWithNoMessages,
         ...recentGroupMessages,
+        ...groupsWithNoMessages,
       ].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
       res.status(200).json({ success: true, data: allRecentMessages });
