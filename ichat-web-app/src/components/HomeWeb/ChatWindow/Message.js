@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Avatar, Button, Modal, Alert } from "antd";
-import { UserAddOutlined } from "@ant-design/icons";
+import { UserAddOutlined, DownloadOutlined } from "@ant-design/icons";
 import { message as antMessage } from "antd";
 import "./Message.css";
 import {
@@ -47,6 +47,119 @@ const Message = ({
   const messageRef = useRef(null);
   const chatMessages = useSelector((state) => state.messages.chatMessages);
   const dispatch = useDispatch();
+
+  // các state hiển thị modal ảnh
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [groupImages, setGroupImages] = useState([]);
+
+  // Thêm state vào component Message để theo dõi xem đã render nhóm ảnh này chưa
+  const [isFirstInGroup, setIsFirstInGroup] = useState(true);
+
+  // Thêm useEffect để kiểm tra xem message này có phải là tin nhắn đầu tiên trong nhóm không
+  useEffect(() => {
+    if (
+      message.type === "image" &&
+      message.is_group_images &&
+      message.group_id
+    ) {
+      // Tìm message đầu tiên trong nhóm có cùng group_id
+      const firstMessageInGroup = allMessages.find(
+        (msg) =>
+          msg.type === "image" &&
+          msg.group_id === message.group_id &&
+          msg.is_group_images
+      );
+
+      // Nếu ID của message hiện tại không phải ID của message đầu tiên, đừng render
+      setIsFirstInGroup(firstMessageInGroup?._id === message._id);
+    }
+  }, [message, allMessages]);
+
+  // Thêm useEffect để kiểm tra tin nhắn đầu tiên trong nhóm chính xác hơn
+  useEffect(() => {
+    if (
+      message.type === "image" &&
+      message.is_group_images &&
+      message.group_id
+    ) {
+      // Tìm tất cả tin nhắn cùng group_id và sắp xếp theo timestamp
+      const sameGroupMessages = allMessages
+        .filter(
+          (msg) => msg.type === "image" && msg.group_id === message.group_id
+        )
+        .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+      // Kiểm tra nếu tin nhắn hiện tại là tin nhắn CỰC CŨ nhất trong nhóm
+      setIsFirstInGroup(sameGroupMessages[0]?._id === message._id);
+    } else {
+      setIsFirstInGroup(false);
+    }
+  }, [message, allMessages]);
+
+  // Thêm useEffect để tìm các ảnh cùng nhóm
+  useEffect(() => {
+    // Chỉ xử lý khi tin nhắn là ảnh và có is_group_images = true
+    if (
+      message.type === "image" &&
+      message.is_group_images &&
+      message.group_id &&
+      Array.isArray(allMessages)
+    ) {
+      // Tìm tất cả ảnh có cùng group_id
+      const imagesInSameGroup = allMessages.filter(
+        (msg) => msg.type === "image" && msg.group_id === message.group_id
+      );
+
+      setGroupImages(imagesInSameGroup);
+    } else {
+      setGroupImages([]);
+    }
+  }, [message, allMessages]);
+
+  // Thêm state để lưu trữ tất cả media từ cuộc trò chuyện
+  const [allMedia, setAllMedia] = useState([]);
+
+  // Tải tất cả ảnh và video từ cuộc trò chuyện
+  useEffect(() => {
+    if (Array.isArray(allMessages)) {
+      // Lọc ra tất cả media (ảnh và video) từ cuộc trò chuyện
+      const mediaMessages = allMessages.filter(
+        (msg) => msg.type === "image" || msg.type === "video"
+      );
+      setAllMedia(mediaMessages);
+    }
+  }, [allMessages]);
+
+  // Sửa lại hàm mở modal để tìm index hiện tại trong danh sách tất cả media
+  const handleOpenMediaModal = () => {
+    const currentIndex = allMedia.findIndex(
+      (media) => media._id === message._id
+    );
+    setCurrentImageIndex(currentIndex >= 0 ? currentIndex : 0);
+    setIsImageModalOpen(true);
+  };
+
+  // Hàm mở modal và đặt ảnh được chọn là ảnh hiện tại
+  const handleOpenImageModal = (initialIndex = 0) => {
+    setCurrentImageIndex(initialIndex);
+    setIsImageModalOpen(true);
+  };
+
+  // Hàm thay đổi ảnh đang xem trong modal
+  const handleChangeImage = (index) => {
+    setCurrentImageIndex(index);
+  };
+
+  // Hàm tải ảnh
+  const downloadImage = (url) => {
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `image-${new Date().getTime()}.jpg`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   const findRepliedMessage = (replyId) => {
     if (!replyId) return null;
@@ -774,49 +887,136 @@ const Message = ({
           {message.reply_to && <RepliedMessage reply={message.reply_to} />}
           {message.type === "image" ? (
             <>
-              <div
-                className="message-image-container"
-                onClick={handleImageClick}
-                style={{ cursor: "pointer" }}
-              >
-                <img
-                  src={message.content}
-                  alt="Message image"
-                  className="message-image"
-                />
-                <span className="image-hd">HD</span>
-                <span className="image-timestamp">
-                  {new Date(message.timestamp).toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </span>
-              </div>
+              {/* Chỉ hiển thị nhóm ảnh nếu đây là ảnh đầu tiên trong nhóm */}
+              {message.is_group_images &&
+              isFirstInGroup &&
+              groupImages.length > 0 ? (
+                <div className="grouped-images-container">
+                  <div className="grouped-images-grid">
+                    {groupImages.slice(0, 3).map((img, index) => (
+                      <div
+                        key={img._id || index}
+                        className="grouped-image-item"
+                        onClick={() => handleOpenMediaModal()}
+                      >
+                        <img
+                          src={img.content}
+                          alt={`Group image ${index + 1}`}
+                          className="grouped-image"
+                        />
+                        {index === 2 && groupImages.length > 3 && (
+                          <div className="more-images-overlay">
+                            <span>+{groupImages.length - 3}</span>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <span className="image-timestamp">
+                    {new Date(message.timestamp).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </span>
+                </div>
+              ) : // Nếu là ảnh nhóm không phải đầu tiên, không hiển thị gì cả
+              message.is_group_images && !isFirstInGroup ? null : (
+                // Nếu là ảnh đơn lẻ, hiển thị bình thường
+                <div
+                  className="message-image-container"
+                  onClick={handleOpenMediaModal}
+                  style={{ cursor: "pointer" }}
+                >
+                  <img
+                    src={message.content}
+                    alt="Message image"
+                    className="message-image"
+                  />
+                  <span className="image-hd">HD</span>
+                  <span className="image-timestamp">
+                    {new Date(message.timestamp).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </span>
+                </div>
+              )}
+
+              {/* Modal xem tất cả media của cuộc trò chuyện */}
               <Modal
-                open={isModalOpen}
+                open={isImageModalOpen}
                 footer={null}
-                onCancel={handleClose}
+                onCancel={() => setIsImageModalOpen(false)}
                 centered
-                width={500}
-                bodyStyle={{
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  padding: 0,
-                  height: "100%",
-                  top: "30px",
-                }}
-                style={{ top: "30px" }}
+                width="80%"
+                className="image-group-modal"
+                bodyStyle={{ padding: 0 }}
               >
-                <img
-                  src={message.content}
-                  alt="Full-size image"
-                  style={{
-                    maxWidth: "100%",
-                    maxHeight: "80vh",
-                    borderRadius: "8px",
-                  }}
-                />
+                <div className="image-viewer-container">
+                  {/* Phần hiển thị media chính ở giữa */}
+                  <div className="main-image-section">
+                    {allMedia[currentImageIndex] && (
+                      <>
+                        {allMedia[currentImageIndex].type === "image" ? (
+                          <img
+                            src={allMedia[currentImageIndex].content}
+                            alt="Selected media"
+                            className="main-image"
+                          />
+                        ) : allMedia[currentImageIndex].type === "video" ? (
+                          <video
+                            src={allMedia[currentImageIndex].content}
+                            controls
+                            className="main-video"
+                            style={{ maxHeight: "80vh", maxWidth: "100%" }}
+                          />
+                        ) : null}
+                        <div className="image-controls">
+                          <button
+                            className="download-button"
+                            onClick={() =>
+                              downloadImage(allMedia[currentImageIndex].content)
+                            }
+                          >
+                            <DownloadOutlined /> Tải xuống
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Danh sách thumbnail bên phải */}
+                  <div className="thumbnails-section">
+                    <h4>Tất cả media ({allMedia.length})</h4>
+                    <div className="thumbnails-container">
+                      {allMedia.map((media, index) => (
+                        <div
+                          key={media._id || index}
+                          className={`thumbnail-item ${
+                            index === currentImageIndex ? "active" : ""
+                          }`}
+                          onClick={() => handleChangeImage(index)}
+                        >
+                          {media.type === "image" ? (
+                            <img
+                              src={media.content}
+                              alt={`Thumbnail ${index + 1}`}
+                              className="thumbnail-image"
+                            />
+                          ) : media.type === "video" ? (
+                            <div className="video-thumbnail">
+                              <video
+                                src={media.content}
+                                className="thumbnail-video"
+                              />
+                              <div className="video-icon">🎬</div>
+                            </div>
+                          ) : null}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
               </Modal>
             </>
           ) : message.type === "video" ? (
@@ -875,7 +1075,7 @@ const Message = ({
                     </span>
                   </div>
                   <button onClick={handleDownload} className="download-button">
-                    📥 Tải về
+                    <DownloadOutlined />
                   </button>
                 </div>
                 <span className="file-timestamp">
@@ -902,26 +1102,7 @@ const Message = ({
               </span>
             </div>
           )}
-          {/* Display reactions */}
-          {/* {message.reactions && message.reactions.length > 0 && (
-            <div className="message-reactions">
-              {Object.entries(countReactions()).map(([type, count]) => (
-                <Tooltip
-                  key={type}
-                  title={`${count} người đã bày tỏ ${getReactionEmoji(type)}`}
-                >
-                  <span
-                    className={`reaction-badge ${
-                      hasUserReacted(type) ? "user-reacted" : ""
-                    }`}
-                    onClick={() => handleReaction(type)}
-                  >
-                    {getReactionEmoji(type)} {count}
-                  </span>
-                </Tooltip>
-              ))}
-            </div>
-          )} */}
+
           {message.reactions && message.reactions.length > 0 && (
             <div className="message-reactions">
               {Object.entries(countReactions()).map(([type, count]) => (
@@ -993,77 +1174,10 @@ const Message = ({
                 <MoreOutlined />
               </button>
             </div>
-            {/* <div className="reaction-icons">
-              <span onClick={() => handleReaction("👍")} title="Like">
-                <LikeOutlined />
-              </span>
-              
-            </div> */}
+
             <div className="reaction-icons">
               <Popover
                 content={
-                  // <div className="reaction-picker">
-                  //   <Tooltip title="Thích">
-                  //     <span
-                  //       className={`reaction-option ${
-                  //         hasUserReacted("like") ? "active" : ""
-                  //       }`}
-                  //       onClick={() => handleReaction("like")}
-                  //     >
-                  //       👍
-                  //     </span>
-                  //   </Tooltip>
-                  //   <Tooltip title="Yêu thích">
-                  //     <span
-                  //       className={`reaction-option ${
-                  //         hasUserReacted("love") ? "active" : ""
-                  //       }`}
-                  //       onClick={() => handleReaction("love")}
-                  //     >
-                  //       ❤️
-                  //     </span>
-                  //   </Tooltip>
-                  //   <Tooltip title="Haha">
-                  //     <span
-                  //       className={`reaction-option ${
-                  //         hasUserReacted("haha") ? "active" : ""
-                  //       }`}
-                  //       onClick={() => handleReaction("haha")}
-                  //     >
-                  //       😂
-                  //     </span>
-                  //   </Tooltip>
-                  //   <Tooltip title="Wow">
-                  //     <span
-                  //       className={`reaction-option ${
-                  //         hasUserReacted("wow") ? "active" : ""
-                  //       }`}
-                  //       onClick={() => handleReaction("wow")}
-                  //     >
-                  //       😮
-                  //     </span>
-                  //   </Tooltip>
-                  //   <Tooltip title="Buồn">
-                  //     <span
-                  //       className={`reaction-option ${
-                  //         hasUserReacted("sad") ? "active" : ""
-                  //       }`}
-                  //       onClick={() => handleReaction("sad")}
-                  //     >
-                  //       😢
-                  //     </span>
-                  //   </Tooltip>
-                  //   <Tooltip title="Giận">
-                  //     <span
-                  //       className={`reaction-option ${
-                  //         hasUserReacted("angry") ? "active" : ""
-                  //       }`}
-                  //       onClick={() => handleReaction("angry")}
-                  //     >
-                  //       😠
-                  //     </span>
-                  //   </Tooltip>
-                  // </div>
                   <div className="reaction-picker">
                     {["like", "love", "haha", "wow", "sad", "angry"].map(
                       (reactionType) => (
