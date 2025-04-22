@@ -56,6 +56,8 @@ const messageSchema = new mongoose.Schema(
       ref: "UserInfo",
       default: [],
     },
+    is_group_images: { type: Boolean, default: false },
+    group_id: { type: String },
   },
   {
     collection: "Message",

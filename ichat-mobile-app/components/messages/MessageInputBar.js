@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   TextInput,
@@ -7,23 +7,37 @@ import {
   StyleSheet,
   Text,
   Platform,
+  ScrollView,
+  Dimensions,
+  ActivityIndicator,
 } from "react-native";
+import { Video } from "expo-av";
+import * as ImagePicker from "expo-image-picker";
 
 import attachmentIcon from "../../assets/icons/attachment.png";
 
 const MessageInputBar = ({
   inputMessage,
   setInputMessage,
-  selectedImage,
-  setSelectedImage,
+  selectedImages,
+  setSelectedImages,
   selectedFile,
   setSelectedFile,
+  selectedVideo,
+  setSelectedVideo,
   sendMessage,
   pickImage,
   pickFile,
+  isUploading,
 }) => {
+  const [videoStatus, setVideoStatus] = useState({});
+
   const hasText = inputMessage.trim();
-  const canSend = hasText || selectedImage || selectedFile;
+  const canSend =
+    hasText ||
+    (selectedImages && selectedImages.length > 0) ||
+    selectedFile ||
+    selectedVideo;
 
   // Hàm cắt ngắn tên file nếu quá dài
   const truncateFileName = (name, maxLength = 20) => {
@@ -49,7 +63,67 @@ const MessageInputBar = ({
 
   return (
     <View style={styles.wrapper}>
-      {/* Hiển thị tệp đã chọn nếu có */}
+      {/* Video Preview */}
+      {selectedVideo && (
+        <View style={styles.videoPreviewContainer}>
+          <Video
+            source={{ uri: selectedVideo.uri || selectedVideo }}
+            style={styles.videoPreview}
+            resizeMode="contain"
+            shouldPlay={false}
+            isLooping={true}
+            useNativeControls
+            onPlaybackStatusUpdate={(status) => setVideoStatus(() => status)}
+          />
+          {isUploading ? (
+            <View style={styles.uploadingOverlay}>
+              <ActivityIndicator size="large" color="#ffffff" />
+              <Text style={styles.uploadingText}>Đang tải video...</Text>
+            </View>
+          ) : (
+            <TouchableOpacity
+              style={styles.removeMediaButton}
+              onPress={() => setSelectedVideo(null)}
+            >
+              <Image
+                source={require("../../assets/icons/close.png")}
+                style={styles.closeIcon}
+              />
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
+
+      {/* Image Preview */}
+      {selectedImages && selectedImages.length > 0 && (
+        <ScrollView
+          horizontal
+          style={styles.previewScrollContainer}
+          showsHorizontalScrollIndicator={false}
+        >
+          {selectedImages.map((uri, index) => (
+            <View key={index} style={styles.previewContainer}>
+              <Image source={{ uri }} style={styles.previewImage} />
+              <TouchableOpacity
+                style={styles.removeMediaButton}
+                onPress={() => {
+                  const newImages = selectedImages.filter(
+                    (_, i) => i !== index
+                  );
+                  setSelectedImages(newImages);
+                }}
+              >
+                <Image
+                  source={require("../../assets/icons/close.png")}
+                  style={styles.closeIcon}
+                />
+              </TouchableOpacity>
+            </View>
+          ))}
+        </ScrollView>
+      )}
+
+      {/* File Preview */}
       {selectedFile && (
         <View style={styles.filePreviewContainer}>
           <View style={styles.fileInfo}>
@@ -70,19 +144,6 @@ const MessageInputBar = ({
             style={styles.closeButton}
             onPress={() => setSelectedFile(null)}
           >
-            <Image
-              source={require("../../assets/icons/close.png")}
-              style={styles.closeIcon}
-            />
-          </TouchableOpacity>
-        </View>
-      )}
-
-      {/* Hiển thị ảnh đã chọn nếu có */}
-      {selectedImage && (
-        <View style={styles.previewContainer}>
-          <Image source={{ uri: selectedImage }} style={styles.previewImage} />
-          <TouchableOpacity onPress={() => setSelectedImage(null)}>
             <Image
               source={require("../../assets/icons/close.png")}
               style={styles.closeIcon}
@@ -186,7 +247,8 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   previewImage: {
-    height: 100,
+    maxHeight: 150,
+    minHeight: 70,
     width: 100,
     borderRadius: 8,
     marginRight: 8,
@@ -228,5 +290,55 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     tintColor: "#ff4d4d",
+  },
+  previewScrollContainer: {
+    flexDirection: "row",
+    marginBottom: 8,
+  },
+  previewContainer: {
+    marginRight: 8,
+    position: "relative",
+  },
+  removeMediaButton: {
+    position: "absolute",
+    top: -8,
+    right: -8,
+    backgroundColor: "white",
+    borderRadius: 12,
+    padding: 4,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 1,
+  },
+  videoPreviewContainer: {
+    marginBottom: 8,
+    borderRadius: 8,
+    overflow: "hidden",
+    position: "relative",
+    height: 200,
+    backgroundColor: "#000", // Add black background
+    width: "100%",
+  },
+  videoPreview: {
+    flex: 1,
+    width: "100%",
+    height: "100%",
+  },
+  uploadingOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  uploadingText: {
+    color: "#ffffff",
+    marginTop: 10,
+    fontSize: 14,
   },
 });

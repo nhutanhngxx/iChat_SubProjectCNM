@@ -56,8 +56,15 @@ const messageService = {
     }
   },
 
-  // Gửi tin nhắn
-  sendMessage: async (message) => {},
+  // Xử lý gửi nhiều ảnh
+  processMultipleImages: async (files, userData) => {
+    try {
+      // Để dành làm Optimize ảnh (nếu cần thiết)
+      return await MessageModel.sendMultipleImages(files, userData);
+    } catch (error) {
+      throw error;
+    }
+  },
 
   // Thu hồi tin nhắn
   recallMessage: async (messageId, userId) => {

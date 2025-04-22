@@ -379,7 +379,7 @@ const Option = ({ route }) => {
           {receiverGroup && !receiverInfo && (
             <TouchableOpacity style={styles.component}>
               <Image
-                source={require("../../assets/icons/details.png")}
+                source={require("../../assets/icons/out-group.png")}
                 style={styles.icon}
               />
               <Text style={{ color: "red", fontSize: 16 }}>Rời khỏi nhóm</Text>
@@ -387,12 +387,9 @@ const Option = ({ route }) => {
           )}
 
           {adminGroup === true && (
-            <TouchableOpacity
-              style={styles.component}
-              onPress={handleDeleteGroup}
-            >
+            <TouchableOpacity style={styles.component}>
               <Image
-                source={require("../../assets/icons/delete-friend.png")}
+                source={require("../../assets/icons/delete-group.png")}
                 style={{ width: 25, height: 25 }}
               />
               <Text style={{ color: "red", fontSize: 16 }}>Xóa nhóm</Text>

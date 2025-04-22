@@ -32,14 +32,17 @@ const MessageController = {
   sendMessage: async (req, res) => {
     try {
       const imageFile = req.files?.image?.[0] || null;
+      const videoFile = req.files?.video?.[0] || null;
       const docFile = req.files?.file?.[0] || null;
+      const file = videoFile || imageFile || docFile;
+
       const result = await MessageModel.sendMessage({
         sender_id: req.body.sender_id,
         receiver_id: req.body.receiver_id,
         content: req.body.content || "",
         type: req.body.type,
         chat_type: req.body.chat_type,
-        file: imageFile || docFile,
+        file: file,
         reply_to: req.body.reply_to || null,
       });
 
@@ -51,6 +54,39 @@ const MessageController = {
       res
         .status(err.status || 500)
         .json({ error: err.message || "Internal server error" });
+    }
+  },
+
+  // Xử lý gửi nhiều ảnh
+  sendMultipleImages: async (req, res) => {
+    try {
+      const { sender_id, receiver_id, chat_type } = req.body;
+      const files = req.files;
+
+      if (!files || files.length === 0) {
+        return res.status(400).json({
+          status: "error",
+          message: "No images provided",
+        });
+      }
+
+      const messages = await MessageModel.sendMultipleImages({
+        files,
+        sender_id,
+        receiver_id,
+        chat_type,
+      });
+
+      res.status(201).json({
+        status: "ok",
+        data: messages,
+      });
+    } catch (error) {
+      console.error("Error in sendMultipleImages controller:", error);
+      res.status(500).json({
+        status: "error",
+        message: error.message || "Internal server error",
+      });
     }
   },
 

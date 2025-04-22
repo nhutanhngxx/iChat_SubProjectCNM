@@ -6,6 +6,38 @@ const mongoose = require("mongoose");
 const { uploadFile } = require("../services/upload-file");
 
 const MessageModel = {
+  // Xử lý nhiều ảnh
+  sendMultipleImages: async ({ files, sender_id, receiver_id, chat_type }) => {
+    try {
+      const group_id = new mongoose.Types.ObjectId().toString(); // Tạo ID duy nhất cho nhóm ảnh
+
+      const uploadPromises = files.map(async (file) => {
+        const imageUrl = await uploadFile(file);
+
+        const newMessage = new Messages({
+          sender_id,
+          receiver_id,
+          content: imageUrl,
+          type: "image",
+          chat_type,
+          status: "sent",
+          is_group_images: true, // Đánh dấu là ảnh nhóm
+          group_id, // Gán cùng group_id cho tất cả ảnh trong nhóm
+          created_at: new Date(),
+          updated_at: new Date(),
+        });
+
+        return newMessage.save();
+      });
+
+      const savedMessages = await Promise.all(uploadPromises);
+      return savedMessages;
+    } catch (error) {
+      console.error("Error in sendMultipleImages model:", error);
+      throw error;
+    }
+  },
+
   searchMessages: async (keyword, userId) => {
     if (!keyword)
       throw { status: 400, message: "Từ khóa tìm kiếm là bắt buộc" };

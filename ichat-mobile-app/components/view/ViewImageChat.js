@@ -1,11 +1,22 @@
-import React, { useEffect } from "react";
-import { View, Image, TouchableOpacity, StyleSheet } from "react-native";
+import React, { useEffect, useState } from "react";
+import {
+  View,
+  Image,
+  TouchableOpacity,
+  StyleSheet,
+  Dimensions,
+  ScrollView,
+  Text,
+} from "react-native";
 import { StatusBar } from "expo-status-bar";
 
 import closeIcon from "../../assets/icons/close.png";
 
 const ViewImageChat = ({ route, navigation }) => {
-  const { imageUrl } = route.params;
+  const { imageUrl, images } = route.params;
+  const [currentIndex, setCurrentIndex] = useState(
+    images.findIndex((img) => img === imageUrl)
+  );
 
   useEffect(() => {
     navigation.getParent()?.setOptions({ tabBarStyle: { display: "none" } });
@@ -21,6 +32,13 @@ const ViewImageChat = ({ route, navigation }) => {
     };
   }, []);
 
+  const handleScroll = (event) => {
+    const slideWidth = event.nativeEvent.layoutMeasurement.width;
+    const offset = event.nativeEvent.contentOffset.x;
+    const index = Math.round(offset / slideWidth);
+    setCurrentIndex(index);
+  };
+
   return (
     <View style={styles.container}>
       <StatusBar hidden={false} style="light" />
@@ -30,11 +48,34 @@ const ViewImageChat = ({ route, navigation }) => {
       >
         <Image source={closeIcon} style={styles.icon} />
       </TouchableOpacity>
-      <Image
-        source={{ uri: imageUrl }}
-        style={styles.image}
-        resizeMode="contain"
-      />
+
+      <ScrollView
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        onMomentumScrollEnd={handleScroll}
+        contentOffset={{
+          x: currentIndex * Dimensions.get("window").width,
+          y: 0,
+        }}
+      >
+        {images.map((img, index) => (
+          <Image
+            key={index}
+            source={{ uri: img }}
+            style={[styles.image, { width: Dimensions.get("window").width }]}
+            resizeMode="contain"
+          />
+        ))}
+      </ScrollView>
+
+      {images.length > 1 && (
+        <View style={styles.pagination}>
+          <Text style={styles.paginationText}>
+            {currentIndex + 1}/{images.length}
+          </Text>
+        </View>
+      )}
     </View>
   );
 };
@@ -60,6 +101,18 @@ const styles = StyleSheet.create({
   image: {
     width: "100%",
     height: "100%",
+  },
+  pagination: {
+    position: "absolute",
+    bottom: 20,
+    alignSelf: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
+    padding: 8,
+    borderRadius: 15,
+  },
+  paginationText: {
+    color: "white",
+    fontSize: 14,
   },
 });
 

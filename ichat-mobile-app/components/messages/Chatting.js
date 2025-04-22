@@ -71,13 +71,14 @@ const Chatting = ({ route }) => {
   const flatListRef = useRef(null); // "friend" | "not-friend" | "blocked" dùng để kiểm tra trạng thái bạn bè giữa 2 người dùng
   const [typeChat, setTypeChat] = useState(route.params?.typeChat || "friend");
   const [inputMessage, setInputMessage] = useState("");
-  const [selectedImage, setSelectedImage] = useState(null);
+  const [selectedImages, setSelectedImages] = useState([]); // Thay thế selectedImage
   const [selectedFile, setSelectedFile] = useState(null);
   const [messages, setMessages] = useState([]);
   const [replyMessage, setReplyMessage] = useState(null);
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [groupMembers, setGroupMembers] = useState([]);
+
   // Kiểm tra trạng thái chặn giữa 2 người dùng
   const [blockStatus, setBlockStatus] = useState({
     isBlocked: false,
@@ -138,6 +139,30 @@ const Chatting = ({ route }) => {
       }
     });
 
+    // Thêm listener cho việc nhận nhiều ảnh
+    socketService.onReceiveMultipleImages((data) => {
+      if (data.chatId === roomId) {
+        setMessages((prevMessages) => {
+          const newMessages = data.messages.filter(
+            (newMsg) => !prevMessages.some((msg) => msg._id === newMsg._id)
+          );
+          return [...prevMessages, ...newMessages];
+        });
+      }
+    });
+
+    // Theo dõi tiến trình upload ảnh
+    socketService.handleImageUploadProgress((progress) => {
+      console.log("Upload progress:", progress);
+      // Có thể thêm logic hiển thị progress bar ở đây
+    });
+
+    // Xử lý lỗi upload ảnh
+    socketService.handleImageUploadError((error) => {
+      console.error("Upload error:", error);
+      Alert.alert("Lỗi", "Không thể tải ảnh lên. Vui lòng thử lại.");
+    });
+
     // Cleanup function
     return () => {
       console.log("Leaving room:", roomId);
@@ -190,36 +215,29 @@ const Chatting = ({ route }) => {
 
   // Hàm chọn ảnh từ thư viện
   const pickImage = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== "granted") {
-      Alert.alert(
-        "Quyền bị từ chối",
-        "Vui lòng cấp quyền truy cập thư viện ảnh trong cài đặt."
-      );
-      return;
-    }
-
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [4, 3],
-        quality: 0.5,
+        mediaTypes: ImagePicker.MediaTypeOptions.All,
+        allowsMultipleSelection: true, // Cho phép chọn nhiều ảnh
+        quality: 0.8,
+        videoMaxDuration: 45,
       });
 
-      if (!result.canceled && result.assets.length > 0) {
-        setSelectedImage(result.assets[0].uri);
+      if (!result.canceled) {
+        // Lấy tất cả URI của ảnh đã chọn
+        const newImages = result.assets.map((asset) => asset.uri);
+        setSelectedImages((prev) => [...prev, ...newImages]);
       }
-    } catch (err) {
-      console.error("Lỗi khi chọn ảnh:", err);
-      Alert.alert("Lỗi", "Đã xảy ra lỗi khi chọn ảnh.");
+    } catch (error) {
+      console.error("Error picking images:", error);
+      Alert.alert("Lỗi", "Không thể chọn ảnh.");
     }
   };
 
   // Hàm lấy tên thành viên từ ID để hiển thị trên tin nhắn nhóm
   const getMemberName = useCallback(
     (memberId) => {
-      const member = groupMembers.find((m) => m._id === memberId);
+      const member = groupMembers.find((m) => m.user_id === memberId);
       return member?.full_name || "Unknown";
     },
     [groupMembers]
@@ -469,10 +487,10 @@ const Chatting = ({ route }) => {
       Alert.alert("Thông báo", "Đang kết nối lại với server...");
       return;
     }
+
     // Kiểm tra trạng thái trò chuyện
     if (typeChat === "not-friend" || typeChat === "blocked") {
       let message = "Bạn không thể gửi tin nhắn trong cuộc trò chuyện này.";
-
       if (typeChat === "blocked") {
         if (blockStatus.blockedByTarget) {
           message = `Bạn không thể gửi tin nhắn cho ${chat.name} vì bạn đã bị chặn.`;
@@ -480,7 +498,6 @@ const Chatting = ({ route }) => {
           message = `Bạn không thể gửi tin nhắn cho ${chat.name} vì bạn đã chặn người này.`;
         }
       }
-
       Alert.alert("Thông báo", message);
       return;
     }
@@ -492,9 +509,6 @@ const Chatting = ({ route }) => {
 
       // Gửi tin nhắn văn bản hoặc reply
       if (inputMessage.trim() || replyMessage) {
-        console.log("Gửi tin nhắn văn bản/reply...");
-        console.log("replyMessage:", replyMessage);
-
         const textMessage = {
           sender_id: user.id,
           receiver_id: chat.id,
@@ -510,69 +524,46 @@ const Chatting = ({ route }) => {
 
         const textResponse = await axios.post(apiEndpoint, textMessage);
 
-        console.log("Phản hồi từ server:", textResponse.data.data);
-
         if (textResponse.data.data) {
           const messageToSend = {
             ...textResponse.data.data,
             chatId: roomId,
           };
-          console.log(socketService.handleSendMessage(messageToSend));
-
           socketService.handleSendMessage(messageToSend);
         }
 
-        // Cập nhật danh sách tin nhắn // Tạm thời khóa lại
-        // setMessages((prev) => [...prev, textResponse.data.message]);
         setInputMessage("");
         setReplyMessage(null);
-        console.log("Gửi tin nhắn văn bản thành công");
       }
 
-      // Gửi hình ảnh hoặc file nếu có
-      if (selectedImage || selectedFile) {
-        console.log("Chuẩn bị gửi hình ảnh/file...");
+      // Gửi hình ảnh
+      if (selectedImages.length > 0) {
         const formData = new FormData();
-        // Thêm ảnh vào FormData
-        if (selectedImage) {
-          console.log("Selected image path:", selectedImage);
-          formData.append("image", {
-            uri: selectedImage,
-            name: `photo-${Date.now()}.jpg`,
-            type: "image/jpeg",
+        const groupId = Date.now().toString(); // Tạo ID nhóm duy nhất
+
+        selectedImages.forEach((uri, index) => {
+          const filename = uri.split("/").pop();
+          const match = /\.(\w+)$/.exec(filename ?? "");
+          const ext = match ? match[1] : "jpg";
+
+          formData.append("images", {
+            uri: uri,
+            name: `photo-${Date.now()}-${index}.${ext}`,
+            type: `image/${ext}`,
           });
-        }
-        // Thêm file vào FormData
-        if (selectedFile) {
-          formData.append("file", {
-            uri: selectedFile.uri,
-            name: selectedFile.name || `file-${Date.now()}`,
-            type: selectedFile.type || "application/octet-stream",
-          });
-        }
-        // Thêm các thông tin khác
+        });
+
         formData.append("sender_id", user.id);
         formData.append("receiver_id", chat.id);
-        formData.append(
-          "type",
-          selectedImage && selectedFile
-            ? "media"
-            : selectedImage
-            ? "image"
-            : "file"
-        );
         formData.append(
           "chat_type",
           chat?.chatType === "group" ? "group" : "private"
         );
+        formData.append("group_id", groupId); // Thêm group_id
+        formData.append("total_images", selectedImages.length.toString()); // Thêm tổng số ảnh
 
-        // In formData
-        for (let [key, value] of formData.entries()) {
-          console.log(key, value);
-        }
-
-        const uploadResponse = await axios.post(
-          `${API_iChat}/send-message`,
+        const response = await axios.post(
+          `${API_iChat}/send-multiple-images`,
           formData,
           {
             headers: {
@@ -581,22 +572,61 @@ const Chatting = ({ route }) => {
             },
           }
         );
-        console.log("Phản hồi từ server:", uploadResponse.data.data);
+
+        if (response.data.data) {
+          response.data.data.forEach((message) => {
+            const messageToSend = {
+              ...message,
+              chatId: roomId,
+              group_id: groupId, // Thêm group_id vào message
+              total_images: selectedImages.length, // Thêm tổng số ảnh
+              is_group_images: true, // Đánh dấu là ảnh nhóm
+            };
+            socketService.handleSendMultipleImages(messageToSend);
+          });
+        }
+
+        setSelectedImages([]);
+      }
+
+      // Gửi file
+      if (selectedFile) {
+        const fileFormData = new FormData();
+
+        fileFormData.append("file", {
+          uri: selectedFile.uri,
+          name: selectedFile.name || `file-${Date.now()}`,
+          type: selectedFile.type || "application/octet-stream",
+        });
+
+        fileFormData.append("sender_id", user.id);
+        fileFormData.append("receiver_id", chat.id);
+        fileFormData.append("type", "file");
+        fileFormData.append(
+          "chat_type",
+          chat?.chatType === "group" ? "group" : "private"
+        );
+
+        const uploadResponse = await axios.post(
+          `${API_iChat}/send-message`,
+          fileFormData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+              Accept: "application/json",
+            },
+          }
+        );
 
         if (uploadResponse.data.data) {
           const messageToSend = {
             ...uploadResponse.data.data,
             chatId: roomId,
           };
-          console.log(socketService.handleSendMessage(messageToSend));
-
           socketService.handleSendMessage(messageToSend);
         }
 
-        // Xóa trạng thái ảnh/file sau khi gửi thành công
-        setSelectedImage(null);
         setSelectedFile(null);
-        console.log("Gửi hình ảnh/file thành công");
       }
     } catch (error) {
       console.error("Lỗi khi gửi tin nhắn/hình ảnh/file:", error);
@@ -668,103 +698,6 @@ const Chatting = ({ route }) => {
     }
   };
 
-  // const handleSoftDelete = async () => {
-  //   if (typeChat === "not-friend" || typeChat === "blocked") {
-  //     let message = "Bạn không thể xóa tin nhắn trong cuộc trò chuyện này.";
-
-  //     if (typeChat === "blocked") {
-  //       if (blockStatus.blockedByTarget) {
-  //         message = `Bạn không thể xóa tin nhắn vì bạn đã bị chặn.`;
-  //       } else if (blockStatus.blockedByUser) {
-  //         message = `Bạn không thể xóa tin nhắn vì bạn đã chặn người này.`;
-  //       }
-  //     }
-
-  //     Alert.alert("Thông báo", message);
-  //     return;
-  //   }
-
-  //   try {
-  //     // Kiểm tra xem tin nhắn được chọn có phải là tin nhắn cuối cùng không
-  //     const isLastMessage =
-  //       selectedMessage._id === messages[messages.length - 1]._id;
-
-  //     const response = await messageService.softDeleteMessagesForUser(
-  //       user.id,
-  //       selectedMessage._id
-  //     );
-
-  //     if (response.data !== null) {
-  //       setMessages((prevMessages) =>
-  //         prevMessages.filter((msg) => msg._id !== selectedMessage._id)
-  //       );
-
-  //       // Nếu là tin nhắn cuối cùng, cập nhật lại tin nhắn cuối
-  //       if (isLastMessage) {
-  //         let updatedMessages;
-  //         let chatId;
-
-  //         if (chat?.chatType === "private") {
-  //           updatedMessages = await messageService.getPrivateMessages({
-  //             userId: user.id,
-  //             chatId: chat.id,
-  //           });
-  //           chatId = chat.id;
-  //         } else {
-  //           // Xử lý cho tin nhắn nhóm
-  //           updatedMessages = await messageService.getMessagesByGroupId(
-  //             chat.id
-  //           );
-  //           chatId = chat.id;
-  //         }
-
-  //         // Lọc tin nhắn chưa bị xóa
-  //         const availableMessages = updatedMessages.filter(
-  //           (msg) => !msg.isdelete?.includes(user.id)
-  //         );
-
-  //         // Tìm tin nhắn cuối cùng hợp lệ
-  //         const lastMessage = availableMessages[availableMessages.length - 1];
-
-  //         // Định dạng nội dung tin nhắn cuối
-  //         const formatMessageContent = (msg) => {
-  //           if (!msg) return "";
-  //           switch (msg.type) {
-  //             case "file":
-  //               return "[Tệp đính kèm]";
-  //             case "image":
-  //               return "[Hình ảnh]";
-  //             case "video":
-  //               return "[Video]";
-  //             case "audio":
-  //               return "[Tệp âm thanh]";
-  //             default:
-  //               return msg.content;
-  //           }
-  //         };
-
-  //         // Emit event để Priority cập nhật
-  //         socketService.emit("update_last_message", {
-  //           chatId,
-  //           isGroup: chat?.chatType !== "private",
-  //           lastMessage: lastMessage
-  //             ? {
-  //                 content: formatMessageContent(lastMessage),
-  //                 timestamp: lastMessage.timestamp,
-  //                 type: lastMessage.type,
-  //                 sender_id: lastMessage.sender_id, // Thêm sender_id cho tin nhắn nhóm
-  //               }
-  //             : null,
-  //         });
-  //       }
-  //     }
-  //   } catch (error) {
-  //     console.error("Lỗi khi xóa mềm tin nhắn:", error);
-  //   } finally {
-  //     setModalVisible(false);
-  //   }
-  // };
-
   // Gửi lời mời kết bạn
   const handleSendFriendRequest = async (chatId) => {
     try {
@@ -823,6 +756,134 @@ const Chatting = ({ route }) => {
     );
   };
 
+  const GroupImagesMessage = ({
+    message,
+    messages,
+    navigation,
+    isMyMessage,
+  }) => {
+    // Lấy tất cả ảnh trong cùng một nhóm
+    const groupImages = messages.filter(
+      (msg) => msg.group_id === message.group_id && msg.type === "image"
+    );
+
+    // Chỉ hiển thị nhóm ảnh cho tin nhắn đầu tiên trong nhóm
+    if (message._id !== groupImages[0]._id) {
+      return null;
+    }
+
+    const renderImages = () => {
+      switch (groupImages.length) {
+        case 1:
+          return (
+            <TouchableOpacity
+              onPress={() =>
+                navigation.navigate("ViewImageChat", {
+                  imageUrl: groupImages[0].content,
+                  images: groupImages.map((img) => img.content),
+                })
+              }
+            >
+              <Image
+                source={{ uri: groupImages[0].content }}
+                style={styles.singleGroupImage}
+                resizeMode="cover"
+              />
+            </TouchableOpacity>
+          );
+
+        case 2:
+          return (
+            <View style={styles.twoImagesContainer}>
+              {groupImages.map((img, index) => (
+                <TouchableOpacity
+                  key={img._id}
+                  onPress={() =>
+                    navigation.navigate("ViewImageChat", {
+                      imageUrl: img.content,
+                      images: groupImages.map((img) => img.content),
+                    })
+                  }
+                  style={[
+                    styles.twoImagesItem,
+                    index === 0 ? { marginRight: 2 } : null,
+                  ]}
+                >
+                  <Image
+                    source={{ uri: img.content }}
+                    style={styles.twoImagesImage}
+                    resizeMode="cover"
+                  />
+                </TouchableOpacity>
+              ))}
+            </View>
+          );
+
+        default:
+          return (
+            <View style={styles.multipleImagesContainer}>
+              <TouchableOpacity
+                onPress={() =>
+                  navigation.navigate("ViewImageChat", {
+                    imageUrl: groupImages[0].content,
+                    images: groupImages.map((img) => img.content),
+                  })
+                }
+                style={styles.mainImageContainer}
+              >
+                <Image
+                  source={{ uri: groupImages[0].content }}
+                  style={styles.mainImage}
+                  resizeMode="cover"
+                />
+              </TouchableOpacity>
+              <View style={styles.smallImagesContainer}>
+                {groupImages.slice(1, 3).map((img, index) => (
+                  <TouchableOpacity
+                    key={img._id}
+                    onPress={() =>
+                      navigation.navigate("ViewImageChat", {
+                        imageUrl: img.content,
+                        images: groupImages.map((img) => img.content),
+                      })
+                    }
+                    style={[
+                      styles.smallImageItem,
+                      index === 0 ? { marginBottom: 2 } : null,
+                    ]}
+                  >
+                    <Image
+                      source={{ uri: img.content }}
+                      style={styles.smallImage}
+                      resizeMode="cover"
+                    />
+                    {index === 1 && groupImages.length > 3 && (
+                      <View style={styles.remainingCountOverlay}>
+                        <Text style={styles.remainingCountText}>
+                          +{groupImages.length - 3}
+                        </Text>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          );
+      }
+    };
+
+    return (
+      <View
+        style={[
+          styles.groupImagesWrapper,
+          isMyMessage ? styles.myGroupImages : styles.theirGroupImages,
+        ]}
+      >
+        {renderImages()}
+      </View>
+    );
+  };
+
   return (
     <View style={styles.container}>
       <StatusBar style="dark" />
@@ -876,6 +937,7 @@ const Chatting = ({ route }) => {
                   id: chat.id,
                   name: chat.name,
                   avatar: chat.avatar,
+                  //
                 });
               }}
             >
@@ -965,6 +1027,17 @@ const Chatting = ({ route }) => {
             const repliedMessage = item.reply_to
               ? messages.find((msg) => msg._id === item.reply_to)
               : null;
+
+            // Kiểm tra nếu là ảnh nhóm và không phải ảnh đầu tiên thì bỏ qua
+            if (item.type === "image" && item.is_group_images) {
+              const groupImages = messages.filter(
+                (msg) => msg.group_id === item.group_id && msg.type === "image"
+              );
+              if (item._id !== groupImages[0]._id) {
+                return null; // Không render gì cả
+              }
+            }
+
             return (
               <View>
                 <TouchableOpacity
@@ -1030,24 +1103,34 @@ const Chatting = ({ route }) => {
                   )}
 
                   {item.type === "image" ? (
-                    <TouchableOpacity
-                      onPress={() =>
-                        navigation.navigate("ViewImageChat", {
-                          imageUrl: item.content,
-                        })
-                      }
-                    >
-                      <Image
-                        source={{ uri: item.content }}
-                        style={{
-                          width: 200,
-                          height: 200,
-                          borderRadius: 10,
-                          marginTop: 5,
-                        }}
-                        resizeMode="cover"
+                    item.is_group_images ? (
+                      <GroupImagesMessage
+                        message={item}
+                        messages={messages}
+                        navigation={navigation}
+                        isMyMessage={item.sender_id === user.id}
                       />
-                    </TouchableOpacity>
+                    ) : (
+                      <TouchableOpacity
+                        onPress={() =>
+                          navigation.navigate("ViewImageChat", {
+                            imageUrl: item.content,
+                            images: [item.content],
+                          })
+                        }
+                      >
+                        <Image
+                          source={{ uri: item.content }}
+                          style={{
+                            width: 200,
+                            height: 200,
+                            borderRadius: 10,
+                            marginTop: 5,
+                          }}
+                          resizeMode="cover"
+                        />
+                      </TouchableOpacity>
+                    )
                   ) : item.type === "file" ? (
                     <TouchableOpacity
                       style={styles.fileContainer}
@@ -1371,8 +1454,8 @@ const Chatting = ({ route }) => {
         <MessageInputBar
           inputMessage={inputMessage}
           setInputMessage={setInputMessage}
-          selectedImage={selectedImage}
-          setSelectedImage={setSelectedImage}
+          selectedImages={selectedImages}
+          setSelectedImages={setSelectedImages}
           selectedFile={selectedFile}
           setSelectedFile={setSelectedFile}
           sendMessage={sendMessage}
@@ -1672,6 +1755,77 @@ const styles = StyleSheet.create({
   notFriendText: {
     color: "#757575",
     fontSize: 14,
+  },
+  groupImagesWrapper: {
+    borderRadius: 10,
+    overflow: "hidden",
+    maxWidth: 280,
+    marginVertical: 2,
+  },
+  myGroupImages: {
+    alignSelf: "flex-end",
+  },
+  theirGroupImages: {
+    alignSelf: "flex-start",
+  },
+  singleGroupImage: {
+    width: 200,
+    height: 200,
+    borderRadius: 10,
+  },
+  twoImagesContainer: {
+    flexDirection: "row",
+    width: 200,
+    height: 200,
+    gap: 2,
+  },
+  twoImagesItem: {
+    flex: 1,
+    borderRadius: 10,
+    overflow: "hidden",
+  },
+  twoImagesImage: {
+    width: "100%",
+    height: "100%",
+  },
+  multipleImagesContainer: {
+    flexDirection: "row",
+    width: 200,
+    height: 200,
+    gap: 2,
+  },
+  mainImageContainer: {
+    flex: 2,
+  },
+  mainImage: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 10,
+  },
+  smallImagesContainer: {
+    flex: 1,
+    gap: 2,
+  },
+  smallImageItem: {
+    flex: 1,
+    borderRadius: 10,
+    overflow: "hidden",
+  },
+  smallImage: {
+    width: "100%",
+    height: "100%",
+  },
+  remainingCountOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 10,
+  },
+  remainingCountText: {
+    color: "white",
+    fontSize: 20,
+    fontWeight: "bold",
   },
 });
 
