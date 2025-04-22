@@ -108,17 +108,28 @@ const ChatWindow = ({ user, selectedFriend }) => {
       if (!selectedUser || !data.chatId) return;
 
       // Xác định xem reaction có thuộc cuộc trò chuyện hiện tại hay không
-      const currentUserIds = [user.id, selectedUser.id].sort();
-      const currentRoomId = `chat_${currentUserIds[0]}_${currentUserIds[1]}`;
+      let currentRoomId;
+
+      if (selectedUser.chat_type === "group") {
+        currentRoomId = `group_${selectedUser.id}`;
+      } else {
+        const currentUserIds = [user.id, selectedUser.id].sort();
+        currentRoomId = `chat_${currentUserIds[0]}_${currentUserIds[1]}`;
+      }
 
       if (data.chatId === currentRoomId) {
         console.log("Reaction belongs to current conversation, updating chat");
-        dispatch(
-          fetchChatMessages({
-            senderId: user.id,
-            receiverId: selectedUser.id,
-          })
-        );
+        // Cập nhật tin nhắn dựa trên loại chat
+        if (selectedUser.chat_type === "group") {
+          dispatch(getUserMessages(selectedUser.id));
+        } else {
+          dispatch(
+            fetchChatMessages({
+              senderId: user.id,
+              receiverId: selectedUser.id,
+            })
+          );
+        }
       }
     };
     console.log("Setting up socket listeners for user:", user.id);
@@ -172,13 +183,29 @@ const ChatWindow = ({ user, selectedFriend }) => {
     };
 
     setSelectedUser(normalizedUser);
+    // Tham gia phòng chat tương ứng
+    let roomId;
+    if (normalizedUser.chat_type === "group") {
+      roomId = `group_${normalizedUser.id}`;
+      console.log("Joining group room:", roomId);
+    } else {
+      const userIds = [user.id, normalizedUser.id].sort();
+      roomId = `chat_${userIds[0]}_${userIds[1]}`;
+      console.log("Joining private chat room:", roomId);
+    }
+    socket.emit("join-room", roomId);
+
     if (normalizedUser.id && user.id) {
-      dispatch(
-        fetchChatMessages({
-          senderId: user.id,
-          receiverId: normalizedUser.id,
-        })
-      );
+      if (normalizedUser.chat_type === "group") {
+        dispatch(getUserMessages(normalizedUser.id));
+      } else {
+        dispatch(
+          fetchChatMessages({
+            senderId: user.id,
+            receiverId: normalizedUser.id,
+          })
+        );
+      }
     }
   };
   useEffect(() => {
@@ -239,6 +266,43 @@ const ChatWindow = ({ user, selectedFriend }) => {
     // Cập nhật messages ở đây (ví dụ: dispatch action hoặc cập nhật state)
     // dispatch(someActionToUpdateMessages(newMessage));
   };
+  // Thêm vào cuối effect hiện tại hoặc tạo một effect mới
+  useEffect(() => {
+    if (!user?.id || !selectedUser?.id) return;
+
+    // Xác định phòng dựa trên loại chat
+    let roomId;
+    if (selectedUser.chat_type === "group") {
+      roomId = `group_${selectedUser.id}`;
+      console.log("Re-joining group room on change:", roomId);
+    } else {
+      const userIds = [user.id, selectedUser.id].sort();
+      roomId = `chat_${userIds[0]}_${userIds[1]}`;
+      console.log("Re-joining private chat room on change:", roomId);
+    }
+
+    // Tham gia phòng
+    socket.emit("join-room", roomId);
+
+    // Lắng nghe sự kiện nhóm cụ thể
+    const handleGroupEvent = (data) => {
+      console.log("Group event received:", data);
+      if (
+        selectedUser.chat_type === "group" &&
+        selectedUser.id === data.groupId
+      ) {
+        dispatch(getUserMessages(selectedUser.id));
+      }
+    };
+
+    socket.on("group-message-update", handleGroupEvent);
+    socket.on("group-member-update", handleGroupEvent);
+
+    return () => {
+      socket.off("group-message-update", handleGroupEvent);
+      socket.off("group-member-update", handleGroupEvent);
+    };
+  }, [user?.id, selectedUser?.id, selectedUser?.chat_type, dispatch]);
 
   return (
     <Layout className="chat-window">

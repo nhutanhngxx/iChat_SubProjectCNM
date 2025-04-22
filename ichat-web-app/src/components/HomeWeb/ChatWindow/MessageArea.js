@@ -33,6 +33,8 @@ import {
   updateMessages,
   sendImageMessage,
   replyToMessage,
+  sendMultipleImages,
+  getUserMessages,
 } from "../../../redux/slices/messagesSlice";
 import Message from "./Message";
 import MessageInput from "./MessageInput";
@@ -760,8 +762,13 @@ const MessageArea = ({ selectedChat, user }) => {
         const sentMessage = response.data; // Tin nhắn vừa gửi
         // Gửi qua socket để bên kia nhận real-time
         console.log("ChatId khi gửi tin nhắn", selectedChat?.id);
-        const userIds = [user.id, selectedChat.id].sort();
-        const roomId = `chat_${userIds[0]}_${userIds[1]}`;
+        let roomId;
+        if (selectedChat.chat_type === "group") {
+          roomId = `group_${selectedChat.id}`;
+        } else {
+          const userIds = [user.id, selectedChat.id].sort();
+          roomId = `chat_${userIds[0]}_${userIds[1]}`;
+        }
 
         socket.emit("send-message", {
           ...sentMessage, // Tin nhắn vừa gửi
@@ -794,8 +801,13 @@ const MessageArea = ({ selectedChat, user }) => {
 
         const sentMessage = result.data;
 
-        const userIds = [user.id, selectedChat.id].sort();
-        const roomId = `chat_${userIds[0]}_${userIds[1]}`;
+        let roomId;
+        if (selectedChat.chat_type === "group") {
+          roomId = `group_${selectedChat.id}`;
+        } else {
+          const userIds = [user.id, selectedChat.id].sort();
+          roomId = `chat_${userIds[0]}_${userIds[1]}`;
+        }
 
         socket.emit("send-message", {
           ...sentMessage,
@@ -809,7 +821,46 @@ const MessageArea = ({ selectedChat, user }) => {
       }
     }
   };
+  // Gửi nhiều ảnh
+  const handleSendMultipleImages = async (selectedImages) => {
+    try {
+      const response = await dispatch(
+        sendMultipleImages({
+          sender_id: user.id,
+          receiver_id: selectedChat.id,
+          images: selectedImages,
+          chat_type: selectedChat.chat_type || "private",
+        })
+      ).unwrap();
 
+      console.log("Sent multiple images successfully:", response.data);
+      const sentMessages = response.data; // Danh sách tin nhắn vừa gửi
+
+      // Nếu là chat nhóm, cập nhật lại tin nhắn nhóm
+      if (selectedChat.chat_type === "group") {
+        dispatch(getUserMessages(selectedChat.id));
+      }
+
+      // Thông báo qua socket
+      const roomId =
+        selectedChat.chat_type === "group"
+          ? `group_${selectedChat.id}`
+          : `chat_${[user.id, selectedChat.id].sort()[0]}_${
+              [user.id, selectedChat.id].sort()[1]
+            }`;
+
+      // Thông báo cho các client khác
+      socket.emit("send-message", {
+        ...sentMessages,
+        chatId: roomId,
+      });
+      dispatch(fetchMessages(user?.id));
+      dispatch(updateMessages(sentMessages));
+    } catch (error) {
+      console.error("Error sending multiple images:", error);
+      antMessage.error("Không thể gửi ảnh. Vui lòng thử lại.");
+    }
+  };
   const handleFileUpload = async (file, mediaType) => {
     if (selectedChat) {
       try {
@@ -838,8 +889,13 @@ const MessageArea = ({ selectedChat, user }) => {
 
         const sentMessage = result.data;
 
-        const userIds = [user.id, selectedChat.id].sort();
-        const roomId = `chat_${userIds[0]}_${userIds[1]}`;
+        let roomId;
+        if (selectedChat.chat_type === "group") {
+          roomId = `group_${selectedChat.id}`;
+        } else {
+          const userIds = [user.id, selectedChat.id].sort();
+          roomId = `chat_${userIds[0]}_${userIds[1]}`;
+        }
 
         socket.emit("send-message", {
           ...sentMessage,
@@ -1087,6 +1143,7 @@ const MessageArea = ({ selectedChat, user }) => {
           clearReplyingTo={clearReplyingTo} // Add this prop
           user={user}
           selectedChat={selectedChat} // Thêm prop selectedChat
+          onImageMutippleUpload={handleSendMultipleImages} // Truyền hàm gửi nhiều ảnh
         />
       </Layout>
       {showConversation && (

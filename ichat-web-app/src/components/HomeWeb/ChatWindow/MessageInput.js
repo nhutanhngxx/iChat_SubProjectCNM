@@ -66,6 +66,7 @@ const MessageInput = ({
   clearReplyingTo,
   user,
   selectedChat,
+  onImageMutippleUpload,
 }) => {
   const [selectedImage, setSelectedImage] = useState(null); // State để lưu ảnh đã chọn
   const [selectedFile, setSelectedFile] = useState(null); // State để lưu file đã chọn
@@ -87,6 +88,11 @@ const MessageInput = ({
   const [isFriendWithReceiver, setIsFriendWithReceiver] = useState(true);
   const [friends, setFriends] = useState({ friends: [] });
   const dispatch = useDispatch();
+  // State lưu trữ nhiều ảnh
+  const [selectedImages, setSelectedImages] = useState([]);
+  const [showMultipleImagePreview, setShowMultipleImagePreview] =
+    useState(false);
+
   // effect để lấy danh sách bạn bè
   useEffect(() => {
     const fetchFriends = async () => {
@@ -230,7 +236,50 @@ const MessageInput = ({
 
     event.target.value = null;
   };
+  // Hàm xử lý khi người dùng chọn nhiều ảnh
+  const handleMultipleImageUpload = (event) => {
+    // Check if users are friends
+    if (
+      !isFriendWithReceiver &&
+      selectedChat.id !== user.id &&
+      selectedChat?.chat_type !== "group"
+    ) {
+      message.warning("Bạn cần kết bạn để gửi tin nhắn.");
+      return;
+    }
 
+    // Verify selected chat
+    if (!selectedChat || !selectedChat.id) {
+      console.error("No selected chat or invalid chat", selectedChat);
+      return;
+    }
+
+    const files = Array.from(event.target.files);
+
+    if (files.length === 0) return;
+
+    // Kiểm tra nếu chỉ có 1 ảnh thì xử lý như bình thường
+    if (files.length === 1) {
+      onImageUpload(files[0]);
+      message.success("Ảnh đã được tải lên thành công!");
+    } else {
+      // Nếu có nhiều ảnh, hiển thị preview và xác nhận
+      setSelectedImages(files);
+      setShowMultipleImagePreview(true);
+      message.info(`Đã chọn ${files.length} ảnh. Nhấn gửi để tải lên.`);
+    }
+
+    // Reset input để có thể chọn lại cùng một file
+    event.target.value = null;
+  };
+  // Hàm xử lý khi người dùng xác nhận gửi nhiều ảnh
+  const handleSendMultipleImages = () => {
+    if (selectedImages.length > 0) {
+      message.success(`Đã gửi ${selectedImages.length} ảnh thành công!`);
+      onImageMutippleUpload(selectedImages); // Gọi hàm gửi nhiều ảnh
+      setShowMultipleImagePreview(false); // Đóng preview sau khi gửi
+    }
+  };
   // Hàm xử lý khi chọn file (mở hộp thoại tải file trực tiếp)
   const handleFileUpload = (event) => {
     // Check if users are friends before sending
@@ -653,6 +702,45 @@ const MessageInput = ({
         </div>
       )}
       {mediaPreview && <MediaPreviewComponent />}
+      {/* Preview nhiều ảnh */}
+      {showMultipleImagePreview && selectedImages.length > 0 && (
+        <div className="multiple-image-preview">
+          <div className="preview-header">
+            <span>Đã chọn {selectedImages.length} ảnh</span>
+            <Button
+              type="text"
+              icon={<CloseCircleOutlined />}
+              onClick={() => {
+                setSelectedImages([]);
+                setShowMultipleImagePreview(false);
+              }}
+            />
+          </div>
+
+          <div className="preview-grid">
+            {selectedImages.slice(0, 4).map((image, index) => (
+              <div key={index} className="preview-image-container">
+                <img
+                  src={URL.createObjectURL(image)}
+                  alt={`Preview ${index}`}
+                  className="preview-image"
+                />
+                {index === 3 && selectedImages.length > 4 && (
+                  <div className="more-images">
+                    +{selectedImages.length - 4}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <div className="preview-footer">
+            <Button type="primary" onClick={handleSendMultipleImages}>
+              Gửi {selectedImages.length} ảnh
+            </Button>
+          </div>
+        </div>
+      )}
       {/* Thanh công cụ trên */}
       <div className="message-toolbar">
         <div style={{ bottom: "102px", position: "absolute", left: "0px" }}>
@@ -702,7 +790,8 @@ const MessageInput = ({
             type="file"
             id="image-upload"
             accept="image/*"
-            onChange={handleImageUpload}
+            onChange={handleMultipleImageUpload}
+            multiple
             style={{ display: "none" }} // Ẩn input file
           />
           <PictureOutlined />

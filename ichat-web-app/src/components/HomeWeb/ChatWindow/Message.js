@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Avatar, Button, Modal, Alert } from "antd";
 import { UserAddOutlined, DownloadOutlined } from "@ant-design/icons";
 import { message as antMessage } from "antd";
@@ -18,6 +18,7 @@ import {
   handleSoftDelete,
   addReactionToMessage,
   removeReactionFromMessage,
+  getUserMessages,
 } from "../../../redux/slices/messagesSlice";
 import { useDispatch, useSelector } from "react-redux";
 import socket from "../../services/socket";
@@ -344,8 +345,13 @@ const Message = ({
       console.log("Recall result:", result);
 
       // Notify other users via socket
-      const userIds = [user.id, selectedChat.id].sort();
-      const roomId = `chat_${userIds[0]}_${userIds[1]}`;
+      let roomId;
+      if (selectedChat.chat_type === "group") {
+        roomId = `group_${selectedChat.id}`;
+      } else {
+        const userIds = [user.id, selectedChat.id].sort();
+        roomId = `chat_${userIds[0]}_${userIds[1]}`;
+      }
 
       socket.emit("recall-message", {
         chatId: roomId,
@@ -363,6 +369,7 @@ const Message = ({
 
       // Refresh messages
       dispatch(fetchMessages(user.id || user._id));
+      dispatch(updateMessages(result));
       closeContextMenu();
       setThreeDotsMenuVisible(false);
     } catch (error) {
@@ -378,8 +385,15 @@ const Message = ({
   useEffect(() => {
     if (!selectedChat?.id || !user?.id) return;
 
-    const userIds = [user.id, selectedChat.id].sort();
-    const roomId = `chat_${userIds[0]}_${userIds[1]}`;
+    let roomId;
+    if (selectedChat.chat_type === "group") {
+      roomId = `group_${selectedChat.id}`;
+      console.log("Joining group room:", roomId);
+    } else {
+      const userIds = [user.id, selectedChat.id].sort();
+      roomId = `chat_${userIds[0]}_${userIds[1]}`;
+      console.log("Joining private chat room:", roomId);
+    }
 
     // Join the consistent room
     socket.emit("join-room", roomId);
@@ -538,6 +552,14 @@ const Message = ({
           messageId: message._id || message.id,
         })
       ).unwrap();
+      console.log("Delete result:", result);
+      // Cập nhật Redux store với tin nhắn đã được xóa
+      if (selectedChat.chat_type === "group") {
+        dispatch(getUserMessages(selectedChat.id));
+      }
+
+      // Gọi fetchMessages sau khi đã cập nhật store
+      await dispatch(fetchMessages(user.id || user._id));
 
       // Show success message
       antMessage.success({
@@ -545,8 +567,6 @@ const Message = ({
         key,
         duration: 2,
       });
-      dispatch(fetchMessages(user.id));
-      dispatch(updateMessages(result));
 
       // Enable socket notification (optional)
       const userIds = [user.id, selectedChat.id].sort();
@@ -598,10 +618,17 @@ const Message = ({
         duration: 1,
       });
 
-      // Create room ID
-      const userIds = [user.id, selectedChat.id].sort();
-      const roomId = `chat_${userIds[0]}_${userIds[1]}`;
-
+      // // Create room ID
+      // const userIds = [user.id, selectedChat.id].sort();
+      // const roomId = `chat_${userIds[0]}_${userIds[1]}`;
+      // Tạo roomId khác nhau cho chat 1-1 và nhóm
+      let roomId;
+      if (selectedChat.chat_type === "group") {
+        roomId = `group_${selectedChat.id}`; // Định dạng roomId cho nhóm
+      } else {
+        const userIds = [user.id, selectedChat.id].sort();
+        roomId = `chat_${userIds[0]}_${userIds[1]}`; // Định dạng roomId cho chat 1-1
+      }
       // Emit add-reaction event
       const payload = {
         chatId: roomId,
@@ -640,9 +667,15 @@ const Message = ({
         duration: 1,
       });
 
-      // Create room ID
-      const userIds = [user.id, selectedChat.id].sort();
-      const roomId = `chat_${userIds[0]}_${userIds[1]}`;
+      let roomId;
+      if (selectedChat.chat_type === "group") {
+        roomId = `group_${selectedChat.id}`;
+        console.log("Joining group room:", roomId);
+      } else {
+        const userIds = [user.id, selectedChat.id].sort();
+        roomId = `chat_${userIds[0]}_${userIds[1]}`;
+        console.log("Joining private chat room:", roomId);
+      }
 
       // Format payload exactly as server expects it
       const payload = {
@@ -663,8 +696,15 @@ const Message = ({
   useEffect(() => {
     if (!selectedChat?.id || !user?.id) return;
 
-    const userIds = [user.id, selectedChat.id].sort();
-    const roomId = `chat_${userIds[0]}_${userIds[1]}`;
+    let roomId;
+    if (selectedChat.chat_type === "group") {
+      roomId = `group_${selectedChat.id}`;
+      console.log("Joining group room:", roomId);
+    } else {
+      const userIds = [user.id, selectedChat.id].sort();
+      roomId = `chat_${userIds[0]}_${userIds[1]}`;
+      console.log("Joining private chat room:", roomId);
+    }
 
     console.log("Joining chat room:", roomId);
     socket.emit("join-room", roomId);
@@ -831,8 +871,15 @@ const Message = ({
   useEffect(() => {
     if (!selectedChat?.id || !user?.id) return;
 
-    const userIds = [user.id, selectedChat.id].sort();
-    const roomId = `chat_${userIds[0]}_${userIds[1]}`;
+    let roomId;
+    if (selectedChat.chat_type === "group") {
+      roomId = `group_${selectedChat.id}`;
+      console.log("Joining group room:", roomId);
+    } else {
+      const userIds = [user.id, selectedChat.id].sort();
+      roomId = `chat_${userIds[0]}_${userIds[1]}`;
+      console.log("Joining private chat room:", roomId);
+    }
     console.log("Message component joining room:", roomId);
     socket.emit("join-room", roomId);
     return () => {
@@ -840,6 +887,51 @@ const Message = ({
       console.log("Cleaning up socket listener for message reactions");
     };
   }, [selectedChat?.id, user?.id, dispatch]);
+  // if (message.type === "image" && message.is_group_images && message.group_id) {
+  //   // Tìm tất cả tin nhắn cùng group_id và sắp xếp theo timestamp
+  //   const sameGroupMessages = allMessages
+  //     .filter(
+  //       (msg) => msg.type === "image" && msg.group_id === message.group_id
+  //     )
+  //     .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+  //   // Nếu không phải tin nhắn đầu tiên trong nhóm, không render gì cả
+  //   if (
+  //     sameGroupMessages.length > 0 &&
+  //     sameGroupMessages[0]?._id !== message._id
+  //   ) {
+  //     return null;
+  //   }
+  // }
+  const isFirstImageInGroup = useMemo(() => {
+    if (
+      message.type === "image" &&
+      message.is_group_images &&
+      message.group_id &&
+      Array.isArray(allMessages)
+    ) {
+      const sameGroupMessages = allMessages
+        .filter(
+          (msg) => msg.type === "image" && msg.group_id === message.group_id
+        )
+        .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+      return (
+        sameGroupMessages.length > 0 &&
+        sameGroupMessages[0]?._id === message._id
+      );
+    }
+    return true; // Nếu không phải ảnh nhóm, luôn trả về true để render
+  }, [message, allMessages]);
+
+  // Và sau đó kiểm tra
+  if (
+    message.type === "image" &&
+    message.is_group_images &&
+    !isFirstImageInGroup
+  ) {
+    return null;
+  }
   return (
     <>
       <div
@@ -920,9 +1012,7 @@ const Message = ({
                     })}
                   </span>
                 </div>
-              ) : // Nếu là ảnh nhóm không phải đầu tiên, không hiển thị gì cả
-              message.is_group_images && !isFirstInGroup ? null : (
-                // Nếu là ảnh đơn lẻ, hiển thị bình thường
+              ) : message.is_group_images && !isFirstInGroup ? null : (
                 <div
                   className="message-image-container"
                   onClick={handleOpenMediaModal}
