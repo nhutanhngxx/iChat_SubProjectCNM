@@ -85,9 +85,6 @@ const Chatting = ({ navigation, route }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
 
-  const [isDownloading, setIsDownloading] = useState(false);
-  const [downloadProgress, setDownloadProgress] = useState(0);
-
   // Kiểm tra trạng thái chặn giữa 2 người dùng
   const [blockStatus, setBlockStatus] = useState({
     isBlocked: false,
@@ -105,21 +102,15 @@ const Chatting = ({ navigation, route }) => {
   useEffect(() => {
     if (!user?.id || !chat?.id) return;
 
-    // let roomId;
-    // if (chat.chat_type === "group") {
-    //   roomId = `group_${chat.id}`;
-    //   console.log("Joining group room:", roomId);
-    // } else {
-    //   const userIds = [user.id, chat.id].sort();
-    //   roomId = `chat_${userIds[0]}_${userIds[1]}`;
-    //   console.log("Joining private chat room:", roomId);
-    // }
-
-    // Tạo roomId cho chat
-    const userIds = [user.id, chat.id].sort();
-    const roomId = `chat_${userIds[0]}_${userIds[1]}`;
-
-    console.log("Joining room:", roomId);
+    let roomId;
+    if (chat.chatType === "group") {
+      roomId = `group_${chat.id}`;
+      console.log("Joining group room:", roomId);
+    } else {
+      const userIds = [user.id, chat.id].sort();
+      roomId = `chat_${userIds[0]}_${userIds[1]}`;
+      console.log("Joining private chat room:", roomId);
+    }
 
     // Lắng nghe sự kiện kết nối
     socketService.connect(() => {
@@ -639,9 +630,15 @@ const Chatting = ({ navigation, route }) => {
     }
 
     try {
-      // Tạo roomId cho chat
-      const userIds = [user.id, chat.id].sort();
-      const roomId = `chat_${userIds[0]}_${userIds[1]}`;
+      let roomId;
+      if (chat.chatType === "group") {
+        roomId = `group_${chat.id}`;
+        console.log("Joining group room:", roomId);
+      } else {
+        const userIds = [user.id, chat.id].sort();
+        roomId = `chat_${userIds[0]}_${userIds[1]}`;
+        console.log("Joining private chat room:", roomId);
+      }
 
       // Gửi tin nhắn văn bản hoặc reply
       if (inputMessage.trim() || replyMessage) {
