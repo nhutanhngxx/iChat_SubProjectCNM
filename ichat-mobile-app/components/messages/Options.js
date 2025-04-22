@@ -155,6 +155,31 @@ const Option = ({ route }) => {
     ]);
   };
 
+  // Xóa nhóm
+  const handleDeleteGroup = async () => {
+    Alert.alert("Thông báo", "Bạn có chắc chắn muốn xóa nhóm này không?", [
+      { text: "Hủy" },
+      {
+        text: "Đồng ý",
+        onPress: async () => {
+          try {
+            const response = await groupService.deleteGroup(id);
+            if (response.status === "ok") {
+              Alert.alert("Thông báo", response.message, [
+                { text: "OK", onPress: () => navigation.navigate("Home") },
+              ]);
+            }
+            if (response.status === "error") {
+              Alert.alert("Thông báo", response.message);
+            }
+          } catch (error) {
+            console.error("Lỗi khi xóa nhóm:", error);
+          }
+        },
+      },
+    ]);
+  };
+
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
@@ -362,7 +387,10 @@ const Option = ({ route }) => {
           )}
 
           {adminGroup === true && (
-            <TouchableOpacity style={styles.component}>
+            <TouchableOpacity
+              style={styles.component}
+              onPress={handleDeleteGroup}
+            >
               <Image
                 source={require("../../assets/icons/delete-friend.png")}
                 style={{ width: 25, height: 25 }}

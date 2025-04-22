@@ -175,6 +175,22 @@ const groupService = {
       throw error;
     }
   },
+
+  deleteGroup: async (groupId) => {
+    try {
+      const response = await apiService.delete(`/${PREFIX}/${groupId}`);
+      if (response.data.status === "error") {
+        throw new Error(response.data.message);
+      }
+      if (response.data.status === "ok") {
+        console.log("Xóa nhóm thành công:", response.data);
+        return { status: "ok", message: "Xóa nhóm thàn công." };
+      }
+    } catch (error) {
+      console.log("Không thể xóa nhóm: ", error);
+      throw error;
+    }
+  },
 };
 
 export default groupService;
