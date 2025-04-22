@@ -34,6 +34,7 @@ import MessageInputBar from "../../components/messages/MessageInputBar";
 import { getHostIP } from "../../services/api";
 import friendService from "../../services/friendService";
 import socketService from "../../services/socketService";
+import { Video } from "expo-av";
 // import { SocketContext } from "../../config/context/SocketContext";
 
 const renderReactionIcons = (reactions) => {
@@ -78,6 +79,15 @@ const Chatting = ({ route }) => {
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [groupMembers, setGroupMembers] = useState([]);
+  const [selectedVideo, setSelectedVideo] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const videoRef = useRef(null);
+  const modalVideoRef = useRef(null);
+
+  const handleVideoPress = () => {
+    setIsModalVisible(true);
+  };
 
   // Kiểm tra trạng thái chặn giữa 2 người dùng
   const [blockStatus, setBlockStatus] = useState({
@@ -217,10 +227,9 @@ const Chatting = ({ route }) => {
   const pickImage = async () => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.All,
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsMultipleSelection: true, // Cho phép chọn nhiều ảnh
         quality: 0.8,
-        videoMaxDuration: 45,
       });
 
       if (!result.canceled) {
@@ -231,6 +240,95 @@ const Chatting = ({ route }) => {
     } catch (error) {
       console.error("Error picking images:", error);
       Alert.alert("Lỗi", "Không thể chọn ảnh.");
+    }
+  };
+
+  const getMimeType = (uri) => {
+    // Lấy phần mở rộng từ uri
+    const extension = uri.split(".").pop().toLowerCase();
+
+    // Map các định dạng phổ biến
+    const mimeMap = {
+      mp4: "video/mp4",
+      mov: "video/quicktime",
+      avi: "video/x-msvideo",
+      wmv: "video/x-ms-wmv",
+    };
+
+    return mimeMap[extension] || "video/mp4"; // Mặc định là mp4 nếu không xác định được
+  };
+
+  const isValidVideoType = (mimeType) => {
+    const validTypes = [
+      "video/mp4",
+      "video/quicktime",
+      "video/x-msvideo",
+      "video/x-ms-wmv",
+    ];
+    return validTypes.includes(mimeType);
+  };
+
+  const pickVideo = async () => {
+    try {
+      const { status } =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert(
+          "Quyền truy cập bị từ chối",
+          "Vui lòng cấp quyền truy cập thư viện ảnh để chọn video."
+        );
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Videos,
+        allowsEditing: true,
+        quality: 1,
+        videoMaxDuration: 60,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        const videoAsset = result.assets[0];
+        const videoSize = await FileSystem.getInfoAsync(videoAsset.uri);
+        const MAX_VIDEO_SIZE = 50 * 1024 * 1024;
+
+        if (videoSize.size > MAX_VIDEO_SIZE) {
+          Alert.alert(
+            "Video quá lớn",
+            "Vui lòng chọn video có kích thước nhỏ hơn 50MB"
+          );
+          return;
+        }
+
+        // Xác định MIME type từ uri
+        const mimeType = getMimeType(videoAsset.uri);
+
+        // Kiểm tra định dạng video hợp lệ
+        if (!isValidVideoType(mimeType)) {
+          Alert.alert(
+            "Định dạng không hỗ trợ",
+            "Vui lòng chọn video định dạng MP4, MOV, AVI hoặc WMV"
+          );
+          return;
+        }
+
+        // Tạo tên file với đúng phần mở rộng
+        const extension = videoAsset.uri.split(".").pop().toLowerCase();
+        const fileName = `video-${Date.now()}.${extension}`;
+
+        const videoFile = {
+          uri: videoAsset.uri,
+          type: mimeType,
+          name: fileName,
+          size: videoSize.size,
+          duration: videoAsset.duration,
+        };
+
+        setSelectedVideo(videoFile);
+      }
+    } catch (error) {
+      console.error("Lỗi khi chọn video:", error);
+      Alert.alert("Lỗi", "Không thể chọn video. Vui lòng thử lại.");
     }
   };
 
@@ -627,6 +725,62 @@ const Chatting = ({ route }) => {
         }
 
         setSelectedFile(null);
+      }
+
+      // Gửi video
+      if (selectedVideo) {
+        const videoFormData = new FormData();
+
+        // Kiểm tra lại MIME type trước khi gửi
+        const mimeType = getMimeType(selectedVideo.uri);
+        if (!isValidVideoType(mimeType)) {
+          Alert.alert(
+            "Lỗi",
+            "Định dạng video không được hỗ trợ. Vui lòng chọn video khác."
+          );
+          setSelectedVideo(null);
+          return;
+        }
+
+        videoFormData.append("video", {
+          uri: selectedVideo.uri,
+          name: selectedVideo.name,
+          type: mimeType,
+        });
+
+        videoFormData.append("sender_id", user.id);
+        videoFormData.append("receiver_id", chat.id);
+        videoFormData.append("type", "video");
+        videoFormData.append(
+          "chat_type",
+          chat?.chatType === "group" ? "group" : "private"
+        );
+
+        try {
+          const uploadResponse = await axios.post(
+            `${API_iChat}/send-message`,
+            videoFormData,
+            {
+              headers: {
+                "Content-Type": "multipart/form-data",
+                Accept: "application/json",
+              },
+            }
+          );
+
+          if (uploadResponse.data.data) {
+            const messageToSend = {
+              ...uploadResponse.data.data,
+              chatId: roomId,
+            };
+            socketService.handleSendMessage(messageToSend);
+          }
+        } catch (error) {
+          console.error("Lỗi khi gửi video:", error);
+          Alert.alert("Lỗi", "Không thể gửi video. Vui lòng thử lại.");
+        } finally {
+          setSelectedVideo(null);
+        }
       }
     } catch (error) {
       console.error("Lỗi khi gửi tin nhắn/hình ảnh/file:", error);
@@ -1150,6 +1304,26 @@ const Chatting = ({ route }) => {
                         {getFileNameFromUrl(item.content) || "Tệp đính kèm"}
                       </Text>
                     </TouchableOpacity>
+                  ) : item.type === "video" ? (
+                    <TouchableOpacity
+                      onPress={() =>
+                        navigation.navigate("ViewVideoChat", {
+                          videoUrl: item.content,
+                        })
+                      }
+                    >
+                      <Video
+                        source={{ uri: item.content }}
+                        style={styles.videoPlayer}
+                        useNativeControls
+                        resizeMode="contain" // Đảm bảo video không bị cắt
+                        isLooping={true} // Tắt lặp lại video
+                        shouldPlay={false} // Phát video ngay lập tức
+                        isMuted={false}
+                        usePoster={true}
+                        posterSource={{ uri: item.content }}
+                      />
+                    </TouchableOpacity>
                   ) : (
                     <Text
                       style={[
@@ -1458,9 +1632,13 @@ const Chatting = ({ route }) => {
           setSelectedImages={setSelectedImages}
           selectedFile={selectedFile}
           setSelectedFile={setSelectedFile}
+          selectedVideo={selectedVideo}
+          setSelectedVideo={setSelectedVideo}
           sendMessage={sendMessage}
           pickImage={pickImage}
+          pickVideo={pickVideo}
           pickFile={pickFile}
+          isUploading={isUploading}
         />
       </KeyboardAvoidingView>
     </View>
@@ -1826,6 +2004,12 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 20,
     fontWeight: "bold",
+  },
+  videoPlayer: {
+    width: 250,
+    height: 150,
+    borderRadius: 10,
+    marginTop: 5,
   },
 });
 
