@@ -191,6 +191,27 @@ const groupService = {
       throw error;
     }
   },
+
+  renameGroup: async ({ groupId, name }) => {
+    try {
+      // console.log("Group Service: ", groupId, newName);
+      const response = await apiService.put(`/${PREFIX}/${groupId}`, {
+        name,
+      });
+      console.log("response: ", response.data);
+
+      if (response.data.status === "error") {
+        throw new Error(response.data.message);
+      }
+      if (response.data.status === "ok") {
+        console.log("Đổi tên nhóm thành công:", response.data);
+        return { status: "ok", message: "Đổi tên nhóm thành công." };
+      }
+    } catch (error) {
+      console.log("Không thể đổi tên nhóm: ", error);
+      throw error;
+    }
+  },
 };
 
 export default groupService;

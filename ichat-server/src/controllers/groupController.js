@@ -198,6 +198,8 @@ const GroupController = {
       const { name } = req.body;
       const avatar = req.file ? req.file.buffer : null;
 
+      console.log(groupId, name, avatar);
+
       const upd = await GroupModel.updateGroup(groupId, {
         name,
         avatar,

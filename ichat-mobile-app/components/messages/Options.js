@@ -18,6 +18,7 @@ import userService from "../../services/userService";
 import groupService from "../../services/groupService";
 import messageService from "../../services/messageService";
 import friendService from "../../services/friendService";
+import ModalRenameGroup from "../group/ModalRenameGroup";
 
 const Option = ({ route }) => {
   // const API_iChat = `http://${getHostIP()}:5001/api`;
@@ -29,6 +30,7 @@ const Option = ({ route }) => {
   const [isGroup, setIsGroup] = useState(false);
   const [adminGroup, setAdminGroup] = useState(null);
   const [sharedGroups, setSharedGroups] = useState([]); // Danh sách nhóm chung giữa 2 người
+  const [isRenameModalVisible, setIsRenameModalVisible] = useState(false);
 
   useEffect(() => {
     const fetchReceiverInfo = async () => {
@@ -37,7 +39,6 @@ const Option = ({ route }) => {
         console.log("User response:", userRes);
         if (!userRes || !userRes._id) {
           const groupRes = await groupService.getGroupById(id);
-          console.log("Group response:", groupRes);
           if (groupRes && groupRes._id) {
             setReceiverGroup(groupRes);
             setIsGroup(true);
@@ -60,7 +61,7 @@ const Option = ({ route }) => {
     if (id) {
       fetchReceiverInfo();
     }
-  }, [id]);
+  }, [id, name, avatar, user.id]);
 
   // Xóa tất cả tin nhắn giữa 2 người
   const handleDeleteChatHistory = async () => {
@@ -197,7 +198,7 @@ const Option = ({ route }) => {
             }}
           >
             <Text style={styles.name}>{name}</Text>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={() => setIsRenameModalVisible(true)}>
               <Image
                 source={require("../../assets/icons/edit.png")}
                 style={[styles.icon, { marginTop: 10 }]}
@@ -276,17 +277,7 @@ const Option = ({ route }) => {
             </TouchableOpacity>
             <Text>Thêm thành viên</Text>
           </View>
-          {/* 3. Đổi tên nhóm */}
-          {/* <View style={{ width: 100, gap: 10, alignItems: "center" }}>
-            <TouchableOpacity>
-              <Image
-                source={require("../../assets/icons/edit.png")}
-                style={styles.icon}
-              />
-            </TouchableOpacity>
-            <Text>Đổi tên nhóm</Text>
-          </View> */}
-          {/* 4. Đổi ảnh nhóm */}
+          {/* 3. Đổi ảnh nhóm */}
           <View style={{ width: 100, gap: 10, alignItems: "center" }}>
             <TouchableOpacity>
               <Image
@@ -483,6 +474,14 @@ const Option = ({ route }) => {
           )}
         </View>
       </ScrollView>
+
+      {/* Modal Rename Group */}
+      <ModalRenameGroup
+        visible={isRenameModalVisible}
+        onClose={() => setIsRenameModalVisible(false)}
+        groupId={id}
+        currentName={name}
+      />
     </View>
   );
 };
