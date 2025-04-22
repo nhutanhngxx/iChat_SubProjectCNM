@@ -17,10 +17,22 @@ export default {
       infoPlist: {
         NSCameraUsageDescription:
           "Ứng dụng cần quyền truy cập camera để quét mã QR.",
+        UIFileSharingEnabled: true,
+        LSSupportsOpeningDocumentsInPlace: true,
+        UISupportsDocumentBrowser: true,
+        NSPhotoLibraryUsageDescription:
+          "Ứng dụng cần quyền truy cập thư viện để lưu file.",
+        NSPhotoLibraryAddUsageDescription:
+          "Ứng dụng cần quyền lưu file vào thư viện.",
       },
+      bundleIdentifier: "com.ichat.app",
     },
     android: {
-      permissions: ["CAMERA"],
+      permissions: [
+        "CAMERA",
+        "WRITE_EXTERNAL_STORAGE",
+        "READ_EXTERNAL_STORAGE",
+      ],
       adaptiveIcon: {
         foregroundImage: "./assets/icons/new-logo.png",
         backgroundColor: "#ffffff",

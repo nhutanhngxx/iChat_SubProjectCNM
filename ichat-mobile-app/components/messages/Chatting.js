@@ -21,6 +21,9 @@ import {
 import * as ImagePicker from "expo-image-picker";
 import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from "expo-file-system";
+import * as MediaLibrary from "expo-media-library";
+import * as IntentLauncher from "expo-intent-launcher";
+import * as Sharing from "expo-sharing";
 import { StatusBar } from "expo-status-bar";
 import * as Clipboard from "expo-clipboard";
 
@@ -63,16 +66,15 @@ const renderReactionIcons = (reactions) => {
   );
 };
 
-const Chatting = ({ route }) => {
+const Chatting = ({ navigation, route }) => {
   const ipAdr = getHostIP();
   const API_iChat = `http://${ipAdr}:5001/api/messages/`;
-  const navigation = useNavigation();
   const { user } = useContext(UserContext);
   const { chat } = route.params || {};
   const flatListRef = useRef(null); // "friend" | "not-friend" | "blocked" dùng để kiểm tra trạng thái bạn bè giữa 2 người dùng
   const [typeChat, setTypeChat] = useState(route.params?.typeChat || "friend");
   const [inputMessage, setInputMessage] = useState("");
-  const [selectedImages, setSelectedImages] = useState([]); // Thay thế selectedImage
+  const [selectedImages, setSelectedImages] = useState([]);
   const [selectedFile, setSelectedFile] = useState(null);
   const [messages, setMessages] = useState([]);
   const [replyMessage, setReplyMessage] = useState(null);
@@ -81,13 +83,10 @@ const Chatting = ({ route }) => {
   const [groupMembers, setGroupMembers] = useState([]);
   const [selectedVideo, setSelectedVideo] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const videoRef = useRef(null);
-  const modalVideoRef = useRef(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
-  const handleVideoPress = () => {
-    setIsModalVisible(true);
-  };
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState(0);
 
   // Kiểm tra trạng thái chặn giữa 2 người dùng
   const [blockStatus, setBlockStatus] = useState({
@@ -98,9 +97,23 @@ const Chatting = ({ route }) => {
 
   const [socketConnected, setSocketConnected] = useState(false);
 
+  // Thêm state ở đầu component
+  const [downloadingFiles, setDownloadingFiles] = useState({}); // { messageId: progress }
+  const [downloadResumables, setDownloadResumables] = useState({}); // { messageId: downloadResumable }
+
   // Thêm useEffect để quản lý socket connection và events
   useEffect(() => {
     if (!user?.id || !chat?.id) return;
+
+    // let roomId;
+    // if (chat.chat_type === "group") {
+    //   roomId = `group_${chat.id}`;
+    //   console.log("Joining group room:", roomId);
+    // } else {
+    //   const userIds = [user.id, chat.id].sort();
+    //   roomId = `chat_${userIds[0]}_${userIds[1]}`;
+    //   console.log("Joining private chat room:", roomId);
+    // }
 
     // Tạo roomId cho chat
     const userIds = [user.id, chat.id].sort();
@@ -182,7 +195,7 @@ const Chatting = ({ route }) => {
     };
   }, [user?.id, chat?.id]);
 
-  const getFileNameFromUrl = (url) => {
+  const saveFileName = (url) => {
     // Tách URL theo dấu '/' và lấy phần cuối cùng
     const fileName = url.split("/").pop();
 
@@ -195,6 +208,31 @@ const Chatting = ({ route }) => {
 
     // Nối lại các phần còn lại để lấy tên file đầy đủ
     return parts.join("-");
+  };
+
+  const getFileNameFromUrl = (url, maxLength = 30) => {
+    // Tách URL theo dấu '/' và lấy phần cuối cùng
+    const fileName = url.split("/").pop();
+
+    // Tách tên file theo dấu '-'
+    const parts = fileName.split("-");
+
+    // Loại bỏ các phần không cần thiết (mã ID, timestamp)
+    parts.shift(); // Bỏ mã ID
+    parts.shift(); // Bỏ timestamp
+
+    // Nối lại phần còn lại để được tên gốc
+    let finalName = parts.join("-");
+
+    // Nếu tên dài hơn maxLength thì rút gọn lại, giữ đầu và đuôi
+    if (finalName.length > maxLength) {
+      const keep = Math.floor((maxLength - 3) / 2); // Trừ 3 cho dấu "..."
+      const start = finalName.slice(0, keep);
+      const end = finalName.slice(-keep);
+      finalName = `${start}...${end}`;
+    }
+
+    return finalName;
   };
 
   // Hàm chọn tệp từ thiết bị
@@ -241,31 +279,6 @@ const Chatting = ({ route }) => {
       console.error("Error picking images:", error);
       Alert.alert("Lỗi", "Không thể chọn ảnh.");
     }
-  };
-
-  const getMimeType = (uri) => {
-    // Lấy phần mở rộng từ uri
-    const extension = uri.split(".").pop().toLowerCase();
-
-    // Map các định dạng phổ biến
-    const mimeMap = {
-      mp4: "video/mp4",
-      mov: "video/quicktime",
-      avi: "video/x-msvideo",
-      wmv: "video/x-ms-wmv",
-    };
-
-    return mimeMap[extension] || "video/mp4"; // Mặc định là mp4 nếu không xác định được
-  };
-
-  const isValidVideoType = (mimeType) => {
-    const validTypes = [
-      "video/mp4",
-      "video/quicktime",
-      "video/x-msvideo",
-      "video/x-ms-wmv",
-    ];
-    return validTypes.includes(mimeType);
   };
 
   const pickVideo = async () => {
@@ -330,6 +343,31 @@ const Chatting = ({ route }) => {
       console.error("Lỗi khi chọn video:", error);
       Alert.alert("Lỗi", "Không thể chọn video. Vui lòng thử lại.");
     }
+  };
+
+  const getMimeType = (uri) => {
+    // Lấy phần mở rộng từ uri
+    const extension = uri.split(".").pop().toLowerCase();
+
+    // Map các định dạng phổ biến
+    const mimeMap = {
+      mp4: "video/mp4",
+      mov: "video/quicktime",
+      avi: "video/x-msvideo",
+      wmv: "video/x-ms-wmv",
+    };
+
+    return mimeMap[extension] || "video/mp4"; // Mặc định là mp4 nếu không xác định được
+  };
+
+  const isValidVideoType = (mimeType) => {
+    const validTypes = [
+      "video/mp4",
+      "video/quicktime",
+      "video/x-msvideo",
+      "video/x-ms-wmv",
+    ];
+    return validTypes.includes(mimeType);
   };
 
   // Hàm lấy tên thành viên từ ID để hiển thị trên tin nhắn nhóm
@@ -637,7 +675,7 @@ const Chatting = ({ route }) => {
       // Gửi hình ảnh
       if (selectedImages.length > 0) {
         const formData = new FormData();
-        const groupId = Date.now().toString(); // Tạo ID nhóm duy nhất
+        const groupId = Date.now().toString();
 
         selectedImages.forEach((uri, index) => {
           const filename = uri.split("/").pop();
@@ -657,8 +695,8 @@ const Chatting = ({ route }) => {
           "chat_type",
           chat?.chatType === "group" ? "group" : "private"
         );
-        formData.append("group_id", groupId); // Thêm group_id
-        formData.append("total_images", selectedImages.length.toString()); // Thêm tổng số ảnh
+        formData.append("group_id", groupId);
+        formData.append("total_images", selectedImages.length.toString());
 
         const response = await axios.post(
           `${API_iChat}/send-multiple-images`,
@@ -729,10 +767,12 @@ const Chatting = ({ route }) => {
 
       // Gửi video
       if (selectedVideo) {
-        const videoFormData = new FormData();
+        setIsUploading(true);
+        setUploadProgress(0);
 
-        // Kiểm tra lại MIME type trước khi gửi
+        const videoFormData = new FormData();
         const mimeType = getMimeType(selectedVideo.uri);
+
         if (!isValidVideoType(mimeType)) {
           Alert.alert(
             "Lỗi",
@@ -744,7 +784,7 @@ const Chatting = ({ route }) => {
 
         videoFormData.append("video", {
           uri: selectedVideo.uri,
-          name: selectedVideo.name,
+          name: selectedVideo.name || "video.mp4",
           type: mimeType,
         });
 
@@ -765,6 +805,12 @@ const Chatting = ({ route }) => {
                 "Content-Type": "multipart/form-data",
                 Accept: "application/json",
               },
+              onUploadProgress: (progressEvent) => {
+                const progress = Math.round(
+                  (progressEvent.loaded * 100) / progressEvent.total
+                );
+                setUploadProgress(progress);
+              },
             }
           );
 
@@ -779,7 +825,9 @@ const Chatting = ({ route }) => {
           console.error("Lỗi khi gửi video:", error);
           Alert.alert("Lỗi", "Không thể gửi video. Vui lòng thử lại.");
         } finally {
+          setIsUploading(false);
           setSelectedVideo(null);
+          setUploadProgress(0);
         }
       }
     } catch (error) {
@@ -817,7 +865,7 @@ const Chatting = ({ route }) => {
     setModalVisible(false);
   };
 
-  // Hanlde xóa mềm- xóa tin nhắn 1 phía
+  // Hanlde xóa mềm - xóa tin nhắn 1 phía
   const handleSoftDelete = async () => {
     if (typeChat === "not-friend" || typeChat === "blocked") {
       let message = "Bạn không thể xóa tin nhắn trong cuộc trò chuyện này.";
@@ -1036,6 +1084,117 @@ const Chatting = ({ route }) => {
         {renderImages()}
       </View>
     );
+  };
+
+  const handleFileDownload = async (fileUrl, messageId) => {
+    try {
+      setDownloadingFiles((prev) => ({ ...prev, [messageId]: 0 }));
+
+      const { status } = await MediaLibrary.requestPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert(
+          "Cần quyền truy cập",
+          "Ứng dụng cần quyền truy cập để lưu file"
+        );
+        return;
+      }
+
+      // Lấy tên file từ URL
+      const fileName = decodeURIComponent(saveFileName(fileUrl));
+      const fileUri = `${FileSystem.documentDirectory}${fileName}`;
+
+      const downloadResumable = FileSystem.createDownloadResumable(
+        fileUrl,
+        fileUri,
+        {},
+        (downloadProgress) => {
+          const progress =
+            downloadProgress.totalBytesWritten /
+            downloadProgress.totalBytesExpectedToWrite;
+          setDownloadingFiles((prev) => ({ ...prev, [messageId]: progress }));
+        }
+      );
+
+      // Lưu downloadResumable object
+      setDownloadResumables((prev) => ({
+        ...prev,
+        [messageId]: downloadResumable,
+      }));
+
+      const { uri } = await downloadResumable.downloadAsync();
+
+      // Xử lý file sau khi tải xong
+      if (Platform.OS === "ios") {
+        // Trên iOS, lưu vào Photos nếu là ảnh/video, mở với QuickLook cho các file khác
+        const fileExtension = fileName.split(".").pop().toLowerCase();
+        const isMedia = ["jpg", "jpeg", "png", "gif", "mov", "mp4"].includes(
+          fileExtension
+        );
+
+        if (isMedia) {
+          await MediaLibrary.saveToLibraryAsync(uri);
+          Alert.alert("Thành công", "File đã được lưu vào thư viện");
+        } else {
+          // Sử dụng QuickLook để xem file
+          await Sharing.shareAsync(uri, {
+            UTI: "public.item",
+            mimeType: "application/octet-stream",
+          });
+        }
+      } else {
+        // Trên Android, lưu file và mở
+        await MediaLibrary.createAssetAsync(uri);
+
+        const contentUri = await FileSystem.getContentUriAsync(uri);
+        await IntentLauncher.startActivityAsync("android.intent.action.VIEW", {
+          data: contentUri,
+          flags: 1,
+          type: "*/*",
+        });
+
+        Alert.alert("Thành công", "File đã được tải về máy của bạn");
+      }
+    } catch (error) {
+      if (error.message !== "Download canceled") {
+        // console.error("Lỗi khi tải file:", error);
+        Alert.alert("Thông báo", "Đã hủy tải file");
+      }
+    } finally {
+      // Cleanup
+      setDownloadingFiles((prev) => {
+        const newState = { ...prev };
+        delete newState[messageId];
+        return newState;
+      });
+      setDownloadResumables((prev) => {
+        const newState = { ...prev };
+        delete newState[messageId];
+        return newState;
+      });
+    }
+  };
+
+  const handleCancelDownload = async (messageId) => {
+    try {
+      const downloadResumable = downloadResumables[messageId];
+      if (downloadResumable) {
+        await downloadResumable.cancelAsync();
+
+        // Cleanup states
+        setDownloadingFiles((prev) => {
+          const newState = { ...prev };
+          delete newState[messageId];
+          return newState;
+        });
+        setDownloadResumables((prev) => {
+          const newState = { ...prev };
+          delete newState[messageId];
+          return newState;
+        });
+      }
+    } catch (error) {
+      console.error("Lỗi khi hủy tải file:", error);
+    }
   };
 
   return (
@@ -1289,41 +1448,86 @@ const Chatting = ({ route }) => {
                     <TouchableOpacity
                       style={styles.fileContainer}
                       onPress={() => {
-                        Alert.alert("Thông báo", "Hãy tải hoặc mở file về máy");
+                        if (!downloadingFiles[item._id]) {
+                          Alert.alert(
+                            "Tải file",
+                            "Bạn muốn tải file này về máy?",
+                            [
+                              { text: "Hủy", style: "cancel" },
+                              {
+                                text: "Tải về",
+                                onPress: () =>
+                                  handleFileDownload(item.content, item._id),
+                              },
+                            ]
+                          );
+                        }
                       }}
                     >
                       <Image
                         source={require("../../assets/icons/attachment.png")}
                         style={styles.fileIcon}
                       />
-                      <Text
-                        style={styles.fileName}
-                        numberOfLines={1}
-                        ellipsizeMode="tail"
-                      >
-                        {getFileNameFromUrl(item.content) || "Tệp đính kèm"}
-                      </Text>
+                      <View style={styles.fileInfoContainer}>
+                        <Text
+                          style={styles.fileName}
+                          numberOfLines={1}
+                          ellipsizeMode="tail"
+                        >
+                          {getFileNameFromUrl(item.content) || "Tệp đính kèm"}
+                        </Text>
+                        {downloadingFiles[item._id] !== undefined && (
+                          <View style={styles.downloadContainer}>
+                            <View style={styles.downloadProgressContainer}>
+                              <View
+                                style={[
+                                  styles.downloadProgressBar,
+                                  {
+                                    width: `${
+                                      downloadingFiles[item._id] * 100
+                                    }%`,
+                                  },
+                                ]}
+                              />
+                              <Text style={styles.downloadProgressText}>
+                                {Math.round(downloadingFiles[item._id] * 100)}%
+                              </Text>
+                            </View>
+                            <TouchableOpacity
+                              style={styles.cancelButton}
+                              onPress={() => handleCancelDownload(item._id)}
+                            >
+                              <Image
+                                source={require("../../assets/icons/close.png")}
+                                style={styles.cancelIcon}
+                              />
+                            </TouchableOpacity>
+                          </View>
+                        )}
+                      </View>
                     </TouchableOpacity>
                   ) : item.type === "video" ? (
-                    <TouchableOpacity
-                      onPress={() =>
-                        navigation.navigate("ViewVideoChat", {
-                          videoUrl: item.content,
-                        })
-                      }
-                    >
-                      <Video
-                        source={{ uri: item.content }}
-                        style={styles.videoPlayer}
-                        useNativeControls
-                        resizeMode="contain" // Đảm bảo video không bị cắt
-                        isLooping={true} // Tắt lặp lại video
-                        shouldPlay={false} // Phát video ngay lập tức
-                        isMuted={false}
-                        usePoster={true}
-                        posterSource={{ uri: item.content }}
-                      />
-                    </TouchableOpacity>
+                    <View style={styles.videoMessageContainer}>
+                      <TouchableOpacity
+                        onPress={() =>
+                          navigation.navigate("ViewVideoChat", {
+                            videoUrl: item.content,
+                          })
+                        }
+                      >
+                        <Video
+                          source={{ uri: item.content }}
+                          style={styles.videoPlayer}
+                          useNativeControls
+                          resizeMode="contain"
+                          isLooping={false}
+                          shouldPlay={false}
+                          isMuted={false}
+                          usePoster={true}
+                          posterSource={{ uri: item.content }}
+                        />
+                      </TouchableOpacity>
+                    </View>
                   ) : (
                     <Text
                       style={[
@@ -1639,6 +1843,7 @@ const Chatting = ({ route }) => {
           pickVideo={pickVideo}
           pickFile={pickFile}
           isUploading={isUploading}
+          uploadProgress={uploadProgress}
         />
       </KeyboardAvoidingView>
     </View>
@@ -1678,7 +1883,6 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginVertical: 5,
     maxWidth: "80%",
-    // marginBottom: i
   },
   myMessage: {
     alignSelf: "flex-end",
@@ -1857,9 +2061,7 @@ const styles = StyleSheet.create({
   fileContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#e6e6fa",
-    borderRadius: 8,
-    marginTop: 5,
+    padding: 5,
   },
   fileIcon: {
     width: 24,
@@ -1870,6 +2072,29 @@ const styles = StyleSheet.create({
     color: "#333",
     fontSize: 14,
     flexShrink: 1,
+  },
+  downloadProgressContainer: {
+    height: 20,
+    backgroundColor: "#f0f0f0",
+    borderRadius: 10,
+    marginTop: 5,
+    overflow: "hidden",
+  },
+  downloadProgressBar: {
+    position: "absolute",
+    left: 0,
+    top: 0,
+    bottom: 0,
+    backgroundColor: "#4CAF50",
+    borderRadius: 10,
+  },
+  downloadProgressText: {
+    position: "absolute",
+    width: "100%",
+    textAlign: "center",
+    color: "#000",
+    fontSize: 12,
+    lineHeight: 20,
   },
   reactionsContainer: {
     position: "absolute",
@@ -2010,6 +2235,69 @@ const styles = StyleSheet.create({
     height: 150,
     borderRadius: 10,
     marginTop: 5,
+  },
+  videoMessageContainer: {
+    maxWidth: "70%",
+    borderRadius: 10,
+    overflow: "hidden",
+    marginVertical: 2,
+  },
+  fileInfoContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  downloadProgressContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+  },
+  downloadProgressBar: {
+    height: 4,
+    backgroundColor: "#007AFF",
+    borderRadius: 2,
+  },
+  downloadProgressText: {
+    fontSize: 10,
+    color: "#fff",
+  },
+  downloadContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  downloadProgressContainer: {
+    height: 15,
+    backgroundColor: "#0AA2F8",
+    borderRadius: 10,
+    overflow: "hidden",
+    width: "80%",
+  },
+  downloadProgressBar: {
+    position: "absolute",
+    left: 0,
+    top: 0,
+    bottom: 0,
+    backgroundColor: "#4CAF50",
+    borderRadius: 10,
+  },
+  downloadProgressText: {
+    position: "absolute",
+    width: "100%",
+    textAlign: "center",
+    color: "#fff",
+    fontSize: 12,
+    lineHeight: 20,
+  },
+  cancelButton: {
+    width: 20,
+    height: 20,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  cancelIcon: {
+    width: 16,
+    height: 16,
+    tintColor: "red",
   },
 });
 

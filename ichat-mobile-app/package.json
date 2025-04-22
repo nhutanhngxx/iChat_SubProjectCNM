@@ -23,6 +23,7 @@
     "dayjs": "^1.11.13",
     "dotenv": "^16.4.7",
     "expo": "^52.0.42",
+    "expo-av": "~15.0.2",
     "expo-barcode-scanner": "^13.0.1",
     "expo-camera": "~16.0.18",
     "expo-clipboard": "^7.0.1",
@@ -33,6 +34,7 @@
     "expo-firebase-recaptcha": "^2.3.1",
     "expo-image-manipulator": "~13.0.6",
     "expo-image-picker": "~16.0.6",
+    "expo-intent-launcher": "^12.0.2",
     "expo-media-library": "^17.0.6",
     "expo-network": "~7.0.5",
     "expo-permissions": "^14.4.0",
@@ -56,7 +58,7 @@
     "react-native-web": "~0.19.13",
     "react-native-webview": "13.12.5",
     "socket.io-client": "^4.8.1",
-    "expo-av": "~15.0.2"
+    "expo-sharing": "~13.0.1"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
