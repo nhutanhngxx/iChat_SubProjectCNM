@@ -25,59 +25,46 @@ const Option = ({ route }) => {
   const { user } = useContext(UserContext); // Lấy thông tin người dùng từ context
   const { id, name, avatar } = route.params || {}; // Nhận id, name, avatar từ route.params
   const [receiverInfo, setReceiverInfo] = useState(null); // Thông tin người nhận
+  const [receiverGroup, setReceiverGroup] = useState([]); // Thông tin nhóm
   const [isGroup, setIsGroup] = useState(false);
+  const [adminGroup, setAdminGroup] = useState(null);
   const [sharedGroups, setSharedGroups] = useState([]); // Danh sách nhóm chung giữa 2 người
 
   useEffect(() => {
     const fetchReceiverInfo = async () => {
-      const res = await userService.getUserById(id);
-      if (res._id !== null) {
-        setReceiverInfo(res);
+      try {
+        const userRes = await userService.getUserById(id);
+        console.log("User response:", userRes);
+        if (!userRes || !userRes._id) {
+          const groupRes = await groupService.getGroupById(id);
+          console.log("Group response:", groupRes);
+          if (groupRes && groupRes._id) {
+            setReceiverGroup(groupRes);
+            setIsGroup(true);
+            if (user.id === groupRes.admin_id) {
+              setAdminGroup(true);
+            } else {
+              setAdminGroup(false);
+            }
+          } else {
+            console.log("Không tìm thấy thông tin user hoặc group");
+          }
+        } else {
+          setReceiverInfo(userRes);
+          setIsGroup(false);
+        }
+      } catch (error) {
+        console.error("Lỗi khi fetch thông tin:", error);
       }
     };
-    fetchReceiverInfo();
-  }, []);
+    if (id) {
+      fetchReceiverInfo();
+    }
+  }, [id]);
 
-  // useEffect(() => {
-  //   const fetchSharedGroups = async () => {
-  //     try {
-  //       const res = await groupService.getAllGroupsByUserId(user.id);
-  //       // Kiểm tra res và res.status tồn tại
-  //       if (res && res.status === "ok") {
-  //         const groups = res.groups || [];
-  //         // Đảm bảo id tồn tại và groups là array trước khi filter
-  //         if (id && Array.isArray(groups)) {
-  //           const filtered = groups.filter((group) => {
-  //             // Kiểm tra group và group.members tồn tại
-  //             return (
-  //               group &&
-  //               Array.isArray(group.members) &&
-  //               group.members.includes(id)
-  //             );
-  //           });
-  //           setSharedGroups(filtered);
-  //           console.log("Nhóm chung:", filtered);
-  //         }
-  //       } else {
-  //         // Nếu không có status ok, set mảng rỗng
-  //         setSharedGroups([]);
-  //       }
-  //     } catch (err) {
-  //       console.error("Lỗi khi lấy nhóm:", err);
-  //       // Trong trường hợp lỗi, set mảng rỗng
-  //       setSharedGroups([]);
-  //     }
-  //   };
-
-  //   // Chỉ gọi API khi có đủ user.id và id
-  //   if (user?.id && id) {
-  //     fetchSharedGroups();
-  //   }
-  // }, [user?.id, id]);
-
-  useEffect(() => {
-    // console.log("avatar: ", avatar);
-  }, []);
+  console.log("User: ", receiverInfo);
+  console.log("Group: ", receiverGroup);
+  console.log("Admin: ", adminGroup);
 
   // Xóa tất cả tin nhắn giữa 2 người
   const handleDeleteChatHistory = async () => {
@@ -168,12 +155,42 @@ const Option = ({ route }) => {
     ]);
   };
 
+  // Xóa nhóm
+  const handleDeleteGroup = async () => {
+    Alert.alert("Thông báo", "Bạn có chắc chắn muốn xóa nhóm này không?", [
+      { text: "Hủy" },
+      {
+        text: "Đồng ý",
+        onPress: async () => {
+          try {
+            const response = await groupService.deleteGroup(id);
+            if (response.status === "ok") {
+              Alert.alert("Thông báo", response.message, [
+                { text: "OK", onPress: () => navigation.navigate("Home") },
+              ]);
+            }
+            if (response.status === "error") {
+              Alert.alert("Thông báo", response.message);
+            }
+          } catch (error) {
+            console.error("Lỗi khi xóa nhóm:", error);
+          }
+        },
+      },
+    ]);
+  };
+
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
       <HeaderOption />
       <View style={styles.profileContainer}>
-        <Image source={{ uri: avatar }} style={styles.avatar} />
+        <Image
+          source={{
+            uri: receiverInfo?.avatar_path || receiverGroup?.avatar,
+          }}
+          style={styles.avatar}
+        />
         <Text style={styles.name}>{name}</Text>
       </View>
 
@@ -225,7 +242,7 @@ const Option = ({ route }) => {
             marginHorizontal: -20,
           }}
         ></View>
-        {/* 1 */}
+        {/* 1. Đa phương tiện, hình ảnh, liên kết */}
         <View>
           <View style={styles.component}>
             <Image
@@ -244,6 +261,8 @@ const Option = ({ route }) => {
             />
           </TouchableOpacity>
         </View>
+
+        {/* Dành cho chat 1-1 */}
         <View>
           {receiverInfo && (
             <View style={{ gap: 15 }}>
@@ -281,8 +300,37 @@ const Option = ({ route }) => {
               </TouchableOpacity>
             </View>
           )}
-          {/* 2 */}
         </View>
+
+        {adminGroup === true && (
+          <View
+            style={{
+              height: 15,
+              backgroundColor: "rgba(0, 0, 0, 0.1)",
+              marginHorizontal: -20,
+            }}
+          ></View>
+        )}
+        {adminGroup === true && (
+          <TouchableOpacity style={styles.component}>
+            <Image
+              source={require("../../assets/icons/storage.png")}
+              style={styles.icon}
+            />
+            <Text style={styles.title}>Cài đặt nhóm</Text>
+          </TouchableOpacity>
+        )}
+
+        {adminGroup === true && (
+          <TouchableOpacity style={styles.component}>
+            <Image
+              source={require("../../assets/icons/add-friend.png")}
+              style={styles.icon}
+            />
+            <Text style={styles.title}>Thêm thành viên</Text>
+          </TouchableOpacity>
+        )}
+
         <View style={{ gap: 15 }}>
           <View
             style={{
@@ -299,17 +347,21 @@ const Option = ({ route }) => {
             />
             <Text style={styles.title}>Lưu trữ cuộc trò chuyện</Text>
           </TouchableOpacity>
+
           {/* 6 */}
-          <TouchableOpacity
-            style={styles.component}
-            onPress={() => handleUnfriend(id)}
-          >
-            <Image
-              source={require("../../assets/icons/delete-friend.png")}
-              style={styles.icon}
-            />
-            <Text style={styles.title}>Xóa khỏi danh sách bạn bè</Text>
-          </TouchableOpacity>
+          {receiverInfo && (
+            <TouchableOpacity
+              style={styles.component}
+              onPress={() => handleUnfriend(id)}
+            >
+              <Image
+                source={require("../../assets/icons/delete-friend.png")}
+                style={styles.icon}
+              />
+              <Text style={styles.title}>Xóa khỏi danh sách bạn bè</Text>
+            </TouchableOpacity>
+          )}
+
           {/* 7 */}
           <TouchableOpacity
             style={styles.component}
@@ -319,19 +371,47 @@ const Option = ({ route }) => {
               source={require("../../assets/icons/delete.png")}
               style={styles.icon}
             />
-            <Text style={styles.title}>Xóa lịch sử trò chuyện</Text>
+            <Text style={{ color: "red", fontSize: 16 }}>
+              Xóa lịch sử trò chuyện
+            </Text>
           </TouchableOpacity>
+
+          {receiverGroup && !receiverInfo && (
+            <TouchableOpacity style={styles.component}>
+              <Image
+                source={require("../../assets/icons/details.png")}
+                style={styles.icon}
+              />
+              <Text style={{ color: "red", fontSize: 16 }}>Rời khỏi nhóm</Text>
+            </TouchableOpacity>
+          )}
+
+          {adminGroup === true && (
+            <TouchableOpacity
+              style={styles.component}
+              onPress={handleDeleteGroup}
+            >
+              <Image
+                source={require("../../assets/icons/delete-friend.png")}
+                style={{ width: 25, height: 25 }}
+              />
+              <Text style={{ color: "red", fontSize: 16 }}>Xóa nhóm</Text>
+            </TouchableOpacity>
+          )}
+
           {/* 8 */}
-          <TouchableOpacity
-            style={styles.component}
-            onPress={() => handleBlockUser(id)}
-          >
-            <Image
-              source={require("../../assets/icons/details.png")}
-              style={styles.icon}
-            />
-            <Text style={styles.title}>Chặn người dùng</Text>
-          </TouchableOpacity>
+          {receiverInfo && (
+            <TouchableOpacity
+              style={styles.component}
+              onPress={() => handleBlockUser(id)}
+            >
+              <Image
+                source={require("../../assets/icons/details.png")}
+                style={styles.icon}
+              />
+              <Text style={styles.title}>Chặn người dùng</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </ScrollView>
     </View>

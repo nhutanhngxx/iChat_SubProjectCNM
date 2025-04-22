@@ -156,21 +156,24 @@ const HeaderMessages = () => {
               <Text style={{ fontSize: 16 }}>Thêm bạn bè</Text>
             </TouchableOpacity>
 
-            {/* <TouchableOpacity
+            <TouchableOpacity
               style={{
                 padding: 10,
                 flexDirection: "row",
                 alignItems: "center",
                 gap: 5,
               }}
-              onPress={() => handleOpenModal()}
+              onPress={() => {
+                setModalVisible(false);
+                navigation.navigate("CreateGroup");
+              }}
             >
               <Image
                 source={createGroupIcon}
                 style={{ width: 25, height: 25 }}
               />
               <Text style={{ fontSize: 16 }}>Tạo nhóm mới</Text>
-            </TouchableOpacity> */}
+            </TouchableOpacity>
 
             <TouchableOpacity
               style={{

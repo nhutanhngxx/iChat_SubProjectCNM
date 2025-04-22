@@ -147,9 +147,50 @@ const groupService = {
     }
   },
 
-  getGroupById: async (groupId) => {},
+  getGroupById: async (groupId) => {
+    try {
+      const response = await apiService.get(`/${PREFIX}/group/${groupId}`);
+      return response.data.data;
+    } catch (error) {
+      console.log("Group Service Error: ", error);
+      return [];
+    }
+  },
 
-  createGroup: async () => {},
+  createGroup: async ({ groupName, adminId, participantIds }) => {
+    console.log("Group Service: ", groupName, adminId, participantIds);
+    try {
+      const response = await apiService.post(`/${PREFIX}/`, {
+        name: groupName,
+        admin_id: adminId,
+        participant_ids: participantIds,
+      });
+      if (response.data.status === "error") {
+        throw new Error(response.data.message);
+      }
+      console.log("Tạo nhóm thành công:", response.data);
+      return response.data;
+    } catch (error) {
+      console.log("Không thể tạo nhóm: ", error);
+      throw error;
+    }
+  },
+
+  deleteGroup: async (groupId) => {
+    try {
+      const response = await apiService.delete(`/${PREFIX}/${groupId}`);
+      if (response.data.status === "error") {
+        throw new Error(response.data.message);
+      }
+      if (response.data.status === "ok") {
+        console.log("Xóa nhóm thành công:", response.data);
+        return { status: "ok", message: "Xóa nhóm thàn công." };
+      }
+    } catch (error) {
+      console.log("Không thể xóa nhóm: ", error);
+      throw error;
+    }
+  },
 };
 
 export default groupService;

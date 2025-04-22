@@ -29,6 +29,7 @@ import ViewProfile from "../components/profile/ViewProfile";
 import ForgotPasswordScreen from "../components/profile/ForgotPassword";
 import ChangePasswordScreen from "../components/profile/ChangePassword";
 import ManageUserBlock from "../components/profile/ManageUserBlock";
+import ModalCreateGroup from "../components/contact/ModalCreateGroup";
 
 const Stack = createStackNavigator();
 
@@ -49,7 +50,6 @@ export default function AppNavigator() {
             component={ProfileInformation}
             options={{ animation: "none" }}
           />
-
           <Stack.Screen
             name="Chatting"
             component={Chatting}
@@ -72,6 +72,7 @@ export default function AppNavigator() {
             options={{ animation: "none" }}
           />
           <Stack.Screen name="FriendRequest" component={FriendRequest} />
+          <Stack.Screen name="CreateGroup" component={ModalCreateGroup} />
           <Stack.Screen
             name="ChangeInformation"
             component={ChangeInformation}
