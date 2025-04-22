@@ -60,35 +60,6 @@ const CATEGORY_COLORS = [
   "#a855f7",
 ];
 
-// const mockMessagesByUser = {
-//   1: [
-//     {
-//       id: 1,
-//       text: "Hi, is the watch still up for sale?",
-//       sender: "George Alan",
-//       timestamp: "2:30 PM",
-//       type: "received",
-//     },
-//     {
-//       id: 2,
-//       text: "Awesome! Can I see a couple of pictures?",
-//       sender: "You",
-//       timestamp: "2:31 PM",
-//       type: "sent",
-//     },
-//   ],
-//   2: [
-//     {
-//       id: 3,
-//       text: "Your ride is arriving",
-//       sender: "Uber Cars",
-//       timestamp: "1:45 PM",
-//       type: "received",
-//     },
-//   ],
-// };
-
-// Sub-components
 const AddCategoryModal = ({ setCategories }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [categoryName, setCategoryName] = useState("");
@@ -583,6 +554,13 @@ const MessageArea = ({ selectedChat, user }) => {
   const [showSearchRight, setShowSearchRight] = useState(false);
   // Tự động cuộn xuống cuối khi có tin nhắn mới
   const messageEndRef = useRef(null);
+  //   const scrollToBottom = () => {
+  //     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  //   };
+  //   // Cuộn xuống khi messages thay đổi hoặc khi chuyển đổi cuộc trò chuyện
+  // useEffect(() => {
+  //   scrollToBottom();
+  // }, [allMessages, selectedChat]);
   const [modalVisible, setModalVisible] = useState(false);
   // Trả lời tin nhắn
   const [replyingTo, setReplyingTo] = useState(null);
@@ -791,6 +769,12 @@ const MessageArea = ({ selectedChat, user }) => {
         });
         dispatch(fetchMessages(user?.id));
         dispatch(updateMessages(sentMessage)); // Cập nhật tin nhắn vào Redux store
+        // Cuộn xuống sau khi gửi tin nhắn thành công
+        setTimeout(() => {
+          if (messageEndRef.current) {
+            messageEndRef.current.scrollIntoView({ behavior: "smooth" });
+          }
+        }, 100);
       } catch (error) {
         console.log("Error sending message:", error);
       }
@@ -893,7 +877,7 @@ const MessageArea = ({ selectedChat, user }) => {
     if (messageEndRef.current) {
       messageEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
-  }, [selectedChat, messages]);
+  }, [displayMessages, selectedChat]); // Sử dụng displayMessages thay vì messages
 
   const handleScrollToBottom = () => {
     if (messageEndRef.current) {
