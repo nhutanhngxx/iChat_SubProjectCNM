@@ -157,7 +157,24 @@ const groupService = {
     }
   },
 
-  createGroup: async () => {},
+  createGroup: async ({ groupName, adminId, participantIds }) => {
+    console.log("Group Service: ", groupName, adminId, participantIds);
+    try {
+      const response = await apiService.post(`/${PREFIX}/`, {
+        name: groupName,
+        admin_id: adminId,
+        participant_ids: participantIds,
+      });
+      if (response.data.status === "error") {
+        throw new Error(response.data.message);
+      }
+      console.log("Tạo nhóm thành công:", response.data);
+      return response.data;
+    } catch (error) {
+      console.log("Không thể tạo nhóm: ", error);
+      throw error;
+    }
+  },
 };
 
 export default groupService;

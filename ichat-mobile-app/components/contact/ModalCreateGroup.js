@@ -18,6 +18,7 @@ import { StatusBar } from "expo-status-bar";
 import friendService from "../../services/friendService";
 import { UserContext } from "../../config/context/UserContext";
 import { useNavigation } from "@react-navigation/native";
+import groupService from "../../services/groupService";
 
 const ModalCreateGroup = () => {
   const [groupList, setGroupList] = useState([]);
@@ -48,8 +49,6 @@ const ModalCreateGroup = () => {
       setDisplayedFriendList(friends);
     };
     fetchFriendList();
-    const interval = setInterval(fetchFriendList, 1000);
-    return () => clearInterval(interval);
   }, [user?.id]);
 
   const handleToggleFriend = (friend) => {
@@ -69,11 +68,17 @@ const ModalCreateGroup = () => {
   };
 
   const handleSearchFriend = (text) => {
-    // Lọc ra những friend có tên chứa searchText
     setSearchText(text);
-    const newFriendList = friendList.filter((item) =>
-      item.name.toLowerCase().includes(searchText.toLowerCase())
-    );
+    if (!text) {
+      setDisplayedFriendList(friendList);
+      return;
+    }
+
+    const newFriendList = friendList.filter((item) => {
+      const itemName = item?.name || item?.full_name || "";
+      return itemName.toLowerCase().includes(text.toLowerCase());
+    });
+
     setDisplayedFriendList(newFriendList);
   };
 
@@ -86,14 +91,34 @@ const ModalCreateGroup = () => {
     }
   }, [groupList, groupName]);
 
-  const handleCreateGroup = () => {
-    Alert.alert(
-      `Tạo nhóm ${groupName} thành công!` +
-        "\n" +
-        "Danh sách thành viên: " +
-        groupList.map((item) => item.id).join(", ")
-    );
-    handleCloseModal();
+  const handleCreateGroup = async () => {
+    try {
+      // Tạo mảng participantIds - chứa id của các thành viên trong nhóm
+      const participantIds = groupList.map((item) => item.id);
+      // Thêm admin vào danh sách thành viên nếu chưa có
+      // if (!participantIds.includes(user.id)) {
+      //   participantIds.push(user.id);
+      // }
+      const response = await groupService.createGroup({
+        groupName,
+        adminId: user.id,
+        participantIds,
+      });
+      if (response.status === "ok") {
+        Alert.alert("Thông báo", "Tạo nhóm thành công", [
+          {
+            text: "OK",
+            onPress: () => handleCloseModal(),
+          },
+        ]);
+      } else {
+        Alert.alert("Thông báo", "Tạo nhóm thất bại");
+      }
+      handleCloseModal();
+    } catch (error) {
+      console.error("Create group error:", error);
+      Alert.alert("Lỗi", "Không thể tạo nhóm. Vui lòng thử lại.");
+    }
   };
 
   const renderItem = ({ item }) => (
@@ -122,7 +147,7 @@ const ModalCreateGroup = () => {
       style={{ position: "relative" }}
       onPress={() => handleToggleFriend(item)}
     >
-      <Image source={item.avatar} style={{ width: 50, height: 50 }} />
+      <Avatar size={50} rounded source={{ uri: item.avatar_path }} />
       <TouchableOpacity
         style={styles.addedItem}
         onPress={() => handleToggleFriend(item)}
@@ -174,6 +199,16 @@ const ModalCreateGroup = () => {
           <Text style={{ textAlign: "center", fontSize: 16, paddingTop: 10 }}>
             Số người đã chọn:{" "}
             <Text style={{ fontWeight: "bold" }}>{groupList.length}</Text>
+          </Text>
+          <Text
+            style={{
+              textAlign: "center",
+              fontSize: 14,
+              paddingTop: 5,
+              color: "gray",
+            }}
+          >
+            (Nhóm phải có ít nhất 3 thành viên)
           </Text>
 
           {/* Input Group Name */}
@@ -289,7 +324,7 @@ const ModalCreateGroup = () => {
                   height: 50,
                   width: 50,
                   justifyContent: "center",
-                  backgroundColor: groupList.length < 2 ? "gray" : "blue",
+                  backgroundColor: isDisabled ? "gray" : "blue",
                   alignItems: "center",
                   borderRadius: 25,
                 }}
