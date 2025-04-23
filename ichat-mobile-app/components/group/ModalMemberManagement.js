@@ -10,14 +10,16 @@ import {
   StatusBar as RNStatusBar,
   Platform,
   TextInput,
-  Modal,
 } from "react-native";
+import { Switch } from "react-native-paper";
 import { Avatar } from "@rneui/themed";
 import { Tab } from "@rneui/themed";
 import { StatusBar } from "expo-status-bar";
 import { useNavigation } from "@react-navigation/native";
 import { UserContext } from "../../config/context/UserContext";
 import groupService from "../../services/groupService";
+import friendService from "../../services/friendService";
+import ModalMemberInfo from "./ModalMemberInfo";
 
 const ModalMemberManagement = ({ route }) => {
   const { groupId } = route.params || {};
@@ -28,9 +30,12 @@ const ModalMemberManagement = ({ route }) => {
   const [members, setMembers] = useState([]);
   const [searchText, setSearchText] = useState("");
   const [filteredMembers, setFilteredMembers] = useState([]);
+  const [friendList, setFriendList] = useState([]);
   const [showSearch, setShowSearch] = useState(false);
   const [selectedMember, setSelectedMember] = useState(null);
   const [memberModalVisible, setMemberModalVisible] = useState(false);
+  const [isChecked, setIsChecked] = useState(false);
+  const [memberRelationships, setMemberRelationships] = useState({});
 
   // Lấy thông tin nhóm và thành viên
   useEffect(() => {
@@ -59,6 +64,38 @@ const ModalMemberManagement = ({ route }) => {
     fetchGroupMembers();
   }, [groupId]);
 
+  // Lấy danh sách bạn bè và xác định mối quan hệ
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const fetchFriendList = async () => {
+      try {
+        const friends = await friendService.getFriendListByUserId(user.id);
+        setFriendList(friends);
+
+        // Xác định mối quan hệ với từng thành viên
+        const relationships = {};
+        members.forEach((member) => {
+          if (member.user_id === user.id) {
+            relationships[member.user_id] = "self";
+          } else {
+            // Kiểm tra xem thành viên có trong danh sách bạn bè không
+            const isFriend = friends.some(
+              (friend) => friend.id === member.user_id
+            );
+            relationships[member.user_id] = isFriend ? "friend" : "stranger";
+          }
+        });
+
+        setMemberRelationships(relationships);
+      } catch (error) {
+        console.error("Lỗi khi lấy danh sách bạn bè:", error);
+      }
+    };
+
+    fetchFriendList();
+  }, [user?.id, members]);
+
   // Lọc thành viên theo tab
   useEffect(() => {
     if (!members.length) return;
@@ -69,14 +106,11 @@ const ModalMemberManagement = ({ route }) => {
     switch (index) {
       case 0: // All
         break;
-      case 1: // Owner and admins
+      case 1: // Quản trị viên
         filtered = filtered.filter((member) => member.role === "admin");
         break;
-      case 2: // Invited
+      case 2: // Đã mời
         filtered = filtered.filter((member) => member.status === "invited");
-        break;
-      case 3: // Blocked
-        filtered = filtered.filter((member) => member.status === "blocked");
         break;
       default:
         break;
@@ -102,6 +136,11 @@ const ModalMemberManagement = ({ route }) => {
   const closeMemberModal = () => {
     setMemberModalVisible(false);
     setSelectedMember(null);
+  };
+
+  // Hàm xử lý switch phê duyệt thành viên
+  const handleMemberApproval = (value) => {
+    setIsChecked(value);
   };
 
   // Render thành viên
@@ -139,42 +178,6 @@ const ModalMemberManagement = ({ route }) => {
     );
   };
 
-  // Render các mục quản lý
-  const renderManagementItem = ({ icon, title, avatars, onPress }) => (
-    <TouchableOpacity style={styles.managementItem} onPress={onPress}>
-      <View style={styles.managementInfo}>
-        <View style={styles.managementIcon}>
-          <Image source={icon} style={styles.icon} />
-        </View>
-        <Text style={styles.managementTitle}>{title}</Text>
-      </View>
-      {avatars && (
-        <View style={styles.avatarContainer}>
-          {avatars.map((avatar, index) => (
-            <Avatar
-              key={index}
-              size={30}
-              rounded
-              containerStyle={[styles.avatar, { marginLeft: index * -10 }]}
-              source={{ uri: avatar }}
-            />
-          ))}
-          {avatars.length > 3 && (
-            <View
-              style={[
-                styles.avatar,
-                styles.moreAvatar,
-                { marginLeft: 3 * -10 },
-              ]}
-            >
-              <Text style={styles.moreAvatarText}>+{avatars.length - 3}</Text>
-            </View>
-          )}
-        </View>
-      )}
-    </TouchableOpacity>
-  );
-
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
@@ -188,17 +191,20 @@ const ModalMemberManagement = ({ route }) => {
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Quản lý thành viên</Text>
           <TouchableOpacity
-            onPress={() => navigation.navigate("ModalAddMember", { groupId })}
+            onPress={() => navigation.navigate("AddMember", { groupId })}
           >
             <Image
               source={require("../../assets/icons/add.png")}
               style={[styles.icon, { tintColor: "white" }]}
             />
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => setShowSearch(!showSearch)}>
+          <TouchableOpacity
+            onPress={() => setShowSearch(!showSearch)}
+            style={{ marginLeft: 10 }}
+          >
             <Image
               source={require("../../assets/icons/search.png")}
-              style={[styles.icon, { tintColor: "white" }]}
+              style={[styles.icon]}
             />
           </TouchableOpacity>
         </View>
@@ -251,28 +257,37 @@ const ModalMemberManagement = ({ route }) => {
         </Tab>
       </SafeAreaView>
 
-      <View style={styles.content}>
-        {/* Management Options */}
-        <View style={styles.managementOptions}>
-          {renderManagementItem({
-            icon: require("../../assets/icons/add.png"),
-            title: "Phê duyệt thành viên",
-            onPress: () => {},
-          })}
+      {/* Option */}
+      {/* {user?.role === "admin" && ( */}
+      <View style={styles.approvalContainer}>
+        <View style={styles.approvalInfo}>
+          <Image
+            source={require("../../assets/icons/setting.png")}
+            style={[styles.icon, { marginRight: 10, tintColor: "#2F80ED" }]}
+          />
+          <View>
+            <Text style={styles.approvalTitle}>Phê duyệt thành viên</Text>
+            <Text style={styles.approvalDescription}>
+              Khi được bật, yêu cầu tham gia nhóm phải được duyệt bởi quản trị
+              viên.
+            </Text>
+          </View>
         </View>
+        <Switch
+          value={isChecked}
+          onValueChange={() => setIsChecked(!isChecked)}
+          color="#2F80ED"
+        />
+      </View>
+      {/* )} */}
 
+      <View style={styles.content}>
         {/* Members List */}
         <View style={styles.membersSection}>
           <View style={styles.membersSectionHeader}>
             <Text style={styles.membersSectionTitle}>
-              Members ({filteredMembers.length})
+              Thành viên ({filteredMembers.length})
             </Text>
-            <TouchableOpacity>
-              <Image
-                source={require("../../assets/icons/more.png")}
-                style={styles.moreIcon}
-              />
-            </TouchableOpacity>
           </View>
 
           <FlatList
@@ -285,85 +300,41 @@ const ModalMemberManagement = ({ route }) => {
       </View>
 
       {/* Modal thông tin thành viên */}
-      <Modal
-        animationType="slide"
-        transparent={true}
+      <ModalMemberInfo
         visible={memberModalVisible}
-        onRequestClose={closeMemberModal}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            {/* Header Modal */}
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Member information</Text>
-              <TouchableOpacity
-                onPress={closeMemberModal}
-                style={styles.closeButton}
-              >
-                <Text style={styles.closeButtonText}>X</Text>
-              </TouchableOpacity>
-            </View>
-
-            {selectedMember && (
-              <View style={styles.modalContent}>
-                {/* Thông tin thành viên */}
-                <View style={styles.memberModalInfo}>
-                  <Avatar
-                    size={80}
-                    rounded
-                    source={{ uri: selectedMember.avatar_path }}
-                    containerStyle={styles.memberModalAvatar}
-                  />
-                  <Text style={styles.memberModalName}>
-                    {selectedMember.user_id === user.id
-                      ? "Bạn"
-                      : selectedMember.full_name}
-                  </Text>
-                </View>
-
-                {/* Các tùy chọn */}
-                <View style={styles.memberModalOptions}>
-                  <TouchableOpacity style={styles.memberModalOption}>
-                    <Text style={styles.optionText}>View profile</Text>
-                  </TouchableOpacity>
-
-                  {selectedMember.role !== "admin" && (
-                    <TouchableOpacity style={styles.memberModalOption}>
-                      <Text style={styles.optionText}>Appoint as admin</Text>
-                    </TouchableOpacity>
-                  )}
-
-                  <TouchableOpacity style={styles.memberModalOption}>
-                    <Text style={styles.optionText}>Block member</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity style={styles.memberModalOption}>
-                    <Text style={[styles.optionText, styles.dangerText]}>
-                      Remove from this group
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-
-                {/* Nút gọi và nhắn tin */}
-                <View style={styles.memberModalActions}>
-                  <TouchableOpacity style={styles.actionButton}>
-                    <Image
-                      source={require("../../assets/icons/phone-call.png")}
-                      style={styles.actionIcon}
-                    />
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.actionButton}>
-                    <Image
-                      source={require("../../assets/icons/add.png")}
-                      style={styles.actionIcon}
-                    />
-                  </TouchableOpacity>
-                </View>
-              </View>
-            )}
-          </View>
-        </View>
-      </Modal>
+        onClose={closeMemberModal}
+        member={selectedMember}
+        currentUserId={user.id}
+        relationshipType={
+          selectedMember
+            ? memberRelationships[selectedMember.user_id] || "stranger"
+            : "stranger"
+        }
+        onViewProfile={() => {
+          closeMemberModal();
+          // Thêm logic xem thông tin thành viên
+          console.log("Xem thông tin thành viên:", selectedMember?.full_name);
+        }}
+        onAppointAdmin={() => {
+          // Thêm logic chỉ định làm quản trị viên
+          console.log("Chỉ định làm quản trị viên:", selectedMember?.full_name);
+        }}
+        onRemoveMember={() => {
+          // Thêm logic xóa thành viên khỏi nhóm
+          console.log("Xóa thành viên khỏi nhóm:", selectedMember?.full_name);
+          closeMemberModal();
+        }}
+        onAddFriend={() => {
+          // Thêm logic kết bạn
+          console.log("Gửi lời mời kết bạn tới:", selectedMember?.full_name);
+        }}
+        onSendMessage={() => {
+          // Thêm logic nhắn tin
+          console.log("Mở cuộc trò chuyện với:", selectedMember?.full_name);
+          closeMemberModal();
+          // navigation.navigate("Chat", { userId: selectedMember?.user_id });
+        }}
+      />
     </View>
   );
 };
@@ -393,8 +364,8 @@ const styles = StyleSheet.create({
     marginLeft: 15,
   },
   icon: {
-    width: 24,
-    height: 24,
+    width: 25,
+    height: 25,
   },
   searchContainer: {
     paddingHorizontal: 15,
@@ -411,60 +382,35 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
     height: 3,
     width: "15%",
-    marginLeft: "5%",
+    marginLeft: "9%",
+  },
+  // Phê duyệt thành viên
+  approvalContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f0f0f0",
+  },
+  approvalInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+  },
+  approvalTitle: {
+    fontSize: 16,
+    fontWeight: "500",
+    marginBottom: 4,
+  },
+  approvalDescription: {
+    fontSize: 12,
+    color: "#888",
+    maxWidth: "90%",
   },
   content: {
     flex: 1,
     padding: 15,
-  },
-  managementOptions: {
-    marginBottom: 20,
-  },
-  managementItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: "#f0f0f0",
-  },
-  managementInfo: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  managementIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "#f0f0f0",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 15,
-  },
-  managementTitle: {
-    fontSize: 16,
-    fontWeight: "500",
-  },
-  avatarContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  avatar: {
-    borderWidth: 2,
-    borderColor: "white",
-  },
-  moreAvatar: {
-    backgroundColor: "#e0e0e0",
-    justifyContent: "center",
-    alignItems: "center",
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-  },
-  moreAvatarText: {
-    fontSize: 12,
-    fontWeight: "bold",
-    color: "#555",
   },
   membersSection: {
     flex: 1,
@@ -510,89 +456,6 @@ const styles = StyleSheet.create({
   },
   memberAction: {
     padding: 5,
-  },
-  // Modal styles
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    justifyContent: "flex-end",
-  },
-  modalContainer: {
-    backgroundColor: "white",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingBottom: 20,
-    maxHeight: "80%",
-  },
-  modalHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: "#f0f0f0",
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-  closeButton: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: "#f0f0f0",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  closeButtonText: {
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  modalContent: {
-    padding: 15,
-  },
-  memberModalInfo: {
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  memberModalAvatar: {
-    marginBottom: 10,
-  },
-  memberModalName: {
-    fontSize: 20,
-    fontWeight: "bold",
-  },
-  memberModalOptions: {
-    marginBottom: 20,
-  },
-  memberModalOption: {
-    paddingVertical: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: "#f0f0f0",
-  },
-  optionText: {
-    fontSize: 16,
-  },
-  dangerText: {
-    color: "#FF3B30",
-  },
-  memberModalActions: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    marginTop: 10,
-  },
-  actionButton: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: "#2F80ED",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  actionIcon: {
-    width: 24,
-    height: 24,
-    tintColor: "white",
   },
 });
 
