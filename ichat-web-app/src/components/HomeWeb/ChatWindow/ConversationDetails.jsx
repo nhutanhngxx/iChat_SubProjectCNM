@@ -37,7 +37,7 @@ import {
   import { CameraOutlined } from "@ant-design/icons";
 import { createGroup } from "../../../redux/slices/groupSlice";
 import { getUserFriends } from "../../../redux/slices/friendSlice";
-import { searchGroup,isGroupSubAdmin,updateGroup,deleteGroup,setRole,removeMember,addMembers,getGroupById } from "../../../redux/slices/groupSlice";
+import { searchGroup,isGroupSubAdmin,updateGroup,deleteGroup,setRole,removeMember,addMembers,getGroupById,transferAdmin } from "../../../redux/slices/groupSlice";
 import { fetchChatMessages,fetchMessages } from "../../../redux/slices/messagesSlice";
 import { GrContract } from "react-icons/gr";
 import GifPicker from "./GifPicker";
@@ -108,6 +108,9 @@ const [groupSettings, setGroupSettings] = useState({
   allow_change_name: true,
   allow_change_avatar: true
 });
+// State cho modal chọn admin mới
+const [showTransferAdminModal, setShowTransferAdminModal] = useState(false);
+const [newAdminId, setNewAdminId] = useState(null);
 
 // Hàm helper để kiểm tra quyền
 const canAddMembers = () => {
@@ -459,37 +462,6 @@ const mediaItems = allMessages
           timestamp: msg.timestamp
         }))
     : [];
-
-  // const fileItems = allMessages
-  //   ? allMessages
-  //       .filter(msg => msg.type === "file")
-  //       .map(msg => {
-  //         // Extract file name and extension from URL
-  //         const fileName = msg.content.split('/').pop();
-  //         const fileExt = fileName.split('.').pop().toLowerCase();
-          
-  //         // Determine file type and color
-  //         let type = fileExt;
-  //         let color = "gray";
-          
-  //         if (fileExt === "pdf") color = "red";
-  //         else if (["zip", "rar", "7z"].includes(fileExt)) color = "purple";
-  //         else if (["doc", "docx"].includes(fileExt)) color = "blue";
-  //         else if (["xls", "xlsx"].includes(fileExt)) color = "green";
-  //         else if (["ppt", "pptx"].includes(fileExt)) color = "orange";
-          
-  //         return {
-  //           id: msg._id,
-  //           name: fileName,
-  //           size: "Unknown", // We could fetch this info from the file if needed
-  //           date: new Date(msg.timestamp).toLocaleDateString(),
-  //           type: type,
-  //           color: color,
-  //           url: msg.content
-  //         };
-  //       })
-  //   : [];
-
   const linkItems = allMessages
     ? allMessages
         .filter(msg => 
@@ -559,26 +531,6 @@ const fetchFriends = async () => {
     }
   }, [selectedChat]);
 // Thêm hàm để lấy cài đặt nhóm
-// const fetchGroupSettings = async () => {
-//   try {
-//     // Gọi API lấy thông tin nhóm
-//     const response = await axios.get(`http://${window.location.hostname}:5001/api/groups/group/${selectedChat.id}`);
-    
-//     if (response.data && response.data.data) {
-//       const groupData = response.data.data;
-//       setGroupSettings({
-//         allow_add_members: groupData.allow_add_members,
-//         allow_change_name: groupData.allow_change_name,
-//         allow_change_avatar: groupData.allow_change_avatar
-//       });
-      
-//       // Kiểm tra nếu người dùng hiện tại là admin chính
-//       setIsMainAdmin(groupData.admin_id === user.id);
-//     }
-//   } catch (error) {
-//     console.error("Error fetching group settings:", error);
-//   }
-// };
 const fetchGroupSettings = async () => {
   try {
     const response = await dispatch(getGroupById(selectedChat.id)).unwrap();
@@ -754,6 +706,12 @@ const handleAddMembers = async () => {
  // Hàm rời nhóm
 const handleLeaveGroup = async () => {
   try {
+     // Nếu là admin chính, yêu cầu chuyển nhượng quyền trước
+     if (isMainAdmin) {
+      setShowTransferAdminModal(true);
+      return; // Dừng lại, không rời nhóm ngay
+    }
+    // Nếu không phải admin chính, tiến hành rời nhóm bình thường
     message.loading({ content: "Đang rời nhóm...", key: "leaveGroup" });
     
     await dispatch(removeMember({
@@ -789,6 +747,67 @@ const handleLeaveGroup = async () => {
       key: "leaveGroup" 
     });
     console.error("Error leaving group:", error);
+  }
+};
+// Hàm chuyển nhượng admin và rời nhóm
+const handleTransferAdminAndLeave = async () => {
+  if (!newAdminId) {
+    return message.error("Vui lòng chọn một thành viên để chuyển quyền admin");
+  }
+
+  try {
+    message.loading({ content: "Đang chuyển quyền admin...", key: "transferAdmin" });
+    
+    // Chuyển quyền admin cho thành viên mới
+    await dispatch(transferAdmin({
+      groupId: selectedChat.id,
+      userId: newAdminId
+    })).unwrap();
+    
+    message.success({ 
+      content: "Đã chuyển quyền admin thành công", 
+      key: "transferAdmin" 
+    });
+
+    // Sau khi chuyển quyền thành công, tiến hành rời nhóm
+    message.loading({ content: "Đang rời nhóm...", key: "leaveGroup" });
+    
+    await dispatch(removeMember({
+      groupId: selectedChat.id,
+      userId: user.id
+    })).unwrap();
+    
+    message.success({ 
+      content: "Đã rời nhóm thành công", 
+      key: "leaveGroup" 
+    });
+
+    // Cập nhật danh sách tin nhắn
+    await dispatch(fetchMessages(user.id || user._id)).unwrap();
+    
+    // Đóng modal và cửa sổ
+    setShowTransferAdminModal(false);
+    setShowLeaveGroupModal(false);
+    
+    // Thông báo đã rời nhóm
+    if (onLeaveGroup && typeof onLeaveGroup === 'function') {
+      onLeaveGroup();
+    } else {
+      window.dispatchEvent(new CustomEvent('group-left', { 
+        detail: { groupId: selectedChat.id }
+      }));
+    }
+    
+    // Đóng cửa sổ chi tiết
+    if (typeof handleExpandContract === 'function') {
+      handleExpandContract(false);
+    }
+  } catch (error) {
+    message.error({ 
+      content: error.message || "Không thể chuyển quyền hoặc rời nhóm", 
+      key: "transferAdmin" 
+    });
+    console.error("Error transferring admin or leaving group:", error);
   }
 };
 
@@ -1675,6 +1694,79 @@ const handleLeaveGroup = async () => {
                   <LogoutOutlined /> Rời nhóm
                 </button>
               )}
+              {/* Modal chọn admin mới khi admin chính muốn rời nhóm */}
+                <Modal
+                  title="Chọn admin mới trước khi rời nhóm"
+                  open={showTransferAdminModal}
+                  onCancel={() => setShowTransferAdminModal(false)}
+                  footer={[
+                    <Button key="cancel" onClick={() => setShowTransferAdminModal(false)}>
+                      Huỷ
+                    </Button>,
+                    <Button 
+                      key="transfer" 
+                      type="primary" 
+                      onClick={handleTransferAdminAndLeave}
+                      disabled={!newAdminId}
+                    >
+                      Chuyển quyền và rời nhóm
+                    </Button>
+                  ]}
+                  width={500}
+                >
+                  <Alert
+                    message="Bạn là admin chính của nhóm này!"
+                    description="Bạn cần chọn một thành viên khác làm admin trước khi rời nhóm."
+                    type="warning"
+                    style={{ marginBottom: '15px' }}
+                    showIcon
+                  />
+                  
+                  <p>Chọn một thành viên để trở thành admin mới:</p>
+                  
+                  <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                    {groupMembers
+                      // Lọc ra các thành viên khác, ưu tiên hiển thị nhóm phó trước
+                      .filter(member => member.user_id !== user.id)
+                      .sort((a, b) => {
+                        // Sắp xếp để nhóm phó hiển thị đầu tiên
+                        if (a.role === "admin" && b.role !== "admin") return -1;
+                        if (a.role !== "admin" && b.role === "admin") return 1;
+                        return 0;
+                      })
+                      .map(member => (
+                        <div 
+                          key={member.user_id}
+                          onClick={() => setNewAdminId(member.user_id)} 
+                          style={{
+                            display: 'flex',
+                            padding: '10px',
+                            alignItems: 'center',
+                            borderBottom: '1px solid #f0f0f0',
+                            cursor: 'pointer',
+                            backgroundColor: newAdminId === member.user_id ? '#e6f7ff' : 'white'
+                          }}
+                        >
+                          <Checkbox 
+                            checked={newAdminId === member.user_id}
+                            onChange={() => setNewAdminId(member.user_id)}
+                          />
+                          <Avatar 
+                            src={member.avatar_path} 
+                            style={{ marginLeft: 10, marginRight: 10 }}
+                          >
+                            {!member.avatar_path && (member.full_name || 'User').charAt(0).toUpperCase()}
+                          </Avatar>
+                          <div>
+                            <div>{member.full_name}</div>
+                            {member.role === "admin" && (
+                              <div style={{ fontSize: '12px', color: '#52c41a' }}>Nhóm phó</div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                </Modal>
             </div>
           </div>
         )}
@@ -1766,6 +1858,15 @@ const handleLeaveGroup = async () => {
         ]}
       >
         <p>Bạn có chắc chắn muốn rời khỏi nhóm "{selectedChat.name}"?</p>
+        {isMainAdmin && (
+          <Alert
+            message="Lưu ý quan trọng"
+            description="Bạn là admin chính của nhóm này. Bạn cần chỉ định một admin mới trước khi rời nhóm."
+            type="warning"
+            showIcon
+            style={{ marginTop: '10px', marginBottom: '10px' }}
+          />
+        )}
         <p>Bạn sẽ không thể nhận tin nhắn từ nhóm này nữa.</p>
       </Modal>
 

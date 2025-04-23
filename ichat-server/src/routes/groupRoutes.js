@@ -25,4 +25,5 @@ router.get("/:groupId/messages/search", GroupController.searchMessages); // Tìm
 router.put("/:groupId/members/:userId/role", GroupController.setRole); // Cập nhật quyền thành viên trong nhóm
 router.get("/group/:groupId", GroupController.getGroupById); // Lấy thông tin nhóm
 router.get("/:groupId/admin-check/:userId", GroupController.isGroupSubAdmin); // Kiểm tra quyền admin (Phụ hay chính)
+router.put("/transferAdmin/:groupId/:userId", GroupController.transferAdmin); // Chuyển quyền admin cho người khác
 module.exports = router;
