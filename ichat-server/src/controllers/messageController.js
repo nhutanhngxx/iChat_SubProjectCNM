@@ -34,7 +34,14 @@ const MessageController = {
       const imageFile = req.files?.image?.[0] || null;
       const videoFile = req.files?.video?.[0] || null;
       const docFile = req.files?.file?.[0] || null;
-      const file = videoFile || imageFile || docFile;
+      const audioFile = req.files?.audio?.[0] || null;
+      const file = videoFile || imageFile || docFile || audioFile;
+
+      // Nếu là audio, thêm duration vào payload
+      const additionalData = {};
+      if (req.body.type === "audio" && req.body.duration) {
+        additionalData.duration = parseInt(req.body.duration, 10);
+      }
 
       const result = await MessageModel.sendMessage({
         sender_id: req.body.sender_id,
@@ -44,6 +51,7 @@ const MessageController = {
         chat_type: req.body.chat_type,
         file: file,
         reply_to: req.body.reply_to || null,
+        ...additionalData,
       });
 
       res.status(201).json({

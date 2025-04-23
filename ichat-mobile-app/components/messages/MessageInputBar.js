@@ -14,6 +14,7 @@ import {
 import { Video } from "expo-av";
 
 import attachmentIcon from "../../assets/icons/attachment.png";
+import AudioRecorder from "./AudioRecorder";
 
 const MessageInputBar = ({
   inputMessage,
@@ -27,11 +28,16 @@ const MessageInputBar = ({
   sendMessage,
   pickImage,
   pickFile,
-  pickVideo, // Thêm prop này
+  pickVideo,
   isUploading,
+  onRecordComplete,
 }) => {
   const videoRef = useRef(null);
   const [videoStatus, setVideoStatus] = useState({});
+  const [isRecording, setIsRecording] = useState(false);
+  const [recording, setRecording] = useState(null);
+  const [recordingDuration, setRecordingDuration] = useState(0);
+  let recordingInterval = null;
 
   const hasText = inputMessage.trim();
   const hasContent = inputMessage.trim() || selectedVideo;
@@ -42,7 +48,7 @@ const MessageInputBar = ({
     selectedVideo;
 
   // Hàm cắt ngắn tên file nếu quá dài
-  const truncateFileName = (name, maxLength = 20) => {
+  const truncateFileName = (name, maxLength = 30) => {
     if (name.length <= maxLength) return name;
     const extension = name.split(".").pop();
     const nameWithoutExt = name.substring(
@@ -182,12 +188,7 @@ const MessageInputBar = ({
 
         {!hasText && (
           <>
-            <TouchableOpacity>
-              <Image
-                source={require("../../assets/icons/microphone.png")}
-                style={styles.icon}
-              />
-            </TouchableOpacity>
+            <AudioRecorder onRecordComplete={onRecordComplete} />
 
             <TouchableOpacity onPress={pickImage}>
               <Image
@@ -362,5 +363,18 @@ const styles = StyleSheet.create({
     color: "#ffffff",
     marginTop: 10,
     fontSize: 14,
+  },
+  recordingButton: {
+    backgroundColor: "#ffe0e0",
+    borderRadius: 20,
+    padding: 5,
+  },
+  recordingDuration: {
+    position: "absolute",
+    top: -20,
+    width: 50,
+    textAlign: "center",
+    fontSize: 12,
+    color: "#ff4444",
   },
 });

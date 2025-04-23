@@ -16,7 +16,10 @@ const FILE_TYPE_MATCH = [
   "video/quicktime", // .MOV
   "video/x-msvideo", // .AVI
   "video/x-ms-wmv", // .WMV
-  "audio/mpeg",
+  "audio/mpeg", // Thêm định dạng audio
+  "audio/mp4", // Cho mp4 files
+  "audio/m4a", // Cho m4a files (một số hệ thống)
+  "audio/x-m4a", // Cho m4a files (một số hệ thống)
   "application/pdf",
   "application/msword",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -29,6 +32,7 @@ const FILE_TYPE_MATCH = [
 const MAX_SIZE = {
   image: 10 * 1024 * 1024, // 10MB for images
   video: 100 * 1024 * 1024, // 100MB for videos
+  audio: 50 * 1024 * 1024, // 50MB cho audio
   file: 50 * 1024 * 1024, // 50MB for other files
 };
 

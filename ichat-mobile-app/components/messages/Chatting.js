@@ -37,8 +37,10 @@ import MessageInputBar from "../../components/messages/MessageInputBar";
 import { getHostIP } from "../../services/api";
 import friendService from "../../services/friendService";
 import socketService from "../../services/socketService";
-import { Video } from "expo-av";
-// import { SocketContext } from "../../config/context/SocketContext";
+import { Video, Audio } from "expo-av";
+import { Ionicons } from "@expo/vector-icons";
+
+import AudioRecorder from "./AudioRecorder";
 
 const renderReactionIcons = (reactions) => {
   const icons = {
@@ -84,6 +86,139 @@ const Chatting = ({ navigation, route }) => {
   const [selectedVideo, setSelectedVideo] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+
+  // Thêm state để quản lý audio đang phát
+  const [playingAudio, setPlayingAudio] = useState(null);
+  const [audioStatus, setAudioStatus] = useState({});
+
+  const formatDuration = (seconds) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = Math.floor(seconds % 60);
+    return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
+  };
+
+  // Thêm function xử lý audio
+  const handlePlayAudio = async (audioUrl, messageId) => {
+    try {
+      // Kiểm tra và thiết lập Audio Mode nếu cần
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: false,
+        playsInSilentModeIOS: true,
+        staysActiveInBackground: true,
+        shouldDuckAndroid: true,
+      });
+
+      // Nếu đang phát audio khác, dừng nó lại
+      if (playingAudio && playingAudio.messageId !== messageId) {
+        try {
+          await playingAudio.sound.stopAsync();
+          await playingAudio.sound.unloadAsync();
+        } catch (error) {
+          console.log("Error stopping previous audio:", error);
+        }
+        setPlayingAudio(null);
+      }
+
+      // Nếu chưa có sound cho message này hoặc sound đã bị unload
+      if (
+        !audioStatus[messageId]?.sound ||
+        audioStatus[messageId]?.sound._loaded === false
+      ) {
+        console.log("Creating new sound for:", audioUrl);
+
+        const { sound, status } = await Audio.Sound.createAsync(
+          { uri: audioUrl },
+          {
+            shouldPlay: true,
+            progressUpdateIntervalMillis: 100,
+          },
+          (status) => {
+            // Callback khi status thay đổi
+            setAudioStatus((prev) => ({
+              ...prev,
+              [messageId]: { ...prev[messageId], status },
+            }));
+          }
+        );
+
+        // Lưu sound mới
+        setPlayingAudio({ messageId, sound });
+        setAudioStatus((prev) => ({
+          ...prev,
+          [messageId]: { sound, isPlaying: true, status },
+        }));
+
+        // Xử lý khi audio kết thúc
+        sound.setOnPlaybackStatusUpdate((status) => {
+          if (status.didJustFinish) {
+            setAudioStatus((prev) => ({
+              ...prev,
+              [messageId]: { ...prev[messageId], isPlaying: false },
+            }));
+          }
+        });
+      } else {
+        // Nếu đã có sound
+        const currentSound = audioStatus[messageId].sound;
+        const isPlaying = audioStatus[messageId].isPlaying;
+
+        if (isPlaying) {
+          console.log("Pausing audio");
+          await currentSound.pauseAsync();
+          setAudioStatus((prev) => ({
+            ...prev,
+            [messageId]: { ...prev[messageId], isPlaying: false },
+          }));
+        } else {
+          console.log("Resuming audio");
+          await currentSound.playAsync();
+          setAudioStatus((prev) => ({
+            ...prev,
+            [messageId]: { ...prev[messageId], isPlaying: true },
+          }));
+        }
+      }
+    } catch (error) {
+      console.error("Lỗi khi phát audio:", error);
+      // Reset status nếu có lỗi
+      setAudioStatus((prev) => ({
+        ...prev,
+        [messageId]: {
+          ...prev[messageId],
+          isPlaying: false,
+          sound: null,
+        },
+      }));
+    }
+  };
+
+  // Thêm cleanup effect
+  useEffect(() => {
+    return () => {
+      console.log("Cleaning up audio resources");
+      Object.values(audioStatus).forEach(async (audio) => {
+        if (audio?.sound) {
+          try {
+            await audio.sound.stopAsync();
+            await audio.sound.unloadAsync();
+          } catch (error) {
+            console.log("Error cleaning up audio:", error);
+          }
+        }
+      });
+    };
+  }, []);
+
+  // Cleanup khi component unmount
+  useEffect(() => {
+    return () => {
+      Object.values(audioStatus).forEach(async (audio) => {
+        if (audio.sound) {
+          await audio.sound.unloadAsync();
+        }
+      });
+    };
+  }, [audioStatus]);
 
   // Kiểm tra trạng thái chặn giữa 2 người dùng
   const [blockStatus, setBlockStatus] = useState({
@@ -827,6 +962,8 @@ const Chatting = ({ navigation, route }) => {
           setUploadProgress(0);
         }
       }
+
+      // Gửi audio
     } catch (error) {
       console.error("Lỗi khi gửi tin nhắn/hình ảnh/file:", error);
       Alert.alert(
@@ -1194,6 +1331,70 @@ const Chatting = ({ navigation, route }) => {
     }
   };
 
+  const handleAudioComplete = async (audioFile) => {
+    try {
+      let roomId;
+      if (chat.chatType === "group") {
+        roomId = `group_${chat.id}`;
+        console.log("Joining group room:", roomId);
+      } else {
+        const userIds = [user.id, chat.id].sort();
+        roomId = `chat_${userIds[0]}_${userIds[1]}`;
+        console.log("Joining private chat room:", roomId);
+      }
+
+      const audioFormData = new FormData();
+
+      // Tạo file object với đúng format
+      const audioFileObj = {
+        uri: audioFile.uri,
+        type: "audio/m4a",
+        name: `audio-${Date.now()}.m4a`,
+      };
+
+      // Append file và các thông tin cần thiết
+      audioFormData.append("audio", audioFileObj);
+      audioFormData.append("sender_id", user.id);
+      audioFormData.append("receiver_id", chat.id);
+      audioFormData.append("type", "audio");
+      audioFormData.append(
+        "chat_type",
+        chat?.chatType === "group" ? "group" : "private"
+      );
+      audioFormData.append("duration", audioFile.duration.toString());
+      audioFormData.append("content", "");
+
+      setIsUploading(true);
+
+      const response = await axios.post(
+        `${API_iChat}/send-message`,
+        audioFormData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Accept: "application/json",
+          },
+        }
+      );
+
+      if (response.data.data) {
+        const messageToSend = {
+          ...response.data.data,
+          chatId: roomId,
+        };
+        socketService.handleSendMessage(messageToSend);
+      }
+    } catch (error) {
+      console.error(
+        "Lỗi khi gửi audio:",
+        error.response?.data || error.message
+      );
+      Alert.alert("Lỗi", "Không thể gửi tin nhắn thoại. Vui lòng thử lại.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <StatusBar style="dark" />
@@ -1525,6 +1726,61 @@ const Chatting = ({ navigation, route }) => {
                         />
                       </TouchableOpacity>
                     </View>
+                  ) : item.type === "audio" ? (
+                    <TouchableOpacity
+                      style={[
+                        styles.audioContainer,
+                        isMyMessage
+                          ? styles.myAudioMessage
+                          : styles.theirAudioMessage,
+                      ]}
+                      onPress={() => handlePlayAudio(item.content, item._id)}
+                    >
+                      <View style={styles.audioContent}>
+                        <Ionicons
+                          name={
+                            audioStatus[item._id]?.isPlaying ? "pause" : "play"
+                          }
+                          size={24}
+                          color={isMyMessage ? "#fff" : "#000"}
+                        />
+                        <View style={styles.audioInfo}>
+                          {/* {console.log(audioStatus[item._id]?.status)} */}
+                          <View style={styles.audioProgressBar}>
+                            <View
+                              style={[
+                                styles.audioProgress,
+                                {
+                                  width: `${
+                                    ((audioStatus[item._id]?.status
+                                      ?.positionMillis || 0) /
+                                      (audioStatus[item._id]?.status
+                                        ?.durationMillis || 1)) *
+                                    100
+                                  }%`,
+                                  backgroundColor: isMyMessage
+                                    ? "#fff"
+                                    : "#000",
+                                },
+                              ]}
+                            />
+                          </View>
+                          <Text
+                            style={[
+                              styles.audioDuration,
+                              { color: isMyMessage ? "#fff" : "#000" },
+                            ]}
+                          >
+                            {formatDuration(
+                              Math.floor(
+                                audioStatus[item._id]?.status.durationMillis /
+                                  1000
+                              ) || 0
+                            )}
+                          </Text>
+                        </View>
+                      </View>
+                    </TouchableOpacity>
                   ) : (
                     <Text
                       style={[
@@ -1587,7 +1843,6 @@ const Chatting = ({ navigation, route }) => {
             flatListRef.current?.scrollToEnd({ animated: true })
           }
         />
-
         {/* Modal Thao Tác Tin Nhắn */}
         <Modal visible={modalVisible} transparent animationType="none">
           <Pressable
@@ -1824,7 +2079,6 @@ const Chatting = ({ navigation, route }) => {
             </TouchableOpacity>
           </View>
         )}
-
         {/* Thanh soạn/gửi tin nhắn */}
         <MessageInputBar
           inputMessage={inputMessage}
@@ -1841,6 +2095,7 @@ const Chatting = ({ navigation, route }) => {
           pickFile={pickFile}
           isUploading={isUploading}
           uploadProgress={uploadProgress}
+          onRecordComplete={handleAudioComplete}
         />
       </KeyboardAvoidingView>
     </View>
@@ -2295,6 +2550,46 @@ const styles = StyleSheet.create({
     width: 16,
     height: 16,
     tintColor: "red",
+  },
+  audioContainer: {
+    padding: 10,
+    borderRadius: 20,
+    maxWidth: "70%",
+    // marginVertical: 2,
+  },
+  myAudioMessage: {
+    backgroundColor: "#007AFF",
+    alignSelf: "flex-end",
+    // marginRight: 10,
+  },
+  theirAudioMessage: {
+    backgroundColor: "#E8E8E8",
+    alignSelf: "flex-start",
+    // marginLeft: 10,
+  },
+  audioContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    minWidth: 150, // Đảm bảo độ rộng tối thiểu
+  },
+  audioInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  audioProgressBar: {
+    height: 4,
+    backgroundColor: "rgba(0,0,0,0.2)",
+    borderRadius: 2,
+    flex: 1,
+  },
+  audioProgress: {
+    borderRadius: 2,
+  },
+  audioDuration: {
+    fontSize: 14,
+    minWidth: 60,
   },
 });
 
