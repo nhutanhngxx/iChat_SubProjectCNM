@@ -45,6 +45,7 @@ import { getUserFriends } from "../../../redux/slices/friendSlice";
 import VideoCallModal from "./CallVideo/VideoCallModal";
 import { message as antMessage } from "antd";
 import { sendFriendRequest } from "../../../redux/slices/friendSlice";
+import CreateGroupModal from "./CreateGroupModal";
 
 const { Header, Content } = Layout;
 
@@ -342,197 +343,6 @@ const CategoryMenu = () => {
   );
 };
 
-const CreateGroupModal = ({ visible, onCancel, onOk }) => {
-  const [selectedContacts, setSelectedContacts] = useState([]);
-  const [activeCategory, setActiveCategory] = useState("all");
-  const [groupName, setGroupName] = useState("");
-
-  // Danh sách mock data
-  const contacts = [
-    { id: "1", name: "Di 4", image: "https://via.placeholder.com/40" },
-    {
-      id: "2",
-      name: "Benzen English",
-      image: "https://via.placeholder.com/40",
-    },
-    { id: "3", name: "Thanh Cảnh", image: "https://via.placeholder.com/40" },
-    { id: "4", name: "Em Tin", image: "https://via.placeholder.com/40" },
-    {
-      id: "5",
-      name: "Lê Phước Nguyên",
-      image: "https://via.placeholder.com/40",
-    },
-  ];
-
-  const categories = [
-    { id: "all", label: "Tất cả" },
-    { id: "customers", label: "Khách hàng" },
-    { id: "family", label: "Gia đình" },
-    { id: "work", label: "Công việc" },
-    { id: "friends", label: "Bạn bè" },
-  ];
-
-  const toggleContact = (contactId) => {
-    setSelectedContacts((prev) =>
-      prev.includes(contactId)
-        ? prev.filter((id) => id !== contactId)
-        : [...prev, contactId]
-    );
-  };
-
-  const removeContact = (contactId) => {
-    setSelectedContacts(selectedContacts.filter((c) => c !== contactId));
-  };
-
-  return (
-    <Modal
-      style={{ overflow: "hidden", height: "100vh", width: "552px" }}
-      title={<span className="text-xl font-semibold">Tạo nhóm</span>}
-      open={visible}
-      onCancel={onCancel}
-      footer={[
-        <Button key="back" onClick={onCancel}>
-          Hủy
-        </Button>,
-        <Button
-          key="submit"
-          type="primary"
-          disabled={!groupName || selectedContacts.length === 0}
-          onClick={onOk}
-        >
-          Tạo nhóm
-        </Button>,
-      ]}
-    >
-      <div className="dialog-content" style={{ height: "538px" }}>
-        <div>
-          {/* Phần tên nhóm */}
-          <div className="group-name-input">
-            <Avatar
-              src="https://via.placeholder.com/40"
-              className="camera-icon"
-            >
-              G
-            </Avatar>
-            <input
-              type="text"
-              placeholder="Nhập tên nhóm..."
-              onChange={(e) => setGroupName(e.target.value)}
-              value={groupName}
-            />
-          </div>
-
-          {/* Thanh tìm kiếm */}
-          <div className="search-container">
-            <SearchOutlined className="search-icon" style={{ left: 30 }} />
-            <input
-              type="text"
-              placeholder="Nhập tên, số điện thoại..."
-              onFocus={(e) => (e.target.style.borderColor = "#1890ff")}
-              onBlur={(e) => (e.target.style.borderColor = "#ccc")}
-            />
-          </div>
-
-          {/* Danh mục */}
-          <div className="categories">
-            {categories.map((category) => (
-              <button
-                key={category.id}
-                style={{
-                  borderRadius: "9999px",
-                  padding: "5px 16px",
-                  border: "none",
-                  cursor: "pointer",
-                  whiteSpace: "nowrap",
-                  backgroundColor:
-                    activeCategory === category.id ? "#2563eb" : "#f3f4f6",
-                  color: activeCategory === category.id ? "white" : "#374151",
-                  transition: "background-color 0.2s, color 0.2s",
-                  fontSize: "12px",
-                }}
-                onClick={() => setActiveCategory(category.id)}
-              >
-                {category.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="conversation-container">
-          <div className="conversations-list">
-            <div className="contacts">
-              {contacts.map((contact) => (
-                <div
-                  key={contact.id}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "12px",
-                    padding: "8px",
-                    borderRadius: "8px",
-                    cursor: "pointer",
-                    transition: "background-color 0.2s",
-                  }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.backgroundColor = "#f3f4f6")
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.backgroundColor = "transparent")
-                  }
-                  onClick={() => toggleContact(contact.id)}
-                >
-                  <Checkbox checked={selectedContacts.includes(contact.id)} />
-                  <Avatar
-                    src={contact.image}
-                    style={{
-                      width: "32px",
-                      height: "32px",
-                      borderRadius: "50%",
-                    }}
-                  >
-                    {contact.name[0]}
-                  </Avatar>
-                  <span style={{ fontWeight: "500" }}>{contact.name}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="selected-section">
-            <div className="selected-header">
-              Đã chọn{" "}
-              <span className="selected-count">
-                {selectedContacts.length}/100
-              </span>
-            </div>
-            <div className="selected-contacts">
-              {selectedContacts.map((contactId) => {
-                const contact = contacts.find((c) => c.id === contactId);
-                return (
-                  <div key={contactId} className="selected-contact">
-                    <img
-                      src={contact.image}
-                      alt=""
-                      className="selected-avatar"
-                    />
-                    <span className="selected-name">{contact.name}</span>
-                    <button
-                      className="remove-button"
-                      onClick={() => removeContact(contactId)}
-                    >
-                      <CloseOutlined />
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      </div>
-    </Modal>
-  );
-};
-
 const MessageArea = ({ selectedChat, user }) => {
   const dispatch = useDispatch();
   const chatMessages = useSelector((state) => state.messages.chatMessages);
@@ -661,13 +471,7 @@ const MessageArea = ({ selectedChat, user }) => {
   };
   console.log(handleExpandContract);
   // At the top of your MessageArea component
-  useEffect(() => {
-    console.log("MessageArea received selectedChat:", selectedChat);
-    // Log specific properties we expect in the header
-    console.log("Avatar path:", selectedChat?.avatar_path);
-    console.log("Name:", selectedChat?.name);
-    console.log("Receiver ID:", selectedChat?.receiver_id);
-  }, [selectedChat]);
+  useEffect(() => {}, [selectedChat]);
   // Gọi API khi component render
   useEffect(() => {
     if (user?.id && selectedChat?.receiver_id) {
@@ -984,9 +788,9 @@ const MessageArea = ({ selectedChat, user }) => {
               visible={modalVisible}
               onCancel={() => setModalVisible(false)}
               onOk={() => {
-                // Xử lý tạo nhóm
                 setModalVisible(false);
               }}
+              userMessageId={selectedChat.id}
             />
             <VideoCameraOutlined
               className="header-icon-message"
