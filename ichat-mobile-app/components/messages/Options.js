@@ -36,7 +36,6 @@ const Option = ({ route }) => {
     const fetchReceiverInfo = async () => {
       try {
         const userRes = await userService.getUserById(id);
-        console.log("User response:", userRes);
         if (!userRes || !userRes._id) {
           const groupRes = await groupService.getGroupById(id);
           if (groupRes && groupRes._id) {
@@ -269,7 +268,9 @@ const Option = ({ route }) => {
           </View>
           {/* 2. Thêm thành viên */}
           <View style={{ width: 105, gap: 10, alignItems: "center" }}>
-            <TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => navigation.navigate("AddMember", { groupId: id })}
+            >
               <Image
                 source={require("../../assets/icons/add-friend.png")}
                 style={styles.icon}
