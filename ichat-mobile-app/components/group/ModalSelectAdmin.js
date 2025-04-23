@@ -12,6 +12,7 @@ import {
   TouchableWithoutFeedback,
   Alert,
 } from "react-native";
+import { useNavigation } from "@react-navigation/native";
 import { Avatar } from "@rneui/themed";
 import groupService from "../../services/groupService";
 
@@ -21,6 +22,7 @@ const ModalSelectAdmin = ({ visible, onClose, groupId, currentAdminId }) => {
   const [selectedMemberId, setSelectedMemberId] = useState(null);
   const [members, setMembers] = useState([]);
   const [filteredMembers, setFilteredMembers] = useState(members);
+  const navigation = useNavigation();
 
   // Cập nhật searchText khi modal được hiển thị
   useEffect(() => {
@@ -75,8 +77,15 @@ const ModalSelectAdmin = ({ visible, onClose, groupId, currentAdminId }) => {
         });
         await groupService.removeMember({ groupId, userId: currentAdminId });
         if (response.status === "ok") {
-          Alert.alert("Thông báo", response.message),
-            [{ text: "OK", onPress: onClose() }];
+          Alert.alert("Thông báo", response.message, [
+            {
+              text: "OK",
+              onPress: () => {
+                onClose();
+                navigation.navigate("Home");
+              },
+            },
+          ]);
         } else {
           Alert.alert("Thông báo", "Chỉ định quản trị viên thất bại");
         }
@@ -169,9 +178,20 @@ const ModalSelectAdmin = ({ visible, onClose, groupId, currentAdminId }) => {
                   onPress={handleConfirm}
                   disabled={!selectedMemberId}
                 >
-                  <Text style={styles.confirmButtonText}>Chọn và tiếp tục</Text>
+                  {isLoading ? (
+                    <ActivityIndicator color="white" size="small" />
+                  ) : (
+                    <Text style={styles.confirmButtonText}>
+                      Chọn và tiếp tục
+                    </Text>
+                  )}
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
+                <TouchableOpacity
+                  style={styles.cancelButton}
+                  onPress={() => {
+                    onClose();
+                  }}
+                >
                   <Text style={styles.cancelButtonText}>Hủy</Text>
                 </TouchableOpacity>
               </View>

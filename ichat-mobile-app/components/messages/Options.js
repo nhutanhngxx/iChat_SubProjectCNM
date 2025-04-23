@@ -513,7 +513,6 @@ const Option = ({ route }) => {
         visible={isSelectAdminModalVisible}
         onClose={() => {
           setIsSelectAdminModalVisible(false);
-          navigation.navigate("Home");
         }}
         groupId={id}
         currentAdminId={user.id}
