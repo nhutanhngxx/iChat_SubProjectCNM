@@ -10,6 +10,7 @@ import {
   StatusBar as RNStatusBar,
   Platform,
   TextInput,
+  Alert,
 } from "react-native";
 import { Switch } from "react-native-paper";
 import { Avatar } from "@rneui/themed";
@@ -319,10 +320,35 @@ const ModalMemberManagement = ({ route }) => {
           // Thêm logic chỉ định làm quản trị viên
           console.log("Chỉ định làm quản trị viên:", selectedMember?.full_name);
         }}
+        // Xóa thành viên khỏi nhóm
         onRemoveMember={() => {
-          // Thêm logic xóa thành viên khỏi nhóm
-          console.log("Xóa thành viên khỏi nhóm:", selectedMember?.full_name);
-          closeMemberModal();
+          Alert.alert(
+            "Thông báo",
+            `Bạn có chắc chắn muốn xóa ${selectedMember?.full_name} ra khỏi nhóm này không?`,
+            [
+              { text: "Hủy" },
+              {
+                text: "Đồng ý",
+                onPress: async () => {
+                  try {
+                    const response = await groupService.removeMember({
+                      groupId,
+                      userId: selectedMember?.user_id,
+                    });
+
+                    if (response.status === "ok") {
+                      Alert.alert("Thông báo", response.message);
+                    } else {
+                      Alert.alert("Thông báo", "Xóa thành viên thất bại");
+                    }
+                  } catch (error) {
+                    console.error("Lỗi khi xóa thành viên khỏi nhóm:", error);
+                  }
+                  closeMemberModal();
+                },
+              },
+            ]
+          );
         }}
         onAddFriend={() => {
           // Thêm logic kết bạn

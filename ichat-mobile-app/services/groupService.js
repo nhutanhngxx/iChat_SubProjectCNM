@@ -233,6 +233,24 @@ const groupService = {
       throw error;
     }
   },
+
+  removeMember: async ({ groupId, userId }) => {
+    try {
+      const response = await apiService.post(`/${PREFIX}/remove-member`, {
+        groupId,
+        userId,
+      });
+      if (response.data.status === "ok") {
+        return {
+          status: "ok",
+          message: "Xóa thành viên khỏi nhóm thành công.",
+        };
+      }
+    } catch (error) {
+      console.log("Không thể xóa thành viên khỏi nhóm: ", error);
+      throw error;
+    }
+  },
 };
 
 export default groupService;
