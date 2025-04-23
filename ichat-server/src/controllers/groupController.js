@@ -166,30 +166,30 @@ const GroupController = {
     }
   },
 
-  // 4. Gửi tin nhắn nhóm
-  sendGroupMessage: async (req, res) => {
-    try {
-      const { groupId } = req.params;
-      const { content, type, sender_id } = req.body; // Lấy sender_id từ req.body
+  // // 4. Gửi tin nhắn nhóm
+  // sendGroupMessage: async (req, res) => {
+  //   try {
+  //     const { groupId } = req.params;
+  //     const { content, type, sender_id } = req.body; // Lấy sender_id từ req.body
 
-      // Xử lý file nếu cần
-      const imageFile = req.files?.image?.[0] || null;
-      const docFile = req.files?.file?.[0] || null;
-      const file = imageFile || docFile;
+  //     // Xử lý file nếu cần
+  //     const imageFile = req.files?.image?.[0] || null;
+  //     const docFile = req.files?.file?.[0] || null;
+  //     const file = imageFile || docFile;
 
-      const msg = await GroupModel.sendGroupMessage({
-        groupId,
-        sender_id,
-        content,
-        type,
-        file, // Truyền file nếu có
-      });
+  //     const msg = await GroupModel.sendGroupMessage({
+  //       groupId,
+  //       sender_id,
+  //       content,
+  //       type,
+  //       file, // Truyền file nếu có
+  //     });
 
-      res.status(201).json({ status: "ok", data: msg });
-    } catch (e) {
-      res.status(500).json({ status: "error", message: e.message });
-    }
-  },
+  //     res.status(201).json({ status: "ok", data: msg });
+  //   } catch (e) {
+  //     res.status(500).json({ status: "error", message: e.message });
+  //   }
+  // },
 
   // 5. Đổi tên / set background
   updateGroup: async (req, res) => {

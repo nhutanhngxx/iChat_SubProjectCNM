@@ -110,7 +110,7 @@ export const sendMessage = createAsyncThunk(
 export const sendImageMessage = createAsyncThunk(
   "messages/sendImageMessage",
   async (
-    { sender_id, receiver_id, image, type: forcedType },
+    { sender_id, receiver_id, image, type: forcedType, chat_type },
     { rejectWithValue }
   ) => {
     try {
@@ -144,7 +144,7 @@ export const sendImageMessage = createAsyncThunk(
       console.log("Sending file as type:", fileType, "MIME:", image.type);
 
       formData.append("type", fileType);
-      formData.append("chat_type", "private");
+      formData.append("chat_type", chat_type);
       formData.append("file", image);
 
       // Set content field to avoid validation error
@@ -348,6 +348,64 @@ export const removeReactionFromMessage = createAsyncThunk(
         error: "Network error",
         details: error.message,
       });
+    }
+  }
+);
+// Thêm nhiều ảnh
+export const sendMultipleImages = createAsyncThunk(
+  "messages/sendMultipleImages",
+  async (
+    { sender_id, receiver_id, images, chat_type },
+    { rejectWithValue }
+  ) => {
+    try {
+      // Kiểm tra dữ liệu đầu vào
+      if (!images || !Array.isArray(images) || images.length === 0) {
+        return rejectWithValue({ message: "No images provided" });
+      }
+
+      // Giới hạn số lượng ảnh
+      if (images.length > 10) {
+        return rejectWithValue({ message: "Maximum 10 images allowed" });
+      }
+
+      const formData = new FormData();
+      formData.append("sender_id", sender_id);
+      formData.append("receiver_id", receiver_id);
+      formData.append("chat_type", chat_type);
+
+      // Thêm tất cả ảnh vào formData với cùng tên field
+      images.forEach((image) => {
+        formData.append("images", image);
+      });
+
+      console.log("Sending multiple images:", images.length);
+
+      const response = await fetch(`${API_URL}send-multiple-images`, {
+        method: "POST",
+        body: formData,
+        // Không thêm Content-Type header vì browser sẽ tự thêm với boundary cho FormData
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Error sending multiple images:", errorText);
+
+        try {
+          const errorJson = JSON.parse(errorText);
+          return rejectWithValue(errorJson);
+        } catch {
+          return rejectWithValue({
+            message: errorText || "Failed to send images",
+          });
+        }
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (err) {
+      console.error("Error in sendMultipleImages thunk:", err);
+      return rejectWithValue({ message: err.message || "Network Error" });
     }
   }
 );
@@ -571,7 +629,7 @@ const messagesSlice = createSlice({
             reactions: updatedMessage.reactions,
           };
           console.log(
-            `✅ Updated message ${updatedMessage._id} with new reactions`
+            `Updated message ${updatedMessage._id} with new reactions`
           );
         }
       })
@@ -605,6 +663,52 @@ const messagesSlice = createSlice({
         state.status = "failed";
         state.error = action.payload?.error || "Failed to remove reaction";
         console.error("Failed to remove reaction:", action.payload);
+      })
+      .addCase(sendMultipleImages.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(sendMultipleImages.fulfilled, (state, action) => {
+        state.loading = false;
+        const newMessages = action.payload.data;
+
+        // Nếu thành công, tin nhắn mới sẽ là một mảng
+        if (Array.isArray(newMessages) && newMessages.length > 0) {
+          // Thêm tất cả tin nhắn mới vào state
+          newMessages.forEach((newMessage) => {
+            state.chatMessages.push(newMessage);
+          });
+
+          // Cập nhật sidebar với tin nhắn cuối cùng
+          const lastMessage = newMessages[newMessages.length - 1];
+
+          // Cập nhật thông tin trong danh sách messages (sidebar)
+          const existingReceiver = state.messages.find(
+            (msg) => msg.receiver_id === lastMessage.receiver_id
+          );
+
+          if (!existingReceiver) {
+            state.messages.unshift({
+              receiver_id: lastMessage.receiver_id,
+              name: lastMessage.receiver_name || "Người nhận mới",
+              lastMessage: "Đã gửi hình ảnh",
+              timestamp: new Date().toISOString(),
+              unread: 1,
+              user_status: "Online",
+              type: "image",
+            });
+          } else {
+            existingReceiver.lastMessage = "Đã gửi hình ảnh";
+            existingReceiver.timestamp = new Date().toISOString();
+            existingReceiver.type = "image";
+            existingReceiver.unread += 1;
+          }
+        }
+      })
+      .addCase(sendMultipleImages.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload?.message || "Could not upload images";
+        console.error("Failed to send multiple images:", action.payload);
       });
   },
 });

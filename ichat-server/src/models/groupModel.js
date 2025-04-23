@@ -113,7 +113,9 @@ const GroupModel = {
           {
             name,
             admin_id,
-            avatar: avatarUrl,
+            avatar:
+              avatarUrl ||
+              "https://nhutanhngxx.s3.ap-southeast-1.amazonaws.com/root/new-logo.png",
           },
         ],
         { session }
@@ -275,7 +277,7 @@ const GroupModel = {
     );
   },
 
-  // 7. Xóa nhóm (chỉ creator)
+  // 7. Xóa nhóm (chỉ creator || admin chính)
   deleteGroup: async (groupId) => {
     await GroupMember.deleteMany({ group_id: groupId });
     return GroupChat.findByIdAndDelete(groupId);

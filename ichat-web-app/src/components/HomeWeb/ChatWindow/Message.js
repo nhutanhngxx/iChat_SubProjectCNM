@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Avatar, Button, Modal, Alert } from "antd";
-import { UserAddOutlined } from "@ant-design/icons";
+import { UserAddOutlined, DownloadOutlined } from "@ant-design/icons";
 import { message as antMessage } from "antd";
+import ReactPlayer from "react-player/lazy";
 import "./Message.css";
 import {
   LikeOutlined,
@@ -17,6 +18,7 @@ import {
   handleSoftDelete,
   addReactionToMessage,
   removeReactionFromMessage,
+  getUserMessages,
 } from "../../../redux/slices/messagesSlice";
 import { useDispatch, useSelector } from "react-redux";
 import socket from "../../services/socket";
@@ -47,6 +49,120 @@ const Message = ({
   const messageRef = useRef(null);
   const chatMessages = useSelector((state) => state.messages.chatMessages);
   const dispatch = useDispatch();
+
+  // các state hiển thị modal ảnh
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [groupImages, setGroupImages] = useState([]);
+
+  // Thêm state vào component Message để theo dõi xem đã render nhóm ảnh này chưa
+  const [isFirstInGroup, setIsFirstInGroup] = useState(true);
+
+  // Thêm useEffect để kiểm tra xem message này có phải là tin nhắn đầu tiên trong nhóm không
+  useEffect(() => {
+    if (
+      message.type === "image" &&
+      message.is_group_images &&
+      message.group_id
+    ) {
+      // Tìm message đầu tiên trong nhóm có cùng group_id
+      const firstMessageInGroup = allMessages.find(
+        (msg) =>
+          msg.type === "image" &&
+          msg.group_id === message.group_id &&
+          msg.is_group_images
+      );
+
+      // Nếu ID của message hiện tại không phải ID của message đầu tiên, đừng render
+      setIsFirstInGroup(firstMessageInGroup?._id === message._id);
+    }
+  }, [message, allMessages]);
+
+  // Thêm useEffect để kiểm tra tin nhắn đầu tiên trong nhóm chính xác hơn
+  useEffect(() => {
+    if (
+      message.type === "image" &&
+      message.is_group_images &&
+      message.group_id
+    ) {
+      // Tìm tất cả tin nhắn cùng group_id và sắp xếp theo timestamp
+      const sameGroupMessages = allMessages
+        .filter(
+          (msg) => msg.type === "image" && msg.group_id === message.group_id
+        )
+        .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+      // Kiểm tra nếu tin nhắn hiện tại là tin nhắn CỰC CŨ nhất trong nhóm
+      setIsFirstInGroup(sameGroupMessages[0]?._id === message._id);
+    } else {
+      setIsFirstInGroup(false);
+    }
+  }, [message, allMessages]);
+
+  // Thêm useEffect để tìm các ảnh cùng nhóm
+  useEffect(() => {
+    // Chỉ xử lý khi tin nhắn là ảnh và có is_group_images = true
+    if (
+      message.type === "image" &&
+      message.is_group_images &&
+      message.group_id &&
+      Array.isArray(allMessages)
+    ) {
+      // Tìm tất cả ảnh có cùng group_id
+      const imagesInSameGroup = allMessages.filter(
+        (msg) => msg.type === "image" && msg.group_id === message.group_id
+      );
+
+      setGroupImages(imagesInSameGroup);
+    } else {
+      setGroupImages([]);
+    }
+  }, [message, allMessages]);
+
+  // Thêm state để lưu trữ tất cả media từ cuộc trò chuyện
+  const [allMedia, setAllMedia] = useState([]);
+
+  // Tải tất cả ảnh và video từ cuộc trò chuyện
+  useEffect(() => {
+    if (Array.isArray(allMessages)) {
+      // Lọc ra tất cả media (ảnh và video) từ cuộc trò chuyện
+      const mediaMessages = allMessages.filter(
+        (msg) => msg.type === "image" || msg.type === "video"
+      );
+      setAllMedia(mediaMessages);
+    }
+  }, [allMessages]);
+
+  // Sửa lại hàm mở modal để tìm index hiện tại trong danh sách tất cả media
+  const handleOpenMediaModal = () => {
+    const currentIndex = allMedia.findIndex(
+      (media) => media._id === message._id
+    );
+    setCurrentImageIndex(currentIndex >= 0 ? currentIndex : 0);
+    setIsImageModalOpen(true);
+  };
+
+  // Hàm mở modal và đặt ảnh được chọn là ảnh hiện tại
+  const handleOpenImageModal = (initialIndex = 0) => {
+    setCurrentImageIndex(initialIndex);
+    setIsImageModalOpen(true);
+  };
+
+  // Hàm thay đổi ảnh đang xem trong modal
+  const handleChangeImage = (index) => {
+    setCurrentImageIndex(index);
+  };
+
+  // Hàm tải ảnh
+  const downloadImage = (url) => {
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `image-${new Date().getTime()}.jpg`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const findRepliedMessage = (replyId) => {
     if (!replyId) return null;
     if (!Array.isArray(allMessages)) return null;
@@ -90,6 +206,50 @@ const Message = ({
 
     return null;
   };
+  // Lấy thông tin thành viên trog nhóm
+  // Thêm state để lưu thông tin người gửi
+  const [senderInfo, setSenderInfo] = useState({
+    full_name: "Đang tải...",
+    avatar_path: null,
+  });
+
+  // Fetch thông tin người gửi khi message thay đổi hoặc khi là tin nhắn nhóm
+  useEffect(() => {
+    // Chỉ fetch khi là tin nhắn nhóm và không phải tin nhắn của mình
+    if (
+      selectedChat?.chat_type === "group" &&
+      !isSender &&
+      message?.sender_id
+    ) {
+      const fetchSenderInfo = async () => {
+        try {
+          // Kiểm tra nếu đã có thông tin người dùng trong cache
+          const response = await fetch(
+            `http://${window.location.hostname}:5001/api/users/${message.sender_id}`
+          );
+
+          if (!response.ok) {
+            throw new Error("Failed to fetch sender info");
+          }
+
+          const data = await response.json();
+
+          if (data && data.user) {
+            setSenderInfo({
+              full_name: data.user.full_name || "Người dùng",
+              avatar_path: data.user.avatar_path,
+            });
+          }
+        } catch (error) {
+          console.error("Error fetching sender info:", error);
+          setSenderInfo({ full_name: "Người dùng", avatar_path: null });
+        }
+      };
+
+      fetchSenderInfo();
+    }
+  }, [selectedChat?.chat_type, isSender, message?.sender_id]);
+
   const [friends, setFriends] = useState([]);
   // Lấy danh sách bạn bè
   useEffect(() => {
@@ -121,6 +281,10 @@ const Message = ({
   const [isFriendWithReceiver, setIsFriendWithReceiver] = useState(true);
   const [friendRequestSent, setFriendRequestSent] = useState(false);
   const checkIsFriend = () => {
+    if (selectedChat?.chat_type === "group") {
+      return true;
+    }
+
     if (!friends || !friends.friends || !Array.isArray(friends.friends)) {
       return false;
     }
@@ -148,8 +312,10 @@ const Message = ({
   const [showReactionPicker, setShowReactionPicker] = useState(false);
   // Function to send friend request
 
-  // Disabled all interaction if not friends
-  const isInteractionDisabled = !isFriendWithReceiver;
+  // const isInteractionDisabled = !isFriendWithReceiver;
+  // Chỉ áp dụng cho chat riêng tư (không phải chat nhóm)
+  const isInteractionDisabled =
+    !isFriendWithReceiver && selectedChat?.chat_type !== "group";
   //Thu hồi tin nhắn
 
   const handleRecall = async () => {
@@ -179,8 +345,13 @@ const Message = ({
       console.log("Recall result:", result);
 
       // Notify other users via socket
-      const userIds = [user.id, selectedChat.id].sort();
-      const roomId = `chat_${userIds[0]}_${userIds[1]}`;
+      let roomId;
+      if (selectedChat.chat_type === "group") {
+        roomId = `group_${selectedChat.id}`;
+      } else {
+        const userIds = [user.id, selectedChat.id].sort();
+        roomId = `chat_${userIds[0]}_${userIds[1]}`;
+      }
 
       socket.emit("recall-message", {
         chatId: roomId,
@@ -198,6 +369,7 @@ const Message = ({
 
       // Refresh messages
       dispatch(fetchMessages(user.id || user._id));
+      dispatch(updateMessages(result));
       closeContextMenu();
       setThreeDotsMenuVisible(false);
     } catch (error) {
@@ -213,8 +385,15 @@ const Message = ({
   useEffect(() => {
     if (!selectedChat?.id || !user?.id) return;
 
-    const userIds = [user.id, selectedChat.id].sort();
-    const roomId = `chat_${userIds[0]}_${userIds[1]}`;
+    let roomId;
+    if (selectedChat.chat_type === "group") {
+      roomId = `group_${selectedChat.id}`;
+      console.log("Joining group room:", roomId);
+    } else {
+      const userIds = [user.id, selectedChat.id].sort();
+      roomId = `chat_${userIds[0]}_${userIds[1]}`;
+      console.log("Joining private chat room:", roomId);
+    }
 
     // Join the consistent room
     socket.emit("join-room", roomId);
@@ -373,6 +552,14 @@ const Message = ({
           messageId: message._id || message.id,
         })
       ).unwrap();
+      console.log("Delete result:", result);
+      // Cập nhật Redux store với tin nhắn đã được xóa
+      if (selectedChat.chat_type === "group") {
+        dispatch(getUserMessages(selectedChat.id));
+      }
+
+      // Gọi fetchMessages sau khi đã cập nhật store
+      await dispatch(fetchMessages(user.id || user._id));
 
       // Show success message
       antMessage.success({
@@ -380,8 +567,6 @@ const Message = ({
         key,
         duration: 2,
       });
-      dispatch(fetchMessages(user.id));
-      dispatch(updateMessages(result));
 
       // Enable socket notification (optional)
       const userIds = [user.id, selectedChat.id].sort();
@@ -433,10 +618,17 @@ const Message = ({
         duration: 1,
       });
 
-      // Create room ID
-      const userIds = [user.id, selectedChat.id].sort();
-      const roomId = `chat_${userIds[0]}_${userIds[1]}`;
-
+      // // Create room ID
+      // const userIds = [user.id, selectedChat.id].sort();
+      // const roomId = `chat_${userIds[0]}_${userIds[1]}`;
+      // Tạo roomId khác nhau cho chat 1-1 và nhóm
+      let roomId;
+      if (selectedChat.chat_type === "group") {
+        roomId = `group_${selectedChat.id}`; // Định dạng roomId cho nhóm
+      } else {
+        const userIds = [user.id, selectedChat.id].sort();
+        roomId = `chat_${userIds[0]}_${userIds[1]}`; // Định dạng roomId cho chat 1-1
+      }
       // Emit add-reaction event
       const payload = {
         chatId: roomId,
@@ -475,9 +667,15 @@ const Message = ({
         duration: 1,
       });
 
-      // Create room ID
-      const userIds = [user.id, selectedChat.id].sort();
-      const roomId = `chat_${userIds[0]}_${userIds[1]}`;
+      let roomId;
+      if (selectedChat.chat_type === "group") {
+        roomId = `group_${selectedChat.id}`;
+        console.log("Joining group room:", roomId);
+      } else {
+        const userIds = [user.id, selectedChat.id].sort();
+        roomId = `chat_${userIds[0]}_${userIds[1]}`;
+        console.log("Joining private chat room:", roomId);
+      }
 
       // Format payload exactly as server expects it
       const payload = {
@@ -498,72 +696,21 @@ const Message = ({
   useEffect(() => {
     if (!selectedChat?.id || !user?.id) return;
 
-    const userIds = [user.id, selectedChat.id].sort();
-    const roomId = `chat_${userIds[0]}_${userIds[1]}`;
+    let roomId;
+    if (selectedChat.chat_type === "group") {
+      roomId = `group_${selectedChat.id}`;
+      console.log("Joining group room:", roomId);
+    } else {
+      const userIds = [user.id, selectedChat.id].sort();
+      roomId = `chat_${userIds[0]}_${userIds[1]}`;
+      console.log("Joining private chat room:", roomId);
+    }
 
     console.log("Joining chat room:", roomId);
     socket.emit("join-room", roomId);
 
     // No return cleanup needed for joining
   }, [selectedChat?.id, user?.id]);
-
-  // // 2. Now handle all socket listeners in a separate useEffect
-  // useEffect(() => {
-  //   if (!selectedChat?.id || !user?.id) return;
-
-  //   const userIds = [user.id, selectedChat.id].sort();
-  //   const roomId = `chat_${userIds[0]}_${userIds[1]}`;
-
-  //   // Debug helper to see all incoming socket events
-  //   const debugSocketEvent = (eventName, data) => {
-  //     console.log(`Socket event received: ${eventName}`, data);
-  //   };
-
-  //   // Reaction handlers
-  //   const handleReactionAdded = (data) => {
-  //     debugSocketEvent("reaction-added", data);
-  //     // Check all possible paths to get messageId
-  //     const messageId = data?.messageId || data?.message_id;
-  //     if (messageId) {
-  //       // Use more specific fetch rather than fetching all messages
-  //       dispatch(
-  //         fetchChatMessages({
-  //           senderId: user.id,
-  //           receiverId: selectedChat.id,
-  //         })
-  //       );
-  //     }
-  //   };
-
-  // const handleReactionRemoved = (data) => {
-  //   debugSocketEvent("reaction-removed", data);
-  //   // Check all possible paths to get messageId
-  //   console.log("Reaction removed data:", data);
-
-  //   const messageId = data?.messageId || data?.message_id;
-  //   if (messageId) {
-  //     // Use more specific fetch rather than fetching all messages
-  //     dispatch(
-  //       fetchChatMessages({
-  //         senderId: user.id,
-  //         receiverId: selectedChat.id,
-  //       })
-  //     );
-  //   }
-  // };
-
-  //   // Set up all event listeners
-  //   socket.on("reaction-added", handleReactionAdded);
-  //   socket.on("reaction-removed", handleReactionRemoved);
-
-  //   // Clean up ALL listeners when component unmounts
-  //   return () => {
-  //     console.log("Cleaning up socket listeners for reactions");
-  //     socket.off("reaction-added", handleReactionAdded);
-  //     socket.off("reaction-removed", handleReactionRemoved);
-  //     socket.off("message-reaction-update"); // Remove any legacy listeners
-  //   };
-  // }, [selectedChat?.id, user?.id, dispatch]);
   const getReactionEmoji = (type) => {
     const map = {
       like: "👍",
@@ -724,25 +871,67 @@ const Message = ({
   useEffect(() => {
     if (!selectedChat?.id || !user?.id) return;
 
-    const userIds = [user.id, selectedChat.id].sort();
-    const roomId = `chat_${userIds[0]}_${userIds[1]}`;
+    let roomId;
+    if (selectedChat.chat_type === "group") {
+      roomId = `group_${selectedChat.id}`;
+      console.log("Joining group room:", roomId);
+    } else {
+      const userIds = [user.id, selectedChat.id].sort();
+      roomId = `chat_${userIds[0]}_${userIds[1]}`;
+      console.log("Joining private chat room:", roomId);
+    }
     console.log("Message component joining room:", roomId);
     socket.emit("join-room", roomId);
-    // Handle reaction updates from other users
-    // const handleMessageReaction = (data) => {
-    //   if (data.messageId) {
-    //     // Fetch updated messages to get the latest reaction data
-    //     dispatch(fetchMessages(user.id));
-    //   }
-    // };
-
-    // socket.on("message-reaction-update", handleMessageReaction);
-
     return () => {
       // socket.off("message-reaction-update", handleMessageReaction);
       console.log("Cleaning up socket listener for message reactions");
     };
   }, [selectedChat?.id, user?.id, dispatch]);
+  // if (message.type === "image" && message.is_group_images && message.group_id) {
+  //   // Tìm tất cả tin nhắn cùng group_id và sắp xếp theo timestamp
+  //   const sameGroupMessages = allMessages
+  //     .filter(
+  //       (msg) => msg.type === "image" && msg.group_id === message.group_id
+  //     )
+  //     .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+  //   // Nếu không phải tin nhắn đầu tiên trong nhóm, không render gì cả
+  //   if (
+  //     sameGroupMessages.length > 0 &&
+  //     sameGroupMessages[0]?._id !== message._id
+  //   ) {
+  //     return null;
+  //   }
+  // }
+  const isFirstImageInGroup = useMemo(() => {
+    if (
+      message.type === "image" &&
+      message.is_group_images &&
+      message.group_id &&
+      Array.isArray(allMessages)
+    ) {
+      const sameGroupMessages = allMessages
+        .filter(
+          (msg) => msg.type === "image" && msg.group_id === message.group_id
+        )
+        .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+      return (
+        sameGroupMessages.length > 0 &&
+        sameGroupMessages[0]?._id === message._id
+      );
+    }
+    return true; // Nếu không phải ảnh nhóm, luôn trả về true để render
+  }, [message, allMessages]);
+
+  // Và sau đó kiểm tra
+  if (
+    message.type === "image" &&
+    message.is_group_images &&
+    !isFirstImageInGroup
+  ) {
+    return null;
+  }
   return (
     <>
       <div
@@ -773,80 +962,188 @@ const Message = ({
           <div className="avatar-message">
             <Avatar
               size={32}
-              src={selectedChat.avatar_path}
+              src={
+                selectedChat.chat_type === "group" && senderInfo.avatar_path
+                  ? senderInfo.avatar_path
+                  : selectedChat.avatar_path
+              }
               className="profile-avatar-message"
             />
           </div>
         )}
 
         <div className="message-column">
+          {/* Hiển thị tên người gửi nếu là tin nhắn nhóm và không phải người dùng hiện tại */}
+          {selectedChat.chat_type === "group" && !isSender && (
+            <div className="sender-name">{senderInfo.full_name}</div>
+          )}
           {message.reply_to && <RepliedMessage reply={message.reply_to} />}
           {message.type === "image" ? (
             <>
-              <div
-                className="message-image-container"
-                onClick={handleImageClick}
-                style={{ cursor: "pointer" }}
-              >
-                <img
-                  src={message.content}
-                  alt="Message image"
-                  className="message-image"
-                />
-                <span className="image-hd">HD</span>
-                <span className="image-timestamp">
-                  {new Date(message.timestamp).toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </span>
-              </div>
-              <Modal
-                open={isModalOpen}
-                footer={null}
-                onCancel={handleClose}
-                centered
-                width={500}
-                bodyStyle={{
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  padding: 0,
-                  height: "100%",
-                  top: "30px",
-                }}
-                style={{ top: "30px" }}
-              >
-                <img
-                  src={message.content}
-                  alt="Full-size image"
-                  style={{
-                    maxWidth: "100%",
-                    maxHeight: "80vh",
-                    borderRadius: "8px",
-                  }}
-                />
-              </Modal>
-            </>
-          ) : message.type === "video" ? (
-            <>
-              <div className="message-video-container">
-                <video
-                  controls
-                  className="message-video"
-                  src={message.content}
-                  preload="metadata"
-                />
-                <span className="video-controls">
-                  <span className="video-timestamp">
+              {/* Chỉ hiển thị nhóm ảnh nếu đây là ảnh đầu tiên trong nhóm */}
+              {message.is_group_images &&
+              isFirstInGroup &&
+              groupImages.length > 0 ? (
+                <div className="grouped-images-container">
+                  <div className="grouped-images-grid">
+                    {groupImages.slice(0, 3).map((img, index) => (
+                      <div
+                        key={img._id || index}
+                        className="grouped-image-item"
+                        onClick={() => handleOpenMediaModal()}
+                      >
+                        <img
+                          src={img.content}
+                          alt={`Group image ${index + 1}`}
+                          className="grouped-image"
+                        />
+                        {index === 2 && groupImages.length > 3 && (
+                          <div className="more-images-overlay">
+                            <span>+{groupImages.length - 3}</span>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <span className="image-timestamp">
                     {new Date(message.timestamp).toLocaleTimeString([], {
                       hour: "2-digit",
                       minute: "2-digit",
                     })}
                   </span>
-                </span>
-              </div>
+                </div>
+              ) : message.is_group_images && !isFirstInGroup ? null : (
+                <div
+                  className="message-image-container"
+                  onClick={handleOpenMediaModal}
+                  style={{ cursor: "pointer" }}
+                >
+                  <img
+                    src={message.content}
+                    alt="Message image"
+                    className="message-image"
+                  />
+                  <span className="image-hd">HD</span>
+                  <span className="image-timestamp">
+                    {new Date(message.timestamp).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </span>
+                </div>
+              )}
+
+              {/* Modal xem tất cả media của cuộc trò chuyện */}
+              <Modal
+                open={isImageModalOpen}
+                footer={null}
+                onCancel={() => setIsImageModalOpen(false)}
+                centered
+                width="80%"
+                className="image-group-modal"
+                bodyStyle={{ padding: 0 }}
+              >
+                <div className="image-viewer-container">
+                  {/* Phần hiển thị media chính ở giữa */}
+                  <div className="main-image-section">
+                    {allMedia[currentImageIndex] && (
+                      <>
+                        {allMedia[currentImageIndex].type === "image" ? (
+                          <img
+                            src={allMedia[currentImageIndex].content}
+                            alt="Selected media"
+                            className="main-image"
+                          />
+                        ) : allMedia[currentImageIndex].type === "video" ? (
+                          <div className="video-player-wrapper">
+                            <ReactPlayer
+                              url={allMedia[currentImageIndex].content}
+                              controls
+                              width="100%"
+                              height="80vh"
+                              style={{ maxHeight: "80vh" }}
+                              config={{
+                                file: {
+                                  attributes: {
+                                    controlsList: "nodownload",
+                                    disablePictureInPicture: true,
+                                  },
+                                },
+                              }}
+                            />
+                          </div>
+                        ) : null}
+                        <div className="image-controls">
+                          <button
+                            className="download-button"
+                            onClick={() =>
+                              downloadImage(allMedia[currentImageIndex].content)
+                            }
+                          >
+                            <DownloadOutlined /> Tải xuống
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Danh sách thumbnail bên phải */}
+                  <div className="thumbnails-section">
+                    <h4>Tất cả media ({allMedia.length})</h4>
+                    <div className="thumbnails-container">
+                      {allMedia.map((media, index) => (
+                        <div
+                          key={media._id || index}
+                          className={`thumbnail-item ${
+                            index === currentImageIndex ? "active" : ""
+                          }`}
+                          onClick={() => handleChangeImage(index)}
+                        >
+                          {media.type === "image" ? (
+                            <img
+                              src={media.content}
+                              alt={`Thumbnail ${index + 1}`}
+                              className="thumbnail-image"
+                            />
+                          ) : media.type === "video" ? (
+                            <div className="video-thumbnail">
+                              <video
+                                src={media.content}
+                                className="thumbnail-video"
+                              />
+                              <div className="video-icon">🎬</div>
+                            </div>
+                          ) : null}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </Modal>
             </>
+          ) : message.type === "video" ? (
+            <div className="message-video-container">
+              <ReactPlayer
+                url={message.content}
+                controls
+                width="100%"
+                height="auto"
+                className="message-video-player"
+                config={{
+                  file: {
+                    attributes: {
+                      preload: "metadata",
+                    },
+                  },
+                }}
+              />
+              <span className="video-timestamp">
+                {new Date(message.timestamp).toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </span>
+            </div>
           ) : message.type === "audio" ? (
             <>
               <div className="message-audio-container">
@@ -884,7 +1181,7 @@ const Message = ({
                     </span>
                   </div>
                   <button onClick={handleDownload} className="download-button">
-                    📥 Tải về
+                    <DownloadOutlined />
                   </button>
                 </div>
                 <span className="file-timestamp">
@@ -911,26 +1208,7 @@ const Message = ({
               </span>
             </div>
           )}
-          {/* Display reactions */}
-          {/* {message.reactions && message.reactions.length > 0 && (
-            <div className="message-reactions">
-              {Object.entries(countReactions()).map(([type, count]) => (
-                <Tooltip
-                  key={type}
-                  title={`${count} người đã bày tỏ ${getReactionEmoji(type)}`}
-                >
-                  <span
-                    className={`reaction-badge ${
-                      hasUserReacted(type) ? "user-reacted" : ""
-                    }`}
-                    onClick={() => handleReaction(type)}
-                  >
-                    {getReactionEmoji(type)} {count}
-                  </span>
-                </Tooltip>
-              ))}
-            </div>
-          )} */}
+
           {message.reactions && message.reactions.length > 0 && (
             <div className="message-reactions">
               {Object.entries(countReactions()).map(([type, count]) => (
@@ -1002,77 +1280,10 @@ const Message = ({
                 <MoreOutlined />
               </button>
             </div>
-            {/* <div className="reaction-icons">
-              <span onClick={() => handleReaction("👍")} title="Like">
-                <LikeOutlined />
-              </span>
-              
-            </div> */}
+
             <div className="reaction-icons">
               <Popover
                 content={
-                  // <div className="reaction-picker">
-                  //   <Tooltip title="Thích">
-                  //     <span
-                  //       className={`reaction-option ${
-                  //         hasUserReacted("like") ? "active" : ""
-                  //       }`}
-                  //       onClick={() => handleReaction("like")}
-                  //     >
-                  //       👍
-                  //     </span>
-                  //   </Tooltip>
-                  //   <Tooltip title="Yêu thích">
-                  //     <span
-                  //       className={`reaction-option ${
-                  //         hasUserReacted("love") ? "active" : ""
-                  //       }`}
-                  //       onClick={() => handleReaction("love")}
-                  //     >
-                  //       ❤️
-                  //     </span>
-                  //   </Tooltip>
-                  //   <Tooltip title="Haha">
-                  //     <span
-                  //       className={`reaction-option ${
-                  //         hasUserReacted("haha") ? "active" : ""
-                  //       }`}
-                  //       onClick={() => handleReaction("haha")}
-                  //     >
-                  //       😂
-                  //     </span>
-                  //   </Tooltip>
-                  //   <Tooltip title="Wow">
-                  //     <span
-                  //       className={`reaction-option ${
-                  //         hasUserReacted("wow") ? "active" : ""
-                  //       }`}
-                  //       onClick={() => handleReaction("wow")}
-                  //     >
-                  //       😮
-                  //     </span>
-                  //   </Tooltip>
-                  //   <Tooltip title="Buồn">
-                  //     <span
-                  //       className={`reaction-option ${
-                  //         hasUserReacted("sad") ? "active" : ""
-                  //       }`}
-                  //       onClick={() => handleReaction("sad")}
-                  //     >
-                  //       😢
-                  //     </span>
-                  //   </Tooltip>
-                  //   <Tooltip title="Giận">
-                  //     <span
-                  //       className={`reaction-option ${
-                  //         hasUserReacted("angry") ? "active" : ""
-                  //       }`}
-                  //       onClick={() => handleReaction("angry")}
-                  //     >
-                  //       😠
-                  //     </span>
-                  //   </Tooltip>
-                  // </div>
                   <div className="reaction-picker">
                     {["like", "love", "haha", "wow", "sad", "angry"].map(
                       (reactionType) => (
