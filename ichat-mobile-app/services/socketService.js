@@ -34,13 +34,45 @@ class SocketService {
 
     // Connection events
     this.socket.on("connect", () => {
-      console.log("Socket connected on Socket Service:", this.socket.id);
+      console.log(
+        "[Service] Socket connected on Socket Service:",
+        this.socket.id
+      );
     });
 
     this.socket.on("connect_error", (error) => {
-      console.error("Connection error:", error);
+      console.error("[Service] Connection error:", error);
       this.reconnect();
     });
+
+    this.socket.on("user-registered", (data) => {
+      console.log("[SocketService] User registration confirmed:", data);
+    });
+  }
+
+  // Thêm method để đăng ký user
+  registerUser(userId) {
+    if (!userId) {
+      console.error("[SocketService] Cannot register: userId is undefined");
+      return;
+    }
+
+    if (!this.socket) {
+      this.connect();
+    }
+
+    if (this.socket.connected) {
+      console.log("[SocketService] Registering user:", userId);
+      this.socket.emit("user-connected", userId);
+    } else {
+      console.log(
+        "[SocketService] Socket not connected, waiting for connection..."
+      );
+      this.socket.once("connect", () => {
+        console.log("[SocketService] Connected, now registering user:", userId);
+        this.socket.emit("user-connected", userId);
+      });
+    }
   }
 
   joinRoom(roomId) {
@@ -175,6 +207,149 @@ class SocketService {
     }, 3000);
   }
 
+  // Audio call methods
+  initiateAudioCall({ callerId, receiverId, roomId }) {
+    if (this.ensureConnection()) {
+      console.log("[AudioCall] Sending call request:", {
+        callerId,
+        receiverId,
+        roomId,
+      });
+
+      return new Promise((resolve, reject) => {
+        // Lắng nghe phản hồi thành công
+        this.socket.once("call-initiated", (response) => {
+          console.log("[AudioCall] Call request accepted:", response);
+          resolve(response);
+        });
+
+        // Lắng nghe phản hồi thất bại
+        this.socket.once("call-failed", (error) => {
+          console.error("[AudioCall] Call request failed:", error);
+          reject(error);
+        });
+
+        // Gửi yêu cầu gọi
+        this.socket.emit("audio-call-request", {
+          callerId,
+          receiverId,
+          roomId,
+        });
+
+        // Timeout sau 5 giây
+        setTimeout(() => {
+          reject(new Error("Không nhận được phản hồi từ server"));
+        }, 5000);
+      });
+    }
+    return Promise.reject(new Error("Socket chưa được kết nối"));
+  }
+
+  cancelAudioCall(roomId, receiverId) {
+    return new Promise((resolve, reject) => {
+      if (!this.socket?.connected) {
+        reject(new Error("Socket chưa được kết nối"));
+        return;
+      }
+
+      console.log("[AudioCall] Canceling call:", { roomId, receiverId });
+
+      // Gửi yêu cầu hủy
+      this.socket.emit("cancel-audio-call", { roomId, receiverId });
+
+      // Lắng nghe xác nhận hủy
+      this.socket.once("call-cancelled-confirmed", (response) => {
+        console.log("[AudioCall] Call cancellation confirmed:", response);
+        resolve(response);
+      });
+
+      // Timeout sau 3 giây
+      setTimeout(() => {
+        reject(new Error("Không nhận được xác nhận hủy cuộc gọi"));
+      }, 3000);
+    });
+  }
+
+  onCallCancelled(callback) {
+    if (this.socket) {
+      this.socket.on("call-cancelled", (data) => {
+        console.log("[SocketService] Call cancelled event received:", data);
+        callback(data);
+      });
+    }
+  }
+
+  acceptAudioCall(callerId, receiverId, roomId) {
+    if (this.ensureConnection()) {
+      this.socket.emit("audio-call-accepted", {
+        callerId,
+        receiverId,
+        roomId,
+      });
+      // Người nhận tham gia phòng
+      this.socket.emit("join-audio-call", roomId);
+    }
+  }
+
+  endAudioCall(roomId) {
+    if (this.ensureConnection() && roomId) {
+      console.log("[SocketService] Ending call in room:", roomId);
+      this.socket.emit("end-audio-call", { roomId });
+    }
+  }
+
+  // Audio call listeners
+  onIncomingAudioCall(callback) {
+    if (this.socket) {
+      this.socket.on("incoming-audio-call", (data) => {
+        console.log("[SocketService] Incoming call:", data);
+        callback(data);
+      });
+    }
+  }
+
+  onAudioCallAccepted(callback) {
+    if (this.socket) {
+      this.socket.on("audio-call-accepted", (data) => {
+        console.log("[SocketService] Call accepted:", data);
+        callback(data);
+      });
+    }
+  }
+
+  onAudioCallRejected(callback) {
+    if (this.socket) {
+      this.socket.on("call-rejected", (data) => {
+        console.log("[SocketService] Call rejected event received:", data);
+        callback(data);
+      });
+    }
+  }
+
+  onAudioCallEnded(callback) {
+    if (this.socket) {
+      this.socket.on("audio-call-ended", (data) => {
+        console.log("[SocketService] Call ended:", data);
+        callback(data);
+      });
+    }
+  }
+
+  rejectAudioCall(receiverId, callerId, roomId) {
+    if (this.ensureConnection()) {
+      console.log("[SocketService] Rejecting call:", {
+        receiverId,
+        callerId,
+        roomId,
+      });
+      this.socket.emit("audio-call-rejected", {
+        receiverId,
+        callerId,
+        roomId,
+      });
+    }
+  }
+
   removeAllListeners() {
     if (this.socket) {
       const events = [
@@ -186,6 +361,10 @@ class SocketService {
         "receive-multiple-images",
         "image-upload-progress",
         "image-upload-error",
+        "incoming-audio-call",
+        "audio-call-accepted",
+        "audio-call-rejected",
+        "audio-call-ended",
       ];
 
       events.forEach((event) => this.socket.off(event));

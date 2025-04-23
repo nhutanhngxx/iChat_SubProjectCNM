@@ -63,6 +63,12 @@ export default {
         },
       ],
       "expo-barcode-scanner",
+      [
+        "expo-av",
+        {
+          microphonePermission: "Allow iChat to access your microphone.",
+        },
+      ],
     ],
     extra: {
       firebaseApiKey: process.env.FIREBASE_API_KEY,

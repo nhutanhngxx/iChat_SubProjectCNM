@@ -1,6 +1,34 @@
+// Map để lưu trữ userId -> socketId
+const userSocketMap = new Map();
+
+// Định nghĩa trạng thái cuộc gọi
+const CallStatus = {
+  PENDING: "pending", // Đang chờ người nhận trả lời
+  ACCEPTED: "accepted", // Người nhận đã chấp nhận
+  ACTIVE: "active", // Cuộc gọi đang diễn ra
+  ENDED: "ended", // Cuộc gọi đã kết thúc
+  REJECTED: "rejected", // Người nhận từ chối
+  CANCELLED: "cancelled", // Người gọi hủy cuộc gọi
+};
+
+// Map để lưu trữ các cuộc gọi đang diễn ra
+const activeAudioCalls = new Map();
+
 module.exports = (io) => {
   io.on("connection", (socket) => {
     console.log("Client connected:", socket.id);
+
+    // Đặt ở đầu file socket.on("connection")
+    socket.on("user-connected", (userId) => {
+      console.log(`[Server] User ${userId} connected with socket ${socket.id}`);
+      userSocketMap.set(userId, socket.id);
+
+      // Debug: In ra map sau khi cập nhật
+      console.log("[Server] Updated user socket map:");
+      userSocketMap.forEach((socketId, userId) => {
+        console.log(`userId: ${userId} -> socketId: ${socketId}`);
+      });
+    });
 
     // Tham gia room theo chatId
     socket.on("join-room", (chatId) => {
@@ -20,11 +48,13 @@ module.exports = (io) => {
         socket.emit("send-message-error", "Lỗi gửi tin nhắn");
       }
     });
+
     //Xoá toàn bộ tin nhắn
     socket.on("delete-all-messages", ({ chatId, userId }) => {
       io.to(chatId).emit("deleted-all-messages", { chatId, userId });
       console.log(` Deleted all messages in room: ${chatId}`);
     });
+
     // Thu hồi tin nhắn
     socket.on("recall-message", (data) => {
       console.log(" recall-message data:", data); // check chatId
@@ -50,6 +80,7 @@ module.exports = (io) => {
       });
       console.log(` Reaction added to message ${messageId} in room: ${chatId}`);
     });
+
     // Xoá reaction
     socket.on("remove-reaction", ({ chatId, messageId, userId }) => {
       io.to(chatId).emit("reaction-removed", {
@@ -61,6 +92,7 @@ module.exports = (io) => {
         ` Reaction removed from message ${messageId} in room: ${chatId}`
       );
     });
+
     // Ghim tin nhắn
     socket.on("pin-message", ({ chatId, messageId, isPinned }) => {
       io.to(chatId).emit("message-pinned", {
@@ -70,6 +102,7 @@ module.exports = (io) => {
       });
       console.log(`Message ${messageId} pin status updated in room: ${chatId}`);
     });
+
     // Trả lời tin nhắn
     socket.on("reply-message", ({ chatId, message }) => {
       io.to(chatId).emit("message-replied", {
@@ -77,6 +110,210 @@ module.exports = (io) => {
         message,
       });
       console.log(`Replied to message in room: ${chatId}`);
+    });
+
+    // Xử lý yêu cầu gọi
+    socket.on("audio-call-request", ({ callerId, receiverId, roomId }) => {
+      console.log("[Server] New call request:", {
+        callerId,
+        receiverId,
+        roomId,
+      });
+
+      // Kiểm tra xem người nhận có đang trong cuộc gọi khác không
+      const isReceiverBusy = Array.from(activeAudioCalls.values()).some(
+        (call) =>
+          (call.receiverId === receiverId || call.callerId === receiverId) &&
+          [CallStatus.PENDING, CallStatus.ACCEPTED, CallStatus.ACTIVE].includes(
+            call.status
+          )
+      );
+
+      if (isReceiverBusy) {
+        socket.emit("call-failed", {
+          error: "Người nhận đang trong cuộc gọi khác",
+          code: "RECEIVER_BUSY",
+        });
+        return;
+      }
+
+      // Khởi tạo cuộc gọi mới với cấu trúc đầy đủ
+      const newCall = {
+        callerId,
+        receiverId,
+        status: CallStatus.PENDING,
+        startTime: new Date(),
+        participants: [callerId], // Người gọi là participant đầu tiên
+        metadata: {
+          roomId,
+          callerSocketId: socket.id,
+          receiverSocketId: userSocketMap.get(receiverId),
+        },
+      };
+
+      // Lưu thông tin cuộc gọi
+      activeAudioCalls.set(roomId, newCall);
+
+      // Log trạng thái cuộc gọi
+      console.log(
+        "[Server] Active calls after new request:",
+        Array.from(activeAudioCalls.entries())
+      );
+
+      // Gửi phản hồi về cho người gọi
+      socket.emit("call-initiated", {
+        success: true,
+        receiverId,
+        roomId,
+      });
+
+      // Gửi thông báo đến người nhận
+      const receiverSocketId = userSocketMap.get(receiverId);
+      if (receiverSocketId) {
+        io.to(receiverSocketId).emit("incoming-audio-call", {
+          callerId,
+          roomId,
+        });
+      } else {
+        // Nếu người nhận offline
+        socket.emit("call-failed", {
+          error: "Người nhận không online",
+          code: "RECEIVER_OFFLINE",
+        });
+        activeAudioCalls.delete(roomId);
+      }
+    });
+
+    // Xử lý chấp nhận cuộc gọi
+    socket.on("audio-call-accepted", ({ callerId, receiverId, roomId }) => {
+      const call = activeAudioCalls.get(roomId);
+      if (call) {
+        call.status = CallStatus.ACCEPTED;
+        call.participants.push(receiverId);
+        call.acceptTime = new Date();
+
+        io.to(roomId).emit("call-connected", {
+          roomId,
+          participants: call.participants,
+          startTime: call.startTime,
+        });
+
+        // Cập nhật trạng thái sau khi kết nối thành công
+        setTimeout(() => {
+          const activeCall = activeAudioCalls.get(roomId);
+          if (activeCall && activeCall.status === CallStatus.ACCEPTED) {
+            activeCall.status = CallStatus.ACTIVE;
+          }
+        }, 1000);
+      }
+    });
+
+    socket.on("audio-call-rejected", ({ receiverId, callerId, roomId }) => {
+      console.log("[Server] Call rejected:", { receiverId, callerId, roomId });
+
+      const call = activeAudioCalls.get(roomId);
+      if (call) {
+        // Kiểm tra xem người từ chối có phải là người nhận không
+        if (call.receiverId !== receiverId) {
+          console.log("[Server] Invalid reject request - not the receiver");
+          return;
+        }
+
+        call.status = CallStatus.REJECTED;
+        call.endTime = new Date();
+        call.rejectReason = "user_rejected";
+
+        // Thông báo cho người gọi
+        const callerSocketId = userSocketMap.get(callerId);
+        if (callerSocketId) {
+          io.to(callerSocketId).emit("call-rejected", {
+            receiverId,
+            callerId,
+            roomId,
+            timestamp: call.endTime,
+          });
+        }
+
+        console.log("[Server] Call rejected successfully:", roomId);
+        activeAudioCalls.delete(roomId);
+      } else {
+        console.log("[Server] Call not found for rejection:", roomId);
+      }
+    });
+
+    // Xử lý hủy cuộc gọi
+    socket.on("cancel-audio-call", ({ roomId, receiverId }) => {
+      const call = activeAudioCalls.get(roomId);
+      if (call) {
+        call.status = CallStatus.CANCELLED;
+        call.endTime = new Date();
+
+        // Thông báo cho người nhận
+        const receiverSocketId = userSocketMap.get(receiverId);
+        if (receiverSocketId) {
+          io.to(receiverSocketId).emit("call-cancelled", {
+            roomId,
+            callerId: call.callerId,
+          });
+        }
+
+        // Xác nhận với người gọi
+        socket.emit("call-cancelled-confirmed", {
+          success: true,
+          roomId,
+        });
+
+        activeAudioCalls.delete(roomId);
+      }
+    });
+
+    // Xử lý kết thúc cuộc gọi
+    socket.on("audio-call-ended", ({ roomId }) => {
+      const call = activeAudioCalls.get(roomId);
+      if (call) {
+        call.status = CallStatus.ENDED;
+        call.endTime = new Date();
+
+        // Thông báo cho tất cả participants
+        io.to(roomId).emit("call-ended", {
+          roomId,
+          duration: call.endTime - call.startTime,
+        });
+
+        activeAudioCalls.delete(roomId);
+      }
+    });
+
+    // Lắng nghe cuộc gọi đến
+    socket.on("incoming-audio-call", ({ callerId, roomId }) => {
+      console.log(`Incoming call: from=${callerId} room=${roomId}`);
+    });
+
+    // Xử lý disconnect
+    socket.on("disconnect", () => {
+      // Tìm và xử lý các cuộc gọi liên quan đến socket này
+      for (const [roomId, call] of activeAudioCalls.entries()) {
+        if (
+          call.metadata.callerSocketId === socket.id ||
+          call.metadata.receiverSocketId === socket.id
+        ) {
+          // Thông báo cho participants còn lại
+          io.to(roomId).emit("call-ended", {
+            roomId,
+            reason: "participant_disconnected",
+          });
+          activeAudioCalls.delete(roomId);
+        }
+      }
+
+      // Xóa user khỏi userSocketMap
+      for (const [userId, socketId] of userSocketMap.entries()) {
+        if (socketId === socket.id) {
+          console.log(`[Server] User ${userId} disconnected`);
+          userSocketMap.delete(userId);
+          break;
+        }
+      }
     });
   });
 };

@@ -41,6 +41,8 @@ import { Video, Audio } from "expo-av";
 import { Ionicons } from "@expo/vector-icons";
 
 import AudioRecorder from "./AudioRecorder";
+import CallOverlay from "./CallOverlay";
+import IncomingCallScreen from "./IncomingCallScreen";
 
 const renderReactionIcons = (reactions) => {
   const icons = {
@@ -220,6 +222,191 @@ const Chatting = ({ navigation, route }) => {
     };
   }, [audioStatus]);
 
+  const [isInCall, setIsInCall] = useState(false);
+  const [incomingCall, setIncomingCall] = useState(null);
+  const [callStatus, setCallStatus] = useState(null); // null | 'connecting' | 'ongoing' | 'outgoing'
+  const [callDuration, setCallDuration] = useState(0);
+  const [isMuted, setIsMuted] = useState(false);
+  const [ringtoneSound, setRingtoneSound] = useState(null);
+  const [durationInterval, setDurationInterval] = useState(null);
+
+  const playRingtone = async () => {
+    try {
+      const { sound } = await Audio.Sound.createAsync(
+        require("../../assets/sounds/thap-trap-tu-do.mp3"),
+        { isLooping: true }
+      );
+      setRingtoneSound(sound);
+      await sound.playAsync();
+    } catch (error) {
+      console.error("Error playing ringtone:", error);
+    }
+  };
+
+  const stopRingtone = async () => {
+    if (ringtoneSound) {
+      await ringtoneSound.stopAsync();
+      await ringtoneSound.unloadAsync();
+      setRingtoneSound(null);
+    }
+  };
+
+  // Thêm state để theo dõi roomId của cuộc gọi hiện tại
+  const [currentCallRoom, setCurrentCallRoom] = useState(null);
+
+  const handleInitiateCall = async () => {
+    if (chat.chatType !== "group" && chat.id === user.id) {
+      Alert.alert("Thông báo", "Không thể gọi cho chính mình");
+      return;
+    }
+
+    if (isInCall || callStatus) {
+      Alert.alert("Thông báo", "Bạn đang trong một cuộc gọi khác");
+      return;
+    }
+
+    const roomId = `audio_${Date.now()}`;
+    console.log("[Chatting] Bắt đầu gọi tới:", chat.id);
+
+    try {
+      setCurrentCallRoom(roomId);
+      setCallStatus("outgoing");
+      setIsInCall(true);
+
+      const callParams = {
+        callerId: user.id,
+        receiverId: chat.chatType === "private" ? chat.id : `group_${chat.id}`,
+        roomId: roomId,
+      };
+
+      console.log("[Chatting] Gửi yêu cầu gọi với params:", callParams);
+
+      const response = await socketService.initiateAudioCall(callParams);
+      console.log("[Chatting] Phản hồi từ server:", response);
+    } catch (error) {
+      console.error("[Chatting] Lỗi khi gọi:", error);
+      Alert.alert("Thông báo", error.message || "Không thể thực hiện cuộc gọi");
+      endAudioCall();
+    }
+  };
+
+  const handleAcceptCall = async () => {
+    if (!incomingCall) return;
+    const { callerId, roomId } = incomingCall;
+    stopRingtone();
+    socketService.acceptAudioCall(callerId, user.id, roomId);
+    setIncomingCall(null);
+    setCallStatus("connecting");
+  };
+
+  const handleRejectCall = (callerId, roomId) => {
+    console.log(
+      "[Chatting] Rejecting call from:",
+      callerId,
+      "in room:",
+      roomId
+    );
+    stopRingtone();
+    socketService.rejectAudioCall(user.id, callerId, roomId);
+    setIncomingCall(null);
+    setCallStatus(null);
+  };
+
+  const startAudioCall = async (roomId) => {
+    try {
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: true,
+        playsInSilentModeIOS: true,
+        staysActiveInBackground: true,
+        shouldDuckAndroid: true,
+        playThroughEarpieceAndroid: true,
+      });
+
+      setCallStatus("connecting");
+
+      // Start duration counter
+      const interval = setInterval(() => {
+        setCallDuration((prev) => prev + 1);
+      }, 1000);
+      setDurationInterval(interval);
+
+      setCallStatus("ongoing");
+    } catch (error) {
+      console.error("Error starting audio call:", error);
+      Alert.alert("Lỗi", "Không thể bắt đầu cuộc gọi. Vui lòng thử lại.");
+      endAudioCall();
+    }
+  };
+
+  // Hàm kết thúc cuộc gọi
+  const endAudioCall = async () => {
+    try {
+      console.log("[Chatting] Ending call for room:", currentCallRoom);
+
+      if (currentCallRoom) {
+        if (callStatus === "outgoing") {
+          // Sử dụng phương thức mới cancelAudioCall
+          const response = await socketService.cancelAudioCall(
+            currentCallRoom,
+            chat.id
+          );
+          console.log("[Chatting] Call cancelled successfully:", response);
+        } else {
+          socketService.endAudioCall(currentCallRoom);
+          console.log("[Chatting] Call ended successfully");
+        }
+      }
+
+      // Clear duration interval
+      if (durationInterval) {
+        clearInterval(durationInterval);
+        setDurationInterval(null);
+      }
+
+      // Reset audio mode
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: false,
+        playsInSilentModeIOS: true,
+        staysActiveInBackground: false,
+        shouldDuckAndroid: false,
+      });
+
+      // Reset all call-related states
+      setCallStatus(null);
+      setCallDuration(0);
+      setIsInCall(false);
+      setIsMuted(false);
+      setCurrentCallRoom(null);
+      await stopRingtone();
+
+      console.log("[Chatting] All call states reset successfully");
+    } catch (error) {
+      console.error("[Chatting] Error ending call:", error);
+      // Vẫn reset states ngay cả khi có lỗi
+      setCallStatus(null);
+      setCallDuration(0);
+      setIsInCall(false);
+      setIsMuted(false);
+      setCurrentCallRoom(null);
+    }
+  };
+
+  const handleToggleMute = async () => {
+    try {
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: true,
+        playsInSilentModeIOS: true,
+        staysActiveInBackground: true,
+        shouldDuckAndroid: true,
+        playThroughEarpieceAndroid: true,
+        allowsRecordingAndroid: !isMuted,
+      });
+      setIsMuted(!isMuted);
+    } catch (error) {
+      console.error("Error toggling mute:", error);
+    }
+  };
+
   // Kiểm tra trạng thái chặn giữa 2 người dùng
   const [blockStatus, setBlockStatus] = useState({
     isBlocked: false,
@@ -247,11 +434,8 @@ const Chatting = ({ navigation, route }) => {
       console.log("Joining private chat room:", roomId);
     }
 
-    // Lắng nghe sự kiện kết nối
-    socketService.connect(() => {
-      console.log("Socket connected to room:", roomId);
-      setSocketConnected(true);
-    });
+    socketService.connect();
+    socketService.registerUser(user.id);
 
     // Join room
     socketService.joinRoom(roomId);
@@ -312,14 +496,64 @@ const Chatting = ({ navigation, route }) => {
       Alert.alert("Lỗi", "Không thể tải ảnh lên. Vui lòng thử lại.");
     });
 
+    // Lắng nghe cuộc gọi đến
+    socketService.onIncomingAudioCall(({ callerId, roomId }) => {
+      setCallStatus("incoming");
+      setIncomingCall({ callerId, roomId });
+    });
+
+    // Thêm handler cho sự kiện hủy cuộc gọi
+    socketService.onCallCancelled(({ roomId }) => {
+      console.log("====> [Chatting] Call cancelled for room:", roomId);
+      stopRingtone();
+      setIncomingCall(null);
+      setCallStatus(null);
+      Alert.alert("Xin lỗi", "Cuộc gọi đã bị hủy từ người gọi!");
+    });
+
+    // Lắng nghe cuộc gọi bị từ chối
+    socketService.onAudioCallRejected(({ callerId, receiverId, roomId }) => {
+      console.log("[Chatting] Call rejected event:", {
+        callerId,
+        receiverId,
+        roomId,
+      });
+      endAudioCall();
+      Alert.alert("Xin lỗi", "Cuộc gọi đã bị từ chối bởi người nhận");
+    });
+
+    socketService.onAudioCallEnded(({ roomId }) => {
+      if (currentCallRoom === roomId) {
+        endAudioCall();
+      }
+    });
+
     // Cleanup function
     return () => {
       console.log("Leaving room:", roomId);
       socketService.leaveRoom(roomId);
       socketService.removeAllListeners();
       socketService.disconect();
+      socketService.endAudioCall();
+      stopRingtone();
     };
   }, [user?.id, chat?.id]);
+
+  // Thêm useEffect để lắng nghe sự kiện mất kết nối
+  useEffect(() => {
+    const handleDisconnect = () => {
+      if (isInCall) {
+        Alert.alert("Mất kết nối", "Cuộc gọi đã bị ngắt do mất kết nối");
+        endAudioCall();
+      }
+    };
+
+    socketService.socket?.on("disconnect", handleDisconnect);
+
+    return () => {
+      socketService.socket?.off("disconnect", handleDisconnect);
+    };
+  }, [isInCall]);
 
   const saveFileName = (url) => {
     // Tách URL theo dấu '/' và lấy phần cuối cùng
@@ -560,20 +794,7 @@ const Chatting = ({ navigation, route }) => {
 
         socketService.handleSendMessage(recalledMessage);
       }
-
-      // if (response.data?.status === "ok") {
-      //   setMessages((prevMessages) =>
-      //     prevMessages.map((msg) =>
-      //       msg._id === selectedMessage._id
-      //         ? { ...msg, content: "Tin nhắn đã được thu hồi" }
-      //         : msg
-      //     )
-      //   );
-      // } else {
-      //   console.error("Thu hồi tin nhắn thất bại:", response.data);
-      // }
     } catch (error) {
-      // console.error("Lỗi khi thu hồi tin nhắn:", error);
       Alert.alert("Thông báo", "Tin nhắn này không thể thu hồi.");
     } finally {
       setModalVisible(false);
@@ -1430,10 +1651,10 @@ const Chatting = ({ navigation, route }) => {
               paddingRight: 10,
             }}
           >
-            <TouchableOpacity>
+            <TouchableOpacity onPress={handleInitiateCall}>
               <Image
                 source={require("../../assets/icons/phone-call.png")}
-                style={styles.iconsInHeader}
+                style={[styles.iconsInHeader, isInCall && { tintColor: "red" }]}
               />
             </TouchableOpacity>
             <TouchableOpacity>
@@ -2097,6 +2318,26 @@ const Chatting = ({ navigation, route }) => {
           uploadProgress={uploadProgress}
           onRecordComplete={handleAudioComplete}
         />
+
+        <CallOverlay
+          isVisible={callStatus === "ongoing" || callStatus === "outgoing"}
+          callStatus={callStatus}
+          duration={formatDuration(callDuration)}
+          isMuted={isMuted}
+          onEndCall={endAudioCall}
+          onToggleMute={handleToggleMute}
+          callerName={chat.name}
+        />
+
+        <IncomingCallScreen
+          isVisible={callStatus === "incoming"}
+          callerName={incomingCall?.callerName || chat.name}
+          callerAvatar={incomingCall?.callerAvatar || chat.avatar.uri}
+          callerId={incomingCall?.callerId}
+          roomId={incomingCall?.roomId}
+          onAccept={handleAcceptCall}
+          onDecline={handleRejectCall}
+        />
       </KeyboardAvoidingView>
     </View>
   );
@@ -2555,23 +2796,20 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 20,
     maxWidth: "70%",
-    // marginVertical: 2,
   },
   myAudioMessage: {
     backgroundColor: "#007AFF",
     alignSelf: "flex-end",
-    // marginRight: 10,
   },
   theirAudioMessage: {
     backgroundColor: "#E8E8E8",
     alignSelf: "flex-start",
-    // marginLeft: 10,
   },
   audioContent: {
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
-    minWidth: 150, // Đảm bảo độ rộng tối thiểu
+    minWidth: 150,
   },
   audioInfo: {
     flexDirection: "row",
@@ -2590,6 +2828,7 @@ const styles = StyleSheet.create({
   audioDuration: {
     fontSize: 14,
     minWidth: 60,
+    marginLeft: 10,
   },
 });
 
