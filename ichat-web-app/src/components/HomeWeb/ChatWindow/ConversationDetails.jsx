@@ -38,6 +38,7 @@ import {
 import { createGroup } from "../../../redux/slices/groupSlice";
 import { getUserFriends } from "../../../redux/slices/friendSlice";
 import { searchGroup,isGroupSubAdmin,updateGroup,deleteGroup,setRole,removeMember,addMembers,getGroupById } from "../../../redux/slices/groupSlice";
+import { fetchChatMessages,fetchMessages } from "../../../redux/slices/messagesSlice";
 import { GrContract } from "react-icons/gr";
 import GifPicker from "./GifPicker";
 import Picker from "emoji-picker-react";
@@ -123,10 +124,8 @@ const canChangeAvatar = () => {
 const canDisbandGroup = () => {
   return isMainAdmin; // Chỉ admin chính mới được giải tán nhóm
 };
-// Kiểm tra người dùng có quyền admin hay subadmin
 // useEffect(() => {
 //   if (selectedChat?.chat_type === "group" && selectedChat?.id && user?.id) {
-//     // Kiểm tra xem người dùng có phải là admin hoặc subadmin không
 //     dispatch(isGroupSubAdmin({
 //       groupId: selectedChat.id, 
 //       userId: user.id
@@ -142,7 +141,7 @@ const canDisbandGroup = () => {
 //       console.error("Error checking admin status:", error);
 //     });
 //   }
-// }, [selectedChat, user]);
+// }, [selectedChat, user, dispatch]);
 useEffect(() => {
   if (selectedChat?.chat_type === "group" && selectedChat?.id && user?.id) {
     dispatch(isGroupSubAdmin({
@@ -151,17 +150,36 @@ useEffect(() => {
     }))
     .unwrap()
     .then(result => {
+      console.log("Check admin result:", result);
       const { isAdmin: isUserAdmin, isMainAdmin: isUserMainAdmin } = result;
       setIsAdmin(isUserAdmin);
       setIsMainAdmin(isUserMainAdmin);
       setIsSubAdmin(isUserAdmin && !isUserMainAdmin);
+      
+      // Gọi API members sau khi đã có kết quả từ API kiểm tra quyền
+      fetchGroupMembers();
     })
     .catch(error => {
       console.error("Error checking admin status:", error);
     });
   }
 }, [selectedChat, user, dispatch]);
+useEffect(() => {
+  // Xử lý tự động xác định isSubAdmin khi isAdmin hoặc isMainAdmin thay đổi
+  if (isAdmin === true && isMainAdmin === false) {
+    setIsSubAdmin(true);
+    console.log("Tự động cập nhật: isSubAdmin = true");
+  }
+}, [isAdmin, isMainAdmin]);
+console.log('Debug phân quyền:', {
+  isMainAdmin,
+  isSubAdmin,
+  isAdmin,
+  userId: user.id,
+  adminId: selectedChat.admin_id
+});
 // Hàm tạo nhóm trò chuyện với chat 1-1
+
 const handleCreateGroupClick = async () => {
   setShowCreateGroupModal(true);
   setIsLoadingFriends(true);
@@ -211,7 +229,7 @@ const handleCreateGroup = async () => {
     return message.error("Vui lòng nhập tên nhóm");
   }
   
-  if (selectedFriendsForGroup.length < 1) {
+  if (selectedFriendsForGroup.length < 2) {
     return message.error("Vui lòng chọn ít nhất 1 người bạn khác");
   }
   
@@ -230,7 +248,7 @@ const handleCreateGroup = async () => {
       content: "Tạo nhóm thành công!",
       key: "createGroup"
     });
-    
+    await dispatch(fetchMessages(user.id || user._id)).unwrap();
     // Đóng modal
     setShowCreateGroupModal(false);
     
@@ -305,12 +323,14 @@ const updateGroupSettings = async () => {
   try {
     message.loading({ content: "Đang cập nhật...", key: "updateGroup" });
 
-    // Cập nhật thông tin nhóm
+    // Cập nhật thông tin nhóm với cấu trúc mới
     const response = await dispatch(updateGroup({
       groupId: selectedChat.id,
       name: groupName,
       avatar: groupAvatar,
-      settings: groupSettings
+      allow_add_members: groupSettings.allow_add_members,
+      allow_change_name: groupSettings.allow_change_name,
+      allow_change_avatar: groupSettings.allow_change_avatar
     })).unwrap();
 
     message.success({ 
@@ -581,8 +601,8 @@ const fetchGroupSettings = async () => {
         setIsAdmin(currentUser?.role === "admin");
               // Kiểm tra nếu người dùng là sub-admin
       // Sub-admin là thành viên có role admin nhưng không phải admin chính
-      const isUserSubAdmin = currentUser?.role === "admin" && !isMainAdmin;
-      setIsSubAdmin(isUserSubAdmin);
+      // const isUserSubAdmin = currentUser?.role === "admin" && !isMainAdmin;
+      // setIsSubAdmin(isUserSubAdmin);
       }
     } catch (error) {
       console.error("Error fetching group members:", error);
@@ -644,7 +664,14 @@ const fetchGroupSettings = async () => {
     }
   };
   // Hàm xoá thành viên cho admin
-const handleRemoveMember = async (userId, userName) => {
+const handleRemoveMember = async (userId, userName,isTargetAdmin) => {
+   // Nếu là nhóm phó và đang cố xóa một nhóm phó khác
+  //  if (isSubAdmin && !isMainAdmin && isAdmin) {
+  //   return message.error("Bạn không có quyền xóa nhóm trưởng hoặc nhóm phó khác");
+  //  }
+  if (isSubAdmin && isTargetAdmin) {
+    return message.error("Bạn không có quyền xóa nhóm trưởng hoặc nhóm phó khác");
+   }
   try {
     Modal.confirm({
       title: "Xác nhận xóa thành viên",
@@ -899,7 +926,8 @@ const handleLeaveGroup = async () => {
                         display: 'flex',
                         alignItems: 'center',
                         padding: '10px',
-                        borderBottom: '1px solid #f0f0f0'
+                        borderBottom: '1px solid #f0f0f0',
+                        justifyContent: 'flex-start',
                         }}>
                         <Checkbox
                             checked={selectedMembers.includes(friend.id || friend._id)}
@@ -1002,7 +1030,7 @@ const handleLeaveGroup = async () => {
                     </div>
                   </div>
 
-                  {(isMainAdmin || isSubAdmin) && (
+                  {(isMainAdmin) && (
                     <>
                       <Divider />
                       <div style={{ marginBottom: 20 }}>
@@ -1078,10 +1106,19 @@ const handleLeaveGroup = async () => {
                             <Avatar src={member.avatar_path} style={{ marginRight: 10 }}>
                               {!member.avatar_path && (member.full_name || 'User').charAt(0).toUpperCase()}
                             </Avatar>
-                            <span>
+                            {/* <span>
                               {member.full_name}
                               {member.user_id === selectedChat.admin_id && (
                                 <span style={{ marginLeft: 5, color: '#1890ff' }}>(Nhóm trưởng)</span>
+                              )}
+                            </span> */}
+                             <span>
+                              {member.full_name}
+                              {member.user_id === selectedChat.admin_id && (
+                                <span style={{ marginLeft: 5, color: '#1890ff' }}>(Nhóm trưởng)</span>
+                              )}
+                              {member.role === "admin" && member.user_id !== selectedChat.admin_id && (
+                                <span style={{ marginLeft: 5, color: '#52c41a' }}>(Nhóm phó)</span>
                               )}
                             </span>
                           </div>
@@ -1097,7 +1134,7 @@ const handleLeaveGroup = async () => {
                                 // Không thể đổi vai trò của admin chính nếu mình không phải admin chính
                                 (member.user_id === selectedChat.admin_id && user.id !== selectedChat.admin_id) ||
                                 // Cần là admin hoặc subadmin để thay đổi vai trò
-                                (!isMainAdmin && !isSubAdmin)
+                                (!isMainAdmin)
                               }
                               onChange={(value) => handleChangeRole(member.user_id, value)}
                             >
@@ -1106,16 +1143,28 @@ const handleLeaveGroup = async () => {
                             </Select>
                             
                             {/* Nút xóa thành viên */}
-                            {(isMainAdmin || isSubAdmin) && 
-                            member.user_id !== user.id && 
-                            member.user_id !== selectedChat.admin_id && (
-                              <Button 
-                                icon={<DeleteOutlined />} 
-                                danger
-                                onClick={() => handleRemoveMember(member.user_id, member.full_name)}
-                                size="small"
-                              />
+                            {((isMainAdmin) || 
+                              (isSubAdmin && member.role !== "admin")) && 
+                              member.user_id !== user.id && 
+                              member.user_id !== selectedChat.admin_id && (
+                                <Button 
+                                  icon={<DeleteOutlined />} 
+                                  danger
+                                  onClick={() => handleRemoveMember(member.user_id, member.full_name, member.role === "admin")}
+                                  size="small"
+                                />
                             )}
+                            {/* {(isMainAdmin || 
+                                (isAdmin === true && isMainAdmin === false && member.role !== "admin")) && 
+                                member.user_id !== user.id && 
+                                member.user_id !== selectedChat.admin_id && (
+                                  <Button 
+                                    icon={<DeleteOutlined />} 
+                                    danger
+                                    onClick={() => handleRemoveMember(member.user_id, member.full_name, member.role === "admin")}
+                                    size="small"
+                                  />
+                              )} */}
                           </div>
                         </div>
                       ))}
@@ -1172,8 +1221,18 @@ const handleLeaveGroup = async () => {
                             {!member.avatar_path && (member.full_name || 'User').charAt(0).toUpperCase()}
                           </Avatar>
                           <div className="member-details">
-                            <span className="member-name">{member.full_name}</span>
-                            {member.role === "admin" && <span className="admin-badge">Nhóm trưởng</span>}
+                            {/* <span className="member-name">{member.full_name}</span>
+                            {member.role === "admin" && <span className="admin-badge">Nhóm trưởng</span>} */}
+                            <span className="member-name">
+                              {member.full_name}
+                            </span>
+
+                              {member.user_id === selectedChat.admin_id && (
+                                <span className="admin-badge" style={{ marginLeft: 5 }}>(Nhóm trưởng)</span>
+                              )}
+                              {member.role === "admin" && member.user_id !== selectedChat.admin_id && (
+                                <span className="admin-badge" style={{ marginLeft: 5 }}>(Nhóm phó)</span>
+                              )}
                           </div>
                         </div>
                       ))}
@@ -1712,7 +1771,7 @@ const handleLeaveGroup = async () => {
               key="create" 
               type="primary" 
               onClick={handleCreateGroup}
-              disabled={!newGroupName.trim() || selectedFriendsForGroup.length < 1}
+              disabled={!newGroupName.trim() || selectedFriendsForGroup.length < 2}
             >
               Tạo nhóm
             </Button>

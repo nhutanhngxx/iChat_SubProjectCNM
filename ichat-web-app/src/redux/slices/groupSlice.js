@@ -179,7 +179,17 @@ export const removeMember = createAsyncThunk(
 // Cập nhật thông tin nhóm
 export const updateGroup = createAsyncThunk(
   "groups/updateGroup",
-  async ({ groupId, name, avatar }, { rejectWithValue }) => {
+  async (
+    {
+      groupId,
+      name,
+      avatar,
+      allow_add_members,
+      allow_change_name,
+      allow_change_avatar,
+    },
+    { rejectWithValue }
+  ) => {
     try {
       const formData = new FormData();
 
@@ -190,6 +200,9 @@ export const updateGroup = createAsyncThunk(
       if (avatar) {
         formData.append("avatar", avatar);
       }
+      formData.append("allow_add_members", allow_add_members.toString());
+      formData.append("allow_change_name", allow_change_name.toString());
+      formData.append("allow_change_avatar", allow_change_avatar.toString());
 
       const response = await fetch(`${API_URL}${groupId}`, {
         method: "PUT",

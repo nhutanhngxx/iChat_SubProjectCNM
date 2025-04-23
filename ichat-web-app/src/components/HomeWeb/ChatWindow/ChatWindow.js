@@ -180,6 +180,7 @@ const ChatWindow = ({ user, selectedFriend }) => {
       chat_type: user.chat_type || "private",
       originalMessage: user.originalMessage || "",
       sender_name: user.sender_name || "",
+      admin_id: user.admin_id || null,
     };
 
     setSelectedUser(normalizedUser);
@@ -224,7 +225,8 @@ const ChatWindow = ({ user, selectedFriend }) => {
         isLastMessageFromMe: msg.isLastMessageFromMe || false,
         chat_type: msg.chat_type || "private",
         originalMessage: msg.originalMessage,
-        sender_name: msg.sender_name, // Thêm trường sender_name nếu cần
+        sender_name: msg.sender_name,
+        admin_id: msg.admin_id,
       }));
 
       setUserListFromState(formattedUsers);

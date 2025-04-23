@@ -246,7 +246,10 @@ const GroupModel = {
   },
 
   // 5. Đổi tên Group / Set avatar
-  updateGroup: async (groupId, { name, avatar }) => {
+  updateGroup: async (
+    groupId,
+    { name, avatar, allow_add_members, allow_change_name, allow_change_avatar }
+  ) => {
     try {
       const update = {};
 
@@ -260,6 +263,10 @@ const GroupModel = {
         const avatarUrl = await uploadFile(avatar);
         update.avatar = avatarUrl; // Sửa từ avatarUrl thành avatar để phù hợp
       }
+
+      update.allow_add_members = allow_add_members;
+      update.allow_change_name = allow_change_name;
+      update.allow_change_avatar = allow_change_avatar;
 
       return GroupChat.findByIdAndUpdate(groupId, update, { new: true });
     } catch (error) {

@@ -197,10 +197,15 @@ const GroupController = {
       const { groupId } = req.params;
       const { name } = req.body;
       const avatar = req.file ? req.file.buffer : null;
-
+      const allow_add_members = req.body.allow_add_members || true;
+      const allow_change_name = req.body.allow_change_name || true;
+      const allow_change_avatar = req.body.allow_change_avatar || true;
       const upd = await GroupModel.updateGroup(groupId, {
         name,
         avatar,
+        allow_add_members,
+        allow_change_name,
+        allow_change_avatar,
       });
 
       res.json({ status: "ok", data: upd });
