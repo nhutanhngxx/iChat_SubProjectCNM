@@ -305,6 +305,18 @@ const ChatWindow = ({ user, selectedFriend }) => {
       socket.off("group-member-update", handleGroupEvent);
     };
   }, [user?.id, selectedUser?.id, selectedUser?.chat_type, dispatch]);
+  // Sửa useEffect xử lý khi người dùng rời nhóm
+  useEffect(() => {
+    const handleUserLeftGroup = () => {
+      setSelectedUser(null); // Sửa từ selectedUser(null) thành setSelectedUser(null)
+    };
+
+    window.addEventListener("user-left-group", handleUserLeftGroup);
+
+    return () => {
+      window.removeEventListener("user-left-group", handleUserLeftGroup);
+    };
+  }, []);
 
   return (
     <Layout className="chat-window">
@@ -322,6 +334,7 @@ const ChatWindow = ({ user, selectedFriend }) => {
           messages={chatMessages}
           onUpdateMessages={handleUpdateMessages} // Truyền hàm callback
           user={user}
+          onChatChange={setSelectedUser}
         />
       ) : (
         <HelloWindow />

@@ -535,7 +535,7 @@ const CreateGroupModal = ({ visible, onCancel, onOk }) => {
   );
 };
 
-const MessageArea = ({ selectedChat, user }) => {
+const MessageArea = ({ selectedChat, user, onChatChange }) => {
   const dispatch = useDispatch();
   const chatMessages = useSelector((state) => state.messages.chatMessages);
   const userMessages = useSelector((state) => state.messages.userMessages);
@@ -556,17 +556,36 @@ const MessageArea = ({ selectedChat, user }) => {
   const [showSearchRight, setShowSearchRight] = useState(false);
   // Tự động cuộn xuống cuối khi có tin nhắn mới
   const messageEndRef = useRef(null);
-  //   const scrollToBottom = () => {
-  //     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  //   };
-  //   // Cuộn xuống khi messages thay đổi hoặc khi chuyển đổi cuộc trò chuyện
-  // useEffect(() => {
-  //   scrollToBottom();
-  // }, [allMessages, selectedChat]);
   const [modalVisible, setModalVisible] = useState(false);
   // Trả lời tin nhắn
   const [replyingTo, setReplyingTo] = useState(null);
-  // Lấy token từ server
+  //state để reset lại mesageArea khi người dùng rời nhóm
+  const [currentChat, setCurrentChat] = useState(selectedChat);
+
+  // useEffect để thoát khỏi componet khi người dùng rời nhóm
+  useEffect(() => {
+    const handleGroupLeft = (event) => {
+      if (event.detail && event.detail.groupId) {
+        // Thông báo lên component cha
+        if (onChatChange) {
+          onChatChange(null);
+        }
+
+        // Hoặc sử dụng sự kiện để thông báo lên component cha
+        window.dispatchEvent(
+          new CustomEvent("user-left-group", {
+            detail: { groupId: event.detail.groupId },
+          })
+        );
+      }
+    };
+
+    window.addEventListener("group-left", handleGroupLeft);
+
+    return () => {
+      window.removeEventListener("group-left", handleGroupLeft);
+    };
+  }, [onChatChange]);
   // Hàm xử lý khi bấm icon Video
   const handleStartCall = async () => {
     try {
@@ -1159,6 +1178,14 @@ const MessageArea = ({ selectedChat, user }) => {
             handleSendMessage={handleSendMessage}
             allMessages={displayMessages}
             user={user}
+            onLeaveGroup={() => {
+              // Thông báo cho component cha thông qua sự kiện
+              window.dispatchEvent(
+                new CustomEvent("user-left-group", {
+                  detail: { groupId: selectedChat.id },
+                })
+              );
+            }}
           />
         </Layout>
       )}
