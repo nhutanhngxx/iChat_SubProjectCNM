@@ -383,7 +383,12 @@ const Option = ({ route }) => {
         )}
 
         {adminGroup === true && (
-          <TouchableOpacity style={styles.component}>
+          <TouchableOpacity
+            style={styles.component}
+            onPress={() =>
+              navigation.navigate("MemberManagement", { groupId: id })
+            }
+          >
             <Image
               source={require("../../assets/icons/friend.png")}
               style={styles.icon}
