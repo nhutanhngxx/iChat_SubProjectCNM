@@ -19,6 +19,7 @@ import groupService from "../../services/groupService";
 import messageService from "../../services/messageService";
 import friendService from "../../services/friendService";
 import ModalRenameGroup from "../group/ModalRenameGroup";
+import ModalSelectAdmin from "../group/ModalSelectAdmin";
 
 const Option = ({ route }) => {
   // const API_iChat = `http://${getHostIP()}:5001/api`;
@@ -31,6 +32,8 @@ const Option = ({ route }) => {
   const [adminGroup, setAdminGroup] = useState(null);
   const [sharedGroups, setSharedGroups] = useState([]); // Danh sách nhóm chung giữa 2 người
   const [isRenameModalVisible, setIsRenameModalVisible] = useState(false);
+  const [isSelectAdminModalVisible, setIsSelectAdminModalVisible] =
+    useState(false);
 
   useEffect(() => {
     const fetchReceiverInfo = async () => {
@@ -183,22 +186,7 @@ const Option = ({ route }) => {
       {
         text: "Đồng ý",
         onPress: async () => {
-          try {
-            const response = await groupService.removeMember({
-              groupId: id,
-              userId: user.id,
-            });
-            if (response.status === "ok") {
-              Alert.alert("Thông báo", "Đã rời khỏi nhóm thành công.", [
-                { text: "OK", onPress: () => navigation.navigate("Home") },
-              ]);
-            }
-            if (response.status === "error") {
-              Alert.alert("Thông báo", "Không thể rời nhóm.");
-            }
-          } catch (error) {
-            console.error("Lỗi khi rời khỏi nhóm:", error);
-          }
+          setIsSelectAdminModalVisible(true);
         },
       },
     ]);
@@ -518,6 +506,17 @@ const Option = ({ route }) => {
         onClose={() => setIsRenameModalVisible(false)}
         groupId={id}
         currentName={name}
+      />
+
+      {/* Modal Select Admin Before Leave */}
+      <ModalSelectAdmin
+        visible={isSelectAdminModalVisible}
+        onClose={() => {
+          setIsSelectAdminModalVisible(false);
+          navigation.navigate("Home");
+        }}
+        groupId={id}
+        currentAdminId={user.id}
       />
     </View>
   );

@@ -20,6 +20,7 @@ const ModalMemberInfo = ({
   onRemoveMember,
   onAddFriend,
   onSendMessage,
+  onLeaveGroup,
   relationshipType, // "friend", "stranger"
 }) => {
   if (!member) return null;
@@ -127,6 +128,20 @@ const ModalMemberInfo = ({
                     >
                       <Text style={[styles.optionText, styles.dangerText]}>
                         Xóa khỏi nhóm
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+
+                  {isCurrentUser && (
+                    <TouchableOpacity
+                      style={styles.memberModalOption}
+                      onPress={() => {
+                        onClose();
+                        onLeaveGroup();
+                      }}
+                    >
+                      <Text style={[styles.optionText, styles.dangerText]}>
+                        Rời khỏi nhóm
                       </Text>
                     </TouchableOpacity>
                   )}

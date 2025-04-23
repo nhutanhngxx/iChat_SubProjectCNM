@@ -21,6 +21,7 @@ import { UserContext } from "../../config/context/UserContext";
 import groupService from "../../services/groupService";
 import friendService from "../../services/friendService";
 import ModalMemberInfo from "./ModalMemberInfo";
+import ModalSelectAdmin from "./ModalSelectAdmin";
 
 const ModalMemberManagement = ({ route }) => {
   const { groupId } = route.params || {};
@@ -37,6 +38,8 @@ const ModalMemberManagement = ({ route }) => {
   const [memberModalVisible, setMemberModalVisible] = useState(false);
   const [isChecked, setIsChecked] = useState(false);
   const [memberRelationships, setMemberRelationships] = useState({});
+  const [selectAdminModalVisible, setSelectAdminModalVisible] = useState(false);
+  const [currentAdminId, setCurrentAdminId] = useState(null);
 
   // Lấy thông tin nhóm và thành viên
   useEffect(() => {
@@ -142,6 +145,70 @@ const ModalMemberManagement = ({ route }) => {
   // Hàm xử lý switch phê duyệt thành viên
   const handleMemberApproval = (value) => {
     setIsChecked(value);
+  };
+
+  // Xử lý khi người dùng muốn rời nhóm
+  const handleLeaveGroup = () => {
+    // Kiểm tra xem người dùng có phải là admin không
+    const userMember = members.find((member) => member.user_id === user.id);
+
+    if (userMember?.role === "admin") {
+      // Nếu là admin, hiển thị modal chọn admin mới
+      const adminMember = members.find((member) => member.role === "admin");
+      if (adminMember) {
+        setCurrentAdminId(adminMember.user_id);
+      }
+      setSelectAdminModalVisible(true);
+    } else {
+      // Nếu không phải admin, hiển thị xác nhận rời nhóm
+      confirmLeaveGroup();
+    }
+  };
+
+  // Xác nhận rời nhóm
+  const confirmLeaveGroup = () => {
+    Alert.alert("Xác nhận", "Bạn có chắc chắn muốn rời nhóm này?", [
+      { text: "Hủy" },
+      {
+        text: "Đồng ý",
+        onPress: async () => {
+          try {
+            const response = await groupService.leaveGroup(groupId, user.id);
+            if (response.status === "ok") {
+              Alert.alert("Thông báo", response.message);
+              navigation.goBack();
+            } else {
+              Alert.alert("Thông báo", "Rời nhóm thất bại");
+            }
+          } catch (error) {
+            console.error("Lỗi khi rời nhóm:", error);
+            Alert.alert("Thông báo", "Rời nhóm thất bại");
+          }
+        },
+      },
+    ]);
+  };
+
+  // Xử lý khi chọn admin mới
+  const handleSelectNewAdmin = async (newAdminId) => {
+    try {
+      // Gọi API để chỉ định admin mới và rời nhóm
+      const response = await groupService.appointAdminAndLeave({
+        groupId,
+        newAdminId,
+        userId: user.id,
+      });
+
+      if (response.status === "ok") {
+        Alert.alert("Thông báo", response.message);
+        navigation.goBack();
+      } else {
+        Alert.alert("Thông báo", "Không thể rời nhóm. Vui lòng thử lại sau.");
+      }
+    } catch (error) {
+      console.error("Lỗi khi chỉ định admin mới và rời nhóm:", error);
+      Alert.alert("Thông báo", "Không thể rời nhóm. Vui lòng thử lại sau.");
+    }
   };
 
   // Render thành viên
@@ -389,6 +456,16 @@ const ModalMemberManagement = ({ route }) => {
           closeMemberModal();
           // navigation.navigate("Chat", { userId: selectedMember?.user_id });
         }}
+        onLeaveGroup={handleLeaveGroup}
+      />
+
+      {/* Modal chọn quản trị viên mới */}
+      <ModalSelectAdmin
+        visible={selectAdminModalVisible}
+        onClose={() => setSelectAdminModalVisible(false)}
+        members={members}
+        currentAdminId={currentAdminId}
+        onSelectAdmin={handleSelectNewAdmin}
       />
     </View>
   );
@@ -511,6 +588,20 @@ const styles = StyleSheet.create({
   },
   memberAction: {
     padding: 5,
+  },
+  leaveGroupButton: {
+    backgroundColor: "#FF3B30",
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    marginHorizontal: 15,
+    marginBottom: 15,
+    alignItems: "center",
+  },
+  leaveGroupText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "bold",
   },
 });
 
