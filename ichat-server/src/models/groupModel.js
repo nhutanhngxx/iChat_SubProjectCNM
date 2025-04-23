@@ -370,6 +370,26 @@ const GroupModel = {
       throw new Error("Không thể kiểm tra quyền admin phụ của nhóm");
     }
   },
+
+  transferAdmin: async (groupId, userId) => {
+    try {
+      // Cập nhật admin_id trong GroupChat
+      const updatedGroup = await GroupChat.findByIdAndUpdate(
+        groupId,
+        { admin_id: userId },
+        { new: true }
+      );
+
+      if (!updatedGroup) {
+        throw new Error("Nhóm không tồn tại");
+      }
+
+      return updatedGroup;
+    } catch (error) {
+      console.error("Lỗi khi chuyển nhường quyền admin:", error);
+      throw error;
+    }
+  },
 };
 
 module.exports = GroupModel;

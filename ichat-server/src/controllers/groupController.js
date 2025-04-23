@@ -282,6 +282,26 @@ const GroupController = {
       });
     }
   },
+
+  // Chuyển nhường quyền admin cho người khác
+  transferAdmin: async (req, res) => {
+    try {
+      const { groupId, userId } = req.params; // hoặc req.body
+
+      const result = await GroupModel.transferAdmin(groupId, userId);
+
+      return res.status(200).json({
+        status: "ok",
+        data: result,
+      });
+    } catch (error) {
+      console.error("Lỗi chuyển nhường quyền admin:", error);
+      return res.status(500).json({
+        status: "error",
+        message: error.message,
+      });
+    }
+  },
 };
 
 module.exports = GroupController;
