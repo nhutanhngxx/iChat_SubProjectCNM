@@ -379,7 +379,6 @@ const GroupModel = {
         { admin_id: userId },
         { new: true }
       );
-
       if (!updatedGroup) {
         throw new Error("Nhóm không tồn tại");
       }

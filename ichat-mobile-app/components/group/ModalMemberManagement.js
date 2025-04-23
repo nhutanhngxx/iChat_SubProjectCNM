@@ -317,8 +317,37 @@ const ModalMemberManagement = ({ route }) => {
           console.log("Xem thông tin thành viên:", selectedMember?.full_name);
         }}
         onAppointAdmin={() => {
-          // Thêm logic chỉ định làm quản trị viên
-          console.log("Chỉ định làm quản trị viên:", selectedMember?.full_name);
+          Alert.alert(
+            "Thông báo",
+            `Bạn có chắc chắn muốn chỉ định ${selectedMember?.full_name} làm quản trị viên không?`,
+            [
+              { text: "Hủy" },
+              {
+                text: "Đồng ý",
+                onPress: async () => {
+                  try {
+                    const response = await groupService.appointAdmin({
+                      groupId,
+                      newAdimUserId: selectedMember?.user_id,
+                      userId: user?.id,
+                    });
+
+                    if (response.status === "ok") {
+                      Alert.alert("Thông báo", response.message);
+                    } else {
+                      Alert.alert(
+                        "Thông báo",
+                        "Chỉ định quản trị viên thất bại"
+                      );
+                    }
+                  } catch (error) {
+                    console.error("Lỗi khi chỉ định quản trị viên:", error);
+                  }
+                  closeMemberModal();
+                },
+              },
+            ]
+          );
         }}
         // Xóa thành viên khỏi nhóm
         onRemoveMember={() => {

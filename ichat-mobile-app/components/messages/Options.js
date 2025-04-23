@@ -176,6 +176,34 @@ const Option = ({ route }) => {
     ]);
   };
 
+  // Rời khỏi nhóm
+  const handleLeaveGroup = async () => {
+    Alert.alert("Thông báo", "Bạn có chắc chắn muốn rời khỏi nhóm này không?", [
+      { text: "Hủy" },
+      {
+        text: "Đồng ý",
+        onPress: async () => {
+          try {
+            const response = await groupService.removeMember({
+              groupId: id,
+              userId: user.id,
+            });
+            if (response.status === "ok") {
+              Alert.alert("Thông báo", "Đã rời khỏi nhóm thành công.", [
+                { text: "OK", onPress: () => navigation.navigate("Home") },
+              ]);
+            }
+            if (response.status === "error") {
+              Alert.alert("Thông báo", "Không thể rời nhóm.");
+            }
+          } catch (error) {
+            console.error("Lỗi khi rời khỏi nhóm:", error);
+          }
+        },
+      },
+    ]);
+  };
+
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
@@ -279,7 +307,7 @@ const Option = ({ route }) => {
             <Text>Thêm thành viên</Text>
           </View>
           {/* 3. Đổi ảnh nhóm */}
-          <View style={{ width: 100, gap: 10, alignItems: "center" }}>
+          <View style={{ width: 105, gap: 10, alignItems: "center" }}>
             <TouchableOpacity>
               <Image
                 source={require("../../assets/icons/image.png")}
@@ -443,7 +471,10 @@ const Option = ({ route }) => {
           </TouchableOpacity>
 
           {receiverGroup && !receiverInfo && (
-            <TouchableOpacity style={styles.component}>
+            <TouchableOpacity
+              style={styles.component}
+              onPress={handleLeaveGroup}
+            >
               <Image
                 source={require("../../assets/icons/details.png")}
                 style={styles.icon}

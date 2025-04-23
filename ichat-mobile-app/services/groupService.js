@@ -157,6 +157,7 @@ const groupService = {
     }
   },
 
+  // Tạo nhóm
   createGroup: async ({ groupName, adminId, participantIds }) => {
     console.log("Group Service: ", groupName, adminId, participantIds);
     try {
@@ -176,6 +177,7 @@ const groupService = {
     }
   },
 
+  // Xóa/giải tán nhóm
   deleteGroup: async (groupId) => {
     try {
       const response = await apiService.delete(`/${PREFIX}/${groupId}`);
@@ -192,6 +194,7 @@ const groupService = {
     }
   },
 
+  // Đổi tên nhóm
   renameGroup: async ({ groupId, name }) => {
     try {
       // console.log("Group Service: ", groupId, newName);
@@ -213,6 +216,7 @@ const groupService = {
     }
   },
 
+  // Thêm thành viên mới
   addMember: async ({ groupId, userIds }) => {
     try {
       const response = await apiService.post(`/${PREFIX}/add-members`, {
@@ -234,6 +238,7 @@ const groupService = {
     }
   },
 
+  // Xóa thành viên khỏi nhóm / Rời nhóm
   removeMember: async ({ groupId, userId }) => {
     try {
       const response = await apiService.post(`/${PREFIX}/remove-member`, {
@@ -248,6 +253,42 @@ const groupService = {
       }
     } catch (error) {
       console.log("Không thể xóa thành viên khỏi nhóm: ", error);
+      throw error;
+    }
+  },
+
+  // Chuyển quyền quản trị viên
+  appointAdmin: async ({ groupId, newAdimUserId, userId }) => {
+    try {
+      // Chuyển quyền quản trị viên
+      const changeAdmin = await apiService.put(
+        `/${PREFIX}/transferAdmin/${groupId}/${newAdimUserId}`
+      );
+
+      // Cập nhật quyền của thành viên được chọn thành quản trị viên
+      const setRoleNewAdmin = await apiService.put(
+        `/${PREFIX}/${groupId}/members/${newAdimUserId}/role`,
+        { role: "admin" }
+      );
+
+      // Cập nhật quyền của thành viên cũ thành thành viên thường
+      const updateRoleOldAdmin = await apiService.put(
+        `/${PREFIX}/${groupId}/members/${userId}/role`,
+        { role: "member" }
+      );
+
+      if (
+        changeAdmin.data.status === "ok" &&
+        setRoleNewAdmin.data.status === "ok" &&
+        updateRoleOldAdmin.data.status === "ok"
+      ) {
+        return {
+          status: "ok",
+          message: "Chuyển quyền quản trị viên thành công.",
+        };
+      }
+    } catch (error) {
+      console.log("Không thể chuyển quyền quản trị viên: ", error);
       throw error;
     }
   },

@@ -120,14 +120,16 @@ const ModalMemberInfo = ({
                     </TouchableOpacity>
                   )}
 
-                  <TouchableOpacity
-                    style={styles.memberModalOption}
-                    onPress={onRemoveMember}
-                  >
-                    <Text style={[styles.optionText, styles.dangerText]}>
-                      Xóa khỏi nhóm
-                    </Text>
-                  </TouchableOpacity>
+                  {!isCurrentUser && (
+                    <TouchableOpacity
+                      style={styles.memberModalOption}
+                      onPress={onRemoveMember}
+                    >
+                      <Text style={[styles.optionText, styles.dangerText]}>
+                        Xóa khỏi nhóm
+                      </Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
               </View>
             </View>
