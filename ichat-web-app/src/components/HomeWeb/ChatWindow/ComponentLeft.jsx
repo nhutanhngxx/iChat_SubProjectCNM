@@ -189,7 +189,7 @@ const ChatItem = ({ item, onSelectUser, onPin }) => {
               {item.type === "audio" && <MutedOutlined />}
               {item.type === "notification" && <NotificationOutlined />}
               {`${item.isLastMessageFromMe === true ? "Bạn: " : 
-                (item.chat_type === "group" ? `${item.sender_name || "Người dùng"}: ` : `${item.name}: `)
+                (item.chat_type === "group" ? `${item.sender_name || ""}: ` : `${item.name}: `)
                 }${item.type === "image"
                   ? "Đã gửi một ảnh"
                   : item.type === "file"

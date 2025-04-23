@@ -37,8 +37,7 @@ import {
   import { CameraOutlined } from "@ant-design/icons";
 import { createGroup } from "../../../redux/slices/groupSlice";
 import { getUserFriends } from "../../../redux/slices/friendSlice";
-
- 
+import { searchGroup,isGroupSubAdmin,updateGroup,deleteGroup,setRole,removeMember,addMembers,getGroupById } from "../../../redux/slices/groupSlice";
 import { GrContract } from "react-icons/gr";
 import GifPicker from "./GifPicker";
 import Picker from "emoji-picker-react";
@@ -99,7 +98,69 @@ const [selectedFriendsForGroup, setSelectedFriendsForGroup] = useState([]);
 const [friendsList, setFriendsList] = useState([]);
 const [isLoadingFriends, setIsLoadingFriends] = useState(false);
 const [searchFriendTerm, setSearchFriendTerm] = useState("");
+// State kiểm tra admin và cho phép quyền
+const [isSubAdmin, setIsSubAdmin] = useState(false);
+const [isMainAdmin, setIsMainAdmin] = useState(false);
+const [groupSettings, setGroupSettings] = useState({
+  allow_add_members: true,
+  allow_change_name: true,
+  allow_change_avatar: true
+});
 
+// Hàm helper để kiểm tra quyền
+const canAddMembers = () => {
+  return isMainAdmin || isSubAdmin || groupSettings.allow_add_members;
+};
+
+const canChangeName = () => {
+  return isMainAdmin || isSubAdmin || groupSettings.allow_change_name;
+};
+
+const canChangeAvatar = () => {
+  return isMainAdmin || isSubAdmin || groupSettings.allow_change_avatar;
+};
+
+const canDisbandGroup = () => {
+  return isMainAdmin; // Chỉ admin chính mới được giải tán nhóm
+};
+// Kiểm tra người dùng có quyền admin hay subadmin
+// useEffect(() => {
+//   if (selectedChat?.chat_type === "group" && selectedChat?.id && user?.id) {
+//     // Kiểm tra xem người dùng có phải là admin hoặc subadmin không
+//     dispatch(isGroupSubAdmin({
+//       groupId: selectedChat.id, 
+//       userId: user.id
+//     }))
+//     .unwrap()
+//     .then(result => {
+//       const { isAdmin: isUserAdmin, isMainAdmin: isUserMainAdmin } = result;
+//       setIsAdmin(isUserAdmin);
+//       setIsMainAdmin(isUserMainAdmin);
+//       setIsSubAdmin(isUserAdmin && !isUserMainAdmin);
+//     })
+//     .catch(error => {
+//       console.error("Error checking admin status:", error);
+//     });
+//   }
+// }, [selectedChat, user]);
+useEffect(() => {
+  if (selectedChat?.chat_type === "group" && selectedChat?.id && user?.id) {
+    dispatch(isGroupSubAdmin({
+      groupId: selectedChat.id, 
+      userId: user.id
+    }))
+    .unwrap()
+    .then(result => {
+      const { isAdmin: isUserAdmin, isMainAdmin: isUserMainAdmin } = result;
+      setIsAdmin(isUserAdmin);
+      setIsMainAdmin(isUserMainAdmin);
+      setIsSubAdmin(isUserAdmin && !isUserMainAdmin);
+    })
+    .catch(error => {
+      console.error("Error checking admin status:", error);
+    });
+  }
+}, [selectedChat, user, dispatch]);
 // Hàm tạo nhóm trò chuyện với chat 1-1
 const handleCreateGroupClick = async () => {
   setShowCreateGroupModal(true);
@@ -188,6 +249,87 @@ const handleCreateGroup = async () => {
       key: "createGroup"
     });
     console.error("Error creating group:", error);
+  }
+};
+
+// Hàm thay đổi vai trò
+const handleChangeRole = async (userId, newRole) => {
+  try {
+    message.loading({ content: "Đang cập nhật vai trò...", key: "changeRole" });
+    
+    await dispatch(setRole({
+      groupId: selectedChat.id,
+      userId: userId,
+      role: newRole
+    })).unwrap();
+    
+    message.success({ 
+      content: "Đã cập nhật vai trò thành viên", 
+      key: "changeRole" 
+    });
+    
+    // Cập nhật danh sách thành viên
+    fetchGroupMembers();
+  } catch (error) {
+    message.error({ 
+      content: error.message || "Không thể cập nhật vai trò", 
+      key: "changeRole" 
+    });
+    console.error("Error changing role:", error);
+  }
+};
+// Hàm giải tán nhóm
+const handleDisbandGroup = async () => {
+  try {
+    message.loading({ content: "Đang giải tán nhóm...", key: "disbandGroup" });
+    
+    await dispatch(deleteGroup(selectedChat.id)).unwrap();
+    
+    message.success({ 
+      content: "Đã giải tán nhóm thành công", 
+      key: "disbandGroup" 
+    });
+    
+    setShowGroupSettingsModal(false);
+    // Có thể cần chuyển hướng người dùng sau khi giải tán nhóm
+  } catch (error) {
+    message.error({ 
+      content: error.message || "Không thể giải tán nhóm", 
+      key: "disbandGroup" 
+    });
+    console.error("Error disbanding group:", error);
+  }
+};
+// Hàm cập nhật nhóm
+const updateGroupSettings = async () => {
+  try {
+    message.loading({ content: "Đang cập nhật...", key: "updateGroup" });
+
+    // Cập nhật thông tin nhóm
+    const response = await dispatch(updateGroup({
+      groupId: selectedChat.id,
+      name: groupName,
+      avatar: groupAvatar,
+      settings: groupSettings
+    })).unwrap();
+
+    message.success({ 
+      content: "Đã cập nhật thông tin nhóm thành công", 
+      key: "updateGroup" 
+    });
+    
+    // Cập nhật lại state
+    fetchGroupMembers();
+    fetchGroupSettings();
+    
+    setShowGroupSettingsModal(false);
+    return response;
+  } catch (error) {
+    message.error({ 
+      content: error.message || "Không thể cập nhật thông tin nhóm", 
+      key: "updateGroup" 
+    });
+    console.error("Error updating group settings:", error);
   }
 };
   // Thêm hàm formatBytes ở đầu component
@@ -378,9 +520,49 @@ const fetchFriends = async () => {
   useEffect(() => {
     if (selectedChat?.chat_type === "group" && selectedChat?.id) {
       fetchGroupMembers();
+      fetchGroupSettings();
     }
   }, [selectedChat]);
-
+// Thêm hàm để lấy cài đặt nhóm
+// const fetchGroupSettings = async () => {
+//   try {
+//     // Gọi API lấy thông tin nhóm
+//     const response = await axios.get(`http://${window.location.hostname}:5001/api/groups/group/${selectedChat.id}`);
+    
+//     if (response.data && response.data.data) {
+//       const groupData = response.data.data;
+//       setGroupSettings({
+//         allow_add_members: groupData.allow_add_members,
+//         allow_change_name: groupData.allow_change_name,
+//         allow_change_avatar: groupData.allow_change_avatar
+//       });
+      
+//       // Kiểm tra nếu người dùng hiện tại là admin chính
+//       setIsMainAdmin(groupData.admin_id === user.id);
+//     }
+//   } catch (error) {
+//     console.error("Error fetching group settings:", error);
+//   }
+// };
+const fetchGroupSettings = async () => {
+  try {
+    const response = await dispatch(getGroupById(selectedChat.id)).unwrap();
+    
+    if (response) {
+      setGroupSettings({
+        allow_add_members: response.allow_add_members,
+        allow_change_name: response.allow_change_name,
+        allow_change_avatar: response.allow_change_avatar
+      });
+      
+      // Cập nhật tên nhóm và biểu tượng
+      setGroupName(response.name);
+      setIsMainAdmin(response.admin_id === user.id);
+    }
+  } catch (error) {
+    console.error("Error fetching group settings:", error);
+  }
+};
   // Function to fetch group members
   const fetchGroupMembers = async () => {
     try {
@@ -397,6 +579,10 @@ const fetchFriends = async () => {
         );
         
         setIsAdmin(currentUser?.role === "admin");
+              // Kiểm tra nếu người dùng là sub-admin
+      // Sub-admin là thành viên có role admin nhưng không phải admin chính
+      const isUserSubAdmin = currentUser?.role === "admin" && !isMainAdmin;
+      setIsSubAdmin(isUserSubAdmin);
       }
     } catch (error) {
       console.error("Error fetching group members:", error);
@@ -457,17 +643,97 @@ const fetchFriends = async () => {
       setInputMessage((prevMessage) => prevMessage + emoji);
     }
   };
-
-  const handleLeaveGroup = async () => {
-    try {
-      // Implementation for leaving group
-      // await axios.post(...);
-      message.success("Đã rời nhóm thành công");
-      setShowLeaveGroupModal(false);
-    } catch (error) {
-      message.error("Không thể rời nhóm. Vui lòng thử lại.");
+  // Hàm xoá thành viên cho admin
+const handleRemoveMember = async (userId, userName) => {
+  try {
+    Modal.confirm({
+      title: "Xác nhận xóa thành viên",
+      content: `Bạn có chắc chắn muốn xóa ${userName} khỏi nhóm?`,
+      okText: "Xóa",
+      okType: "danger",
+      cancelText: "Hủy",
+      onOk: async () => {
+        message.loading({ content: "Đang xóa thành viên...", key: "removeMember" });
+        
+        await dispatch(removeMember({
+          groupId: selectedChat.id,
+          userId: userId
+        })).unwrap();
+        
+        message.success({ 
+          content: "Đã xóa thành viên khỏi nhóm", 
+          key: "removeMember" 
+        });
+        
+        // Cập nhật lại danh sách thành viên
+        fetchGroupMembers();
+      }
+    });
+  } catch (error) {
+    message.error({ 
+      content: error.message || "Không thể xóa thành viên", 
+      key: "removeMember" 
+    });
+    console.error("Error removing member:", error);
+  }
+};
+  // Hàm thêm thành viên
+const handleAddMembers = async () => {
+  try {
+    if (selectedMembers.length === 0) {
+      return message.info("Vui lòng chọn ít nhất một thành viên");
     }
-  };
+    
+    message.loading({ content: "Đang thêm thành viên...", key: "addMembers" });
+    
+    await dispatch(addMembers({
+      groupId: selectedChat.id,
+      userIds: selectedMembers
+    })).unwrap();
+    
+    message.success({ 
+      content: `Đã thêm ${selectedMembers.length} thành viên vào nhóm`, 
+      key: "addMembers" 
+    });
+    
+    // Cập nhật lại danh sách thành viên
+    fetchGroupMembers();
+    setShowAddMembersModal(false);
+    setSelectedMembers([]);
+  } catch (error) {
+    message.error({ 
+      content: error.message || "Không thể thêm thành viên", 
+      key: "addMembers" 
+    });
+    console.error("Error adding members:", error);
+  }
+};
+
+ // Hàm rời nhóm
+const handleLeaveGroup = async () => {
+  try {
+    message.loading({ content: "Đang rời nhóm...", key: "leaveGroup" });
+    
+    await dispatch(removeMember({
+      groupId: selectedChat.id,
+      userId: user.id
+    })).unwrap();
+    
+    message.success({ 
+      content: "Đã rời nhóm thành công", 
+      key: "leaveGroup" 
+    });
+    
+    setShowLeaveGroupModal(false);
+    // Có thể cần chuyển hướng người dùng sau khi rời nhóm
+  } catch (error) {
+    message.error({ 
+      content: error.message || "Không thể rời nhóm", 
+      key: "leaveGroup" 
+    });
+    console.error("Error leaving group:", error);
+  }
+};
 
   const handleDeleteHistory = async () => {
     try {
@@ -552,41 +818,47 @@ const fetchFriends = async () => {
                     </span>
                 </div>
                 
-                {selectedChat.chat_type === "group" ? (
+                  {selectedChat.chat_type === "group" ? (
                     <>
                     <div>
-                        <button 
+                      <button 
                         className="conversation-action-button"
-                        onClick={() => setShowAddMembersModal(true)}
-                        >
+                        onClick={() => {
+                          if (canAddMembers()) {
+                            setShowAddMembersModal(true);
+                          } else {
+                            message.info("Bạn không có quyền thêm thành viên vào nhóm");
+                          }
+                        }}
+                      >
                         <UserAddOutlined />
-                        </button>
-                        <span style={{width:"74px"}}>
+                      </button>
+                      <span style={{width:"74px"}}>
                         Thêm thành viên
-                        </span>
+                      </span>
                     </div>
                     <div>
-                        <button 
+                      <button 
                         className="conversation-action-button"
                         onClick={() => setShowGroupSettingsModal(true)}
-                        >
+                      >
                         <SettingOutlined />
-                        </button>
-                        <span>
+                      </button>
+                      <span>
                         Quản lý<br />nhóm
-                        </span>
+                      </span>
                     </div>
                     </>
-                ) : (
+                  ) : (
                     <div>
-                    <button className="conversation-action-button"  onClick={handleCreateGroupClick}>
+                      <button className="conversation-action-button" onClick={handleCreateGroupClick}>
                         <UsergroupAddOutlined />
-                    </button>
-                    <span>
+                      </button>
+                      <span>
                         Tạo nhóm <br /> trò chuyện
-                    </span>
+                      </span>
                     </div>
-                )}
+                  )}
                 </div>
                             {/* Modal thêm thành viên */}
                 <Modal
@@ -601,12 +873,7 @@ const fetchFriends = async () => {
                     key="add" 
                     type="primary" 
                     disabled={selectedMembers.length === 0}
-                    onClick={() => {
-                        // Xử lý thêm thành viên vào nhóm
-                        message.success(`Đã thêm ${selectedMembers.length} thành viên vào nhóm`);
-                        setShowAddMembersModal(false);
-                        setSelectedMembers([]);
-                    }}
+                    onClick={handleAddMembers}
                     >
                     Thêm ({selectedMembers.length})
                     </Button>
@@ -664,160 +931,222 @@ const fetchFriends = async () => {
 
                 {/* Modal cài đặt nhóm */}
                 <Modal
-                title="Quản lý nhóm"
-                open={showGroupSettingsModal}
-                onCancel={() => setShowGroupSettingsModal(false)}
-                footer={[
-                    <Button key="cancel" onClick={() => setShowGroupSettingsModal(false)}>
-                    Hủy
-                    </Button>,
-                    <Button 
-                    key="save" 
-                    type="primary" 
-                    onClick={() => {
-                        // Xử lý lưu cài đặt nhóm
-                        message.success("Đã cập nhật thông tin nhóm");
-                        setShowGroupSettingsModal(false);
-                    }}
-                    >
-                    Lưu thay đổi
-                    </Button>
-                ]}
-                width={500}
-                >
-                <div style={{ marginBottom: 20 }}>
+                    title="Quản lý nhóm"
+                    open={showGroupSettingsModal}
+                    onCancel={() => setShowGroupSettingsModal(false)}
+                    footer={[
+                      <Button key="cancel" onClick={() => setShowGroupSettingsModal(false)}>
+                        Hủy
+                      </Button>,
+                      <Button 
+                        key="save" 
+                        type="primary" 
+                        onClick={updateGroupSettings}
+                      >
+                        Lưu thay đổi
+                      </Button>
+                    ]}
+                    width={500}
+                  >
+                  <div style={{ marginBottom: 20 }}>
                     <h4>Thông tin cơ bản</h4>
                     <div style={{ display: 'flex', marginBottom: 15, alignItems: 'center' }}>
-                    <div style={{ marginRight: 15 }}>
+                      <div style={{ marginRight: 15 }}>
                         <Avatar 
-                        size={64} 
-                        src={selectedChat.avatar_path}
-                        style={{ cursor: 'pointer' }}
-                        onClick={() => document.getElementById('group-avatar-upload').click()}
+                          size={64} 
+                          src={selectedChat.avatar_path}
+                          style={{ 
+                            cursor: canChangeAvatar() ? 'pointer' : 'default' 
+                          }}
+                          onClick={() => {
+                            if (canChangeAvatar()) {
+                              document.getElementById('group-avatar-upload').click()
+                            } else if (!isMainAdmin && !isSubAdmin) {
+                              message.info("Chỉ quản trị viên mới có quyền thay đổi ảnh nhóm")
+                            }
+                          }}
                         >
-                        {!selectedChat.avatar_path && (selectedChat.name || 'G').charAt(0).toUpperCase()}
+                          {!selectedChat.avatar_path && (selectedChat.name || 'G').charAt(0).toUpperCase()}
                         </Avatar>
                         <input
-                        type="file"
-                        id="group-avatar-upload"
-                        hidden
-                        accept="image/*"
-                        onChange={(e) => {
+                          type="file"
+                          id="group-avatar-upload"
+                          hidden
+                          disabled={!canChangeAvatar()}
+                          accept="image/*"
+                          onChange={(e) => {
                             if (e.target.files[0]) {
-                            setGroupAvatar(e.target.files[0]);
+                              setGroupAvatar(e.target.files[0]);
                             }
-                        }}
+                          }}
                         />
-                        <div style={{ textAlign: 'center', marginTop: 5 }}>
-                        <Button type="text" icon={<UploadOutlined />} size="small">
-                            Đổi ảnh
-                        </Button>
-                        </div>
-                    </div>
-                    <Input
+                        {canChangeAvatar() && (
+                          <div style={{ textAlign: 'center', marginTop: 5 }}>
+                            <Button 
+                              type="text" 
+                              icon={<UploadOutlined />} 
+                              size="small"
+                            >
+                              Đổi ảnh
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                      <Input
                         placeholder="Tên nhóm"
                         value={groupName}
                         onChange={e => setGroupName(e.target.value)}
                         style={{ flex: 1 }}
-                    />
+                        disabled={!canChangeName()}
+                      />
                     </div>
-                </div>
+                  </div>
 
-                <Divider />
-
-                <div style={{ marginBottom: 20 }}>
-                    <h4>Cài đặt thành viên</h4>
-                    <div style={{ marginBottom: 10 }}>
-                    <Checkbox 
-                        checked={requireApproval}
-                        onChange={e => setRequireApproval(e.target.checked)}
-                    >
-                        Yêu cầu phê duyệt khi có thành viên mới muốn tham gia
-                    </Checkbox>
-                    </div>
-                    
-                    <div style={{ marginBottom: 10 }}>
-                    <Checkbox>
-                        Cho phép tất cả thành viên thêm người mới
-                    </Checkbox>
-                    </div>
-                    
-                    <div style={{ marginBottom: 10 }}>
-                    <Checkbox>
-                        Cho phép thành viên thay đổi tên và ảnh nhóm
-                    </Checkbox>
-                    </div>
-                </div>
-
-                <Divider />
-
-                <div style={{ marginBottom: 20 }}>
-                    <h4>Quản lý vai trò</h4>
-                    <div className="admin-section">
-                    {groupMembers.slice(0, 5).map(member => (
-                        <div key={member.user_id} className="member-item" style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '8px 0',
-                        borderBottom: '1px solid #f0f0f0'
-                        }}>
-                        <div style={{ display: 'flex', alignItems: 'center' }}>
-                            <Avatar src={member.avatar_path} style={{ marginRight: 10 }}>
-                            {!member.avatar_path && (member.full_name || 'User').charAt(0).toUpperCase()}
-                            </Avatar>
-                            <span>{member.full_name}</span>
+                  {(isMainAdmin || isSubAdmin) && (
+                    <>
+                      <Divider />
+                      <div style={{ marginBottom: 20 }}>
+                        <h4>Cài đặt thành viên</h4>
+                        <div style={{ marginBottom: 10 }}>
+                          <Checkbox 
+                            checked={requireApproval}
+                            onChange={e => setRequireApproval(e.target.checked)}
+                          >
+                            Yêu cầu phê duyệt khi có thành viên mới muốn tham gia
+                          </Checkbox>
                         </div>
                         
-                        <Select
-                            defaultValue={member.role || "member"}
-                            style={{ width: 120 }}
-                            disabled={
-                            member.user_id === user.id || 
-                            member.user_id === user._id || 
-                            !isAdmin
-                            }
-                            onChange={(value) => {
-                            // Xử lý thay đổi vai trò
-                            console.log(`Changed ${member.full_name}'s role to ${value}`);
+                        <div style={{ marginBottom: 10 }}>
+                          <Checkbox
+                            checked={groupSettings.allow_add_members}
+                            onChange={e => {
+                              setGroupSettings({
+                                ...groupSettings,
+                                allow_add_members: e.target.checked
+                              });
                             }}
-                        >
-                            <Select.Option value="admin">Nhóm trưởng</Select.Option>
-                            <Select.Option value="member">Thành viên</Select.Option>
-                        </Select>
+                          >
+                            Cho phép tất cả thành viên thêm người mới
+                          </Checkbox>
                         </div>
-                    ))}
-                    
-                    {groupMembers.length > 5 && (
-                        <Button type="link" style={{ padding: '10px 0' }}>
-                        Xem tất cả thành viên
-                        </Button>
-                    )}
-                    </div>
-                </div>
+                        
+                        <div style={{ marginBottom: 10 }}>
+                          <Checkbox
+                            checked={groupSettings.allow_change_name}
+                            onChange={e => {
+                              setGroupSettings({
+                                ...groupSettings,
+                                allow_change_name: e.target.checked
+                              });
+                            }}
+                          >
+                            Cho phép thành viên thay đổi tên nhóm
+                          </Checkbox>
+                        </div>
 
-                {isAdmin && (
+                        <div style={{ marginBottom: 10 }}>
+                          <Checkbox
+                            checked={groupSettings.allow_change_avatar}
+                            onChange={e => {
+                              setGroupSettings({
+                                ...groupSettings,
+                                allow_change_avatar: e.target.checked
+                              });
+                            }}
+                          >
+                            Cho phép thành viên thay đổi ảnh nhóm
+                          </Checkbox>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  <Divider />
+
+                  <div style={{ marginBottom: 20 }}>
+                    <h4>Quản lý vai trò</h4>
+                    <div className="admin-section">
+                      {groupMembers.slice(0, 5).map(member => (
+                        <div key={member.user_id} className="member-item" style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '8px 0',
+                          borderBottom: '1px solid #f0f0f0'
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center' }}>
+                            <Avatar src={member.avatar_path} style={{ marginRight: 10 }}>
+                              {!member.avatar_path && (member.full_name || 'User').charAt(0).toUpperCase()}
+                            </Avatar>
+                            <span>
+                              {member.full_name}
+                              {member.user_id === selectedChat.admin_id && (
+                                <span style={{ marginLeft: 5, color: '#1890ff' }}>(Nhóm trưởng)</span>
+                              )}
+                            </span>
+                          </div>
+                          
+                          <div style={{ display: 'flex', gap: '8px' }}>
+                            <Select
+                              defaultValue={member.role || "member"}
+                              style={{ width: 120 }}
+                              disabled={
+                                // Không thể đổi vai trò của chính mình
+                                member.user_id === user.id || 
+                                member.user_id === user._id || 
+                                // Không thể đổi vai trò của admin chính nếu mình không phải admin chính
+                                (member.user_id === selectedChat.admin_id && user.id !== selectedChat.admin_id) ||
+                                // Cần là admin hoặc subadmin để thay đổi vai trò
+                                (!isMainAdmin && !isSubAdmin)
+                              }
+                              onChange={(value) => handleChangeRole(member.user_id, value)}
+                            >
+                              <Select.Option value="admin">Quản trị viên</Select.Option>
+                              <Select.Option value="member">Thành viên</Select.Option>
+                            </Select>
+                            
+                            {/* Nút xóa thành viên */}
+                            {(isMainAdmin || isSubAdmin) && 
+                            member.user_id !== user.id && 
+                            member.user_id !== selectedChat.admin_id && (
+                              <Button 
+                                icon={<DeleteOutlined />} 
+                                danger
+                                onClick={() => handleRemoveMember(member.user_id, member.full_name)}
+                                size="small"
+                              />
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                      
+                      {groupMembers.length > 5 && (
+                        <Button type="link" style={{ padding: '10px 0' }}>
+                          Xem tất cả thành viên
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+
+                  {isMainAdmin && (
                     <>
-                    <Divider />
-                    <div>
+                      <Divider />
+                      <div>
                         <Button danger onClick={() => {
-                        Modal.confirm({
+                          Modal.confirm({
                             title: 'Xác nhận giải tán nhóm',
                             content: 'Bạn có chắc chắn muốn giải tán nhóm này? Hành động này không thể hoàn tác.',
                             okText: 'Giải tán',
                             okType: 'danger',
                             cancelText: 'Hủy',
-                            onOk() {
-                            message.success('Đã giải tán nhóm thành công');
-                            setShowGroupSettingsModal(false);
-                            },
-                        });
+                            onOk: handleDisbandGroup
+                          });
                         }}>
-                        <DeleteOutlined /> Giải tán nhóm
+                          <DeleteOutlined /> Giải tán nhóm
                         </Button>
-                    </div>
+                      </div>
                     </>
-                )}
+                  )}
                 </Modal>
             
             {/* Hiển thị thành viên nhóm nếu là chat nhóm */}
