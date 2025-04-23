@@ -311,6 +311,20 @@ const handleDisbandGroup = async () => {
     
     setShowGroupSettingsModal(false);
     // Có thể cần chuyển hướng người dùng sau khi giải tán nhóm
+     // Có thể cần chuyển hướng người dùng sau khi rời nhóm
+     if (onLeaveGroup && typeof onLeaveGroup === 'function') {
+      onLeaveGroup();
+    } else {
+      // Nếu không có prop onLeaveGroup, sử dụng sự kiện tùy chỉnh
+      window.dispatchEvent(new CustomEvent('group-left', { 
+        detail: { groupId: selectedChat.id }
+      }));
+    }
+    
+    // Đóng cửa sổ chi tiết hộp thoại nếu có
+    if (typeof handleExpandContract === 'function') {
+      handleExpandContract(false);
+    }
   } catch (error) {
     message.error({ 
       content: error.message || "Không thể giải tán nhóm", 
@@ -756,7 +770,6 @@ const handleLeaveGroup = async () => {
     
     setShowLeaveGroupModal(false);
     // Có thể cần chuyển hướng người dùng sau khi rời nhóm
-    // Kiểm tra xem có prop onLeaveGroup không trước khi gọi
     if (onLeaveGroup && typeof onLeaveGroup === 'function') {
       onLeaveGroup();
     } else {
