@@ -212,6 +212,27 @@ const groupService = {
       throw error;
     }
   },
+
+  addMember: async ({ groupId, userIds }) => {
+    try {
+      const response = await apiService.post(`/${PREFIX}/add-members`, {
+        groupId,
+        userIds,
+      });
+      if (response.data.status === "error") {
+        throw new Error(response.data.message);
+      }
+      if (response.data.status === "ok") {
+        return {
+          status: "ok",
+          message: "Thêm thành viên vào nhóm thành công.",
+        };
+      }
+    } catch (error) {
+      console.log("Không thể thêm thành viên vào nhóm: ", error);
+      throw error;
+    }
+  },
 };
 
 export default groupService;

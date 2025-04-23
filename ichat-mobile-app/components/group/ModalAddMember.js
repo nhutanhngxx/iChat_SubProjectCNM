@@ -109,8 +109,29 @@ const ModalAddMember = ({ route }) => {
     setDisplayedFriendList(newFriendList);
   };
 
-  const handleAddMember = () => {
-    Alert.alert("Thông báo", "Đã thêm thành viên vào nhóm");
+  const handleAddMember = async () => {
+    try {
+      const response = await groupService.addMember({
+        groupId,
+        userIds: memberList.map((item) => item.id),
+      });
+      if (response.status === "ok") {
+        Alert.alert("Thông báo", response.message, [
+          {
+            text: "OK",
+            onPress: () => handleCloseModal(),
+          },
+        ]);
+      } else {
+        Alert.alert("Thông báo", "Thêm thành viên vào nhóm thất bại");
+      }
+    } catch (error) {
+      console.error("Lỗi khi thêm thành viên vào nhóm:", error);
+      Alert.alert(
+        "Lỗi",
+        "Không thể thêm thành viên vào nhóm. Vui lòng thử lại."
+      );
+    }
   };
 
   //   Cập nhật trạng thái của nút thêm thành viên
