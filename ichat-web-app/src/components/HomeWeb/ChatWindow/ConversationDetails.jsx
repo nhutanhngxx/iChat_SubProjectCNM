@@ -1887,9 +1887,7 @@ const handleTransferAdminAndLeave = async () => {
         <p>Bạn có chắc chắn muốn xóa lịch sử trò chuyện với "{selectedChat.name}"?</p>
         <p>Hành động này không thể hoàn tác.</p>
       </Modal>
-      // Thêm đoạn code này vào cuối component, trước dòng return cuối cùng
-
-        {/* Modal tạo nhóm mới */}
+      {/* Modal tạo nhóm mới */}
         <Modal
           title="Tạo nhóm trò chuyện mới"
           open={showCreateGroupModal}

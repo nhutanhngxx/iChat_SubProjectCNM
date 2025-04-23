@@ -854,10 +854,12 @@ const MessageArea = ({ selectedChat, user, onChatChange }) => {
           </div>
 
           <div className="action-buttons-message-area">
-            <UsergroupAddOutlined
-              className="header-icon-message-area"
-              onClick={() => setModalVisible(true)}
-            />
+            {selectedChat.chat_type !== "group" && (
+              <UsergroupAddOutlined
+                className="header-icon-message-area"
+                onClick={() => setModalVisible(true)}
+              />
+            )}
             <CreateGroupModal
               visible={modalVisible}
               onCancel={() => setModalVisible(false)}
