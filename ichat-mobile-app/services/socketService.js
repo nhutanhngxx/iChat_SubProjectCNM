@@ -131,8 +131,23 @@ class SocketService {
 
   // Cập nhật thông tin nhóm
   handleUpdateGroup({ groupId, name, avatar }) {
+    console.log("Socket Service -  Handling update group:", {
+      groupId,
+      name,
+      avatar,
+    });
     if (this.ensureConnection()) {
       this.socket.emit("update-group", { groupId, name, avatar });
+    }
+  }
+  onGroupUpdated(callback) {
+    console.log("SocketService - Setting up group-updated listener");
+    if (this.ensureConnection()) {
+      this.socket.off("group-updated");
+      this.socket.on("group-updated", (data) => {
+        console.log("Received group-updated event:", data);
+        callback(data);
+      });
     }
   }
 
@@ -140,6 +155,11 @@ class SocketService {
   handleLeaveGroup({ groupId, userId }) {
     if (this.ensureConnection()) {
       this.socket.emit("leave-group", { groupId, userId });
+    }
+  }
+  onMemberLeft(callback) {
+    if (this.ensureConnection()) {
+      this.socket.on("member-left", callback);
     }
   }
 
@@ -193,13 +213,6 @@ class SocketService {
     }
   }
 
-  // Cập nhật nhóm
-  onGroupUpdated(callback) {
-    if (this.ensureConnection()) {
-      this.socket.on("group-updated", callback);
-    }
-  }
-
   // Chuyển quyền quản trị viên
   onAdminTransferred(callback) {
     if (this.ensureConnection()) {
@@ -232,13 +245,6 @@ class SocketService {
   onMemberRejected(callback) {
     if (this.ensureConnection()) {
       this.socket.on("member-rejected", callback);
-    }
-  }
-
-  // Rời khỏi nhóm
-  onMemberLeft(callback) {
-    if (this.ensureConnection()) {
-      this.socket.on("member-left", callback);
     }
   }
 

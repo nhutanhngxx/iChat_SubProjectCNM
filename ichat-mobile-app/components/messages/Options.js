@@ -20,6 +20,7 @@ import messageService from "../../services/messageService";
 import friendService from "../../services/friendService";
 import ModalRenameGroup from "../group/ModalRenameGroup";
 import ModalSelectAdmin from "../group/ModalSelectAdmin";
+import socketService from "../../services/socketService";
 
 const Option = ({ route }) => {
   // const API_iChat = `http://${getHostIP()}:5001/api`;
@@ -34,6 +35,28 @@ const Option = ({ route }) => {
   const [isRenameModalVisible, setIsRenameModalVisible] = useState(false); // Modal đổi tên nhóm
   const [isSelectAdminModalVisible, setIsSelectAdminModalVisible] =
     useState(false); // Modal chọn quản trị viên mới trước khi rời khỏi nhóm
+
+  // Lắng nghe sự kiện từ socket
+  useEffect(() => {
+    if (!id) return;
+
+    socketService.joinRoom(id);
+
+    socketService.onGroupUpdated(({ groupId, name, avatar }) => {
+      if (id === groupId) {
+        setReceiverGroup((prev) => ({
+          ...prev,
+          name: name || prev.name,
+          avatar: avatar || prev.avatar,
+        }));
+      }
+    });
+
+    return () => {
+      socketService.leaveRoom(id);
+      socketService.removeAllListeners();
+    };
+  }, [id]);
 
   useEffect(() => {
     const fetchReceiverInfo = async () => {
@@ -212,7 +235,7 @@ const Option = ({ route }) => {
               gap: 10,
             }}
           >
-            <Text style={styles.name}>{name}</Text>
+            <Text style={styles.name}>{receiverGroup?.name}</Text>
             <TouchableOpacity onPress={() => setIsRenameModalVisible(true)}>
               <Image
                 source={require("../../assets/icons/edit.png")}
@@ -506,7 +529,7 @@ const Option = ({ route }) => {
         visible={isRenameModalVisible}
         onClose={() => setIsRenameModalVisible(false)}
         groupId={id}
-        currentName={name}
+        currentName={receiverGroup?.name || ""}
       />
 
       {/* Modal Select Admin Before Leave */}

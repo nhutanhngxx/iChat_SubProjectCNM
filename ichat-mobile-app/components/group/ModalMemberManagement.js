@@ -47,10 +47,13 @@ const ModalMemberManagement = ({ route }) => {
   useEffect(() => {
     if (!groupId) return;
 
+    socketService.joinRoom(groupId);
+
     // Lắng nghe sự kiện thêm/xóa thành viên
     socketService.onMemberAdded(({ groupId: receivedGroupId, userIds }) => {
       if (groupId === receivedGroupId) {
         fetchGroupMembers();
+        fetchInvitedMembers();
       }
     });
     socketService.onMemberRemoved(({ groupId: receivedGroupId, userId }) => {
@@ -93,13 +96,8 @@ const ModalMemberManagement = ({ route }) => {
 
     // Lắng nghe sự kiện chấp nhận thành viên vào nhóm
     socketService.onMemberLeft(({ groupId: receivedGroupId, userId }) => {
-      if (groupId === receivedGroupId) {
-        setMembers((prev) =>
-          prev.filter((member) => member.user_id !== userId)
-        );
-        setFilteredMembers((prev) =>
-          prev.filter((member) => member.user_id !== userId)
-        );
+      if (groupId === receivedGroupId && userId === user.id) {
+        navigation.navigate("Home");
       }
     });
 
@@ -167,20 +165,18 @@ const ModalMemberManagement = ({ route }) => {
   }, [user?.id, members]);
 
   // Lấy danh sách thành viên được mời bởi người dùng
+  const fetchInvitedMembers = async () => {
+    try {
+      const invitedMembersList = await groupService.getInvitedMembersByUserId(
+        user.id
+      );
+      setInvitedMembers(invitedMembersList);
+    } catch (error) {
+      console.error("Lỗi khi lấy danh sách thành viên được mời:", error);
+    }
+  };
   useEffect(() => {
     if (!user?.id || index !== 2) return;
-
-    const fetchInvitedMembers = async () => {
-      try {
-        const invitedMembersList = await groupService.getInvitedMembersByUserId(
-          user.id
-        );
-        setInvitedMembers(invitedMembersList);
-      } catch (error) {
-        console.error("Lỗi khi lấy danh sách thành viên được mời:", error);
-      }
-    };
-
     fetchInvitedMembers();
   }, [user?.id, index]);
 
@@ -259,7 +255,7 @@ const ModalMemberManagement = ({ route }) => {
   }, [groupId]);
 
   // Hàm xử lý switch phê duyệt thành viên
-  const handleCheckMemberApproval = async (value) => {
+  const handleUpdateMemberApproval = async (value) => {
     try {
       setIsChecked(value);
       const response = await groupService.updateMemberApproval({
@@ -315,7 +311,7 @@ const ModalMemberManagement = ({ route }) => {
         text: "Đồng ý",
         onPress: async () => {
           try {
-            const response = await groupService.leaveGroup(groupId, user.id);
+            const response = await groupService.removeMember(groupId, user.id);
             if (response.status === "ok") {
               socketService.handleLeaveGroup({
                 groupId,
@@ -470,7 +466,7 @@ const ModalMemberManagement = ({ route }) => {
             <View style={{ flexDirection: "row", alignItems: "center" }}>
               <Switch
                 value={isChecked}
-                onValueChange={() => handleCheckMemberApproval(!isChecked)}
+                onValueChange={() => handleUpdateMemberApproval(!isChecked)}
                 color="#2F80ED"
               />
             </View>
@@ -606,7 +602,6 @@ const ModalMemberManagement = ({ route }) => {
                     });
 
                     if (response.status === "ok") {
-                      // Emit socket event
                       socketService.handleRemoveMember({
                         groupId,
                         userId: selectedMember?.user_id,

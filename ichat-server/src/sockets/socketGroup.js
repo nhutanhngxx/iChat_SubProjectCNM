@@ -2,6 +2,18 @@ module.exports = (io) => {
   io.on("connection", (socket) => {
     console.log("Client connected - Group:", socket.id);
 
+    // Tham gia room theo groupId
+    socket.on("join-room", (groupId) => {
+      socket.join(groupId);
+      console.log(` Socket ${socket.id} joined room: ${groupId}`);
+    });
+
+    // Lắng nghe rời room theo groupId
+    socket.on("leave-room", (groupId) => {
+      socket.leave(groupId);
+      console.log(` Socket ${socket.id} left room: ${groupId}`);
+    });
+
     // Lắng nghe sự kiện thêm thành viên mới
     socket.on("add-members", ({ groupId, userIds }) => {
       console.log("Add member:", groupId, userIds);
@@ -17,7 +29,13 @@ module.exports = (io) => {
     // Lắng nghe sự kiện cập nhật thông tin nhóm
     socket.on("update-group", ({ groupId, name, avatar }) => {
       console.log("Update group:", groupId, name, avatar);
-      io.to(groupId).emit("group-updated", { groupId, name, avatar });
+      io.in(groupId).emit("group-updated", { groupId, name, avatar });
+
+      const room = io.sockets.adapter.rooms.get(groupId);
+      console.log(
+        `Broadcasted to room ${groupId}, connected clients:`,
+        room ? room.size : 0
+      );
     });
 
     // Lắng nghe sự kiện giải tán/xóa nhóm
