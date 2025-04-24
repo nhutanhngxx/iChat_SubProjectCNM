@@ -47,6 +47,7 @@ import { getUserFriends } from "../../../redux/slices/friendSlice";
 import VideoCallModal from "./CallVideo/VideoCallModal";
 import { message as antMessage } from "antd";
 import { sendFriendRequest } from "../../../redux/slices/friendSlice";
+import CreateGroupModal from "./CreateGroupModal";
 
 const { Header, Content } = Layout;
 
@@ -343,199 +344,7 @@ const CategoryMenu = () => {
     </div>
   );
 };
-
-const CreateGroupModal = ({ visible, onCancel, onOk }) => {
-  const [selectedContacts, setSelectedContacts] = useState([]);
-  const [activeCategory, setActiveCategory] = useState("all");
-  const [groupName, setGroupName] = useState("");
-
-  // Danh sách mock data
-  const contacts = [
-    { id: "1", name: "Di 4", image: "https://via.placeholder.com/40" },
-    {
-      id: "2",
-      name: "Benzen English",
-      image: "https://via.placeholder.com/40",
-    },
-    { id: "3", name: "Thanh Cảnh", image: "https://via.placeholder.com/40" },
-    { id: "4", name: "Em Tin", image: "https://via.placeholder.com/40" },
-    {
-      id: "5",
-      name: "Lê Phước Nguyên",
-      image: "https://via.placeholder.com/40",
-    },
-  ];
-
-  const categories = [
-    { id: "all", label: "Tất cả" },
-    { id: "customers", label: "Khách hàng" },
-    { id: "family", label: "Gia đình" },
-    { id: "work", label: "Công việc" },
-    { id: "friends", label: "Bạn bè" },
-  ];
-
-  const toggleContact = (contactId) => {
-    setSelectedContacts((prev) =>
-      prev.includes(contactId)
-        ? prev.filter((id) => id !== contactId)
-        : [...prev, contactId]
-    );
-  };
-
-  const removeContact = (contactId) => {
-    setSelectedContacts(selectedContacts.filter((c) => c !== contactId));
-  };
-
-  return (
-    <Modal
-      style={{ overflow: "hidden", height: "100vh", width: "552px" }}
-      title={<span className="text-xl font-semibold">Tạo nhóm</span>}
-      open={visible}
-      onCancel={onCancel}
-      footer={[
-        <Button key="back" onClick={onCancel}>
-          Hủy
-        </Button>,
-        <Button
-          key="submit"
-          type="primary"
-          disabled={!groupName || selectedContacts.length === 0}
-          onClick={onOk}
-        >
-          Tạo nhóm
-        </Button>,
-      ]}
-    >
-      <div className="dialog-content" style={{ height: "538px" }}>
-        <div>
-          {/* Phần tên nhóm */}
-          <div className="group-name-input">
-            <Avatar
-              src="https://via.placeholder.com/40"
-              className="camera-icon"
-            >
-              G
-            </Avatar>
-            <input
-              type="text"
-              placeholder="Nhập tên nhóm..."
-              onChange={(e) => setGroupName(e.target.value)}
-              value={groupName}
-            />
-          </div>
-
-          {/* Thanh tìm kiếm */}
-          <div className="search-container">
-            <SearchOutlined className="search-icon" style={{ left: 30 }} />
-            <input
-              type="text"
-              placeholder="Nhập tên, số điện thoại..."
-              onFocus={(e) => (e.target.style.borderColor = "#1890ff")}
-              onBlur={(e) => (e.target.style.borderColor = "#ccc")}
-            />
-          </div>
-
-          {/* Danh mục */}
-          <div className="categories">
-            {categories.map((category) => (
-              <button
-                key={category.id}
-                style={{
-                  borderRadius: "9999px",
-                  padding: "5px 16px",
-                  border: "none",
-                  cursor: "pointer",
-                  whiteSpace: "nowrap",
-                  backgroundColor:
-                    activeCategory === category.id ? "#2563eb" : "#f3f4f6",
-                  color: activeCategory === category.id ? "white" : "#374151",
-                  transition: "background-color 0.2s, color 0.2s",
-                  fontSize: "12px",
-                }}
-                onClick={() => setActiveCategory(category.id)}
-              >
-                {category.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="conversation-container">
-          <div className="conversations-list">
-            <div className="contacts">
-              {contacts.map((contact) => (
-                <div
-                  key={contact.id}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "12px",
-                    padding: "8px",
-                    borderRadius: "8px",
-                    cursor: "pointer",
-                    transition: "background-color 0.2s",
-                  }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.backgroundColor = "#f3f4f6")
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.backgroundColor = "transparent")
-                  }
-                  onClick={() => toggleContact(contact.id)}
-                >
-                  <Checkbox checked={selectedContacts.includes(contact.id)} />
-                  <Avatar
-                    src={contact.image}
-                    style={{
-                      width: "32px",
-                      height: "32px",
-                      borderRadius: "50%",
-                    }}
-                  >
-                    {contact.name[0]}
-                  </Avatar>
-                  <span style={{ fontWeight: "500" }}>{contact.name}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="selected-section">
-            <div className="selected-header">
-              Đã chọn{" "}
-              <span className="selected-count">
-                {selectedContacts.length}/100
-              </span>
-            </div>
-            <div className="selected-contacts">
-              {selectedContacts.map((contactId) => {
-                const contact = contacts.find((c) => c.id === contactId);
-                return (
-                  <div key={contactId} className="selected-contact">
-                    <img
-                      src={contact.image}
-                      alt=""
-                      className="selected-avatar"
-                    />
-                    <span className="selected-name">{contact.name}</span>
-                    <button
-                      className="remove-button"
-                      onClick={() => removeContact(contactId)}
-                    >
-                      <CloseOutlined />
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      </div>
-    </Modal>
-  );
-};
-
-const MessageArea = ({ selectedChat, user }) => {
+const MessageArea = ({ selectedChat, user, onChatChange, onSelectUser }) => {
   const dispatch = useDispatch();
   const chatMessages = useSelector((state) => state.messages.chatMessages);
   const userMessages = useSelector((state) => state.messages.userMessages);
@@ -556,17 +365,55 @@ const MessageArea = ({ selectedChat, user }) => {
   const [showSearchRight, setShowSearchRight] = useState(false);
   // Tự động cuộn xuống cuối khi có tin nhắn mới
   const messageEndRef = useRef(null);
-  //   const scrollToBottom = () => {
-  //     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  //   };
-  //   // Cuộn xuống khi messages thay đổi hoặc khi chuyển đổi cuộc trò chuyện
-  // useEffect(() => {
-  //   scrollToBottom();
-  // }, [allMessages, selectedChat]);
   const [modalVisible, setModalVisible] = useState(false);
   // Trả lời tin nhắn
   const [replyingTo, setReplyingTo] = useState(null);
-  // Lấy token từ server
+  //state để reset lại mesageArea khi người dùng rời nhóm
+  const [currentChat, setCurrentChat] = useState(selectedChat);
+  //Scroll để tìm tin nhắn
+  const scrollToMessage = (message) => {
+    if (!message || !message._id) return;
+
+    // Find the message element by its ID
+    const messageElement = document.getElementById(`message-${message._id}`);
+
+    if (messageElement) {
+      // Scroll to the message with a smooth animation
+      messageElement.scrollIntoView({ behavior: "smooth", block: "center" });
+
+      // Add a highlight effect
+      messageElement.classList.add("highlighted-message");
+
+      // Remove the highlight after a few seconds
+      setTimeout(() => {
+        messageElement.classList.remove("highlighted-message");
+      }, 3000);
+    }
+  };
+  // useEffect để thoát khỏi componet khi người dùng rời nhóm
+  useEffect(() => {
+    const handleGroupLeft = (event) => {
+      if (event.detail && event.detail.groupId) {
+        // Thông báo lên component cha
+        if (onChatChange) {
+          onChatChange(null);
+        }
+
+        // Hoặc sử dụng sự kiện để thông báo lên component cha
+        window.dispatchEvent(
+          new CustomEvent("user-left-group", {
+            detail: { groupId: event.detail.groupId },
+          })
+        );
+      }
+    };
+
+    window.addEventListener("group-left", handleGroupLeft);
+
+    return () => {
+      window.removeEventListener("group-left", handleGroupLeft);
+    };
+  }, [onChatChange]);
   // Hàm xử lý khi bấm icon Video
   const handleStartCall = async () => {
     try {
@@ -663,13 +510,7 @@ const MessageArea = ({ selectedChat, user }) => {
   };
   console.log(handleExpandContract);
   // At the top of your MessageArea component
-  useEffect(() => {
-    console.log("MessageArea received selectedChat:", selectedChat);
-    // Log specific properties we expect in the header
-    console.log("Avatar path:", selectedChat?.avatar_path);
-    console.log("Name:", selectedChat?.name);
-    console.log("Receiver ID:", selectedChat?.receiver_id);
-  }, [selectedChat]);
+  useEffect(() => {}, [selectedChat]);
   // Gọi API khi component render
   useEffect(() => {
     if (user?.id && selectedChat?.receiver_id) {
@@ -1032,17 +873,19 @@ const MessageArea = ({ selectedChat, user }) => {
           </div>
 
           <div className="action-buttons-message-area">
-            <UsergroupAddOutlined
-              className="header-icon-message-area"
-              onClick={() => setModalVisible(true)}
-            />
+            {selectedChat.chat_type !== "group" && (
+              <UsergroupAddOutlined
+                className="header-icon-message-area"
+                onClick={() => setModalVisible(true)}
+              />
+            )}
             <CreateGroupModal
               visible={modalVisible}
               onCancel={() => setModalVisible(false)}
               onOk={() => {
-                // Xử lý tạo nhóm
                 setModalVisible(false);
               }}
+              userMessageId={selectedChat.id}
             />
             <VideoCameraOutlined
               className="header-icon-message"
@@ -1159,13 +1002,31 @@ const MessageArea = ({ selectedChat, user }) => {
             handleSendMessage={handleSendMessage}
             allMessages={displayMessages}
             user={user}
+            onLeaveGroup={() => {
+              // Thông báo cho component cha thông qua sự kiện
+              window.dispatchEvent(
+                new CustomEvent("user-left-group", {
+                  detail: { groupId: selectedChat.id },
+                })
+              );
+            }}
+            onSelectUser={onSelectUser}
+            onUpdateSelectedChat={(updatedChat) => {
+              onChatChange(updatedChat); // Use the setter function passed from ChatWindow
+            }}
           />
         </Layout>
       )}
       {/* Hiển thị tìm kiếm bên thông tin hội thoại */}
       {showSearchRight && (
         <Layout className="layout-search-right">
-          <SearchRight setShowSearchRight={setShowSearchRight} />
+          <SearchRight
+            setShowSearchRight={setShowSearchRight}
+            messages={displayMessages}
+            onMessageSelect={scrollToMessage}
+            selectedChat={selectedChat}
+            user={user}
+          />
         </Layout>
       )}
     </div>

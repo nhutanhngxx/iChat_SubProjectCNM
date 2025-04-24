@@ -932,7 +932,7 @@ style Modal Group
 }
 
 :where(.css-dev-only-do-not-override-1htoz2s).ant-modal .ant-modal-content {
-  height: 653px;
+  height: fit-content;
   max-height: 100%;
   background: #ffffff !important;
 }

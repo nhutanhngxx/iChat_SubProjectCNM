@@ -38,7 +38,7 @@ const MAX_SIZE = {
 
 const uploadFile = async (file) => {
   const filePath = `${randomString(4)}-${Date.now()}-${file.originalname}`;
-  const fileType = file.mimetype.split("/")[0];
+  const fileType = file.mimetype ? file.mimetype.split("/")[0] : "file";
   const sizeLimit = MAX_SIZE[fileType] || MAX_SIZE.file;
 
   if (file.size > sizeLimit) {
