@@ -389,6 +389,20 @@ const GroupModel = {
       throw error;
     }
   },
+
+  // Kiểm tra trạn thái của phê duyệt thành viên của nhóm
+  checkMemberApproval: async (groupId) => {
+    try {
+      const group = await GroupChat.findById(groupId);
+      if (!group) {
+        throw new Error("Nhóm không tồn tại");
+      }
+      return group.require_approval;
+    } catch (error) {
+      console.error("Lỗi khi kiểm tra trạng thái phê duyệt thành viên:", error);
+      throw error;
+    }
+  },
 };
 
 module.exports = GroupModel;

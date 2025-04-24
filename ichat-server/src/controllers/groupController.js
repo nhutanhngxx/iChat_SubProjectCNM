@@ -302,6 +302,26 @@ const GroupController = {
       });
     }
   },
+
+  // Kiểm tra trạng thái của phê duyệt thành viên của nhóm
+  checkMemberApproval: async (req, res) => {
+    try {
+      const { groupId } = req.params;
+
+      const result = await GroupModel.checkMemberApproval(groupId);
+
+      return res.status(200).json({
+        status: "ok",
+        data: result,
+      });
+    } catch (error) {
+      console.error("Lỗi khi kiểm tra trạng thái phê duyệt thành viên:", error);
+      return res.status(500).json({
+        status: "error",
+        message: error.message,
+      });
+    }
+  },
 };
 
 module.exports = GroupController;
