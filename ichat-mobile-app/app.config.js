@@ -17,10 +17,26 @@ export default {
       infoPlist: {
         NSCameraUsageDescription:
           "Ứng dụng cần quyền truy cập camera để quét mã QR.",
+        UIFileSharingEnabled: true,
+        LSSupportsOpeningDocumentsInPlace: true,
+        UISupportsDocumentBrowser: true,
+        NSPhotoLibraryUsageDescription:
+          "Ứng dụng cần quyền truy cập thư viện để lưu file.",
+        NSPhotoLibraryAddUsageDescription:
+          "Ứng dụng cần quyền lưu file vào thư viện.",
+        NSMicrophoneUsageDescription:
+          "iChat cần quyền truy cập microphone để thực hiện cuộc gọi âm thanh.",
       },
+      bundleIdentifier: "com.ichat.app",
     },
     android: {
-      permissions: ["CAMERA"],
+      permissions: [
+        "CAMERA",
+        "WRITE_EXTERNAL_STORAGE",
+        "READ_EXTERNAL_STORAGE",
+        "RECORD_AUDIO",
+        "MODIFY_AUDIO_SETTINGS",
+      ],
       adaptiveIcon: {
         foregroundImage: "./assets/icons/new-logo.png",
         backgroundColor: "#ffffff",
@@ -45,12 +61,21 @@ export default {
     },
     plugins: [
       [
+        // "@config-plugins/react-native-webrtc",
         "expo-image-picker",
         {
           photosPermission: "Ứng dụng cần truy cập thư viện ảnh để chọn ảnh.",
+          cameraPermission: "Cho phép iChat truy cập camera",
+          microphonePermission: "Cho phép iChat truy cập microphone",
         },
       ],
       "expo-barcode-scanner",
+      [
+        "expo-av",
+        {
+          microphonePermission: "Cho phép iChat truy cập microphone",
+        },
+      ],
     ],
     extra: {
       firebaseApiKey: process.env.FIREBASE_API_KEY,

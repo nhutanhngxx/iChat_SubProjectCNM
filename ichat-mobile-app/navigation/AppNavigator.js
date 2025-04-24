@@ -19,6 +19,7 @@ import QRScanner from "../components/camera/QRScannerScreen";
 import ProfileInformation from "../components/profile/ProfileInformation";
 import ViewImagePost from "../components/view/ViewImagePost";
 import ViewImageChat from "../components/view/ViewImageChat";
+import ViewVideoChat from "../components/view/ViewVideoChat";
 import Option from "../components/messages/Options";
 import ChangeInformation from "../components/profile/ChangeInformation";
 import AddFriend from "../components/contact/AddFriend";
@@ -64,7 +65,16 @@ export default function AppNavigator() {
           <Stack.Screen name="ViewProfile" component={ViewProfile} />
           <Stack.Screen name="QRScanner" component={QRScanner} />
           <Stack.Screen name="ViewImagePost" component={ViewImagePost} />
-          <Stack.Screen name="ViewImageChat" component={ViewImageChat} />
+          <Stack.Screen
+            name="ViewImageChat"
+            component={ViewImageChat}
+            options={{ animation: "none" }}
+          />
+          <Stack.Screen
+            name="ViewVideoChat"
+            component={ViewVideoChat}
+            options={{ animation: "none" }}
+          />
           <Stack.Screen name="Option" component={Option} />
           <Stack.Screen
             name="AddFriend"

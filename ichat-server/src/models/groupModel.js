@@ -104,9 +104,26 @@ const GroupModel = {
         : [];
 
       // Xử lý avatar nếu có
-      let avatarUrl = null;
-      if (avatar) {
-        avatarUrl = await uploadFile(avatar);
+      // let avatarUrl = null;
+      // if (avatar) {
+      //   avatarUrl = await uploadFile(avatar);
+      // }
+
+      // Xử lý avatar nếu có (Merge code)
+      let avatarUrl =
+        "https://nhutanhngxx.s3.ap-southeast-1.amazonaws.com/root/new-logo.png"; // default avatar
+      if (avatar && avatar.buffer) {
+        try {
+          avatarUrl = await uploadFile({
+            buffer: avatar.buffer,
+            mimetype: avatar.mimetype,
+            originalname: avatar.originalname,
+            size: avatar.size,
+          });
+        } catch (error) {
+          console.error("Lỗi upload avatar:", error);
+          // Tiếp tục với avatar mặc định nếu upload thất bại
+        }
       }
 
       // Tạo group
