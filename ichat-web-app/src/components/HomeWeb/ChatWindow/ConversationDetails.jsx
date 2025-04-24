@@ -1,6 +1,6 @@
 import React from "react";
 import { useEffect, useRef, useState } from "react";
-import { Avatar, Button, message, Modal,Alert} from "antd"; // Thêm message, Modal
+import { Avatar, Button, message, Modal,Alert,Spin} from "antd"; // Thêm message, Modal
 import "./ConversationDetails.css";
 import { FaCaretDown } from "react-icons/fa";
 import { FaCaretRight } from "react-icons/fa";
@@ -27,7 +27,7 @@ import {
   EyeOutlined,
   CloseOutlined
 } from "@ant-design/icons";
-import { DownloadOutlined,PlayCircleOutlined } from '@ant-design/icons';
+import { DownloadOutlined,PlayCircleOutlined,PhoneOutlined } from '@ant-design/icons';
 import { 
     UserAddOutlined, 
     SettingOutlined,
@@ -44,6 +44,9 @@ import GifPicker from "./GifPicker";
 import Picker from "emoji-picker-react";
 import { useDispatch } from "react-redux";
 import axios from "axios";
+import { MessageOutlined } from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
+import { sendFriendRequest } from '../../../redux/slices/friendSlice';
 
 const ConversationDetails = ({
   isVisible,
@@ -56,7 +59,8 @@ const ConversationDetails = ({
   setInputMessage,
   allMessages,
   user,
-  onLeaveGroup
+  onLeaveGroup,
+  onSelectUser
 }) => {
   const dispatch = useDispatch();
   const inputRef = useRef(null);
@@ -111,7 +115,97 @@ const [groupSettings, setGroupSettings] = useState({
 // State cho modal chọn admin mới
 const [showTransferAdminModal, setShowTransferAdminModal] = useState(false);
 const [newAdminId, setNewAdminId] = useState(null);
-
+//State hiển thị trang cá nhân
+const [selectedMember, setSelectedMember] = useState(null);
+const [showMemberInfoModal, setShowMemberInfoModal] = useState(false);
+const [isFriend, setIsFriend] = useState(false);
+const [isCheckingFriend, setIsCheckingFriend] = useState(false);
+const navigate = useNavigate();
+// Hàm kiểm tra xem hai người đã là bạn bè chưa
+const checkFriendshipStatus = async (memberId) => {
+  if (memberId === user.id) return false; // Không thể kết bạn với chính mình
+  
+  setIsCheckingFriend(true);
+  try {
+    // Lấy danh sách bạn bè của user hiện tại
+    const response = await axios.get(
+      `http://${window.location.hostname}:5001/api/friendships/${user.id}`
+    );
+    
+    // Kiểm tra xem memberId có trong danh sách bạn bè không
+    if (response.data && response.data.friends) {
+      const isFriend = response.data.friends.some(friend => 
+        // Kiểm tra cả id và _id vì có thể có sự khác nhau trong cấu trúc dữ liệu
+        (friend.id === memberId || friend._id === memberId)
+      );
+      
+      console.log(`Kiểm tra bạn bè giữa ${user.id} và ${memberId}:`, isFriend ? "Đã là bạn bè" : "Chưa là bạn bè");
+      setIsCheckingFriend(false);
+      return isFriend;
+    }
+    
+    setIsCheckingFriend(false);
+    return false;
+  } catch (error) {
+    console.error("Lỗi khi kiểm tra trạng thái bạn bè:", error);
+    setIsCheckingFriend(false);
+    return false;
+  }
+};
+// Xử lý khi nhấp vào avatar của thành viên
+const handleMemberClick = async (member) => {
+  setSelectedMember(member);
+  const friendStatus = await checkFriendshipStatus(member.user_id);
+  setIsFriend(friendStatus);
+  setShowMemberInfoModal(true);
+};
+// Hàm gửi lời mời kết bạn
+const handleSendFriendRequest = async () => {
+  if (!selectedMember) return;
+  
+  try {
+    message.loading({ content: "Đang gửi lời mời kết bạn...", key: "friendRequest" });
+    
+    await dispatch(sendFriendRequest({
+      sender_id: user.id,
+      receiver_id: selectedMember.user_id
+    })).unwrap();
+    
+    message.success({ 
+      content: "Đã gửi lời mời kết bạn thành công", 
+      key: "friendRequest" 
+    });
+    
+    setShowMemberInfoModal(false);
+  } catch (error) {
+    message.error({ 
+      content: error.message || "Không thể gửi lời mời kết bạn", 
+      key: "friendRequest" 
+    });
+    console.error("Error sending friend request:", error);
+  }
+};
+// Hàm chuyển đến chat với thành viên
+const handleMessageMember = () => {
+  if (!selectedMember) return;
+  
+  // Tạo đối tượng chat với format phù hợp
+  const chatUser = {
+    id: selectedMember.user_id,  // ID của thành viên được chọn, không phải user hiện tại
+    name: selectedMember.full_name,
+    avatar_path: selectedMember.avatar_path,
+    chat_type: "private",
+    receiver_id: selectedMember.user_id,
+    sender_id: user.id,  // Thêm sender_id để rõ ràng
+    unread: 0,
+    timestamp: new Date().toISOString()
+  };
+  console.log("Chat user:", chatUser);
+  onSelectUser(chatUser); // Gọi hàm selectedChat với đối tượng chatUser
+  // Đóng modal thông tin
+  setShowMemberInfoModal(false);
+  
+};
 // Hàm helper để kiểm tra quyền
 const canAddMembers = () => {
   return isMainAdmin || isSubAdmin || groupSettings.allow_add_members;
@@ -936,7 +1030,7 @@ const handleTransferAdminAndLeave = async () => {
                     </div>
                   )}
                 </div>
-                            {/* Modal thêm thành viên */}
+                 {/* Modal thêm thành viên */}
                 <Modal
                 title="Thêm thành viên vào nhóm"
                 open={showAddMembersModal}
@@ -1264,24 +1358,26 @@ const handleTransferAdminAndLeave = async () => {
                 {isOpenMembers && (
                   <div className="modal-members-list">
                     <div className="members-list">
-                      {groupMembers.slice(0, showAllMembers ? groupMembers.length : 5).map(member => (
+                     {groupMembers.slice(0, showAllMembers ? groupMembers.length : 5).map(member => (
                         <div key={member.user_id} className="member-item">
-                          <Avatar src={member.avatar_path}>
+                          <Avatar 
+                            src={member.avatar_path}
+                            style={{ cursor: 'pointer' }} 
+                            onClick={() => handleMemberClick(member)}
+                          >
                             {!member.avatar_path && (member.full_name || 'User').charAt(0).toUpperCase()}
                           </Avatar>
                           <div className="member-details">
-                            {/* <span className="member-name">{member.full_name}</span>
-                            {member.role === "admin" && <span className="admin-badge">Nhóm trưởng</span>} */}
                             <span className="member-name">
                               {member.full_name}
                             </span>
 
-                              {member.user_id === selectedChat.admin_id && (
-                                <span className="admin-badge" style={{ marginLeft: 5 }}>(Nhóm trưởng)</span>
-                              )}
-                              {member.role === "admin" && member.user_id !== selectedChat.admin_id && (
-                                <span className="admin-badge" style={{ marginLeft: 5 }}>(Nhóm phó)</span>
-                              )}
+                            {member.user_id === selectedChat.admin_id && (
+                              <span className="admin-badge" style={{ marginLeft: 5 }}>(Nhóm trưởng)</span>
+                            )}
+                            {member.role === "admin" && member.user_id !== selectedChat.admin_id && (
+                              <span className="admin-badge" style={{ marginLeft: 5 }}>(Nhóm phó)</span>
+                            )}
                           </div>
                         </div>
                       ))}
@@ -1299,7 +1395,72 @@ const handleTransferAdminAndLeave = async () => {
                 )}
               </div>
             )}
-            
+            {/* Modal thông tin thành viên */}
+              <Modal
+                title="Thông tin thành viên"
+                open={showMemberInfoModal}
+                onCancel={() => setShowMemberInfoModal(false)}
+                footer={null}
+                width={400}
+              >
+                {selectedMember && (
+                  <div style={{ textAlign: 'center', padding: '20px 0' }}>
+                    <Avatar 
+                      size={100} 
+                      src={selectedMember.avatar_path}
+                      style={{ marginBottom: 15 }}
+                    >
+                      {!selectedMember.avatar_path && (selectedMember.full_name || 'User').charAt(0).toUpperCase()}
+                    </Avatar>
+                    
+                    <h2 style={{ margin: '15px 0', fontWeight: 600 }}>
+                      {selectedMember.full_name}
+                      {selectedMember.user_id === selectedChat.admin_id && (
+                        <span style={{ fontSize: '14px', color: '#1890ff', marginLeft: 8 }}>(Nhóm trưởng)</span>
+                      )}
+                      {selectedMember.role === "admin" && selectedMember.user_id !== selectedChat.admin_id && (
+                        <span style={{ fontSize: '14px', color: '#52c41a', marginLeft: 8 }}>(Nhóm phó)</span>
+                      )}
+                    </h2>
+                    
+                    {selectedMember.phone && (
+                      <p style={{ margin: '8px 0', color: '#666' }}>
+                        <PhoneOutlined style={{ marginRight: 8 }} /> {selectedMember.phone}
+                      </p>
+                    )}
+                    
+                    <div style={{ 
+                      display: 'flex', 
+                      justifyContent: 'center', 
+                      marginTop: 25,
+                      gap: 15 
+                    }}>
+                      {/* Nếu thành viên là user hiện tại thì không hiển thị nút kết bạn/nhắn tin */}
+                      {selectedMember.user_id !== user.id && (
+                        isCheckingFriend ? (
+                          <Spin size="small" />
+                        ) : isFriend ? (
+                          <Button 
+                            type="primary" 
+                            icon={<MessageOutlined />}
+                            onClick={handleMessageMember}
+                          >
+                            Nhắn tin
+                          </Button>
+                        ) : (
+                          <Button
+                            type="primary"
+                            icon={<UserAddOutlined />}
+                            onClick={handleSendFriendRequest}
+                          >
+                            Kết bạn
+                          </Button>
+                        )
+                      )}
+                    </div>
+                  </div>
+                )}
+              </Modal>
             {/* Nhóm chung - chỉ hiển thị nếu là chat 1-1 */}
             {selectedChat.chat_type !== "group" && (
               <div

@@ -344,7 +344,7 @@ const CategoryMenu = () => {
     </div>
   );
 };
-const MessageArea = ({ selectedChat, user, onChatChange }) => {
+const MessageArea = ({ selectedChat, user, onChatChange, onSelectUser }) => {
   const dispatch = useDispatch();
   const chatMessages = useSelector((state) => state.messages.chatMessages);
   const userMessages = useSelector((state) => state.messages.userMessages);
@@ -991,6 +991,7 @@ const MessageArea = ({ selectedChat, user, onChatChange }) => {
                 })
               );
             }}
+            onSelectUser={onSelectUser}
           />
         </Layout>
       )}

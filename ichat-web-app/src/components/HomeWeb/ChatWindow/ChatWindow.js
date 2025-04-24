@@ -335,6 +335,7 @@ const ChatWindow = ({ user, selectedFriend }) => {
           onUpdateMessages={handleUpdateMessages} // Truyền hàm callback
           user={user}
           onChatChange={setSelectedUser}
+          onSelectUser={handleSelectUser}
         />
       ) : (
         <HelloWindow />
