@@ -992,6 +992,9 @@ const MessageArea = ({ selectedChat, user, onChatChange, onSelectUser }) => {
               );
             }}
             onSelectUser={onSelectUser}
+            onUpdateSelectedChat={(updatedChat) => {
+              onChatChange(updatedChat); // Use the setter function passed from ChatWindow
+            }}
           />
         </Layout>
       )}

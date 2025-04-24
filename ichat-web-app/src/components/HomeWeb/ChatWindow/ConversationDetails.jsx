@@ -60,7 +60,8 @@ const ConversationDetails = ({
   allMessages,
   user,
   onLeaveGroup,
-  onSelectUser
+  onSelectUser,
+  onUpdateSelectedChat
 }) => {
   const dispatch = useDispatch();
   const inputRef = useRef(null);
@@ -112,7 +113,7 @@ const [groupSettings, setGroupSettings] = useState({
   allow_change_name: true,
   allow_change_avatar: true
 });
-// State cho modal chọn admin mới
+// State cho modal chọn admin mới khi rời nhóm
 const [showTransferAdminModal, setShowTransferAdminModal] = useState(false);
 const [newAdminId, setNewAdminId] = useState(null);
 //State hiển thị trang cá nhân
@@ -121,6 +122,84 @@ const [showMemberInfoModal, setShowMemberInfoModal] = useState(false);
 const [isFriend, setIsFriend] = useState(false);
 const [isCheckingFriend, setIsCheckingFriend] = useState(false);
 const navigate = useNavigate();
+// State để quản lý modal chuyển quyền admin 
+const [showTransferAdminChooserModal, setShowTransferAdminChooserModal] = useState(false);
+const [newAdminIdForTransfer, setNewAdminIdForTransfer] = useState(null);
+// Hàm xử lý chuyển quyền admin chính
+const handleTransferAdmin = async () => {
+  if (!newAdminIdForTransfer) {
+    return message.error("Vui lòng chọn một thành viên để chuyển quyền admin");
+  }
+
+  try {
+    message.loading({ content: "Đang chuyển quyền admin...", key: "transferAdmin" });
+    
+    // Chuyển quyền admin cho thành viên mới
+    await dispatch(transferAdmin({
+      groupId: selectedChat.id,
+      userId: newAdminIdForTransfer
+    })).unwrap();
+    
+    // Cập nhật quyền của mình thành thành viên thường
+    await dispatch(setRole({
+      groupId: selectedChat.id,
+      userId: user.id,
+      role: "member"
+    })).unwrap();
+    
+    // Thêm thông báo loading khi cập nhật dữ liệu
+    message.loading({ content: "Đang cập nhật dữ liệu...", key: "updating" });
+    
+    // Cập nhật trực tiếp giá trị admin_id trong selectedChat
+    const updatedSelectedChat = {
+      ...selectedChat,
+      admin_id: newAdminIdForTransfer
+    };
+    
+    // Nếu có hàm callback từ component cha để cập nhật selectedChat
+    if (typeof onUpdateSelectedChat === 'function') {
+      onUpdateSelectedChat(updatedSelectedChat);
+    }
+    
+    // Cập nhật danh sách thành viên và settings
+    await Promise.all([
+      fetchGroupMembers(),
+      fetchGroupSettings()
+    ]);
+    
+    message.success({ 
+      content: "Đã chuyển quyền admin thành công", 
+      key: "transferAdmin" 
+    });
+    
+    message.success({ 
+      content: "Đã cập nhật thông tin nhóm thành công", 
+      key: "updating" 
+    });
+
+    // Đóng modal và cập nhật lại danh sách thành viên
+    setShowTransferAdminChooserModal(false);
+    setNewAdminIdForTransfer(null);
+    
+    // Cập nhật trạng thái người dùng hiện tại
+    setIsMainAdmin(false);
+    
+    // Thêm kích hoạt sự kiện để thông báo cho các component khác biết về sự thay đổi admin
+    window.dispatchEvent(new CustomEvent('admin-changed', { 
+      detail: { 
+        groupId: selectedChat.id, 
+        newAdminId: newAdminIdForTransfer,
+        previousAdminId: user.id
+      }
+    }));
+  } catch (error) {
+    message.error({ 
+      content: error.message || "Không thể chuyển quyền admin", 
+      key: "transferAdmin" 
+    });
+    console.error("Error transferring admin:", error);
+  }
+};
 // Hàm kiểm tra xem hai người đã là bạn bè chưa
 const checkFriendshipStatus = async (memberId) => {
   if (memberId === user.id) return false; // Không thể kết bạn với chính mình
@@ -1323,23 +1402,104 @@ const handleTransferAdminAndLeave = async () => {
                   {isMainAdmin && (
                     <>
                       <Divider />
-                      <div>
-                        <Button danger onClick={() => {
-                          Modal.confirm({
-                            title: 'Xác nhận giải tán nhóm',
-                            content: 'Bạn có chắc chắn muốn giải tán nhóm này? Hành động này không thể hoàn tác.',
-                            okText: 'Giải tán',
-                            okType: 'danger',
-                            cancelText: 'Hủy',
-                            onOk: handleDisbandGroup
-                          });
-                        }}>
-                          <DeleteOutlined /> Giải tán nhóm
-                        </Button>
-                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 15 }}>
+                          <Button 
+                            type="primary" 
+                            icon={<UserOutlined />} 
+                            onClick={() => setShowTransferAdminChooserModal(true)}
+                          >
+                            Chuyển quyền nhóm trưởng
+                          </Button>
+                          
+                          <Button danger onClick={() => {
+                            Modal.confirm({
+                              title: 'Xác nhận giải tán nhóm',
+                              content: 'Bạn có chắc chắn muốn giải tán nhóm này? Hành động này không thể hoàn tác.',
+                              okText: 'Giải tán',
+                              okType: 'danger',
+                              cancelText: 'Hủy',
+                              onOk: handleDisbandGroup
+                            });
+                          }}>
+                            <DeleteOutlined /> Giải tán nhóm
+                          </Button>
+                        </div>
                     </>
                   )}
                 </Modal>
+                {/* Modal chọn thành viên để chuyển quyền admin */}
+                    <Modal
+                      title="Chuyển quyền nhóm trưởng"
+                      open={showTransferAdminChooserModal}
+                      onCancel={() => setShowTransferAdminChooserModal(false)}
+                      footer={[
+                        <Button key="cancel" onClick={() => setShowTransferAdminChooserModal(false)}>
+                          Huỷ
+                        </Button>,
+                        <Button 
+                          key="transfer" 
+                          type="primary" 
+                          onClick={handleTransferAdmin}
+                          disabled={!newAdminIdForTransfer}
+                        >
+                          Chuyển quyền
+                        </Button>
+                      ]}
+                      width={500}
+                    >
+                      <Alert
+                        message="Lưu ý quan trọng"
+                        description="Sau khi chuyển quyền, người được chọn sẽ trở thành nhóm trưởng và bạn sẽ trở thành thành viên thường."
+                        type="info"
+                        style={{ marginBottom: '15px' }}
+                        showIcon
+                      />
+                      
+                      <p>Chọn một thành viên để trở thành nhóm trưởng mới:</p>
+                      
+                      <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                        {groupMembers
+                          // Lọc ra các thành viên khác, ưu tiên hiển thị nhóm phó trước
+                          .filter(member => member.user_id !== user.id)
+                          .sort((a, b) => {
+                            // Sắp xếp để nhóm phó hiển thị đầu tiên
+                            if (a.role === "admin" && b.role !== "admin") return -1;
+                            if (a.role !== "admin" && b.role === "admin") return 1;
+                            return 0;
+                          })
+                          .map(member => (
+                            <div 
+                              key={member.user_id}
+                              onClick={() => setNewAdminIdForTransfer(member.user_id)} 
+                              style={{
+                                display: 'flex',
+                                padding: '10px',
+                                alignItems: 'center',
+                                borderBottom: '1px solid #f0f0f0',
+                                cursor: 'pointer',
+                                backgroundColor: newAdminIdForTransfer === member.user_id ? '#e6f7ff' : 'white'
+                              }}
+                            >
+                              <Checkbox 
+                                checked={newAdminIdForTransfer === member.user_id}
+                                onChange={() => setNewAdminIdForTransfer(member.user_id)}
+                              />
+                              <Avatar 
+                                src={member.avatar_path} 
+                                style={{ marginLeft: 10, marginRight: 10 }}
+                              >
+                                {!member.avatar_path && (member.full_name || 'User').charAt(0).toUpperCase()}
+                              </Avatar>
+                              <div>
+                                <div>{member.full_name}</div>
+                                {member.role === "admin" && (
+                                  <div style={{ fontSize: '12px', color: '#52c41a' }}>Nhóm phó</div>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                      </div>
+                    </Modal>
             
             {/* Hiển thị thành viên nhóm nếu là chat nhóm */}
             {selectedChat.chat_type === "group" && (
