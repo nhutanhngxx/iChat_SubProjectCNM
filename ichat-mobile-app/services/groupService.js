@@ -347,7 +347,23 @@ const groupService = {
   },
 
   // Lấy danh sách thành được mời bởi bạn
-  getInvitedMembersByUserId: async (userId) => {},
+  getInvitedMembersByUserId: async (userId) => {
+    try {
+      const response = await apiService.get(
+        `/${PREFIX}/invited-members/${userId}`
+      );
+
+      if (response.data.status === "error") {
+        console.error("API trả về lỗi:", response.data.message);
+        return [];
+      }
+
+      return response.data.data;
+    } catch (error) {
+      console.log("Không thể lấy danh sách thành viên được mời: ", error);
+      return [];
+    }
+  },
 
   // Chấp nhận thành viên vào nhóm
   acceptMember: async ({ groupId, memberId }) => {

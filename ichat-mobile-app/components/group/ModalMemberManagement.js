@@ -40,6 +40,7 @@ const ModalMemberManagement = ({ route }) => {
   const [memberRelationships, setMemberRelationships] = useState({}); // Kiểm tra mối quan hệ giữa người dùng và thành viên trong nhóm - friend, stranger
   const [selectAdminModalVisible, setSelectAdminModalVisible] = useState(false); // Modal chọn quản trị viên mới
   const [currentAdminId, setCurrentAdminId] = useState(null); // ID của quản trị viên hiện tại
+  const [invitedMembers, setInvitedMembers] = useState([]); // Danh sách thành viên được mời bởi người dùng hiện tại
 
   // Lấy thông tin nhóm và thành viên
   useEffect(() => {
@@ -100,35 +101,65 @@ const ModalMemberManagement = ({ route }) => {
     fetchFriendList();
   }, [user?.id, members]);
 
+  // Lấy danh sách thành viên được mời bởi người dùng
+  useEffect(() => {
+    if (!user?.id || index !== 2) return;
+
+    const fetchInvitedMembers = async () => {
+      try {
+        const invitedMembersList = await groupService.getInvitedMembersByUserId(
+          user.id
+        );
+        setInvitedMembers(invitedMembersList);
+      } catch (error) {
+        console.error("Lỗi khi lấy danh sách thành viên được mời:", error);
+      }
+    };
+
+    fetchInvitedMembers();
+  }, [user?.id, index]);
+
   // Lọc thành viên theo tab
   useEffect(() => {
-    if (!members.length) return;
+    if (!members.length && index !== 2) return;
 
-    let filtered = [...members];
+    let filtered = [];
 
     // Lọc theo tab
     switch (index) {
       case 0: // All
+        filtered = [...members];
         break;
       case 1: // Quản trị viên
-        filtered = filtered.filter((member) => member.role === "admin");
+        filtered = members.filter((member) => member.role === "admin");
         break;
       case 2: // Đã mời
-        filtered = filtered.filter((member) => member.status === "invited");
+        if (invitedMembers.length > 0) {
+          // Format lại dữ liệu từ API để hiển thị
+          filtered = invitedMembers.map((item) => ({
+            user_id: item.member._id,
+            full_name: item.member.full_name,
+            avatar_path: item.member.avatar_path,
+            role: "member",
+            status: "approved",
+            invited_by_current_user: true,
+          }));
+        }
         break;
       default:
+        filtered = [...members];
         break;
     }
 
     // Lọc theo tìm kiếm
-    if (searchText) {
+    if (searchText && filtered.length > 0) {
       filtered = filtered.filter((member) =>
         member.full_name.toLowerCase().includes(searchText.toLowerCase())
       );
     }
 
     setFilteredMembers(filtered);
-  }, [index, members, searchText]);
+  }, [index, members, searchText, invitedMembers]);
 
   // Xử lý khi nhấn vào thành viên
   const handleMemberPress = (member) => {
@@ -245,8 +276,11 @@ const ModalMemberManagement = ({ route }) => {
               {isCurrentUser ? "Bạn" : item.full_name}
             </Text>
             <Text style={styles.memberRole}>
-              {item.role === "admin" ? "Quản trị viên" : "Thành viên"}
-              {/* // : item.added_by // ? `Added by ${item.added_by}` // : "" } */}
+              {item.role === "admin"
+                ? "Quản trị viên"
+                : item.invited_by_current_user
+                ? "Được mời bởi bạn"
+                : "Thành viên"}
             </Text>
           </View>
         </View>
@@ -410,12 +444,18 @@ const ModalMemberManagement = ({ route }) => {
             </Text>
           </View>
 
-          <FlatList
-            data={filteredMembers}
-            keyExtractor={(item) => item.user_id.toString()}
-            renderItem={renderMemberItem}
-            showsVerticalScrollIndicator={false}
-          />
+          {index === 2 && filteredMembers.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>Bạn chưa mời ai vào nhóm này</Text>
+            </View>
+          ) : (
+            <FlatList
+              data={filteredMembers}
+              keyExtractor={(item) => item.user_id.toString()}
+              renderItem={renderMemberItem}
+              showsVerticalScrollIndicator={false}
+            />
+          )}
         </View>
       </View>
 
@@ -529,6 +569,17 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 30,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: "#888",
+    textAlign: "center",
   },
   header: {
     backgroundColor: "#2F80ED",
