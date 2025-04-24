@@ -489,6 +489,49 @@ const GroupModel = {
     }
   },
 
+  // Lấy danh sách thành viên được mời bởi bạn
+  getInvitedMembersByUserId: async (userId) => {
+    try {
+      const invitedMembers = await GroupMember.aggregate([
+        {
+          $match: {
+            invited_by: new mongoose.Types.ObjectId(userId),
+            status: "approved",
+          },
+        },
+        {
+          $lookup: {
+            from: "UserInfo",
+            localField: "user_id",
+            foreignField: "_id",
+            as: "userDetails",
+          },
+        },
+        {
+          $unwind: "$userDetails",
+        },
+        {
+          $project: {
+            _id: 1,
+            user_id: 1,
+            status: 1,
+            joined_at: "$joined_at",
+            member: {
+              _id: "$userDetails._id",
+              full_name: "$userDetails.full_name",
+              avatar_path: "$userDetails.avatar_path",
+            },
+          },
+        },
+      ]);
+
+      return invitedMembers;
+    } catch (error) {
+      console.error("Lỗi khi lấy danh sách thành viên được mời:", error);
+      throw error;
+    }
+  },
+
   // Chấp nhận thành viên vào nhóm
   acceptMember: async ({ groupId, memberId }) => {
     try {

@@ -31,5 +31,9 @@ router.put("/member-approval/:groupId", GroupController.updateMemberApproval); /
 router.get("/pending-members/:groupId", GroupController.getPendingMembers); // Lấy danh sách yêu cầu tham gia nhóm đang chờ duyệt
 router.put("/accept-member/:groupId/:memberId", GroupController.acceptMember); // Chấp nhận thành viên vào nhóm
 router.put("/reject-member/:groupId/:memberId", GroupController.rejectMember); // Từ chối thành viên vào nhóm
+router.get(
+  "/invited-members/:userId",
+  GroupController.getInvitedMembersByUserId
+); // Lấy danh sách thành viên được mời bởi bạn
 
 module.exports = router;

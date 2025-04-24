@@ -346,6 +346,9 @@ const groupService = {
     }
   },
 
+  // Lấy danh sách thành được mời bởi bạn
+  getInvitedMembersByUserId: async (userId) => {},
+
   // Chấp nhận thành viên vào nhóm
   acceptMember: async ({ groupId, memberId }) => {
     try {
