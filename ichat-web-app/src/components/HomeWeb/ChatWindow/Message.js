@@ -938,6 +938,7 @@ const Message = ({
   return (
     <>
       <div
+        id={`message-${message._id}`} // thêm id để scroll tin nhắn
         className={`message ${isSender ? "sent" : "received"} ${
           !isFriendWithReceiver && !isSender ? "not-friend-message" : ""
         }`}

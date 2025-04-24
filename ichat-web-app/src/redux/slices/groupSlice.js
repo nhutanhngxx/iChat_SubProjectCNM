@@ -370,7 +370,28 @@ export const isGroupSubAdmin = createAsyncThunk(
     }
   }
 );
-
+// Chuyển nhường quyền admin chính cho người khác
+export const transferAdmin = createAsyncThunk(
+  "groups/transferAdmin",
+  async ({ groupId, userId }, { rejectWithValue }) => {
+    try {
+      const response = await fetch(
+        `${API_URL}transferAdmin/${groupId}/${userId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ groupId, userId }),
+        }
+      );
+      const data = await response.json();
+      return data.data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
 // Initial state
 const initialState = {
   userGroups: [],
@@ -551,6 +572,21 @@ const groupSlice = createSlice({
               : member
           );
         }
+      })
+      .addCase(transferAdmin.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        // Update the group members list to reflect the new admin
+        if (state.groupMembers.length > 0) {
+          state.groupMembers = state.groupMembers.map((member) =>
+            member.user_id === action.payload.user_id
+              ? { ...member, role: "admin" }
+              : member
+          );
+        }
+      })
+      .addCase(transferAdmin.rejected, (state, action) => {
+        state.status = "failed";
+        state.error = action.payload || action.error.message;
       });
   },
 });

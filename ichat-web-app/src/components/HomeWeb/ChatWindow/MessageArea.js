@@ -344,7 +344,7 @@ const CategoryMenu = () => {
     </div>
   );
 };
-const MessageArea = ({ selectedChat, user, onChatChange }) => {
+const MessageArea = ({ selectedChat, user, onChatChange, onSelectUser }) => {
   const dispatch = useDispatch();
   const chatMessages = useSelector((state) => state.messages.chatMessages);
   const userMessages = useSelector((state) => state.messages.userMessages);
@@ -370,7 +370,26 @@ const MessageArea = ({ selectedChat, user, onChatChange }) => {
   const [replyingTo, setReplyingTo] = useState(null);
   //state để reset lại mesageArea khi người dùng rời nhóm
   const [currentChat, setCurrentChat] = useState(selectedChat);
+  //Scroll để tìm tin nhắn
+  const scrollToMessage = (message) => {
+    if (!message || !message._id) return;
 
+    // Find the message element by its ID
+    const messageElement = document.getElementById(`message-${message._id}`);
+
+    if (messageElement) {
+      // Scroll to the message with a smooth animation
+      messageElement.scrollIntoView({ behavior: "smooth", block: "center" });
+
+      // Add a highlight effect
+      messageElement.classList.add("highlighted-message");
+
+      // Remove the highlight after a few seconds
+      setTimeout(() => {
+        messageElement.classList.remove("highlighted-message");
+      }, 3000);
+    }
+  };
   // useEffect để thoát khỏi componet khi người dùng rời nhóm
   useEffect(() => {
     const handleGroupLeft = (event) => {
@@ -854,10 +873,12 @@ const MessageArea = ({ selectedChat, user, onChatChange }) => {
           </div>
 
           <div className="action-buttons-message-area">
-            <UsergroupAddOutlined
-              className="header-icon-message-area"
-              onClick={() => setModalVisible(true)}
-            />
+            {selectedChat.chat_type !== "group" && (
+              <UsergroupAddOutlined
+                className="header-icon-message-area"
+                onClick={() => setModalVisible(true)}
+              />
+            )}
             <CreateGroupModal
               visible={modalVisible}
               onCancel={() => setModalVisible(false)}
@@ -989,13 +1010,23 @@ const MessageArea = ({ selectedChat, user, onChatChange }) => {
                 })
               );
             }}
+            onSelectUser={onSelectUser}
+            onUpdateSelectedChat={(updatedChat) => {
+              onChatChange(updatedChat); // Use the setter function passed from ChatWindow
+            }}
           />
         </Layout>
       )}
       {/* Hiển thị tìm kiếm bên thông tin hội thoại */}
       {showSearchRight && (
         <Layout className="layout-search-right">
-          <SearchRight setShowSearchRight={setShowSearchRight} />
+          <SearchRight
+            setShowSearchRight={setShowSearchRight}
+            messages={displayMessages}
+            onMessageSelect={scrollToMessage}
+            selectedChat={selectedChat}
+            user={user}
+          />
         </Layout>
       )}
     </div>
