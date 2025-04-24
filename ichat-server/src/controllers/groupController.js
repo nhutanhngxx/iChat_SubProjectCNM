@@ -322,6 +322,30 @@ const GroupController = {
       });
     }
   },
+
+  // Cập nhật trạng thái của phê duyệt thành viên của nhóm
+  updateMemberApproval: async (req, res) => {
+    try {
+      const { groupId } = req.params;
+      const { requireApproval } = req.body;
+
+      const result = await GroupModel.updateMemberApproval({
+        groupId,
+        requireApproval,
+      });
+
+      return res.status(200).json({
+        status: "ok",
+        data: result,
+      });
+    } catch (error) {
+      console.error("Lỗi khi cập nhật trạng thái phê duyệt thành viên:", error);
+      return res.status(500).json({
+        status: "error",
+        message: error.message,
+      });
+    }
+  },
 };
 
 module.exports = GroupController;

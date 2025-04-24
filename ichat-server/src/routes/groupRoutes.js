@@ -27,4 +27,5 @@ router.get("/group/:groupId", GroupController.getGroupById); // Lấy danh sách
 router.get("/:groupId/admin-check/:userId", GroupController.isGroupSubAdmin); // Kiểm tra quyền admin (Phụ hay chính)
 router.put("/transferAdmin/:groupId/:userId", GroupController.transferAdmin); // Chuyển quyền admin cho người khác
 router.get("/member-approval/:groupId", GroupController.checkMemberApproval); // Kiểm tra trạng thái của phê duyệt thành viên của nhóm
+router.put("/member-approval/:groupId", GroupController.updateMemberApproval); // Cập nhật trạng thái của phê duyệt thành viên của nhóm
 module.exports = router;

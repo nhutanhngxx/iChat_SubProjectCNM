@@ -403,6 +403,24 @@ const GroupModel = {
       throw error;
     }
   },
+
+  // Cập nhật trạng thái của phê duyệt thành viên của nhóm
+  updateMemberApproval: async ({ groupId, requireApproval }) => {
+    try {
+      const updatedGroup = await GroupChat.findByIdAndUpdate(
+        groupId,
+        { require_approval: requireApproval },
+        { new: true }
+      );
+      if (!updatedGroup) {
+        throw new Error("Nhóm không tồn tại");
+      }
+      return updatedGroup;
+    } catch (error) {
+      console.error("Lỗi khi cập nhật trạng thái phê duyệt thành viên:", error);
+      throw error;
+    }
+  },
 };
 
 module.exports = GroupModel;

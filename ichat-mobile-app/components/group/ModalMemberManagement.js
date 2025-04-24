@@ -27,19 +27,19 @@ const ModalMemberManagement = ({ route }) => {
   const { groupId } = route.params || {};
   const navigation = useNavigation();
   const { user } = useContext(UserContext);
-  const [index, setIndex] = useState(0);
-  const [group, setGroup] = useState(null);
-  const [members, setMembers] = useState([]);
-  const [searchText, setSearchText] = useState("");
-  const [filteredMembers, setFilteredMembers] = useState([]);
-  const [friendList, setFriendList] = useState([]);
-  const [showSearch, setShowSearch] = useState(false);
-  const [selectedMember, setSelectedMember] = useState(null);
-  const [memberModalVisible, setMemberModalVisible] = useState(false);
-  const [isChecked, setIsChecked] = useState(false);
-  const [memberRelationships, setMemberRelationships] = useState({});
-  const [selectAdminModalVisible, setSelectAdminModalVisible] = useState(false);
-  const [currentAdminId, setCurrentAdminId] = useState(null);
+  const [index, setIndex] = useState(0); // Tab hiện tại
+  const [group, setGroup] = useState(null); // Thông tin nhóm
+  const [members, setMembers] = useState([]); // Danh sách thành viên
+  const [searchText, setSearchText] = useState(""); // Từ khóa tìm kiếm
+  const [filteredMembers, setFilteredMembers] = useState([]); // Danh sách thành viên đã lọc
+  const [friendList, setFriendList] = useState([]); // Danh sách bạn bè
+  const [showSearch, setShowSearch] = useState(false); // Bật tắt hiển thị thanh tìm kiếm
+  const [selectedMember, setSelectedMember] = useState(null); // Thành viên được chọn
+  const [memberModalVisible, setMemberModalVisible] = useState(false); // Modal thông tin thành viên
+  const [isChecked, setIsChecked] = useState(false); // Trạng thái switch phê duyệt thành viên
+  const [memberRelationships, setMemberRelationships] = useState({}); // Kiểm tra mối quan hệ giữa người dùng và thành viên trong nhóm - friend, stranger
+  const [selectAdminModalVisible, setSelectAdminModalVisible] = useState(false); // Modal chọn quản trị viên mới
+  const [currentAdminId, setCurrentAdminId] = useState(null); // ID của quản trị viên hiện tại
 
   // Lấy thông tin nhóm và thành viên
   useEffect(() => {
@@ -142,9 +142,32 @@ const ModalMemberManagement = ({ route }) => {
     setSelectedMember(null);
   };
 
+  // Lấy trạng thái phê duyệt thành viên
+  useEffect(() => {
+    if (!groupId) return;
+
+    const fetchMemberApproval = async () => {
+      try {
+        const response = await groupService.checkMemberApproval(groupId);
+        setIsChecked(response);
+      } catch (error) {
+        console.error(
+          "Lỗi khi kiểm tra trạng thái phê duyệt thành viên:",
+          error
+        );
+      }
+    };
+
+    fetchMemberApproval();
+  }, [groupId, isChecked]);
+
   // Hàm xử lý switch phê duyệt thành viên
-  const handleMemberApproval = (value) => {
-    setIsChecked(value);
+  const handleCheckMemberApproval = (value) => {
+    const response = groupService.updateMemberApproval({
+      groupId,
+      requireApproval: value,
+    });
+    setIsChecked(response);
   };
 
   // Xử lý khi người dùng muốn rời nhóm
@@ -343,7 +366,7 @@ const ModalMemberManagement = ({ route }) => {
         </View>
         <Switch
           value={isChecked}
-          onValueChange={() => setIsChecked(!isChecked)}
+          onValueChange={() => handleCheckMemberApproval(!isChecked)}
           color="#2F80ED"
         />
       </View>

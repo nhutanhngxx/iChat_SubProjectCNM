@@ -197,17 +197,14 @@ const groupService = {
   // Đổi tên nhóm
   renameGroup: async ({ groupId, name }) => {
     try {
-      // console.log("Group Service: ", groupId, newName);
       const response = await apiService.put(`/${PREFIX}/${groupId}`, {
         name,
       });
-      console.log("response: ", response.data);
 
       if (response.data.status === "error") {
         throw new Error(response.data.message);
       }
       if (response.data.status === "ok") {
-        console.log("Đổi tên nhóm thành công:", response.data);
         return { status: "ok", message: "Đổi tên nhóm thành công." };
       }
     } catch (error) {
@@ -289,6 +286,33 @@ const groupService = {
       }
     } catch (error) {
       console.log("Không thể chuyển quyền quản trị viên: ", error);
+      throw error;
+    }
+  },
+
+  // Kiểm tra trạng thái phê duyệt thành viên của nhóm
+  checkMemberApproval: async (groupId) => {
+    try {
+      const response = await apiService.get(
+        `/${PREFIX}/member-approval/${groupId}`
+      );
+      return response.data.data;
+    } catch (error) {
+      console.error("Lỗi khi kiểm tra trạng thái phê duyệt thành viên:", error);
+      throw error;
+    }
+  },
+
+  // Cập nhật trạng thái phê duyệt thành viên của nhóm
+  updateMemberApproval: async ({ groupId, requireApproval }) => {
+    try {
+      const response = await apiService.put(
+        `/${PREFIX}/member-approval/${groupId}`,
+        { requireApproval }
+      );
+      return response.data.data;
+    } catch (error) {
+      console.error("Lỗi khi cập nhật trạng thái phê duyệt thành viên:", error);
       throw error;
     }
   },
