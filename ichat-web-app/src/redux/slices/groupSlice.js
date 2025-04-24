@@ -392,6 +392,111 @@ export const transferAdmin = createAsyncThunk(
     }
   }
 );
+// Thêm các createAsyncThunk mới
+export const createGroupInvitation = createAsyncThunk(
+  "groups/createInvitation",
+  async ({ groupId, userId, expiresInHours, maxUses }, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${API_URL}${groupId}/invitations`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userId, expiresInHours, maxUses }),
+      });
+
+      const data = await response.json();
+
+      if (data.status === "error") {
+        return rejectWithValue(data.message);
+      }
+
+      return data.data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+export const getGroupInvitations = createAsyncThunk(
+  "groups/getInvitations",
+  async ({ groupId, userId }, { rejectWithValue }) => {
+    try {
+      const response = await fetch(
+        `${API_URL}${groupId}/invitations?userId=${userId}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      const data = await response.json();
+      console.log("API response for invitations:", data);
+
+      if (data.status === "error") {
+        return rejectWithValue(data.message);
+      }
+
+      return data.data || data;
+    } catch (error) {
+      console.error("Error fetching invitations:", error);
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+export const revokeGroupInvitation = createAsyncThunk(
+  "groups/revokeInvitation",
+  async ({ inviteId, userId }, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${API_URL}invitations/${inviteId}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userId }),
+      });
+
+      const data = await response.json();
+
+      if (data.status === "error") {
+        return rejectWithValue(data.message);
+      }
+
+      return { inviteId, ...data };
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+export const joinGroupByInvitation = createAsyncThunk(
+  "groups/joinByInvitation",
+  async ({ token, userId }, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${API_URL}join-by-invite`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ token, userId }),
+      });
+
+      const data = await response.json();
+
+      if (data.status === "error") {
+        return rejectWithValue(data.message);
+      }
+
+      return data.data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
 // Initial state
 const initialState = {
   userGroups: [],
@@ -403,6 +508,10 @@ const initialState = {
   adminStatus: null,
   status: "idle",
   error: null,
+  groupInvitations: [],
+  invitationStatus: "idle", // 'idle' | 'loading' | 'succeeded' | 'failed'
+  invitationError: null,
+  currentInvitation: null,
 };
 
 const groupSlice = createSlice({
@@ -587,6 +696,59 @@ const groupSlice = createSlice({
       .addCase(transferAdmin.rejected, (state, action) => {
         state.status = "failed";
         state.error = action.payload || action.error.message;
+      })
+      // createGroupInvitation
+      .addCase(createGroupInvitation.pending, (state) => {
+        state.invitationStatus = "loading";
+      })
+      .addCase(createGroupInvitation.fulfilled, (state, action) => {
+        state.invitationStatus = "succeeded";
+        state.currentInvitation = action.payload;
+      })
+      .addCase(createGroupInvitation.rejected, (state, action) => {
+        state.invitationStatus = "failed";
+        state.invitationError = action.payload || action.error.message;
+      })
+
+      // getGroupInvitations
+      .addCase(getGroupInvitations.pending, (state) => {
+        state.invitationStatus = "loading";
+      })
+      .addCase(getGroupInvitations.fulfilled, (state, action) => {
+        state.invitationStatus = "succeeded";
+        // Ensure we're storing an array, handle potential API response formats
+        state.groupInvitations = Array.isArray(action.payload)
+          ? action.payload
+          : action.payload?.data || action.payload?.invitations || [];
+      })
+      .addCase(getGroupInvitations.rejected, (state, action) => {
+        state.invitationStatus = "failed";
+        state.invitationError = action.payload || action.error.message;
+      })
+
+      // revokeGroupInvitation
+      .addCase(revokeGroupInvitation.fulfilled, (state, action) => {
+        state.invitationStatus = "succeeded";
+        state.groupInvitations = state.groupInvitations.filter(
+          (invite) => invite._id !== action.payload.inviteId
+        );
+      })
+
+      // joinGroupByInvitation
+      .addCase(joinGroupByInvitation.pending, (state) => {
+        state.invitationStatus = "loading";
+      })
+      .addCase(joinGroupByInvitation.fulfilled, (state, action) => {
+        state.invitationStatus = "succeeded";
+        if (
+          !state.userGroups.some((group) => group._id === action.payload._id)
+        ) {
+          state.userGroups.push(action.payload);
+        }
+      })
+      .addCase(joinGroupByInvitation.rejected, (state, action) => {
+        state.invitationStatus = "failed";
+        state.invitationError = action.payload || action.error.message;
       });
   },
 });

@@ -26,4 +26,16 @@ router.put("/:groupId/members/:userId/role", GroupController.setRole); // Cập 
 router.get("/group/:groupId", GroupController.getGroupById); // Lấy thông tin nhóm
 router.get("/:groupId/admin-check/:userId", GroupController.isGroupSubAdmin); // Kiểm tra quyền admin (Phụ hay chính)
 router.put("/transferAdmin/:groupId/:userId", GroupController.transferAdmin); // Chuyển quyền admin cho người khác
+
+// Tạo lời mời nhóm
+router.post("/:groupId/invitations", GroupController.createInvitation);
+
+// Lấy danh sách lời mời nhóm
+router.get("/:groupId/invitations", GroupController.getGroupInvitations);
+
+// Hủy lời mời
+router.delete("/invitations/:inviteId", GroupController.revokeInvitation);
+
+// Tham gia nhóm bằng lời mời
+router.post("/join-by-invite", GroupController.joinByInvitation);
 module.exports = router;

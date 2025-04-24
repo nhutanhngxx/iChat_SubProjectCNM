@@ -5,6 +5,8 @@ const Message = require("../schemas/Messages");
 const mongoose = require("mongoose");
 const { uploadFile } = require("../services/upload-file");
 const { get } = require("http");
+const crypto = require("crypto");
+const GroupInvitation = require("../schemas/GroupInvitation");
 
 const GroupModel = {
   //   Lấy danh sách nhóm mà người dùng tham gia
@@ -395,6 +397,149 @@ const GroupModel = {
       console.error("Lỗi khi chuyển nhường quyền admin:", error);
       throw error;
     }
+  },
+  // Tạo lời mời nhóm
+  createGroupInvitation: async (
+    groupId,
+    userId,
+    expiresInHours = 24,
+    maxUses = null
+  ) => {
+    // Kiểm tra xem nhóm có tồn tại không
+    const group = await GroupChat.findById(groupId);
+    if (!group) {
+      throw new Error("Không tìm thấy nhóm");
+    }
+
+    // Kiểm tra xem người tạo có phải là thành viên nhóm
+    const isMember = await GroupMember.findOne({
+      group_id: groupId,
+      user_id: userId,
+    });
+
+    if (!isMember) {
+      throw new Error("Bạn không phải là thành viên của nhóm này");
+    }
+    const existingInvite = await GroupInvitation.findOne({
+      group_id: groupId,
+      active: true,
+      expires_at: { $gt: new Date() },
+      max_uses: maxUses,
+    });
+
+    if (existingInvite) {
+      return existingInvite; // Trả về lời mời hiện có thay vì tạo mới
+    }
+
+    // Tạo token ngẫu nhiên
+    const token = crypto.randomBytes(16).toString("hex");
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + expiresInHours);
+
+    // Tạo lời mời mới
+    const invitation = await GroupInvitation.create({
+      group_id: groupId,
+      token,
+      created_by: userId,
+      expires_at: expiresAt,
+      max_uses: maxUses,
+      use_count: 0,
+      active: true,
+    });
+
+    return invitation;
+  },
+
+  // Xác thực và sử dụng lời mời
+  validateAndJoinGroup: async (token, userId) => {
+    // Tìm lời mời theo token
+    const invitation = await GroupInvitation.findOne({
+      token,
+      active: true,
+      expires_at: { $gt: new Date() },
+    });
+
+    if (!invitation) {
+      throw new Error("Lời mời không hợp lệ hoặc đã hết hạn");
+    }
+
+    // Kiểm tra số lần sử dụng
+    if (invitation.max_uses && invitation.use_count >= invitation.max_uses) {
+      throw new Error("Lời mời đã đạt giới hạn sử dụng");
+    }
+
+    // Kiểm tra xem người dùng đã là thành viên chưa
+    const existingMember = await GroupMember.findOne({
+      group_id: invitation.group_id,
+      user_id: userId,
+    });
+
+    if (existingMember) {
+      throw new Error("Bạn đã là thành viên của nhóm này");
+    }
+
+    // Thêm người dùng vào nhóm (nếu thành viên đã có thì không thêm chỉ cập nhật)
+    await GroupMember.updateOne(
+      { group_id: invitation.group_id, user_id: userId },
+      { $setOnInsert: { role: "member", joined_at: new Date() } },
+      { upsert: true }
+    );
+
+    // Cập nhật số lần sử dụng
+    invitation.use_count += 1;
+    await invitation.save();
+
+    // Lấy thông tin nhóm để trả về
+    const group = await GroupChat.findById(invitation.group_id);
+    return group;
+  },
+
+  // Hủy lời mời
+  revokeInvitation: async (inviteId, userId) => {
+    const invitation = await GroupInvitation.findById(inviteId);
+
+    if (!invitation) {
+      throw new Error("Không tìm thấy lời mời");
+    }
+
+    // Kiểm tra quyền (chỉ người tạo hoặc admin nhóm mới có thể hủy)
+    const group = await GroupChat.findById(invitation.group_id);
+    const isAdmin = group.admin_id.toString() === userId.toString();
+    const isCreator = invitation.created_by.toString() === userId.toString();
+
+    if (!isAdmin && !isCreator) {
+      throw new Error("Bạn không có quyền hủy lời mời này");
+    }
+
+    invitation.active = false;
+    await invitation.save();
+
+    return invitation;
+  },
+
+  // Lấy danh sách lời mời của nhóm
+  getGroupInvitations: async (groupId, userId) => {
+    // Kiểm tra xem người dùng có quyền xem không (là thành viên nhóm)
+    const member = await GroupMember.findOne({
+      group_id: groupId,
+      user_id: userId,
+    });
+    console.log("Group ID:", groupId);
+    console.log("User ID:", userId);
+    console.log("Member:", member);
+
+    if (!member) {
+      throw new Error("Bạn không phải là thành viên của nhóm này");
+    }
+
+    // Lấy các lời mời còn hoạt động
+    const invitations = await GroupInvitation.find({
+      group_id: groupId,
+      active: true,
+      expires_at: { $gt: new Date() },
+    }).populate("created_by", "full_name avatar_path");
+
+    return invitations;
   },
 };
 

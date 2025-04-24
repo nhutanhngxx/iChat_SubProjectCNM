@@ -47,7 +47,8 @@ import axios from "axios";
 import { MessageOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { sendFriendRequest } from '../../../redux/slices/friendSlice';
-
+import GroupInviteModal from './GroupInviteModal';
+import { ShareAltOutlined } from '@ant-design/icons';
 const ConversationDetails = ({
   isVisible,
   selectedChat,
@@ -121,6 +122,8 @@ const [selectedMember, setSelectedMember] = useState(null);
 const [showMemberInfoModal, setShowMemberInfoModal] = useState(false);
 const [isFriend, setIsFriend] = useState(false);
 const [isCheckingFriend, setIsCheckingFriend] = useState(false);
+// state mở grouInvite
+const [showInviteModal, setShowInviteModal] = useState(false);
 const navigate = useNavigate();
 // State để quản lý modal chuyển quyền admin 
 const [showTransferAdminChooserModal, setShowTransferAdminChooserModal] = useState(false);
@@ -1097,6 +1100,17 @@ const handleTransferAdminAndLeave = async () => {
                         Quản lý<br />nhóm
                       </span>
                     </div>
+                    <div >
+                  <button 
+                    className="conversation-action-button"
+                    onClick={() => setShowInviteModal(true)}
+                  >
+                    <ShareAltOutlined />
+                  </button>
+                  <span>
+                    Chia sẻ<br />nhóm
+                  </span>
+                </div>
                     </>
                   ) : (
                     <div>
@@ -1109,6 +1123,24 @@ const handleTransferAdminAndLeave = async () => {
                     </div>
                   )}
                 </div>
+                {/* {selectedChat.chat_type === "group" && (
+                <div style={{display:"flex",background:"cyan",boxShadow:"-moz-initial"}}>
+                  <button 
+                    className="conversation-action-button"
+                    style={{
+                      width: "50px",
+                      backgroundColor: "cyan",
+                      
+                    }}
+                    onClick={() => setShowInviteModal(true)}
+                  >
+                    <ShareAltOutlined />
+                  </button>
+                  <span>
+                    Chia sẻ<br />nhóm
+                  </span>
+                </div>
+              )} */}
                  {/* Modal thêm thành viên */}
                 <Modal
                 title="Thêm thành viên vào nhóm"
@@ -2008,7 +2040,6 @@ const handleTransferAdminAndLeave = async () => {
               >
                 <DeleteOutlined /> Xóa lịch sử trò chuyện
               </button>
-              
               {selectedChat.chat_type === "group" && (
                 <button 
                   onClick={() => setShowLeaveGroupModal(true)}
@@ -2017,6 +2048,16 @@ const handleTransferAdminAndLeave = async () => {
                   <LogoutOutlined /> Rời nhóm
                 </button>
               )}
+              {/* Modal chia sẻ lời mời nhóm */}
+                {selectedChat.chat_type === "group" && (
+                  <GroupInviteModal
+                    visible={showInviteModal}
+                    onCancel={() => setShowInviteModal(false)}
+                    groupId={selectedChat.id}
+                    userId={user.id}
+                    groupName={selectedChat.name}
+                  />
+                )}
               {/* Modal chọn admin mới khi admin chính muốn rời nhóm */}
                 <Modal
                   title="Chọn admin mới trước khi rời nhóm"

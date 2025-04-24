@@ -304,6 +304,98 @@ const GroupController = {
       });
     }
   },
+  // Tạo lời mời nhóm
+  createInvitation: async (req, res) => {
+    try {
+      const { groupId } = req.params;
+      const { userId, expiresInHours, maxUses } = req.body;
+
+      const invitation = await GroupModel.createGroupInvitation(
+        groupId,
+        userId,
+        expiresInHours || 24,
+        maxUses || null
+      );
+
+      const inviteUrl = `${
+        process.env.FRONTEND_URL || "http://localhost:3000"
+      }/invite/${invitation.token}`;
+
+      res.status(201).json({
+        status: "ok",
+        data: {
+          invitation,
+          inviteUrl,
+          qrData: invitation.token,
+        },
+      });
+    } catch (error) {
+      res.status(400).json({
+        status: "error",
+        message: error.message,
+      });
+    }
+  },
+
+  // Xác thực và tham gia nhóm
+  joinByInvitation: async (req, res) => {
+    try {
+      const { token, userId } = req.body;
+
+      const group = await GroupModel.validateAndJoinGroup(token, userId);
+
+      res.status(200).json({
+        status: "ok",
+        message: "Đã tham gia nhóm thành công",
+        data: group,
+      });
+    } catch (error) {
+      res.status(400).json({
+        status: "error",
+        message: error.message,
+      });
+    }
+  },
+
+  // Hủy lời mời
+  revokeInvitation: async (req, res) => {
+    try {
+      const { inviteId } = req.params;
+      const { userId } = req.body;
+
+      await GroupModel.revokeInvitation(inviteId, userId);
+
+      res.status(200).json({
+        status: "ok",
+        message: "Đã hủy lời mời thành công",
+      });
+    } catch (error) {
+      res.status(400).json({
+        status: "error",
+        message: error.message,
+      });
+    }
+  },
+
+  // Lấy danh sách lời mời của nhóm
+  getGroupInvitations: async (req, res) => {
+    try {
+      const { groupId } = req.params;
+      const { userId } = req.query;
+
+      const invitations = await GroupModel.getGroupInvitations(groupId, userId);
+
+      res.status(200).json({
+        status: "ok",
+        data: invitations,
+      });
+    } catch (error) {
+      res.status(400).json({
+        status: "error",
+        message: error.message,
+      });
+    }
+  },
 };
 
 module.exports = GroupController;
