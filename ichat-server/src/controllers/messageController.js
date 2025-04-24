@@ -536,6 +536,7 @@ const MessageController = {
             unread: 1,
             isLastMessageFromMe: 1,
             chat_type: 1,
+            admin_id: "$groupInfo.admin_id",
           },
         },
       ]);
@@ -569,6 +570,7 @@ const MessageController = {
               isLastMessageFromMe: false,
               chat_type: "group",
               sender_name: "",
+              admin_id: groupInfo.admin_id,
             });
           }
         }

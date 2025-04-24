@@ -109,17 +109,6 @@ const RequestList = () => {
     }
   };
 
-  // Thu hồi lời mời
-  // const handleCancelRequest = (id) => {
-  //   setRequestData((prev) =>
-  //     prev.map((req) =>
-  //       req.id === id
-  //         ? { ...req, message_request: "Đã thu hồi lời mời", received: false }
-  //         : req
-  //     )
-  //   );
-  // };
-
   const handleCancelRequest = async (requestId, receivedId) => {
     try {
       const data = {

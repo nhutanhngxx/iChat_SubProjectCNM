@@ -102,9 +102,26 @@ const GroupModel = {
         : [];
 
       // Xử lý avatar nếu có
-      let avatarUrl = null;
-      if (avatar) {
-        avatarUrl = await uploadFile(avatar);
+      // let avatarUrl = null;
+      // if (avatar) {
+      //   avatarUrl = await uploadFile(avatar);
+      // }
+
+      // Xử lý avatar nếu có (Merge code)
+      let avatarUrl =
+        "https://nhutanhngxx.s3.ap-southeast-1.amazonaws.com/root/new-logo.png"; // default avatar
+      if (avatar && avatar.buffer) {
+        try {
+          avatarUrl = await uploadFile({
+            buffer: avatar.buffer,
+            mimetype: avatar.mimetype,
+            originalname: avatar.originalname,
+            size: avatar.size,
+          });
+        } catch (error) {
+          console.error("Lỗi upload avatar:", error);
+          // Tiếp tục với avatar mặc định nếu upload thất bại
+        }
       }
 
       // Tạo group
@@ -246,7 +263,10 @@ const GroupModel = {
   },
 
   // 5. Đổi tên Group / Set avatar
-  updateGroup: async (groupId, { name, avatar }) => {
+  updateGroup: async (
+    groupId,
+    { name, avatar, allow_add_members, allow_change_name, allow_change_avatar }
+  ) => {
     try {
       const update = {};
 
@@ -260,6 +280,10 @@ const GroupModel = {
         const avatarUrl = await uploadFile(avatar);
         update.avatar = avatarUrl; // Sửa từ avatarUrl thành avatar để phù hợp
       }
+
+      update.allow_add_members = allow_add_members;
+      update.allow_change_name = allow_change_name;
+      update.allow_change_avatar = allow_change_avatar;
 
       return GroupChat.findByIdAndUpdate(groupId, update, { new: true });
     } catch (error) {
@@ -368,6 +392,25 @@ const GroupModel = {
     } catch (error) {
       console.error("Lỗi khi kiểm tra quyền admin phụ:", error);
       throw new Error("Không thể kiểm tra quyền admin phụ của nhóm");
+    }
+  },
+  transferAdmin: async (groupId, userId) => {
+    try {
+      // Cập nhật admin_id trong GroupChat
+      const updatedGroup = await GroupChat.findByIdAndUpdate(
+        groupId,
+        { admin_id: userId },
+        { new: true }
+      );
+
+      if (!updatedGroup) {
+        throw new Error("Nhóm không tồn tại");
+      }
+
+      return updatedGroup;
+    } catch (error) {
+      console.error("Lỗi khi chuyển nhường quyền admin:", error);
+      throw error;
     }
   },
 };

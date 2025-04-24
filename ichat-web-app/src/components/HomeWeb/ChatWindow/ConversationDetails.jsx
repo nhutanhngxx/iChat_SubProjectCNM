@@ -1,6 +1,6 @@
 import React from "react";
 import { useEffect, useRef, useState } from "react";
-import { Avatar, Button, message, Modal,Alert} from "antd"; // Thêm message, Modal
+import { Avatar, Button, message, Modal,Alert,Spin} from "antd"; // Thêm message, Modal
 import "./ConversationDetails.css";
 import { FaCaretDown } from "react-icons/fa";
 import { FaCaretRight } from "react-icons/fa";
@@ -27,7 +27,7 @@ import {
   EyeOutlined,
   CloseOutlined
 } from "@ant-design/icons";
-import { DownloadOutlined,PlayCircleOutlined } from '@ant-design/icons';
+import { DownloadOutlined,PlayCircleOutlined,PhoneOutlined } from '@ant-design/icons';
 import { 
     UserAddOutlined, 
     SettingOutlined,
@@ -37,12 +37,16 @@ import {
   import { CameraOutlined } from "@ant-design/icons";
 import { createGroup } from "../../../redux/slices/groupSlice";
 import { getUserFriends } from "../../../redux/slices/friendSlice";
-import { searchGroup,isGroupSubAdmin,updateGroup,deleteGroup,setRole,removeMember,addMembers,getGroupById } from "../../../redux/slices/groupSlice";
+import { searchGroup,isGroupSubAdmin,updateGroup,deleteGroup,setRole,removeMember,addMembers,getGroupById,transferAdmin } from "../../../redux/slices/groupSlice";
+import { fetchChatMessages,fetchMessages } from "../../../redux/slices/messagesSlice";
 import { GrContract } from "react-icons/gr";
 import GifPicker from "./GifPicker";
 import Picker from "emoji-picker-react";
 import { useDispatch } from "react-redux";
 import axios from "axios";
+import { MessageOutlined } from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
+import { sendFriendRequest } from '../../../redux/slices/friendSlice';
 
 const ConversationDetails = ({
   isVisible,
@@ -54,7 +58,10 @@ const ConversationDetails = ({
   onImageUpload,
   setInputMessage,
   allMessages,
-  user
+  user,
+  onLeaveGroup,
+  onSelectUser,
+  onUpdateSelectedChat
 }) => {
   const dispatch = useDispatch();
   const inputRef = useRef(null);
@@ -106,7 +113,178 @@ const [groupSettings, setGroupSettings] = useState({
   allow_change_name: true,
   allow_change_avatar: true
 });
+// State cho modal chọn admin mới khi rời nhóm
+const [showTransferAdminModal, setShowTransferAdminModal] = useState(false);
+const [newAdminId, setNewAdminId] = useState(null);
+//State hiển thị trang cá nhân
+const [selectedMember, setSelectedMember] = useState(null);
+const [showMemberInfoModal, setShowMemberInfoModal] = useState(false);
+const [isFriend, setIsFriend] = useState(false);
+const [isCheckingFriend, setIsCheckingFriend] = useState(false);
+const navigate = useNavigate();
+// State để quản lý modal chuyển quyền admin 
+const [showTransferAdminChooserModal, setShowTransferAdminChooserModal] = useState(false);
+const [newAdminIdForTransfer, setNewAdminIdForTransfer] = useState(null);
+// Hàm xử lý chuyển quyền admin chính
+const handleTransferAdmin = async () => {
+  if (!newAdminIdForTransfer) {
+    return message.error("Vui lòng chọn một thành viên để chuyển quyền admin");
+  }
 
+  try {
+    message.loading({ content: "Đang chuyển quyền admin...", key: "transferAdmin" });
+    
+    // Chuyển quyền admin cho thành viên mới
+    await dispatch(transferAdmin({
+      groupId: selectedChat.id,
+      userId: newAdminIdForTransfer
+    })).unwrap();
+    
+    // Cập nhật quyền của mình thành thành viên thường
+    await dispatch(setRole({
+      groupId: selectedChat.id,
+      userId: user.id,
+      role: "member"
+    })).unwrap();
+    
+    // Thêm thông báo loading khi cập nhật dữ liệu
+    message.loading({ content: "Đang cập nhật dữ liệu...", key: "updating" });
+    
+    // Cập nhật trực tiếp giá trị admin_id trong selectedChat
+    const updatedSelectedChat = {
+      ...selectedChat,
+      admin_id: newAdminIdForTransfer
+    };
+    
+    // Nếu có hàm callback từ component cha để cập nhật selectedChat
+    if (typeof onUpdateSelectedChat === 'function') {
+      onUpdateSelectedChat(updatedSelectedChat);
+    }
+    
+    // Cập nhật danh sách thành viên và settings
+    await Promise.all([
+      fetchGroupMembers(),
+      fetchGroupSettings()
+    ]);
+    
+    message.success({ 
+      content: "Đã chuyển quyền admin thành công", 
+      key: "transferAdmin" 
+    });
+    
+    message.success({ 
+      content: "Đã cập nhật thông tin nhóm thành công", 
+      key: "updating" 
+    });
+
+    // Đóng modal và cập nhật lại danh sách thành viên
+    setShowTransferAdminChooserModal(false);
+    setNewAdminIdForTransfer(null);
+    
+    // Cập nhật trạng thái người dùng hiện tại
+    setIsMainAdmin(false);
+    
+    // Thêm kích hoạt sự kiện để thông báo cho các component khác biết về sự thay đổi admin
+    window.dispatchEvent(new CustomEvent('admin-changed', { 
+      detail: { 
+        groupId: selectedChat.id, 
+        newAdminId: newAdminIdForTransfer,
+        previousAdminId: user.id
+      }
+    }));
+  } catch (error) {
+    message.error({ 
+      content: error.message || "Không thể chuyển quyền admin", 
+      key: "transferAdmin" 
+    });
+    console.error("Error transferring admin:", error);
+  }
+};
+// Hàm kiểm tra xem hai người đã là bạn bè chưa
+const checkFriendshipStatus = async (memberId) => {
+  if (memberId === user.id) return false; // Không thể kết bạn với chính mình
+  
+  setIsCheckingFriend(true);
+  try {
+    // Lấy danh sách bạn bè của user hiện tại
+    const response = await axios.get(
+      `http://${window.location.hostname}:5001/api/friendships/${user.id}`
+    );
+    
+    // Kiểm tra xem memberId có trong danh sách bạn bè không
+    if (response.data && response.data.friends) {
+      const isFriend = response.data.friends.some(friend => 
+        // Kiểm tra cả id và _id vì có thể có sự khác nhau trong cấu trúc dữ liệu
+        (friend.id === memberId || friend._id === memberId)
+      );
+      
+      console.log(`Kiểm tra bạn bè giữa ${user.id} và ${memberId}:`, isFriend ? "Đã là bạn bè" : "Chưa là bạn bè");
+      setIsCheckingFriend(false);
+      return isFriend;
+    }
+    
+    setIsCheckingFriend(false);
+    return false;
+  } catch (error) {
+    console.error("Lỗi khi kiểm tra trạng thái bạn bè:", error);
+    setIsCheckingFriend(false);
+    return false;
+  }
+};
+// Xử lý khi nhấp vào avatar của thành viên
+const handleMemberClick = async (member) => {
+  setSelectedMember(member);
+  const friendStatus = await checkFriendshipStatus(member.user_id);
+  setIsFriend(friendStatus);
+  setShowMemberInfoModal(true);
+};
+// Hàm gửi lời mời kết bạn
+const handleSendFriendRequest = async () => {
+  if (!selectedMember) return;
+  
+  try {
+    message.loading({ content: "Đang gửi lời mời kết bạn...", key: "friendRequest" });
+    
+    await dispatch(sendFriendRequest({
+      sender_id: user.id,
+      receiver_id: selectedMember.user_id
+    })).unwrap();
+    
+    message.success({ 
+      content: "Đã gửi lời mời kết bạn thành công", 
+      key: "friendRequest" 
+    });
+    
+    setShowMemberInfoModal(false);
+  } catch (error) {
+    message.error({ 
+      content: error.message || "Không thể gửi lời mời kết bạn", 
+      key: "friendRequest" 
+    });
+    console.error("Error sending friend request:", error);
+  }
+};
+// Hàm chuyển đến chat với thành viên
+const handleMessageMember = () => {
+  if (!selectedMember) return;
+  
+  // Tạo đối tượng chat với format phù hợp
+  const chatUser = {
+    id: selectedMember.user_id,  // ID của thành viên được chọn, không phải user hiện tại
+    name: selectedMember.full_name,
+    avatar_path: selectedMember.avatar_path,
+    chat_type: "private",
+    receiver_id: selectedMember.user_id,
+    sender_id: user.id,  // Thêm sender_id để rõ ràng
+    unread: 0,
+    timestamp: new Date().toISOString()
+  };
+  console.log("Chat user:", chatUser);
+  onSelectUser(chatUser); // Gọi hàm selectedChat với đối tượng chatUser
+  // Đóng modal thông tin
+  setShowMemberInfoModal(false);
+  
+};
 // Hàm helper để kiểm tra quyền
 const canAddMembers = () => {
   return isMainAdmin || isSubAdmin || groupSettings.allow_add_members;
@@ -123,10 +301,8 @@ const canChangeAvatar = () => {
 const canDisbandGroup = () => {
   return isMainAdmin; // Chỉ admin chính mới được giải tán nhóm
 };
-// Kiểm tra người dùng có quyền admin hay subadmin
 // useEffect(() => {
 //   if (selectedChat?.chat_type === "group" && selectedChat?.id && user?.id) {
-//     // Kiểm tra xem người dùng có phải là admin hoặc subadmin không
 //     dispatch(isGroupSubAdmin({
 //       groupId: selectedChat.id, 
 //       userId: user.id
@@ -142,7 +318,7 @@ const canDisbandGroup = () => {
 //       console.error("Error checking admin status:", error);
 //     });
 //   }
-// }, [selectedChat, user]);
+// }, [selectedChat, user, dispatch]);
 useEffect(() => {
   if (selectedChat?.chat_type === "group" && selectedChat?.id && user?.id) {
     dispatch(isGroupSubAdmin({
@@ -151,17 +327,36 @@ useEffect(() => {
     }))
     .unwrap()
     .then(result => {
+      console.log("Check admin result:", result);
       const { isAdmin: isUserAdmin, isMainAdmin: isUserMainAdmin } = result;
       setIsAdmin(isUserAdmin);
       setIsMainAdmin(isUserMainAdmin);
       setIsSubAdmin(isUserAdmin && !isUserMainAdmin);
+      
+      // Gọi API members sau khi đã có kết quả từ API kiểm tra quyền
+      fetchGroupMembers();
     })
     .catch(error => {
       console.error("Error checking admin status:", error);
     });
   }
 }, [selectedChat, user, dispatch]);
+useEffect(() => {
+  // Xử lý tự động xác định isSubAdmin khi isAdmin hoặc isMainAdmin thay đổi
+  if (isAdmin === true && isMainAdmin === false) {
+    setIsSubAdmin(true);
+    console.log("Tự động cập nhật: isSubAdmin = true");
+  }
+}, [isAdmin, isMainAdmin]);
+console.log('Debug phân quyền:', {
+  isMainAdmin,
+  isSubAdmin,
+  isAdmin,
+  userId: user.id,
+  adminId: selectedChat.admin_id
+});
 // Hàm tạo nhóm trò chuyện với chat 1-1
+
 const handleCreateGroupClick = async () => {
   setShowCreateGroupModal(true);
   setIsLoadingFriends(true);
@@ -211,7 +406,7 @@ const handleCreateGroup = async () => {
     return message.error("Vui lòng nhập tên nhóm");
   }
   
-  if (selectedFriendsForGroup.length < 1) {
+  if (selectedFriendsForGroup.length < 2) {
     return message.error("Vui lòng chọn ít nhất 1 người bạn khác");
   }
   
@@ -230,7 +425,7 @@ const handleCreateGroup = async () => {
       content: "Tạo nhóm thành công!",
       key: "createGroup"
     });
-    
+    await dispatch(fetchMessages(user.id || user._id)).unwrap();
     // Đóng modal
     setShowCreateGroupModal(false);
     
@@ -292,6 +487,20 @@ const handleDisbandGroup = async () => {
     
     setShowGroupSettingsModal(false);
     // Có thể cần chuyển hướng người dùng sau khi giải tán nhóm
+     // Có thể cần chuyển hướng người dùng sau khi rời nhóm
+     if (onLeaveGroup && typeof onLeaveGroup === 'function') {
+      onLeaveGroup();
+    } else {
+      // Nếu không có prop onLeaveGroup, sử dụng sự kiện tùy chỉnh
+      window.dispatchEvent(new CustomEvent('group-left', { 
+        detail: { groupId: selectedChat.id }
+      }));
+    }
+    
+    // Đóng cửa sổ chi tiết hộp thoại nếu có
+    if (typeof handleExpandContract === 'function') {
+      handleExpandContract(false);
+    }
   } catch (error) {
     message.error({ 
       content: error.message || "Không thể giải tán nhóm", 
@@ -305,12 +514,14 @@ const updateGroupSettings = async () => {
   try {
     message.loading({ content: "Đang cập nhật...", key: "updateGroup" });
 
-    // Cập nhật thông tin nhóm
+    // Cập nhật thông tin nhóm với cấu trúc mới
     const response = await dispatch(updateGroup({
       groupId: selectedChat.id,
       name: groupName,
       avatar: groupAvatar,
-      settings: groupSettings
+      allow_add_members: groupSettings.allow_add_members,
+      allow_change_name: groupSettings.allow_change_name,
+      allow_change_avatar: groupSettings.allow_change_avatar
     })).unwrap();
 
     message.success({ 
@@ -424,37 +635,6 @@ const mediaItems = allMessages
           timestamp: msg.timestamp
         }))
     : [];
-
-  // const fileItems = allMessages
-  //   ? allMessages
-  //       .filter(msg => msg.type === "file")
-  //       .map(msg => {
-  //         // Extract file name and extension from URL
-  //         const fileName = msg.content.split('/').pop();
-  //         const fileExt = fileName.split('.').pop().toLowerCase();
-          
-  //         // Determine file type and color
-  //         let type = fileExt;
-  //         let color = "gray";
-          
-  //         if (fileExt === "pdf") color = "red";
-  //         else if (["zip", "rar", "7z"].includes(fileExt)) color = "purple";
-  //         else if (["doc", "docx"].includes(fileExt)) color = "blue";
-  //         else if (["xls", "xlsx"].includes(fileExt)) color = "green";
-  //         else if (["ppt", "pptx"].includes(fileExt)) color = "orange";
-          
-  //         return {
-  //           id: msg._id,
-  //           name: fileName,
-  //           size: "Unknown", // We could fetch this info from the file if needed
-  //           date: new Date(msg.timestamp).toLocaleDateString(),
-  //           type: type,
-  //           color: color,
-  //           url: msg.content
-  //         };
-  //       })
-  //   : [];
-
   const linkItems = allMessages
     ? allMessages
         .filter(msg => 
@@ -524,26 +704,6 @@ const fetchFriends = async () => {
     }
   }, [selectedChat]);
 // Thêm hàm để lấy cài đặt nhóm
-// const fetchGroupSettings = async () => {
-//   try {
-//     // Gọi API lấy thông tin nhóm
-//     const response = await axios.get(`http://${window.location.hostname}:5001/api/groups/group/${selectedChat.id}`);
-    
-//     if (response.data && response.data.data) {
-//       const groupData = response.data.data;
-//       setGroupSettings({
-//         allow_add_members: groupData.allow_add_members,
-//         allow_change_name: groupData.allow_change_name,
-//         allow_change_avatar: groupData.allow_change_avatar
-//       });
-      
-//       // Kiểm tra nếu người dùng hiện tại là admin chính
-//       setIsMainAdmin(groupData.admin_id === user.id);
-//     }
-//   } catch (error) {
-//     console.error("Error fetching group settings:", error);
-//   }
-// };
 const fetchGroupSettings = async () => {
   try {
     const response = await dispatch(getGroupById(selectedChat.id)).unwrap();
@@ -581,8 +741,8 @@ const fetchGroupSettings = async () => {
         setIsAdmin(currentUser?.role === "admin");
               // Kiểm tra nếu người dùng là sub-admin
       // Sub-admin là thành viên có role admin nhưng không phải admin chính
-      const isUserSubAdmin = currentUser?.role === "admin" && !isMainAdmin;
-      setIsSubAdmin(isUserSubAdmin);
+      // const isUserSubAdmin = currentUser?.role === "admin" && !isMainAdmin;
+      // setIsSubAdmin(isUserSubAdmin);
       }
     } catch (error) {
       console.error("Error fetching group members:", error);
@@ -644,7 +804,14 @@ const fetchGroupSettings = async () => {
     }
   };
   // Hàm xoá thành viên cho admin
-const handleRemoveMember = async (userId, userName) => {
+const handleRemoveMember = async (userId, userName,isTargetAdmin) => {
+   // Nếu là nhóm phó và đang cố xóa một nhóm phó khác
+  //  if (isSubAdmin && !isMainAdmin && isAdmin) {
+  //   return message.error("Bạn không có quyền xóa nhóm trưởng hoặc nhóm phó khác");
+  //  }
+  if (isSubAdmin && isTargetAdmin) {
+    return message.error("Bạn không có quyền xóa nhóm trưởng hoặc nhóm phó khác");
+   }
   try {
     Modal.confirm({
       title: "Xác nhận xóa thành viên",
@@ -712,6 +879,12 @@ const handleAddMembers = async () => {
  // Hàm rời nhóm
 const handleLeaveGroup = async () => {
   try {
+     // Nếu là admin chính, yêu cầu chuyển nhượng quyền trước
+     if (isMainAdmin) {
+      setShowTransferAdminModal(true);
+      return; // Dừng lại, không rời nhóm ngay
+    }
+    // Nếu không phải admin chính, tiến hành rời nhóm bình thường
     message.loading({ content: "Đang rời nhóm...", key: "leaveGroup" });
     
     await dispatch(removeMember({
@@ -723,15 +896,91 @@ const handleLeaveGroup = async () => {
       content: "Đã rời nhóm thành công", 
       key: "leaveGroup" 
     });
+    await dispatch(fetchMessages(user.id || user._id)).unwrap();
+    // await dispatch(fetchChatMessages(user.id || user._id)).unwrap();
     
     setShowLeaveGroupModal(false);
     // Có thể cần chuyển hướng người dùng sau khi rời nhóm
+    if (onLeaveGroup && typeof onLeaveGroup === 'function') {
+      onLeaveGroup();
+    } else {
+      // Nếu không có prop onLeaveGroup, sử dụng sự kiện tùy chỉnh
+      window.dispatchEvent(new CustomEvent('group-left', { 
+        detail: { groupId: selectedChat.id }
+      }));
+    }
+    
+    // Đóng cửa sổ chi tiết hộp thoại nếu có
+    if (typeof handleExpandContract === 'function') {
+      handleExpandContract(false);
+    }
   } catch (error) {
     message.error({ 
       content: error.message || "Không thể rời nhóm", 
       key: "leaveGroup" 
     });
     console.error("Error leaving group:", error);
+  }
+};
+// Hàm chuyển nhượng admin và rời nhóm
+const handleTransferAdminAndLeave = async () => {
+  if (!newAdminId) {
+    return message.error("Vui lòng chọn một thành viên để chuyển quyền admin");
+  }
+
+  try {
+    message.loading({ content: "Đang chuyển quyền admin...", key: "transferAdmin" });
+    
+    // Chuyển quyền admin cho thành viên mới
+    await dispatch(transferAdmin({
+      groupId: selectedChat.id,
+      userId: newAdminId
+    })).unwrap();
+    
+    message.success({ 
+      content: "Đã chuyển quyền admin thành công", 
+      key: "transferAdmin" 
+    });
+
+    // Sau khi chuyển quyền thành công, tiến hành rời nhóm
+    message.loading({ content: "Đang rời nhóm...", key: "leaveGroup" });
+    
+    await dispatch(removeMember({
+      groupId: selectedChat.id,
+      userId: user.id
+    })).unwrap();
+    
+    message.success({ 
+      content: "Đã rời nhóm thành công", 
+      key: "leaveGroup" 
+    });
+
+    // Cập nhật danh sách tin nhắn
+    await dispatch(fetchMessages(user.id || user._id)).unwrap();
+    
+    // Đóng modal và cửa sổ
+    setShowTransferAdminModal(false);
+    setShowLeaveGroupModal(false);
+    
+    // Thông báo đã rời nhóm
+    if (onLeaveGroup && typeof onLeaveGroup === 'function') {
+      onLeaveGroup();
+    } else {
+      window.dispatchEvent(new CustomEvent('group-left', { 
+        detail: { groupId: selectedChat.id }
+      }));
+    }
+    
+    // Đóng cửa sổ chi tiết
+    if (typeof handleExpandContract === 'function') {
+      handleExpandContract(false);
+    }
+  } catch (error) {
+    message.error({ 
+      content: error.message || "Không thể chuyển quyền hoặc rời nhóm", 
+      key: "transferAdmin" 
+    });
+    console.error("Error transferring admin or leaving group:", error);
   }
 };
 
@@ -860,7 +1109,7 @@ const handleLeaveGroup = async () => {
                     </div>
                   )}
                 </div>
-                            {/* Modal thêm thành viên */}
+                 {/* Modal thêm thành viên */}
                 <Modal
                 title="Thêm thành viên vào nhóm"
                 open={showAddMembersModal}
@@ -899,7 +1148,8 @@ const handleLeaveGroup = async () => {
                         display: 'flex',
                         alignItems: 'center',
                         padding: '10px',
-                        borderBottom: '1px solid #f0f0f0'
+                        borderBottom: '1px solid #f0f0f0',
+                        justifyContent: 'flex-start',
                         }}>
                         <Checkbox
                             checked={selectedMembers.includes(friend.id || friend._id)}
@@ -1002,7 +1252,7 @@ const handleLeaveGroup = async () => {
                     </div>
                   </div>
 
-                  {(isMainAdmin || isSubAdmin) && (
+                  {(isMainAdmin) && (
                     <>
                       <Divider />
                       <div style={{ marginBottom: 20 }}>
@@ -1078,10 +1328,19 @@ const handleLeaveGroup = async () => {
                             <Avatar src={member.avatar_path} style={{ marginRight: 10 }}>
                               {!member.avatar_path && (member.full_name || 'User').charAt(0).toUpperCase()}
                             </Avatar>
-                            <span>
+                            {/* <span>
                               {member.full_name}
                               {member.user_id === selectedChat.admin_id && (
                                 <span style={{ marginLeft: 5, color: '#1890ff' }}>(Nhóm trưởng)</span>
+                              )}
+                            </span> */}
+                             <span>
+                              {member.full_name}
+                              {member.user_id === selectedChat.admin_id && (
+                                <span style={{ marginLeft: 5, color: '#1890ff' }}>(Nhóm trưởng)</span>
+                              )}
+                              {member.role === "admin" && member.user_id !== selectedChat.admin_id && (
+                                <span style={{ marginLeft: 5, color: '#52c41a' }}>(Nhóm phó)</span>
                               )}
                             </span>
                           </div>
@@ -1097,7 +1356,7 @@ const handleLeaveGroup = async () => {
                                 // Không thể đổi vai trò của admin chính nếu mình không phải admin chính
                                 (member.user_id === selectedChat.admin_id && user.id !== selectedChat.admin_id) ||
                                 // Cần là admin hoặc subadmin để thay đổi vai trò
-                                (!isMainAdmin && !isSubAdmin)
+                                (!isMainAdmin)
                               }
                               onChange={(value) => handleChangeRole(member.user_id, value)}
                             >
@@ -1106,16 +1365,28 @@ const handleLeaveGroup = async () => {
                             </Select>
                             
                             {/* Nút xóa thành viên */}
-                            {(isMainAdmin || isSubAdmin) && 
-                            member.user_id !== user.id && 
-                            member.user_id !== selectedChat.admin_id && (
-                              <Button 
-                                icon={<DeleteOutlined />} 
-                                danger
-                                onClick={() => handleRemoveMember(member.user_id, member.full_name)}
-                                size="small"
-                              />
+                            {((isMainAdmin) || 
+                              (isSubAdmin && member.role !== "admin")) && 
+                              member.user_id !== user.id && 
+                              member.user_id !== selectedChat.admin_id && (
+                                <Button 
+                                  icon={<DeleteOutlined />} 
+                                  danger
+                                  onClick={() => handleRemoveMember(member.user_id, member.full_name, member.role === "admin")}
+                                  size="small"
+                                />
                             )}
+                            {/* {(isMainAdmin || 
+                                (isAdmin === true && isMainAdmin === false && member.role !== "admin")) && 
+                                member.user_id !== user.id && 
+                                member.user_id !== selectedChat.admin_id && (
+                                  <Button 
+                                    icon={<DeleteOutlined />} 
+                                    danger
+                                    onClick={() => handleRemoveMember(member.user_id, member.full_name, member.role === "admin")}
+                                    size="small"
+                                  />
+                              )} */}
                           </div>
                         </div>
                       ))}
@@ -1131,23 +1402,104 @@ const handleLeaveGroup = async () => {
                   {isMainAdmin && (
                     <>
                       <Divider />
-                      <div>
-                        <Button danger onClick={() => {
-                          Modal.confirm({
-                            title: 'Xác nhận giải tán nhóm',
-                            content: 'Bạn có chắc chắn muốn giải tán nhóm này? Hành động này không thể hoàn tác.',
-                            okText: 'Giải tán',
-                            okType: 'danger',
-                            cancelText: 'Hủy',
-                            onOk: handleDisbandGroup
-                          });
-                        }}>
-                          <DeleteOutlined /> Giải tán nhóm
-                        </Button>
-                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 15 }}>
+                          <Button 
+                            type="primary" 
+                            icon={<UserOutlined />} 
+                            onClick={() => setShowTransferAdminChooserModal(true)}
+                          >
+                            Chuyển quyền nhóm trưởng
+                          </Button>
+                          
+                          <Button danger onClick={() => {
+                            Modal.confirm({
+                              title: 'Xác nhận giải tán nhóm',
+                              content: 'Bạn có chắc chắn muốn giải tán nhóm này? Hành động này không thể hoàn tác.',
+                              okText: 'Giải tán',
+                              okType: 'danger',
+                              cancelText: 'Hủy',
+                              onOk: handleDisbandGroup
+                            });
+                          }}>
+                            <DeleteOutlined /> Giải tán nhóm
+                          </Button>
+                        </div>
                     </>
                   )}
                 </Modal>
+                {/* Modal chọn thành viên để chuyển quyền admin */}
+                    <Modal
+                      title="Chuyển quyền nhóm trưởng"
+                      open={showTransferAdminChooserModal}
+                      onCancel={() => setShowTransferAdminChooserModal(false)}
+                      footer={[
+                        <Button key="cancel" onClick={() => setShowTransferAdminChooserModal(false)}>
+                          Huỷ
+                        </Button>,
+                        <Button 
+                          key="transfer" 
+                          type="primary" 
+                          onClick={handleTransferAdmin}
+                          disabled={!newAdminIdForTransfer}
+                        >
+                          Chuyển quyền
+                        </Button>
+                      ]}
+                      width={500}
+                    >
+                      <Alert
+                        message="Lưu ý quan trọng"
+                        description="Sau khi chuyển quyền, người được chọn sẽ trở thành nhóm trưởng và bạn sẽ trở thành thành viên thường."
+                        type="info"
+                        style={{ marginBottom: '15px' }}
+                        showIcon
+                      />
+                      
+                      <p>Chọn một thành viên để trở thành nhóm trưởng mới:</p>
+                      
+                      <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                        {groupMembers
+                          // Lọc ra các thành viên khác, ưu tiên hiển thị nhóm phó trước
+                          .filter(member => member.user_id !== user.id)
+                          .sort((a, b) => {
+                            // Sắp xếp để nhóm phó hiển thị đầu tiên
+                            if (a.role === "admin" && b.role !== "admin") return -1;
+                            if (a.role !== "admin" && b.role === "admin") return 1;
+                            return 0;
+                          })
+                          .map(member => (
+                            <div 
+                              key={member.user_id}
+                              onClick={() => setNewAdminIdForTransfer(member.user_id)} 
+                              style={{
+                                display: 'flex',
+                                padding: '10px',
+                                alignItems: 'center',
+                                borderBottom: '1px solid #f0f0f0',
+                                cursor: 'pointer',
+                                backgroundColor: newAdminIdForTransfer === member.user_id ? '#e6f7ff' : 'white'
+                              }}
+                            >
+                              <Checkbox 
+                                checked={newAdminIdForTransfer === member.user_id}
+                                onChange={() => setNewAdminIdForTransfer(member.user_id)}
+                              />
+                              <Avatar 
+                                src={member.avatar_path} 
+                                style={{ marginLeft: 10, marginRight: 10 }}
+                              >
+                                {!member.avatar_path && (member.full_name || 'User').charAt(0).toUpperCase()}
+                              </Avatar>
+                              <div>
+                                <div>{member.full_name}</div>
+                                {member.role === "admin" && (
+                                  <div style={{ fontSize: '12px', color: '#52c41a' }}>Nhóm phó</div>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                      </div>
+                    </Modal>
             
             {/* Hiển thị thành viên nhóm nếu là chat nhóm */}
             {selectedChat.chat_type === "group" && (
@@ -1166,14 +1518,26 @@ const handleLeaveGroup = async () => {
                 {isOpenMembers && (
                   <div className="modal-members-list">
                     <div className="members-list">
-                      {groupMembers.slice(0, showAllMembers ? groupMembers.length : 5).map(member => (
+                     {groupMembers.slice(0, showAllMembers ? groupMembers.length : 5).map(member => (
                         <div key={member.user_id} className="member-item">
-                          <Avatar src={member.avatar_path}>
+                          <Avatar 
+                            src={member.avatar_path}
+                            style={{ cursor: 'pointer' }} 
+                            onClick={() => handleMemberClick(member)}
+                          >
                             {!member.avatar_path && (member.full_name || 'User').charAt(0).toUpperCase()}
                           </Avatar>
                           <div className="member-details">
-                            <span className="member-name">{member.full_name}</span>
-                            {member.role === "admin" && <span className="admin-badge">Nhóm trưởng</span>}
+                            <span className="member-name">
+                              {member.full_name}
+                            </span>
+
+                            {member.user_id === selectedChat.admin_id && (
+                              <span className="admin-badge" style={{ marginLeft: 5 }}>(Nhóm trưởng)</span>
+                            )}
+                            {member.role === "admin" && member.user_id !== selectedChat.admin_id && (
+                              <span className="admin-badge" style={{ marginLeft: 5 }}>(Nhóm phó)</span>
+                            )}
                           </div>
                         </div>
                       ))}
@@ -1191,7 +1555,72 @@ const handleLeaveGroup = async () => {
                 )}
               </div>
             )}
-            
+            {/* Modal thông tin thành viên */}
+              <Modal
+                title="Thông tin thành viên"
+                open={showMemberInfoModal}
+                onCancel={() => setShowMemberInfoModal(false)}
+                footer={null}
+                width={400}
+              >
+                {selectedMember && (
+                  <div style={{ textAlign: 'center', padding: '20px 0' }}>
+                    <Avatar 
+                      size={100} 
+                      src={selectedMember.avatar_path}
+                      style={{ marginBottom: 15 }}
+                    >
+                      {!selectedMember.avatar_path && (selectedMember.full_name || 'User').charAt(0).toUpperCase()}
+                    </Avatar>
+                    
+                    <h2 style={{ margin: '15px 0', fontWeight: 600 }}>
+                      {selectedMember.full_name}
+                      {selectedMember.user_id === selectedChat.admin_id && (
+                        <span style={{ fontSize: '14px', color: '#1890ff', marginLeft: 8 }}>(Nhóm trưởng)</span>
+                      )}
+                      {selectedMember.role === "admin" && selectedMember.user_id !== selectedChat.admin_id && (
+                        <span style={{ fontSize: '14px', color: '#52c41a', marginLeft: 8 }}>(Nhóm phó)</span>
+                      )}
+                    </h2>
+                    
+                    {selectedMember.phone && (
+                      <p style={{ margin: '8px 0', color: '#666' }}>
+                        <PhoneOutlined style={{ marginRight: 8 }} /> {selectedMember.phone}
+                      </p>
+                    )}
+                    
+                    <div style={{ 
+                      display: 'flex', 
+                      justifyContent: 'center', 
+                      marginTop: 25,
+                      gap: 15 
+                    }}>
+                      {/* Nếu thành viên là user hiện tại thì không hiển thị nút kết bạn/nhắn tin */}
+                      {selectedMember.user_id !== user.id && (
+                        isCheckingFriend ? (
+                          <Spin size="small" />
+                        ) : isFriend ? (
+                          <Button 
+                            type="primary" 
+                            icon={<MessageOutlined />}
+                            onClick={handleMessageMember}
+                          >
+                            Nhắn tin
+                          </Button>
+                        ) : (
+                          <Button
+                            type="primary"
+                            icon={<UserAddOutlined />}
+                            onClick={handleSendFriendRequest}
+                          >
+                            Kết bạn
+                          </Button>
+                        )
+                      )}
+                    </div>
+                  </div>
+                )}
+              </Modal>
             {/* Nhóm chung - chỉ hiển thị nếu là chat 1-1 */}
             {selectedChat.chat_type !== "group" && (
               <div
@@ -1362,159 +1791,161 @@ const handleLeaveGroup = async () => {
                 </div>
               </Modal>
 
-            {/* File section */}
-            <div className="file-section">
-              <div
-                className="select-wrapper"
-                onClick={() => setIsOpenFile(!isOpenFile)}
-              >
-                <h3>File</h3>
-                {isOpenFile ? (
-                  <FaCaretDown className="anticon" />
-                ) : (
-                  <FaCaretRight className="anticon" />
-                )}
-              </div>
-              {isOpenFile && (
-                <div className="modal-file-list">
-                  {processedFileItems.length > 0 ? (
-                    <>
-                      <div className="file-list-wrapper">
-                        {processedFileItems.slice(0, 5).map((file) => (
-                          <div className="file-item" key={file.id}>
-                            <div className="file-info-wrapper" onClick={()=>setShowAllFiles(!showAllFiles)}>
-                              {file.type === "pdf" ? (
-                                <BiSolidFilePdf
-                                  className="type-icon"
-                                  style={{ color: "red" }}
-                                />
-                              ) : ["zip", "rar", "7z"].includes(file.type) ? (
-                                <AiFillFileZip
-                                  className="type-icon"
-                                  style={{ color: "violet" }}
-                                />
-                              ) : ["doc", "docx"].includes(file.type) ? (
-                                <FaFileWord
-                                  className="type-icon"
-                                  style={{ color: "blue" }}
-                                />
-                              ) : ["xls", "xlsx"].includes(file.type) ? (
-                                <FaFileExcel
-                                  className="type-icon"
-                                  style={{ color: "green" }}
-                                />
-                              ) : ["ppt", "pptx"].includes(file.type) ? (
-                                <FaFilePowerpoint
-                                  className="type-icon"
-                                  style={{ color: "orange" }}
-                                />
-                              ) : (
-                                <FaFileAlt
-                                  className="type-icon"
-                                  style={{ color: "gray" }}
-                                />
-                              )}
-                              <div className="file-info">
-                                <h4>{file.name}</h4>
-                                <p>{file.size}</p>
-                              </div>
-                            </div>
-                            <div className="file-date-wrapper">
-                              <p>{file.date}</p>
-                              <Button 
-                                type="text"
-                                icon={<DownloadOutlined />} 
-                                size="small"
-                                onClick={() => window.open(file.url, '_blank')}
-                              />
-                            </div> 
-                          </div>
-                        ))}
-                      </div>
-                      {processedFileItems.length > 5 && (
-                        <div style={{ padding: "0 20px" }}>
-                          <button 
-                            className="icon-showallFile"
-                            onClick={() => setShowAllFiles(true)}
-                          >
-                            Xem tất cả
-                          </button>
-                        </div>
-                      )}
-                    </>
-                  ) : fileItems.length > 0 ? (
-                    <div className="loading-files">
-                      <div>Đang tải thông tin file...</div>
-                    </div>
+          {/* File section */}
+              <div className="file-section">
+                <div
+                  className="select-wrapper"
+                  onClick={() => setIsOpenFile(!isOpenFile)}
+                >
+                  <h3>File</h3>
+                  {isOpenFile ? (
+                    <FaCaretDown className="anticon" />
                   ) : (
-                    <div className="no-content-message">
-                      Chưa có tệp nào được gửi
-                    </div>
+                    <FaCaretRight className="anticon" />
                   )}
                 </div>
-              )}
-            </div>
+                {isOpenFile && (
+                  <div className="modal-file-list">
+                    {processedFileItems.length > 0 ? (
+                      <>
+                        <div className="file-list-wrapper">
+                          {processedFileItems.slice(0, 5).map((file) => (
+                            <div className="file-item" key={file.id}>
+                              <div className="file-info-wrapper" onClick={()=>setShowAllFiles(!showAllFiles)}>
+                                {file.type === "pdf" ? (
+                                  <BiSolidFilePdf
+                                    className="type-icon"
+                                    style={{ color: "red" }}
+                                  />
+                                ) : ["zip", "rar", "7z"].includes(file.type) ? (
+                                  <AiFillFileZip
+                                    className="type-icon"
+                                    style={{ color: "violet" }}
+                                  />
+                                ) : ["doc", "docx"].includes(file.type) ? (
+                                  <FaFileWord
+                                    className="type-icon"
+                                    style={{ color: "blue" }}
+                                  />
+                                ) : ["xls", "xlsx"].includes(file.type) ? (
+                                  <FaFileExcel
+                                    className="type-icon"
+                                    style={{ color: "green" }}
+                                  />
+                                ) : ["ppt", "pptx"].includes(file.type) ? (
+                                  <FaFilePowerpoint
+                                    className="type-icon"
+                                    style={{ color: "orange" }}
+                                  />
+                                ) : (
+                                  <FaFileAlt
+                                    className="type-icon"
+                                    style={{ color: "gray" }}
+                                  />
+                                )}
+                                <div className="file-info">
+                                  <h4 style={{
+                                    width: "180px",
+                                    whiteSpace: "nowrap",
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                    marginBottom: "2px"
+                                  }}>
+                                    {file.name}
+                                  </h4>
+                                  <p>{file.size}</p>
+                                </div>
+                              </div>
+                              <div className="file-date-wrapper">
+                                <p>{file.date}</p>
+                                <Button 
+                                  type="text"
+                                  icon={<DownloadOutlined />} 
+                                  size="small"
+                                  onClick={() => window.open(file.url, '_blank')}
+                                />
+                              </div> 
+                            </div>
+                          ))}
+                        </div>
+                        {processedFileItems.length > 5 && (
+                          <div style={{ padding: "0 20px" }}>
+                            <button 
+                              className="icon-showallFile"
+                              onClick={() => setShowAllFiles(true)}
+                            >
+                              Xem tất cả
+                            </button>
+                          </div>
+                        )}
+                      </>
+                    ) : fileItems.length > 0 ? (
+                      <div className="loading-files">
+                        <div>Đang tải thông tin file...</div>
+                      </div>
+                    ) : (
+                      <div className="no-content-message">
+                        Chưa có tệp nào được gửi
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             {/* Modal xem tất cả file */}
               {
                 showAllFiles && (
                   <Modal
-                title="Tất cả file đã gửi"
-                open={showAllFiles}
-                onCancel={() => setShowAllFiles(false)}
-                footer={null}
-                width={700}
-              >
-                <Input
-                  placeholder="Tìm kiếm file..."
-                  prefix={<SearchOutlined />}
-                  style={{ marginBottom: 15 }}
-                  onChange={(e) => {
-                    // Có thể thêm logic tìm kiếm file ở đây
-                  }}
-                />
-                
-                <div className="all-files-list" style={{ maxHeight: '60vh', overflowY: 'auto' }}>
-                  {processedFileItems.map((file) => (
-                    <div className="file-item" key={file.id} style={{ borderBottom: '1px solid #f0f0f0', padding: '10px 0' }}>
-                      <div className="file-info-wrapper">
-                        {file.type === "pdf" ? (
-                          <BiSolidFilePdf className="type-icon" style={{ color: "red", fontSize: '24px' }} />
-                        ) : ["zip", "rar", "7z"].includes(file.type) ? (
-                          <AiFillFileZip className="type-icon" style={{ color: "violet", fontSize: '24px' }} />
-                        ) : ["doc", "docx"].includes(file.type) ? (
-                          <FaFileWord className="type-icon" style={{ color: "blue", fontSize: '24px' }} />
-                        ) : ["xls", "xlsx"].includes(file.type) ? (
-                          <FaFileExcel className="type-icon" style={{ color: "green", fontSize: '24px' }} />
-                        ) : ["ppt", "pptx"].includes(file.type) ? (
-                          <FaFilePowerpoint className="type-icon" style={{ color: "orange", fontSize: '24px' }} />
-                        ) : (
-                          <FaFileAlt className="type-icon" style={{ color: "gray", fontSize: '24px' }} />
-                        )}
-                        <div className="file-info">
-                          <h4>
-                            <a href={file.url} target="_blank" rel="noopener noreferrer">
-                              {file.name}
-                            </a>
-                          </h4>
-                          <div style={{ display: 'flex', gap: '20px', color: '#888' }}>
-                            <span>{file.size}</span>
-                            <span>{file.date}</span>
-                            <span>Gửi bởi: {file.msg.sender_name || 'Không xác định'}</span>
+                    title="Tất cả file đã gửi"
+                    open={showAllFiles}
+                    onCancel={() => setShowAllFiles(false)}
+                    footer={null}
+                    width={700}
+                  >
+                    <Input
+                      placeholder="Tìm kiếm file..."
+                      prefix={<SearchOutlined />}
+                      style={{ marginBottom: 15 }}
+                      onChange={(e) => {
+                        // Có thể thêm logic tìm kiếm file ở đây
+                      }}
+                    />
+                    
+                    <div className="all-files-list" style={{ maxHeight: '60vh', overflowY: 'auto' }}>
+                      {processedFileItems.map((file) => (
+                        <div className="file-item" key={file.id} style={{ borderBottom: '1px solid #f0f0f0', padding: '10px 0' }}>
+                          <div className="file-info-wrapper">
+                            {/* Icon type code */}
+                            <div className="file-info">
+                              <h4 style={{
+                                maxWidth: "400px",
+                                whiteSpace: "nowrap",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                marginBottom: "2px"
+                              }}>
+                                <a href={file.url} target="_blank" rel="noopener noreferrer">
+                                  {file.name}
+                                </a>
+                              </h4>
+                              <div style={{ display: 'flex', gap: '20px', color: '#888' }}>
+                                <span>{file.size}</span>
+                                <span>{file.date}</span>
+                                <span>Gửi bởi: {file.msg.sender_name || 'Không xác định'}</span>
+                              </div>
+                            </div>
                           </div>
+                          <Button 
+                            type="primary"
+                            icon={<DownloadOutlined />}
+                            onClick={() => window.open(file.url, '_blank')}
+                          >
+                            Tải về
+                          </Button>
                         </div>
-                      </div>
-                      <Button 
-                        type="primary"
-                        icon={<DownloadOutlined />}
-                        onClick={() => window.open(file.url, '_blank')}
-                      >
-                        Tải về
-                      </Button>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              </Modal>
-                )
+                  </Modal>
+                   )
               }
 
             {/* Link section */}
@@ -1586,6 +2017,79 @@ const handleLeaveGroup = async () => {
                   <LogoutOutlined /> Rời nhóm
                 </button>
               )}
+              {/* Modal chọn admin mới khi admin chính muốn rời nhóm */}
+                <Modal
+                  title="Chọn admin mới trước khi rời nhóm"
+                  open={showTransferAdminModal}
+                  onCancel={() => setShowTransferAdminModal(false)}
+                  footer={[
+                    <Button key="cancel" onClick={() => setShowTransferAdminModal(false)}>
+                      Huỷ
+                    </Button>,
+                    <Button 
+                      key="transfer" 
+                      type="primary" 
+                      onClick={handleTransferAdminAndLeave}
+                      disabled={!newAdminId}
+                    >
+                      Chuyển quyền và rời nhóm
+                    </Button>
+                  ]}
+                  width={500}
+                >
+                  <Alert
+                    message="Bạn là admin chính của nhóm này!"
+                    description="Bạn cần chọn một thành viên khác làm admin trước khi rời nhóm."
+                    type="warning"
+                    style={{ marginBottom: '15px' }}
+                    showIcon
+                  />
+                  
+                  <p>Chọn một thành viên để trở thành admin mới:</p>
+                  
+                  <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                    {groupMembers
+                      // Lọc ra các thành viên khác, ưu tiên hiển thị nhóm phó trước
+                      .filter(member => member.user_id !== user.id)
+                      .sort((a, b) => {
+                        // Sắp xếp để nhóm phó hiển thị đầu tiên
+                        if (a.role === "admin" && b.role !== "admin") return -1;
+                        if (a.role !== "admin" && b.role === "admin") return 1;
+                        return 0;
+                      })
+                      .map(member => (
+                        <div 
+                          key={member.user_id}
+                          onClick={() => setNewAdminId(member.user_id)} 
+                          style={{
+                            display: 'flex',
+                            padding: '10px',
+                            alignItems: 'center',
+                            borderBottom: '1px solid #f0f0f0',
+                            cursor: 'pointer',
+                            backgroundColor: newAdminId === member.user_id ? '#e6f7ff' : 'white'
+                          }}
+                        >
+                          <Checkbox 
+                            checked={newAdminId === member.user_id}
+                            onChange={() => setNewAdminId(member.user_id)}
+                          />
+                          <Avatar 
+                            src={member.avatar_path} 
+                            style={{ marginLeft: 10, marginRight: 10 }}
+                          >
+                            {!member.avatar_path && (member.full_name || 'User').charAt(0).toUpperCase()}
+                          </Avatar>
+                          <div>
+                            <div>{member.full_name}</div>
+                            {member.role === "admin" && (
+                              <div style={{ fontSize: '12px', color: '#52c41a' }}>Nhóm phó</div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                </Modal>
             </div>
           </div>
         )}
@@ -1677,6 +2181,15 @@ const handleLeaveGroup = async () => {
         ]}
       >
         <p>Bạn có chắc chắn muốn rời khỏi nhóm "{selectedChat.name}"?</p>
+        {isMainAdmin && (
+          <Alert
+            message="Lưu ý quan trọng"
+            description="Bạn là admin chính của nhóm này. Bạn cần chỉ định một admin mới trước khi rời nhóm."
+            type="warning"
+            showIcon
+            style={{ marginTop: '10px', marginBottom: '10px' }}
+          />
+        )}
         <p>Bạn sẽ không thể nhận tin nhắn từ nhóm này nữa.</p>
       </Modal>
 
@@ -1697,9 +2210,7 @@ const handleLeaveGroup = async () => {
         <p>Bạn có chắc chắn muốn xóa lịch sử trò chuyện với "{selectedChat.name}"?</p>
         <p>Hành động này không thể hoàn tác.</p>
       </Modal>
-      // Thêm đoạn code này vào cuối component, trước dòng return cuối cùng
-
-        {/* Modal tạo nhóm mới */}
+      {/* Modal tạo nhóm mới */}
         <Modal
           title="Tạo nhóm trò chuyện mới"
           open={showCreateGroupModal}
@@ -1712,7 +2223,7 @@ const handleLeaveGroup = async () => {
               key="create" 
               type="primary" 
               onClick={handleCreateGroup}
-              disabled={!newGroupName.trim() || selectedFriendsForGroup.length < 1}
+              disabled={!newGroupName.trim() || selectedFriendsForGroup.length < 2}
             >
               Tạo nhóm
             </Button>

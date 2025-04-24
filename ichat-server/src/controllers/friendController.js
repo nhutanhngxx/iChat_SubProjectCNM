@@ -421,32 +421,6 @@ const FriendshipController = {
     }
   },
 
-  // Láy danh sách người dùng đã bị chặn
-  getBlockedUsers: async (req, res) => {
-    const { userId } = req.params;
-    try {
-      const blockedFriendships = await Friendship.find({
-        blocked_by: userId,
-        status: "blocked",
-      });
-
-      const blockedUsersIds = blockedFriendships.map((friendship) => {
-        const isSenderBlocker =
-          friendship.blocked_by.toString() ===
-          friendship.sender_id._id.toString();
-        return isSenderBlocker ? friendship.receiver_id : friendship.sender_id;
-      });
-
-      const blockedUsers = await User.find({
-        _id: { $in: blockedUsersIds },
-      });
-
-      res.json({ status: "ok", data: blockedUsers });
-    } catch (error) {
-      res.status(500).json({ status: "error", message: error.message });
-    }
-  },
-
   // Kiểm tra trạng thái chặn giữa 2 người dùng
   checkBlockStatus: async (req, res) => {
     const { user_id, target_id } = req.params;
