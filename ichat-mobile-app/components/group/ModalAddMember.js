@@ -114,6 +114,7 @@ const ModalAddMember = ({ route }) => {
       const response = await groupService.addMember({
         groupId,
         userIds: memberList.map((item) => item.id),
+        inviterId: user.id,
       });
       if (response.status === "ok") {
         Alert.alert("Thông báo", response.message, [

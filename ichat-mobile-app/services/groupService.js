@@ -211,11 +211,12 @@ const groupService = {
   },
 
   // Thêm thành viên mới
-  addMember: async ({ groupId, userIds }) => {
+  addMember: async ({ groupId, userIds, inviterId }) => {
     try {
       const response = await apiService.post(`/${PREFIX}/add-members`, {
         groupId,
         userIds,
+        inviterId,
       });
       if (response.data.status === "error") {
         throw new Error(response.data.message);
@@ -294,16 +295,15 @@ const groupService = {
         `/${PREFIX}/member-approval/${groupId}`
       );
 
-      // Kiểm tra response
       if (response.data.status === "error") {
         console.error("API trả về lỗi:", response.data.message);
-        return false; // Giá trị mặc định nếu có lỗi
+        return false;
       }
 
       return response.data.data;
     } catch (error) {
       console.error("Lỗi khi kiểm tra trạng thái phê duyệt thành viên:", error);
-      return false; // Giá trị mặc định nếu có lỗi
+      return false;
     }
   },
 
@@ -315,7 +315,6 @@ const groupService = {
         { requireApproval }
       );
 
-      // Kiểm tra response
       if (response.data.status === "error") {
         console.error("API trả về lỗi:", response.data.message);
         return null;
@@ -324,7 +323,64 @@ const groupService = {
       return response.data.data;
     } catch (error) {
       console.error("Lỗi khi cập nhật trạng thái phê duyệt thành viên:", error);
-      return null; // Trả về null thay vì throw error để xử lý lỗi ở component
+      return null;
+    }
+  },
+
+  // Lấy danh sách yêu cầu tham gia nhóm đang chờ duyệt
+  getPendingMembers: async (groupId) => {
+    try {
+      const response = await apiService.get(
+        `/${PREFIX}/pending-members/${groupId}`
+      );
+
+      if (response.data.status === "error") {
+        console.error("API trả về lỗi:", response.data.message);
+        return [];
+      }
+
+      return response.data.data || [];
+    } catch (error) {
+      console.error("Lỗi khi lấy danh sách yêu cầu tham gia:", error);
+      return [];
+    }
+  },
+
+  // Chấp nhận thành viên vào nhóm
+  acceptMember: async ({ groupId, memberId }) => {
+    try {
+      const response = await apiService.put(
+        `/${PREFIX}/accept-member/${groupId}/${memberId}`
+      );
+
+      if (response.data.status === "error") {
+        console.error("API trả về lỗi:", response.data.message);
+        return null;
+      }
+
+      return response.data.data;
+    } catch (error) {
+      console.error("Lỗi khi chấp nhận thành viên:", error);
+      return null;
+    }
+  },
+
+  // Từ chối thành viên vào nhóm
+  rejectMember: async ({ groupId, memberId }) => {
+    try {
+      const response = await apiService.put(
+        `/${PREFIX}/reject-member/${groupId}/${memberId}`
+      );
+
+      if (response.data.status === "error") {
+        console.error("API trả về lỗi:", response.data.message);
+        return null;
+      }
+
+      return response.data.status;
+    } catch (error) {
+      console.error("Lỗi khi từ chối thành viên:", error);
+      return null;
     }
   },
 };

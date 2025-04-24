@@ -31,7 +31,7 @@ const GroupModel = {
       // Sử dụng aggregate để join dữ liệu từ GroupMember và UserInfo
       const members = await GroupMember.aggregate([
         // Lọc theo group_id
-        { $match: { group_id: groupObjectId } },
+        { $match: { group_id: groupObjectId, status: "approved" } },
 
         // Join với collection UserInfo để lấy thông tin user
         {
@@ -165,8 +165,14 @@ const GroupModel = {
   },
 
   // Thêm nhiều thành viên cùng lúc
-  addMembers: async (groupId, userIds) => {
+  addMembers: async (groupId, userIds, inviterId) => {
     try {
+      // Kiểm tra groupId và userIds
+      const group = await GroupChat.findById(groupId);
+      if (!group) {
+        throw new Error("Nhóm không tồn tại");
+      }
+
       // Chuyển đổi thành mảng nếu chỉ là một ID
       const userIdArray = Array.isArray(userIds) ? userIds : [userIds];
 
@@ -202,6 +208,8 @@ const GroupModel = {
       const membersToAdd = newUserIds.map((userId) => ({
         group_id: groupId,
         user_id: new mongoose.Types.ObjectId(userId),
+        invited_by: inviterId,
+        status: group.require_approval ? "pending" : "approved",
       }));
 
       // Thêm các thành viên mới
@@ -418,6 +426,93 @@ const GroupModel = {
       return updatedGroup;
     } catch (error) {
       console.error("Lỗi khi cập nhật trạng thái phê duyệt thành viên:", error);
+      throw error;
+    }
+  },
+
+  // Lấy danh sách yêu cầu tham gia nhóm đang đợi được duyệt
+  getPendingMembers: async (groupId) => {
+    try {
+      const pendingMembers = await GroupMember.aggregate([
+        {
+          $match: {
+            group_id: new mongoose.Types.ObjectId(groupId),
+            status: "pending",
+          },
+        },
+        {
+          $lookup: {
+            from: "UserInfo",
+            localField: "user_id",
+            foreignField: "_id",
+            as: "userDetails",
+          },
+        },
+        {
+          $lookup: {
+            from: "UserInfo",
+            localField: "invited_by",
+            foreignField: "_id",
+            as: "inviterDetails",
+          },
+        },
+        {
+          $unwind: "$userDetails",
+        },
+        {
+          $unwind: "$inviterDetails",
+        },
+        {
+          $project: {
+            _id: 1,
+            user_id: 1,
+            status: 1,
+            requested_at: "$joined_at",
+            member: {
+              _id: "$userDetails._id",
+              full_name: "$userDetails.full_name",
+              avatar_path: "$userDetails.avatar_path",
+            },
+            invited_by: {
+              _id: "$inviterDetails._id",
+              full_name: "$inviterDetails.full_name",
+              avatar_path: "$inviterDetails.avatar_path",
+            },
+          },
+        },
+      ]);
+
+      return pendingMembers;
+    } catch (error) {
+      console.error("Lỗi khi lấy danh sách yêu cầu tham gia:", error);
+      throw error;
+    }
+  },
+
+  // Chấp nhận thành viên vào nhóm
+  acceptMember: async ({ groupId, memberId }) => {
+    try {
+      return await GroupMember.findOneAndUpdate(
+        { group_id: groupId, user_id: memberId },
+        { status: "approved" },
+        { new: true }
+      );
+    } catch (error) {
+      console.error("Lỗi khi chấp nhận thành viên:", error);
+      throw error;
+    }
+  },
+
+  // Từ chối thành viên vào nhóm
+  rejectMember: async ({ groupId, memberId }) => {
+    try {
+      return await GroupMember.findOneAndDelete({
+        group_id: groupId,
+        user_id: memberId,
+        status: "pending",
+      });
+    } catch (error) {
+      console.error("Lỗi khi từ chối thành viên:", error);
       throw error;
     }
   },

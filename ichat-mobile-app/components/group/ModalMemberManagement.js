@@ -344,28 +344,61 @@ const ModalMemberManagement = ({ route }) => {
 
       {/* Option */}
       {adminGroup && (
-        <View style={styles.approvalContainer}>
-          <View style={styles.approvalInfo}>
-            <Image
-              source={require("../../assets/icons/setting.png")}
-              style={[styles.icon, { marginRight: 10, tintColor: "#2F80ED" }]}
-            />
-            <View>
-              <Text style={styles.approvalTitle}>Phê duyệt thành viên</Text>
-              <Text style={styles.approvalDescription}>
-                Khi được bật, yêu cầu tham gia nhóm phải được duyệt bởi quản trị
-                viên.
-              </Text>
+        <>
+          <View style={styles.approvalContainer}>
+            <View style={styles.approvalInfo}>
+              <Image
+                source={require("../../assets/icons/setting.png")}
+                style={[styles.icon, { marginRight: 10, tintColor: "#2F80ED" }]}
+              />
+              <View>
+                <Text style={styles.approvalTitle}>Phê duyệt thành viên</Text>
+                <Text style={styles.approvalDescription}>
+                  Khi được bật, yêu cầu tham gia nhóm phải được duyệt bởi quản
+                  trị viên.
+                </Text>
+              </View>
+            </View>
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <Switch
+                value={isChecked}
+                onValueChange={() => handleCheckMemberApproval(!isChecked)}
+                color="#2F80ED"
+              />
             </View>
           </View>
-          <View style={{ flexDirection: "row", alignItems: "center" }}>
-            <Switch
-              value={isChecked}
-              onValueChange={() => handleCheckMemberApproval(!isChecked)}
-              color="#2F80ED"
-            />
-          </View>
-        </View>
+
+          {isChecked && (
+            <TouchableOpacity
+              style={styles.pendingInvitationsContainer}
+              onPress={() =>
+                navigation.navigate("PendingInvitations", { groupId })
+              }
+            >
+              <View style={styles.approvalInfo}>
+                <Image
+                  source={require("../../assets/icons/notification.png")}
+                  style={[
+                    styles.icon,
+                    { marginRight: 10, tintColor: "#2F80ED" },
+                  ]}
+                />
+                <View>
+                  <Text style={styles.approvalTitle}>
+                    Lời mời đang chờ duyệt
+                  </Text>
+                  <Text style={styles.approvalDescription}>
+                    Xem danh sách các lời mời vào nhóm đang chờ được chấp thuận
+                  </Text>
+                </View>
+              </View>
+              <Image
+                source={require("../../assets/icons/next.png")}
+                style={[styles.icon, { tintColor: "#2F80ED" }]}
+              />
+            </TouchableOpacity>
+          )}
+        </>
       )}
 
       <View style={styles.content}>
@@ -545,6 +578,15 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: "#f0f0f0",
+  },
+  pendingInvitationsContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 15,
+    paddingVertical: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f0f0f0",
+    backgroundColor: "#f9f9f9",
   },
   approvalInfo: {
     flexDirection: "row",

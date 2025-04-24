@@ -130,7 +130,7 @@ const GroupController = {
   // Thêm nhiều thành viên cùng lúc
   addMembers: async (req, res) => {
     try {
-      const { groupId, userIds } = req.body;
+      const { groupId, userIds, inviterId } = req.body;
 
       if (!groupId) {
         return res
@@ -144,7 +144,7 @@ const GroupController = {
           .json({ status: "error", message: "Thiếu userIds" });
       }
 
-      const result = await GroupModel.addMembers(groupId, userIds);
+      const result = await GroupModel.addMembers(groupId, userIds, inviterId);
 
       res.json({
         status: "ok",
@@ -344,6 +344,45 @@ const GroupController = {
         status: "error",
         message: error.message,
       });
+    }
+  },
+
+  // Lấy danh sách yêu cầu tham gia nhóm đang chờ duyệt
+  getPendingMembers: async (req, res) => {
+    try {
+      const { groupId } = req.params;
+      const pendingMembers = await GroupModel.getPendingMembers(groupId);
+      return res.json({ status: "ok", data: pendingMembers });
+    } catch (error) {
+      console.error("Lỗi khi lấy danh sách yêu cầu tham gia:", error);
+      res.status(500).json({ status: "error", message: error.message });
+    }
+  },
+
+  // Chấp nhận thành viên vào nhóm
+  acceptMember: async (req, res) => {
+    try {
+      const { groupId, memberId } = req.params;
+      const acceptedMember = await GroupModel.acceptMember({
+        groupId,
+        memberId,
+      });
+      return res.json({ status: "ok", data: acceptedMember });
+    } catch (error) {
+      console.error("Lỗi khi chấp nhận thành viên:", error);
+      res.status(500).json({ status: "error", message: error.message });
+    }
+  },
+
+  // Từ chối thành viên vào nhóm
+  rejectMember: async (req, res) => {
+    try {
+      const { groupId, memberId } = req.params;
+      await GroupModel.rejectMember({ groupId, memberId });
+      return res.json({ status: "ok" });
+    } catch (error) {
+      console.error("Lỗi khi từ chối thành viên:", error);
+      res.status(500).json({ status: "error", message: error.message });
     }
   },
 };
