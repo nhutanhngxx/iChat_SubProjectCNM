@@ -220,6 +220,7 @@ const ChatList = ({ filteredChatList, onSelectUser, onPin }) => (
     itemLayout="horizontal"
     dataSource={filteredChatList}
     renderItem={(item) => <ChatItem item={item} onSelectUser={onSelectUser} onPin={onPin} />}
+    style={{overflowY:"scroll", maxHeight:"86vh",scrollbarWidth:"none"}} // Thay đổi chiều cao của danh sách
   />
 );
 
