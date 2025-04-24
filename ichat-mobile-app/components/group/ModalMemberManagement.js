@@ -22,6 +22,7 @@ import groupService from "../../services/groupService";
 import friendService from "../../services/friendService";
 import ModalMemberInfo from "./ModalMemberInfo";
 import ModalSelectAdmin from "./ModalSelectAdmin";
+import socketService from "../../services/socketService";
 
 const ModalMemberManagement = ({ route }) => {
   const { groupId, adminGroup } = route.params || {};
@@ -42,29 +43,93 @@ const ModalMemberManagement = ({ route }) => {
   const [currentAdminId, setCurrentAdminId] = useState(null); // ID của quản trị viên hiện tại
   const [invitedMembers, setInvitedMembers] = useState([]); // Danh sách thành viên được mời bởi người dùng hiện tại
 
-  // Lấy thông tin nhóm và thành viên
+  // Lắng nghe sự kiện từ socket
   useEffect(() => {
     if (!groupId) return;
 
-    const fetchGroupInfo = async () => {
-      try {
-        const groupInfo = await groupService.getGroupById(groupId);
-        setGroup(groupInfo);
-      } catch (error) {
-        console.error("Lỗi khi lấy thông tin nhóm:", error);
+    // Lắng nghe sự kiện thêm/xóa thành viên
+    socketService.onMemberAdded(({ groupId: receivedGroupId, userIds }) => {
+      if (groupId === receivedGroupId) {
+        fetchGroupMembers();
       }
-    };
-
-    const fetchGroupMembers = async () => {
-      try {
-        const membersList = await groupService.getGroupMembers(groupId);
-        setMembers(membersList);
-        setFilteredMembers(membersList);
-      } catch (error) {
-        console.error("Lỗi khi lấy danh sách thành viên:", error);
+    });
+    socketService.onMemberRemoved(({ groupId: receivedGroupId, userId }) => {
+      if (groupId === receivedGroupId) {
+        setMembers((prev) =>
+          prev.filter((member) => member.user_id !== userId)
+        );
+        setFilteredMembers((prev) =>
+          prev.filter((member) => member.user_id !== userId)
+        );
       }
-    };
+    });
 
+    // Lắng nghe sự kiện chuyển quyền quản trị viên
+    socketService.onAdminTransferred(({ groupId: receivedGroupId, userId }) => {
+      if (groupId === receivedGroupId) {
+        setMembers((prev) =>
+          prev.map((member) => ({
+            ...member,
+            role: member.user_id === userId ? "admin" : "member",
+          }))
+        );
+        setFilteredMembers((prev) =>
+          prev.map((member) => ({
+            ...member,
+            role: member.user_id === userId ? "admin" : "member",
+          }))
+        );
+      }
+    });
+
+    // Lắng nghe sự kiện cập nhật trạng thái phê duyệt thành viên
+    socketService.onMemberApprovalUpdated(
+      ({ groupId: receivedGroupId, requireApproval }) => {
+        if (groupId === receivedGroupId) {
+          setIsChecked(requireApproval);
+        }
+      }
+    );
+
+    // Lắng nghe sự kiện chấp nhận thành viên vào nhóm
+    socketService.onMemberLeft(({ groupId: receivedGroupId, userId }) => {
+      if (groupId === receivedGroupId) {
+        setMembers((prev) =>
+          prev.filter((member) => member.user_id !== userId)
+        );
+        setFilteredMembers((prev) =>
+          prev.filter((member) => member.user_id !== userId)
+        );
+      }
+    });
+
+    return () => {
+      socketService.removeAllListeners();
+    };
+  }, [groupId]);
+
+  const fetchGroupInfo = async () => {
+    try {
+      const groupInfo = await groupService.getGroupById(groupId);
+      setGroup(groupInfo);
+    } catch (error) {
+      console.error("Lỗi khi lấy thông tin nhóm:", error);
+    }
+  };
+
+  const fetchGroupMembers = async () => {
+    try {
+      const membersList = await groupService.getGroupMembers(groupId);
+      setMembers(membersList);
+      setFilteredMembers(membersList);
+    } catch (error) {
+      console.error("Lỗi khi lấy danh sách thành viên:", error);
+    }
+  };
+
+  // Lấy thông tin nhóm và thành viên
+  useEffect(() => {
+    if (!groupId) return;
     fetchGroupInfo();
     fetchGroupMembers();
   }, [groupId]);
@@ -202,6 +267,11 @@ const ModalMemberManagement = ({ route }) => {
         requireApproval: value,
       });
 
+      socketService.handleUpdateMemberApproval({
+        groupId,
+        requireApproval: value,
+      });
+
       if (!response) {
         setIsChecked(!value);
         Alert.alert(
@@ -247,6 +317,10 @@ const ModalMemberManagement = ({ route }) => {
           try {
             const response = await groupService.leaveGroup(groupId, user.id);
             if (response.status === "ok") {
+              socketService.handleLeaveGroup({
+                groupId,
+                userId: user.id,
+              });
               Alert.alert("Thông báo", response.message);
               navigation.goBack();
             } else {
@@ -495,6 +569,10 @@ const ModalMemberManagement = ({ route }) => {
                     });
 
                     if (response.status === "ok") {
+                      socketService.handleTransferAdmin({
+                        groupId,
+                        userId: selectedMember?.user_id,
+                      });
                       Alert.alert("Thông báo", response.message);
                     } else {
                       Alert.alert(
@@ -528,6 +606,11 @@ const ModalMemberManagement = ({ route }) => {
                     });
 
                     if (response.status === "ok") {
+                      // Emit socket event
+                      socketService.handleRemoveMember({
+                        groupId,
+                        userId: selectedMember?.user_id,
+                      });
                       Alert.alert("Thông báo", response.message);
                     } else {
                       Alert.alert("Thông báo", "Xóa thành viên thất bại");
@@ -542,14 +625,11 @@ const ModalMemberManagement = ({ route }) => {
           );
         }}
         onAddFriend={() => {
-          // Thêm logic kết bạn
           console.log("Gửi lời mời kết bạn tới:", selectedMember?.full_name);
         }}
         onSendMessage={() => {
-          // Thêm logic nhắn tin
           console.log("Mở cuộc trò chuyện với:", selectedMember?.full_name);
           closeMemberModal();
-          // navigation.navigate("Chat", { userId: selectedMember?.user_id });
         }}
         onLeaveGroup={handleLeaveGroup}
       />
