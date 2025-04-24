@@ -159,7 +159,6 @@ const groupService = {
 
   // Tạo nhóm
   createGroup: async ({ groupName, adminId, participantIds }) => {
-    console.log("Group Service: ", groupName, adminId, participantIds);
     try {
       const response = await apiService.post(`/${PREFIX}/`, {
         name: groupName,
@@ -169,7 +168,6 @@ const groupService = {
       if (response.data.status === "error") {
         throw new Error(response.data.message);
       }
-      console.log("Tạo nhóm thành công:", response.data);
       return response.data;
     } catch (error) {
       console.log("Không thể tạo nhóm: ", error);
@@ -185,7 +183,6 @@ const groupService = {
         throw new Error(response.data.message);
       }
       if (response.data.status === "ok") {
-        console.log("Xóa nhóm thành công:", response.data);
         return { status: "ok", message: "Xóa nhóm thàn công." };
       }
     } catch (error) {
@@ -296,10 +293,17 @@ const groupService = {
       const response = await apiService.get(
         `/${PREFIX}/member-approval/${groupId}`
       );
+
+      // Kiểm tra response
+      if (response.data.status === "error") {
+        console.error("API trả về lỗi:", response.data.message);
+        return false; // Giá trị mặc định nếu có lỗi
+      }
+
       return response.data.data;
     } catch (error) {
       console.error("Lỗi khi kiểm tra trạng thái phê duyệt thành viên:", error);
-      throw error;
+      return false; // Giá trị mặc định nếu có lỗi
     }
   },
 
@@ -310,10 +314,17 @@ const groupService = {
         `/${PREFIX}/member-approval/${groupId}`,
         { requireApproval }
       );
+
+      // Kiểm tra response
+      if (response.data.status === "error") {
+        console.error("API trả về lỗi:", response.data.message);
+        return null;
+      }
+
       return response.data.data;
     } catch (error) {
       console.error("Lỗi khi cập nhật trạng thái phê duyệt thành viên:", error);
-      throw error;
+      return null; // Trả về null thay vì throw error để xử lý lỗi ở component
     }
   },
 };

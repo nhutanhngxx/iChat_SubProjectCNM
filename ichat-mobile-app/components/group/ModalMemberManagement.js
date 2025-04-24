@@ -24,7 +24,7 @@ import ModalMemberInfo from "./ModalMemberInfo";
 import ModalSelectAdmin from "./ModalSelectAdmin";
 
 const ModalMemberManagement = ({ route }) => {
-  const { groupId } = route.params || {};
+  const { groupId, adminGroup } = route.params || {};
   const navigation = useNavigation();
   const { user } = useContext(UserContext);
   const [index, setIndex] = useState(0); // Tab hiện tại
@@ -159,15 +159,33 @@ const ModalMemberManagement = ({ route }) => {
     };
 
     fetchMemberApproval();
-  }, [groupId, isChecked]);
+    // Loại bỏ isChecked khỏi dependencies để tránh vòng lặp vô hạn
+  }, [groupId]);
 
   // Hàm xử lý switch phê duyệt thành viên
-  const handleCheckMemberApproval = (value) => {
-    const response = groupService.updateMemberApproval({
-      groupId,
-      requireApproval: value,
-    });
-    setIsChecked(response);
+  const handleCheckMemberApproval = async (value) => {
+    try {
+      setIsChecked(value);
+      const response = await groupService.updateMemberApproval({
+        groupId,
+        requireApproval: value,
+      });
+
+      if (!response) {
+        setIsChecked(!value);
+        Alert.alert(
+          "Thông báo",
+          "Không thể cập nhật trạng thái phê duyệt thành viên"
+        );
+      }
+    } catch (error) {
+      console.error("Lỗi khi cập nhật trạng thái phê duyệt thành viên:", error);
+      setIsChecked(!value);
+      Alert.alert(
+        "Thông báo",
+        "Không thể cập nhật trạng thái phê duyệt thành viên"
+      );
+    }
   };
 
   // Xử lý khi người dùng muốn rời nhóm
@@ -212,28 +230,6 @@ const ModalMemberManagement = ({ route }) => {
     ]);
   };
 
-  // Xử lý khi chọn admin mới
-  const handleSelectNewAdmin = async (newAdminId) => {
-    try {
-      // Gọi API để chỉ định admin mới và rời nhóm
-      const response = await groupService.appointAdminAndLeave({
-        groupId,
-        newAdminId,
-        userId: user.id,
-      });
-
-      if (response.status === "ok") {
-        Alert.alert("Thông báo", response.message);
-        navigation.goBack();
-      } else {
-        Alert.alert("Thông báo", "Không thể rời nhóm. Vui lòng thử lại sau.");
-      }
-    } catch (error) {
-      console.error("Lỗi khi chỉ định admin mới và rời nhóm:", error);
-      Alert.alert("Thông báo", "Không thể rời nhóm. Vui lòng thử lại sau.");
-    }
-  };
-
   // Render thành viên
   const renderMemberItem = ({ item }) => {
     const isCurrentUser = item.user_id === user.id;
@@ -249,9 +245,7 @@ const ModalMemberManagement = ({ route }) => {
               {isCurrentUser ? "Bạn" : item.full_name}
             </Text>
             <Text style={styles.memberRole}>
-              {isCurrentUser && item.role === "admin"
-                ? "Quản trị viên"
-                : "Thành viên"}
+              {item.role === "admin" ? "Quản trị viên" : "Thành viên"}
               {/* // : item.added_by // ? `Added by ${item.added_by}` // : "" } */}
             </Text>
           </View>
@@ -262,7 +256,7 @@ const ModalMemberManagement = ({ route }) => {
         >
           <Image
             source={require("../../assets/icons/more.png")}
-            style={styles.moreIcon}
+            style={[styles.moreIcon, { tintColor: "#888" }]}
           />
         </TouchableOpacity>
       </TouchableOpacity>
@@ -349,28 +343,30 @@ const ModalMemberManagement = ({ route }) => {
       </SafeAreaView>
 
       {/* Option */}
-      {/* {user?.role === "admin" && ( */}
-      <View style={styles.approvalContainer}>
-        <View style={styles.approvalInfo}>
-          <Image
-            source={require("../../assets/icons/setting.png")}
-            style={[styles.icon, { marginRight: 10, tintColor: "#2F80ED" }]}
-          />
-          <View>
-            <Text style={styles.approvalTitle}>Phê duyệt thành viên</Text>
-            <Text style={styles.approvalDescription}>
-              Khi được bật, yêu cầu tham gia nhóm phải được duyệt bởi quản trị
-              viên.
-            </Text>
+      {adminGroup && (
+        <View style={styles.approvalContainer}>
+          <View style={styles.approvalInfo}>
+            <Image
+              source={require("../../assets/icons/setting.png")}
+              style={[styles.icon, { marginRight: 10, tintColor: "#2F80ED" }]}
+            />
+            <View>
+              <Text style={styles.approvalTitle}>Phê duyệt thành viên</Text>
+              <Text style={styles.approvalDescription}>
+                Khi được bật, yêu cầu tham gia nhóm phải được duyệt bởi quản trị
+                viên.
+              </Text>
+            </View>
+          </View>
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <Switch
+              value={isChecked}
+              onValueChange={() => handleCheckMemberApproval(!isChecked)}
+              color="#2F80ED"
+            />
           </View>
         </View>
-        <Switch
-          value={isChecked}
-          onValueChange={() => handleCheckMemberApproval(!isChecked)}
-          color="#2F80ED"
-        />
-      </View>
-      {/* )} */}
+      )}
 
       <View style={styles.content}>
         {/* Members List */}
@@ -396,16 +392,19 @@ const ModalMemberManagement = ({ route }) => {
         onClose={closeMemberModal}
         member={selectedMember}
         currentUserId={user.id}
+        adminGroup={adminGroup}
         relationshipType={
           selectedMember
             ? memberRelationships[selectedMember.user_id] || "stranger"
             : "stranger"
         }
+        // Xem thông tin thành viên
         onViewProfile={() => {
           closeMemberModal();
           // Thêm logic xem thông tin thành viên
           console.log("Xem thông tin thành viên:", selectedMember?.full_name);
         }}
+        // Chỉ định làm quản trị viên
         onAppointAdmin={() => {
           Alert.alert(
             "Thông báo",
@@ -486,9 +485,8 @@ const ModalMemberManagement = ({ route }) => {
       <ModalSelectAdmin
         visible={selectAdminModalVisible}
         onClose={() => setSelectAdminModalVisible(false)}
-        members={members}
         currentAdminId={currentAdminId}
-        onSelectAdmin={handleSelectNewAdmin}
+        groupId={groupId}
       />
     </View>
   );

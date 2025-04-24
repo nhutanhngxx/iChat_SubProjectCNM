@@ -28,12 +28,12 @@ const Option = ({ route }) => {
   const { id, name, avatar } = route.params || {}; // Nhận id, name, avatar từ route.params
   const [receiverInfo, setReceiverInfo] = useState(null); // Thông tin người nhận
   const [receiverGroup, setReceiverGroup] = useState([]); // Thông tin nhóm
-  const [isGroup, setIsGroup] = useState(false);
-  const [adminGroup, setAdminGroup] = useState(null);
+  const [isGroup, setIsGroup] = useState(false); // Kiểm tra xem có phải nhóm không
+  const [adminGroup, setAdminGroup] = useState(null); // Kiểm tra xem có phải admin của nhóm không
   const [sharedGroups, setSharedGroups] = useState([]); // Danh sách nhóm chung giữa 2 người
-  const [isRenameModalVisible, setIsRenameModalVisible] = useState(false);
+  const [isRenameModalVisible, setIsRenameModalVisible] = useState(false); // Modal đổi tên nhóm
   const [isSelectAdminModalVisible, setIsSelectAdminModalVisible] =
-    useState(false);
+    useState(false); // Modal chọn quản trị viên mới trước khi rời khỏi nhóm
 
   useEffect(() => {
     const fetchReceiverInfo = async () => {
@@ -379,7 +379,8 @@ const Option = ({ route }) => {
           )}
         </View>
 
-        {adminGroup === true && (
+        {/* Dành cho nhóm */}
+        <View style={{ gap: 15 }}>
           <View
             style={{
               height: 15,
@@ -387,22 +388,22 @@ const Option = ({ route }) => {
               marginHorizontal: -20,
             }}
           ></View>
-        )}
-        {adminGroup === true && (
-          <TouchableOpacity style={styles.component}>
-            <Image
-              source={require("../../assets/icons/setting.png")}
-              style={styles.icon}
-            />
-            <Text style={styles.title}>Cài đặt nhóm</Text>
-          </TouchableOpacity>
-        )}
-
-        {adminGroup === true && (
+          {adminGroup === true && (
+            <TouchableOpacity style={styles.component}>
+              <Image
+                source={require("../../assets/icons/setting.png")}
+                style={styles.icon}
+              />
+              <Text style={styles.title}>Cài đặt nhóm</Text>
+            </TouchableOpacity>
+          )}
           <TouchableOpacity
             style={styles.component}
             onPress={() =>
-              navigation.navigate("MemberManagement", { groupId: id })
+              navigation.navigate("MemberManagement", {
+                groupId: id,
+                adminGroup,
+              })
             }
           >
             <Image
@@ -411,7 +412,7 @@ const Option = ({ route }) => {
             />
             <Text style={styles.title}>Danh sách thành viên</Text>
           </TouchableOpacity>
-        )}
+        </View>
 
         <View style={{ gap: 15 }}>
           <View

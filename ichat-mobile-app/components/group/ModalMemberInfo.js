@@ -15,6 +15,7 @@ const ModalMemberInfo = ({
   onClose,
   member,
   currentUserId,
+  adminGroup,
   onViewProfile,
   onAppointAdmin,
   onRemoveMember,
@@ -110,7 +111,7 @@ const ModalMemberInfo = ({
                     <Text style={styles.optionText}>Xem thông tin</Text>
                   </TouchableOpacity>
 
-                  {member.role !== "admin" && (
+                  {member.role !== "admin" && adminGroup && (
                     <TouchableOpacity
                       style={styles.memberModalOption}
                       onPress={onAppointAdmin}
@@ -121,7 +122,7 @@ const ModalMemberInfo = ({
                     </TouchableOpacity>
                   )}
 
-                  {!isCurrentUser && (
+                  {!isCurrentUser && adminGroup && (
                     <TouchableOpacity
                       style={styles.memberModalOption}
                       onPress={onRemoveMember}
