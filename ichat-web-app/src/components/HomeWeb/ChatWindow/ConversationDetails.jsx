@@ -1470,159 +1470,161 @@ const handleTransferAdminAndLeave = async () => {
                 </div>
               </Modal>
 
-            {/* File section */}
-            <div className="file-section">
-              <div
-                className="select-wrapper"
-                onClick={() => setIsOpenFile(!isOpenFile)}
-              >
-                <h3>File</h3>
-                {isOpenFile ? (
-                  <FaCaretDown className="anticon" />
-                ) : (
-                  <FaCaretRight className="anticon" />
-                )}
-              </div>
-              {isOpenFile && (
-                <div className="modal-file-list">
-                  {processedFileItems.length > 0 ? (
-                    <>
-                      <div className="file-list-wrapper">
-                        {processedFileItems.slice(0, 5).map((file) => (
-                          <div className="file-item" key={file.id}>
-                            <div className="file-info-wrapper" onClick={()=>setShowAllFiles(!showAllFiles)}>
-                              {file.type === "pdf" ? (
-                                <BiSolidFilePdf
-                                  className="type-icon"
-                                  style={{ color: "red" }}
-                                />
-                              ) : ["zip", "rar", "7z"].includes(file.type) ? (
-                                <AiFillFileZip
-                                  className="type-icon"
-                                  style={{ color: "violet" }}
-                                />
-                              ) : ["doc", "docx"].includes(file.type) ? (
-                                <FaFileWord
-                                  className="type-icon"
-                                  style={{ color: "blue" }}
-                                />
-                              ) : ["xls", "xlsx"].includes(file.type) ? (
-                                <FaFileExcel
-                                  className="type-icon"
-                                  style={{ color: "green" }}
-                                />
-                              ) : ["ppt", "pptx"].includes(file.type) ? (
-                                <FaFilePowerpoint
-                                  className="type-icon"
-                                  style={{ color: "orange" }}
-                                />
-                              ) : (
-                                <FaFileAlt
-                                  className="type-icon"
-                                  style={{ color: "gray" }}
-                                />
-                              )}
-                              <div className="file-info">
-                                <h4>{file.name}</h4>
-                                <p>{file.size}</p>
-                              </div>
-                            </div>
-                            <div className="file-date-wrapper">
-                              <p>{file.date}</p>
-                              <Button 
-                                type="text"
-                                icon={<DownloadOutlined />} 
-                                size="small"
-                                onClick={() => window.open(file.url, '_blank')}
-                              />
-                            </div> 
-                          </div>
-                        ))}
-                      </div>
-                      {processedFileItems.length > 5 && (
-                        <div style={{ padding: "0 20px" }}>
-                          <button 
-                            className="icon-showallFile"
-                            onClick={() => setShowAllFiles(true)}
-                          >
-                            Xem tất cả
-                          </button>
-                        </div>
-                      )}
-                    </>
-                  ) : fileItems.length > 0 ? (
-                    <div className="loading-files">
-                      <div>Đang tải thông tin file...</div>
-                    </div>
+          {/* File section */}
+              <div className="file-section">
+                <div
+                  className="select-wrapper"
+                  onClick={() => setIsOpenFile(!isOpenFile)}
+                >
+                  <h3>File</h3>
+                  {isOpenFile ? (
+                    <FaCaretDown className="anticon" />
                   ) : (
-                    <div className="no-content-message">
-                      Chưa có tệp nào được gửi
-                    </div>
+                    <FaCaretRight className="anticon" />
                   )}
                 </div>
-              )}
-            </div>
+                {isOpenFile && (
+                  <div className="modal-file-list">
+                    {processedFileItems.length > 0 ? (
+                      <>
+                        <div className="file-list-wrapper">
+                          {processedFileItems.slice(0, 5).map((file) => (
+                            <div className="file-item" key={file.id}>
+                              <div className="file-info-wrapper" onClick={()=>setShowAllFiles(!showAllFiles)}>
+                                {file.type === "pdf" ? (
+                                  <BiSolidFilePdf
+                                    className="type-icon"
+                                    style={{ color: "red" }}
+                                  />
+                                ) : ["zip", "rar", "7z"].includes(file.type) ? (
+                                  <AiFillFileZip
+                                    className="type-icon"
+                                    style={{ color: "violet" }}
+                                  />
+                                ) : ["doc", "docx"].includes(file.type) ? (
+                                  <FaFileWord
+                                    className="type-icon"
+                                    style={{ color: "blue" }}
+                                  />
+                                ) : ["xls", "xlsx"].includes(file.type) ? (
+                                  <FaFileExcel
+                                    className="type-icon"
+                                    style={{ color: "green" }}
+                                  />
+                                ) : ["ppt", "pptx"].includes(file.type) ? (
+                                  <FaFilePowerpoint
+                                    className="type-icon"
+                                    style={{ color: "orange" }}
+                                  />
+                                ) : (
+                                  <FaFileAlt
+                                    className="type-icon"
+                                    style={{ color: "gray" }}
+                                  />
+                                )}
+                                <div className="file-info">
+                                  <h4 style={{
+                                    width: "180px",
+                                    whiteSpace: "nowrap",
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                    marginBottom: "2px"
+                                  }}>
+                                    {file.name}
+                                  </h4>
+                                  <p>{file.size}</p>
+                                </div>
+                              </div>
+                              <div className="file-date-wrapper">
+                                <p>{file.date}</p>
+                                <Button 
+                                  type="text"
+                                  icon={<DownloadOutlined />} 
+                                  size="small"
+                                  onClick={() => window.open(file.url, '_blank')}
+                                />
+                              </div> 
+                            </div>
+                          ))}
+                        </div>
+                        {processedFileItems.length > 5 && (
+                          <div style={{ padding: "0 20px" }}>
+                            <button 
+                              className="icon-showallFile"
+                              onClick={() => setShowAllFiles(true)}
+                            >
+                              Xem tất cả
+                            </button>
+                          </div>
+                        )}
+                      </>
+                    ) : fileItems.length > 0 ? (
+                      <div className="loading-files">
+                        <div>Đang tải thông tin file...</div>
+                      </div>
+                    ) : (
+                      <div className="no-content-message">
+                        Chưa có tệp nào được gửi
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             {/* Modal xem tất cả file */}
               {
                 showAllFiles && (
                   <Modal
-                title="Tất cả file đã gửi"
-                open={showAllFiles}
-                onCancel={() => setShowAllFiles(false)}
-                footer={null}
-                width={700}
-              >
-                <Input
-                  placeholder="Tìm kiếm file..."
-                  prefix={<SearchOutlined />}
-                  style={{ marginBottom: 15 }}
-                  onChange={(e) => {
-                    // Có thể thêm logic tìm kiếm file ở đây
-                  }}
-                />
-                
-                <div className="all-files-list" style={{ maxHeight: '60vh', overflowY: 'auto' }}>
-                  {processedFileItems.map((file) => (
-                    <div className="file-item" key={file.id} style={{ borderBottom: '1px solid #f0f0f0', padding: '10px 0' }}>
-                      <div className="file-info-wrapper">
-                        {file.type === "pdf" ? (
-                          <BiSolidFilePdf className="type-icon" style={{ color: "red", fontSize: '24px' }} />
-                        ) : ["zip", "rar", "7z"].includes(file.type) ? (
-                          <AiFillFileZip className="type-icon" style={{ color: "violet", fontSize: '24px' }} />
-                        ) : ["doc", "docx"].includes(file.type) ? (
-                          <FaFileWord className="type-icon" style={{ color: "blue", fontSize: '24px' }} />
-                        ) : ["xls", "xlsx"].includes(file.type) ? (
-                          <FaFileExcel className="type-icon" style={{ color: "green", fontSize: '24px' }} />
-                        ) : ["ppt", "pptx"].includes(file.type) ? (
-                          <FaFilePowerpoint className="type-icon" style={{ color: "orange", fontSize: '24px' }} />
-                        ) : (
-                          <FaFileAlt className="type-icon" style={{ color: "gray", fontSize: '24px' }} />
-                        )}
-                        <div className="file-info">
-                          <h4>
-                            <a href={file.url} target="_blank" rel="noopener noreferrer">
-                              {file.name}
-                            </a>
-                          </h4>
-                          <div style={{ display: 'flex', gap: '20px', color: '#888' }}>
-                            <span>{file.size}</span>
-                            <span>{file.date}</span>
-                            <span>Gửi bởi: {file.msg.sender_name || 'Không xác định'}</span>
+                    title="Tất cả file đã gửi"
+                    open={showAllFiles}
+                    onCancel={() => setShowAllFiles(false)}
+                    footer={null}
+                    width={700}
+                  >
+                    <Input
+                      placeholder="Tìm kiếm file..."
+                      prefix={<SearchOutlined />}
+                      style={{ marginBottom: 15 }}
+                      onChange={(e) => {
+                        // Có thể thêm logic tìm kiếm file ở đây
+                      }}
+                    />
+                    
+                    <div className="all-files-list" style={{ maxHeight: '60vh', overflowY: 'auto' }}>
+                      {processedFileItems.map((file) => (
+                        <div className="file-item" key={file.id} style={{ borderBottom: '1px solid #f0f0f0', padding: '10px 0' }}>
+                          <div className="file-info-wrapper">
+                            {/* Icon type code */}
+                            <div className="file-info">
+                              <h4 style={{
+                                maxWidth: "400px",
+                                whiteSpace: "nowrap",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                marginBottom: "2px"
+                              }}>
+                                <a href={file.url} target="_blank" rel="noopener noreferrer">
+                                  {file.name}
+                                </a>
+                              </h4>
+                              <div style={{ display: 'flex', gap: '20px', color: '#888' }}>
+                                <span>{file.size}</span>
+                                <span>{file.date}</span>
+                                <span>Gửi bởi: {file.msg.sender_name || 'Không xác định'}</span>
+                              </div>
+                            </div>
                           </div>
+                          <Button 
+                            type="primary"
+                            icon={<DownloadOutlined />}
+                            onClick={() => window.open(file.url, '_blank')}
+                          >
+                            Tải về
+                          </Button>
                         </div>
-                      </div>
-                      <Button 
-                        type="primary"
-                        icon={<DownloadOutlined />}
-                        onClick={() => window.open(file.url, '_blank')}
-                      >
-                        Tải về
-                      </Button>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              </Modal>
-                )
+                  </Modal>
+                   )
               }
 
             {/* Link section */}

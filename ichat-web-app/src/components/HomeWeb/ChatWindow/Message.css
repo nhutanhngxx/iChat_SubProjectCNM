@@ -144,6 +144,7 @@
 .file-info {
   display: flex;
   flex-direction: column;
+  max-width: 176px;
 }
 
 .file-name {
@@ -493,26 +494,6 @@
 .message.sent .message-reactions {
   left: 0;
 }
-
-/* .reaction-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 8px;
-  background-color: #f0f2f5;
-  border-radius: 12px;
-  font-size: 12px;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.reaction-badge.user-reacted {
-  background-color: #e6f7ff;
-  border: 1px solid #1890ff;
-}
-
-.reaction-badge:hover {
-  background-color: #e6f7ff;
-} */
 /* Add this to your Message.css file */
 .reaction-badge {
   display: inline-flex;
