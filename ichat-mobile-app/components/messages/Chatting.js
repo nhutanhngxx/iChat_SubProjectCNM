@@ -229,6 +229,7 @@ const Chatting = ({ navigation, route }) => {
   const [isMuted, setIsMuted] = useState(false);
   const [ringtoneSound, setRingtoneSound] = useState(null);
   const [durationInterval, setDurationInterval] = useState(null);
+  const [peerConnection, setPeerConnection] = useState(null);
 
   const playRingtone = async () => {
     try {
@@ -292,12 +293,97 @@ const Chatting = ({ navigation, route }) => {
 
   const handleAcceptCall = async () => {
     if (!incomingCall) return;
+
     const { callerId, roomId } = incomingCall;
-    stopRingtone();
-    socketService.acceptAudioCall(callerId, user.id, roomId);
-    setIncomingCall(null);
-    setCallStatus("connecting");
+    console.log(
+      "[Chatting] Accepting call from:",
+      callerId,
+      "in room:",
+      roomId
+    );
+
+    try {
+      stopRingtone();
+      setCallStatus("connecting");
+      setCurrentCallRoom(roomId);
+
+      // Accept call and wait for connection
+      const connectionData = await socketService.acceptAudioCall(
+        callerId,
+        user.id,
+        roomId
+      );
+
+      // If we get here, the call was connected successfully
+      handleCallConnected(connectionData);
+    } catch (error) {
+      console.error("[Chatting] Error accepting call:", error);
+      Alert.alert("Lỗi", "Không thể kết nối cuộc gọi. Vui lòng thử lại.");
+      endAudioCall();
+    }
   };
+
+  // Xử lý khi cuộc gọi được kết nối thành công
+  const handleCallConnected = useCallback(
+    async ({ roomId }) => {
+      try {
+        // // Khởi tạo WebRTC connection
+        // const configuration = {
+        //   iceServers: [
+        //     { urls: "stun:stun.l.google.com:19302" },
+        //     // Thêm TURN server nếu cần
+        //   ],
+        // };
+        // const peerConnection = new RTCPeerConnection(configuration);
+
+        // // Thêm audio track
+        // const stream = await navigator.mediaDevices.getUserMedia({
+        //   audio: true,
+        // });
+        // stream.getTracks().forEach((track) => {
+        //   peerConnection.addTrack(track, stream);
+        // });
+
+        // // Lắng nghe remote stream
+        // peerConnection.ontrack = (event) => {
+        //   const remoteStream = event.streams[0];
+        //   // Phát remote audio stream
+        //   playRemoteStream(remoteStream);
+        // };
+
+        // Bắt đầu đếm thời gian
+        const interval = setInterval(() => {
+          setCallDuration((prev) => prev + 1);
+        }, 1000);
+        setDurationInterval(interval);
+
+        // Cập nhật trạng thái
+        setCallStatus("ongoing");
+        setIsInCall(true);
+        setIncomingCall(null);
+
+        console.log("[Chatting] Call successfully connected in room:", roomId);
+      } catch (error) {
+        console.error("[Chatting] Error setting up call:", error);
+        Alert.alert("Lỗi", "Không thể thiết lập cuộc gọi. Vui lòng thử lại.");
+        endAudioCall();
+      }
+    },
+    [currentCallRoom, endAudioCall]
+  );
+
+  // Thêm function để phát remote stream
+  // const playRemoteStream = async (stream) => {
+  //   try {
+  //     const audioContext = new (window.AudioContext ||
+  //       window.webkitAudioContext)();
+  //     const source = audioContext.createMediaStreamSource(stream);
+  //     const speaker = audioContext.destination;
+  //     source.connect(speaker);
+  //   } catch (error) {
+  //     console.error("[Chatting] Error playing remote stream:", error);
+  //   }
+  // };
 
   const handleRejectCall = (callerId, roomId) => {
     console.log(
@@ -312,82 +398,43 @@ const Chatting = ({ navigation, route }) => {
     setCallStatus(null);
   };
 
-  const startAudioCall = async (roomId) => {
-    try {
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: true,
-        playsInSilentModeIOS: true,
-        staysActiveInBackground: true,
-        shouldDuckAndroid: true,
-        playThroughEarpieceAndroid: true,
-      });
-
-      setCallStatus("connecting");
-
-      // Start duration counter
-      const interval = setInterval(() => {
-        setCallDuration((prev) => prev + 1);
-      }, 1000);
-      setDurationInterval(interval);
-
-      setCallStatus("ongoing");
-    } catch (error) {
-      console.error("Error starting audio call:", error);
-      Alert.alert("Lỗi", "Không thể bắt đầu cuộc gọi. Vui lòng thử lại.");
-      endAudioCall();
-    }
-  };
-
   // Hàm kết thúc cuộc gọi
   const endAudioCall = async () => {
     try {
-      console.log("[Chatting] Ending call for room:", currentCallRoom);
-
       if (currentCallRoom) {
-        if (callStatus === "outgoing") {
-          // Sử dụng phương thức mới cancelAudioCall
-          const response = await socketService.cancelAudioCall(
-            currentCallRoom,
-            chat.id
-          );
-          console.log("[Chatting] Call cancelled successfully:", response);
-        } else {
-          socketService.endAudioCall(currentCallRoom);
-          console.log("[Chatting] Call ended successfully");
-        }
+        socketService.endAudioCall(currentCallRoom);
       }
 
-      // Clear duration interval
+      // Cleanup WebRTC
+      // if (peerConnection) {
+      //   peerConnection.close();
+      //   setPeerConnection(null);
+      // }
+
+      // Dừng đếm thời gian
       if (durationInterval) {
         clearInterval(durationInterval);
         setDurationInterval(null);
       }
 
       // Reset audio mode
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: false,
-        playsInSilentModeIOS: true,
-        staysActiveInBackground: false,
-        shouldDuckAndroid: false,
-      });
+      // await Audio.setAudioModeAsync({
+      //   allowsRecordingIOS: false,
+      //   playsInSilentModeIOS: true,
+      //   staysActiveInBackground: false,
+      //   shouldDuckAndroid: false,
+      // });
 
-      // Reset all call-related states
+      // Reset states
       setCallStatus(null);
       setCallDuration(0);
       setIsInCall(false);
       setIsMuted(false);
       setCurrentCallRoom(null);
-      await stopRingtone();
-
-      console.log("[Chatting] All call states reset successfully");
+      setIncomingCall(null);
+      // await stopRingtone();
     } catch (error) {
       console.error("[Chatting] Error ending call:", error);
-      // Vẫn reset states ngay cả khi có lỗi
-      setCallStatus(null);
-      setCallDuration(0);
-      setIsInCall(false);
-      setIsMuted(false);
-      setCurrentCallRoom(null);
     }
   };
 
@@ -402,6 +449,7 @@ const Chatting = ({ navigation, route }) => {
         allowsRecordingAndroid: !isMuted,
       });
       setIsMuted(!isMuted);
+      console.log("[Chatting] Microphone muted:", !isMuted);
     } catch (error) {
       console.error("Error toggling mute:", error);
     }
@@ -414,7 +462,7 @@ const Chatting = ({ navigation, route }) => {
     blockedByUser: false,
   });
 
-  const [socketConnected, setSocketConnected] = useState(false);
+  // Socket connection status is tracked by socketService directly
 
   // Thêm state ở đầu component
   const [downloadingFiles, setDownloadingFiles] = useState({}); // { messageId: progress }
@@ -513,17 +561,28 @@ const Chatting = ({ navigation, route }) => {
 
     // Lắng nghe cuộc gọi bị từ chối
     socketService.onAudioCallRejected(({ callerId, receiverId, roomId }) => {
+      Alert.alert("Xin lỗi", "Cuộc gọi đã bị từ chối bởi người nhận");
       console.log("[Chatting] Call rejected event:", {
         callerId,
         receiverId,
         roomId,
       });
       endAudioCall();
-      Alert.alert("Xin lỗi", "Cuộc gọi đã bị từ chối bởi người nhận");
     });
 
     socketService.onAudioCallEnded(({ roomId }) => {
       if (currentCallRoom === roomId) {
+        endAudioCall();
+      }
+    });
+
+    // Lắng nghe cuộc gọi được chấp nhận
+    socketService.onCallConnected(handleCallConnected);
+
+    // Thêm listener cho trạng thái kết nối cuộc gọi
+    socketService.onCallConnectionStatus((status) => {
+      if (!status.connected && callStatus === "connecting") {
+        Alert.alert("Lỗi", status.error || "Không thể kết nối cuộc gọi");
         endAudioCall();
       }
     });
@@ -535,7 +594,9 @@ const Chatting = ({ navigation, route }) => {
       socketService.removeAllListeners();
       socketService.disconect();
       socketService.endAudioCall();
+      socketService.offCallConnected();
       stopRingtone();
+      socketService.socket?.off("call-connection-status");
     };
   }, [user?.id, chat?.id]);
 
@@ -2320,7 +2381,7 @@ const Chatting = ({ navigation, route }) => {
         />
 
         <CallOverlay
-          isVisible={callStatus === "ongoing" || callStatus === "outgoing"}
+          isVisible={["connecting", "ongoing", "outgoing"].includes(callStatus)}
           callStatus={callStatus}
           duration={formatDuration(callDuration)}
           isMuted={isMuted}

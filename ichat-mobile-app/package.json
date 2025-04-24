@@ -9,6 +9,7 @@
     "web": "expo start --web"
   },
   "dependencies": {
+    "@config-plugins/react-native-webrtc": "^10.0.0",
     "@expo/metro-runtime": "~4.0.1",
     "@expo/vector-icons": "^14.0.2",
     "@react-native-async-storage/async-storage": "^1.23.1",
@@ -38,8 +39,10 @@
     "expo-media-library": "^17.0.6",
     "expo-network": "~7.0.5",
     "expo-permissions": "^14.4.0",
+    "expo-sharing": "~13.0.1",
     "expo-status-bar": "~2.0.1",
     "firebase": "^11.5.0",
+    "mediasoup-client": "^3.9.7",
     "react": "^18.3.1",
     "react-dom": "18.3.1",
     "react-native": "^0.76.9",
@@ -56,9 +59,9 @@
     "react-native-tab-view": "^4.0.6",
     "react-native-vector-icons": "^10.2.0",
     "react-native-web": "~0.19.13",
+    "react-native-webrtc": "^124.0.5",
     "react-native-webview": "13.12.5",
-    "socket.io-client": "^4.8.1",
-    "expo-sharing": "~13.0.1"
+    "socket.io-client": "^4.8.1"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

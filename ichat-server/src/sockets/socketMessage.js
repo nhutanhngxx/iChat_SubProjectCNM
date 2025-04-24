@@ -1,3 +1,5 @@
+const CallHistory = require("../schemas/CallHistory");
+
 // Map để lưu trữ userId -> socketId
 const userSocketMap = new Map();
 
@@ -185,32 +187,59 @@ module.exports = (io) => {
     });
 
     // Xử lý chấp nhận cuộc gọi
-    socket.on("audio-call-accepted", ({ callerId, receiverId, roomId }) => {
-      const call = activeAudioCalls.get(roomId);
-      if (call) {
-        call.status = CallStatus.ACCEPTED;
-        call.participants.push(receiverId);
-        call.acceptTime = new Date();
-
-        io.to(roomId).emit("call-connected", {
+    socket.on(
+      "audio-call-accepted",
+      async ({ callerId, receiverId, roomId }) => {
+        console.log("[Server] Call accepted:", {
+          callerId,
+          receiverId,
           roomId,
-          participants: call.participants,
-          startTime: call.startTime,
         });
 
-        // Cập nhật trạng thái sau khi kết nối thành công
-        setTimeout(() => {
-          const activeCall = activeAudioCalls.get(roomId);
-          if (activeCall && activeCall.status === CallStatus.ACCEPTED) {
-            activeCall.status = CallStatus.ACTIVE;
+        const call = activeAudioCalls.get(roomId);
+        if (call) {
+          call.status = CallStatus.ACCEPTED;
+          call.acceptTime = new Date();
+          call.participants = [callerId, receiverId];
+
+          // Emit to both participants
+          const callerSocketId = userSocketMap.get(callerId);
+          const receiverSocketId = userSocketMap.get(receiverId);
+
+          if (callerSocketId && receiverSocketId) {
+            // Emit call-connected to both participants
+            io.to(callerSocketId).to(receiverSocketId).emit("call-connected", {
+              roomId,
+              participants: call.participants,
+              startTime: call.acceptTime,
+              callerId,
+              receiverId,
+            });
+
+            try {
+              const callHistory = new CallHistory({
+                caller_id: callerId,
+                receiver_id: receiverId,
+                type: "voice",
+                start_time: call.startTime,
+                duration: 0,
+                end_time: call.acceptTime,
+                status: "answered",
+              });
+
+              await callHistory.save();
+              call.historyId = callHistory._id;
+              console.log("[Server] Call history created:", callHistory._id);
+            } catch (error) {
+              console.error("[Server] Error creating call history:", error);
+            }
           }
-        }, 1000);
+        }
       }
-    });
+    );
 
     socket.on("audio-call-rejected", ({ receiverId, callerId, roomId }) => {
       console.log("[Server] Call rejected:", { receiverId, callerId, roomId });
-
       const call = activeAudioCalls.get(roomId);
       if (call) {
         // Kiểm tra xem người từ chối có phải là người nhận không
@@ -268,19 +297,57 @@ module.exports = (io) => {
     });
 
     // Xử lý kết thúc cuộc gọi
-    socket.on("audio-call-ended", ({ roomId }) => {
+    socket.on("end-audio-call", async ({ roomId }) => {
       const call = activeAudioCalls.get(roomId);
-      if (call) {
-        call.status = CallStatus.ENDED;
-        call.endTime = new Date();
+      if (call && call.historyId) {
+        const endTime = new Date();
+        const duration = Math.floor((endTime - call.acceptTime) / 1000); // Chuyển đổi thành giây
 
-        // Thông báo cho tất cả participants
-        io.to(roomId).emit("call-ended", {
-          roomId,
-          duration: call.endTime - call.startTime,
+        try {
+          // Cập nhật thông tin cuộc gọi trong database
+          await CallHistory.findByIdAndUpdate(call.historyId, {
+            duration: duration,
+            end_time: endTime,
+          });
+
+          console.log("[Server] Call history updated:", {
+            historyId: call.historyId,
+            duration,
+            endTime,
+          });
+        } catch (error) {
+          console.error("[Server] Error updating call history:", error);
+        }
+
+        // Xóa cuộc gọi khỏi map
+        activeAudioCalls.delete(roomId);
+      }
+
+      // Thông báo cho tất cả người tham gia
+      io.to(roomId).emit("call-ended", { roomId });
+    });
+
+    // Xử lý cuộc gọi nhỡ
+    socket.on("call-timeout", async ({ callerId, receiverId, roomId }) => {
+      try {
+        // Tạo bản ghi cuộc gọi với trạng thái "missed"
+        const callHistory = new CallHistory({
+          caller_id: callerId,
+          receiver_id: receiverId,
+          type: "voice",
+          start_time: new Date(),
+          duration: 0,
+          end_time: new Date(),
+          status: "missed",
         });
 
+        await callHistory.save();
+        console.log("[Server] Missed call history created:", callHistory._id);
+
+        // Xóa cuộc gọi khỏi map
         activeAudioCalls.delete(roomId);
+      } catch (error) {
+        console.error("[Server] Error creating missed call history:", error);
       }
     });
 

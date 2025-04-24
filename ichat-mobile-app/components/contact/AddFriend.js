@@ -33,7 +33,7 @@ const AddFriend = () => {
   const fetchUsers = async () => {
     try {
       const response = await axios.get(`${API_iChat}/users`);
-      console.log("Response:", response.data);
+      // console.log("Response:", response.data);
 
       if (response.data.status === "ok" && Array.isArray(response.data.users)) {
         setUsers(response.data.users); // Cập nhật state users

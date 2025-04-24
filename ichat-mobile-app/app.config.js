@@ -24,6 +24,8 @@ export default {
           "Ứng dụng cần quyền truy cập thư viện để lưu file.",
         NSPhotoLibraryAddUsageDescription:
           "Ứng dụng cần quyền lưu file vào thư viện.",
+        NSMicrophoneUsageDescription:
+          "iChat cần quyền truy cập microphone để thực hiện cuộc gọi âm thanh.",
       },
       bundleIdentifier: "com.ichat.app",
     },
@@ -32,6 +34,8 @@ export default {
         "CAMERA",
         "WRITE_EXTERNAL_STORAGE",
         "READ_EXTERNAL_STORAGE",
+        "RECORD_AUDIO",
+        "MODIFY_AUDIO_SETTINGS",
       ],
       adaptiveIcon: {
         foregroundImage: "./assets/icons/new-logo.png",
@@ -57,16 +61,19 @@ export default {
     },
     plugins: [
       [
+        // "@config-plugins/react-native-webrtc",
         "expo-image-picker",
         {
           photosPermission: "Ứng dụng cần truy cập thư viện ảnh để chọn ảnh.",
+          cameraPermission: "Cho phép iChat truy cập camera",
+          microphonePermission: "Cho phép iChat truy cập microphone",
         },
       ],
       "expo-barcode-scanner",
       [
         "expo-av",
         {
-          microphonePermission: "Allow iChat to access your microphone.",
+          microphonePermission: "Cho phép iChat truy cập microphone",
         },
       ],
     ],

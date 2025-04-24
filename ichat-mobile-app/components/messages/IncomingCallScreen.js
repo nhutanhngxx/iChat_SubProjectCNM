@@ -59,7 +59,16 @@ const IncomingCallScreen = ({
   };
 
   const startVibration = () => {
-    Vibration.vibrate([500, 1000, 500, 1000], true);
+    // Pattern: [delay, vibrate, pause, vibrate, ...]
+    Vibration.vibrate(
+      [
+        1000, // Delay ban đầu
+        2000, // Rung 2 giây
+        1000, // Pause 1 giây
+        2000, // Rung 2 giây
+      ],
+      true
+    );
   };
 
   const startRingtone = async () => {
@@ -85,7 +94,14 @@ const IncomingCallScreen = ({
 
   const handleRejectCall = () => {
     stopRingtone();
+    Vibration.cancel();
     onDecline(callerId, roomId);
+  };
+
+  const handleAcceptCall = () => {
+    stopRingtone();
+    Vibration.cancel();
+    onAccept();
   };
 
   if (!isVisible) return null;
@@ -134,7 +150,7 @@ const IncomingCallScreen = ({
           {/* Nút chấp nhận */}
           <TouchableOpacity
             style={[styles.button, styles.acceptButton]}
-            onPress={onAccept}
+            onPress={handleAcceptCall}
           >
             <Ionicons
               name="call"

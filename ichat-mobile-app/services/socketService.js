@@ -280,14 +280,53 @@ class SocketService {
   }
 
   acceptAudioCall(callerId, receiverId, roomId) {
-    if (this.ensureConnection()) {
-      this.socket.emit("audio-call-accepted", {
-        callerId,
-        receiverId,
-        roomId,
+    return new Promise((resolve, reject) => {
+      if (this.ensureConnection()) {
+        console.log("[SocketService] Sending accept call request:", {
+          callerId,
+          receiverId,
+          roomId,
+        });
+
+        // Listen for call-connected event before emitting accept
+        this.socket.once("call-connected", (data) => {
+          console.log("[SocketService] Call connected event received:", data);
+          resolve(data);
+        });
+
+        // Emit accept event
+        this.socket.emit("audio-call-accepted", {
+          callerId,
+          receiverId,
+          roomId,
+        });
+
+        // Increase timeout to 15 seconds
+        setTimeout(() => {
+          this.socket.off("call-connected"); // Clean up listener
+          reject(new Error("Accept call timeout"));
+        }, 15000);
+      } else {
+        reject(new Error("Socket not connected"));
+      }
+    });
+  }
+
+  // Lắng nghe chấp nhận cuộc gọi
+  onCallConnected(callback) {
+    console.log("[SocketService] Setting up call connected listener..");
+    if (this.socket) {
+      this.socket.off("call-connected");
+      this.socket.on("call-connected", (data) => {
+        console.log("[SocketService] Call connected event received:", data);
+        callback(data);
       });
-      // Người nhận tham gia phòng
-      this.socket.emit("join-audio-call", roomId);
+    }
+  }
+
+  offCallConnected() {
+    if (this.socket) {
+      this.socket.off("call-connected");
     }
   }
 
@@ -346,6 +385,17 @@ class SocketService {
         receiverId,
         callerId,
         roomId,
+      });
+    }
+  }
+
+  // Thêm listener mới cho trạng thái kết nối
+  onCallConnectionStatus(callback) {
+    if (this.socket) {
+      this.socket.off("call-connection-status");
+      this.socket.on("call-connection-status", (status) => {
+        console.log("[SocketService] Call connection status:", status);
+        callback(status);
       });
     }
   }
