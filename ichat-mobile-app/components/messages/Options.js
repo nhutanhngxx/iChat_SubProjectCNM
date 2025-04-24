@@ -18,6 +18,8 @@ import userService from "../../services/userService";
 import groupService from "../../services/groupService";
 import messageService from "../../services/messageService";
 import friendService from "../../services/friendService";
+import ModalRenameGroup from "../group/ModalRenameGroup";
+import ModalSelectAdmin from "../group/ModalSelectAdmin";
 
 const Option = ({ route }) => {
   // const API_iChat = `http://${getHostIP()}:5001/api`;
@@ -26,18 +28,19 @@ const Option = ({ route }) => {
   const { id, name, avatar } = route.params || {}; // Nhận id, name, avatar từ route.params
   const [receiverInfo, setReceiverInfo] = useState(null); // Thông tin người nhận
   const [receiverGroup, setReceiverGroup] = useState([]); // Thông tin nhóm
-  const [isGroup, setIsGroup] = useState(false);
-  const [adminGroup, setAdminGroup] = useState(null);
+  const [isGroup, setIsGroup] = useState(false); // Kiểm tra xem có phải nhóm không
+  const [adminGroup, setAdminGroup] = useState(null); // Kiểm tra xem có phải admin của nhóm không
   const [sharedGroups, setSharedGroups] = useState([]); // Danh sách nhóm chung giữa 2 người
+  const [isRenameModalVisible, setIsRenameModalVisible] = useState(false); // Modal đổi tên nhóm
+  const [isSelectAdminModalVisible, setIsSelectAdminModalVisible] =
+    useState(false); // Modal chọn quản trị viên mới trước khi rời khỏi nhóm
 
   useEffect(() => {
     const fetchReceiverInfo = async () => {
       try {
         const userRes = await userService.getUserById(id);
-        console.log("User response:", userRes);
         if (!userRes || !userRes._id) {
           const groupRes = await groupService.getGroupById(id);
-          console.log("Group response:", groupRes);
           if (groupRes && groupRes._id) {
             setReceiverGroup(groupRes);
             setIsGroup(true);
@@ -60,11 +63,7 @@ const Option = ({ route }) => {
     if (id) {
       fetchReceiverInfo();
     }
-  }, [id]);
-
-  console.log("User: ", receiverInfo);
-  console.log("Group: ", receiverGroup);
-  console.log("Admin: ", adminGroup);
+  }, [id, name, avatar, user.id]);
 
   // Xóa tất cả tin nhắn giữa 2 người
   const handleDeleteChatHistory = async () => {
@@ -180,6 +179,19 @@ const Option = ({ route }) => {
     ]);
   };
 
+  // Rời khỏi nhóm
+  const handleLeaveGroup = async () => {
+    Alert.alert("Thông báo", "Bạn có chắc chắn muốn rời khỏi nhóm này không?", [
+      { text: "Hủy" },
+      {
+        text: "Đồng ý",
+        onPress: async () => {
+          setIsSelectAdminModalVisible(true);
+        },
+      },
+    ]);
+  };
+
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
@@ -191,44 +203,109 @@ const Option = ({ route }) => {
           }}
           style={styles.avatar}
         />
-        <Text style={styles.name}>{name}</Text>
-      </View>
-
-      <View
-        style={{
-          flexDirection: "row",
-          justifyContent: "center",
-          gap: 30,
-          paddingVertical: 15,
-        }}
-      >
-        <View style={{ width: 100, gap: 10, alignItems: "center" }}>
-          <TouchableOpacity>
-            <Image
-              source={require("../../assets/icons/search.png")}
-              style={styles.icon}
-            />
-          </TouchableOpacity>
-          <Text style={{ textAlign: "center" }}>Tìm tin nhắn</Text>
-        </View>
-        {receiverInfo && (
-          <View style={{ width: 100, gap: 10, alignItems: "center" }}>
-            <TouchableOpacity
-              onPress={() =>
-                navigation.navigate("ViewProfile", {
-                  foundUser: receiverInfo,
-                })
-              }
-            >
+        {!adminGroup && <Text style={styles.name}>{name}</Text>}
+        {adminGroup && (
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 10,
+            }}
+          >
+            <Text style={styles.name}>{name}</Text>
+            <TouchableOpacity onPress={() => setIsRenameModalVisible(true)}>
               <Image
-                source={require("../../assets/icons/me.png")}
-                style={styles.icon}
+                source={require("../../assets/icons/edit.png")}
+                style={[styles.icon, { marginTop: 10 }]}
               />
             </TouchableOpacity>
-            <Text>Xem hồ sơ</Text>
           </View>
         )}
       </View>
+
+      {/* Function under Avatar - User */}
+      {!adminGroup && (
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "center",
+            gap: 30,
+            paddingVertical: 15,
+          }}
+        >
+          <View style={{ width: 100, gap: 10, alignItems: "center" }}>
+            <TouchableOpacity>
+              <Image
+                source={require("../../assets/icons/search.png")}
+                style={styles.icon}
+              />
+            </TouchableOpacity>
+            <Text style={{ textAlign: "center" }}>Tìm tin nhắn</Text>
+          </View>
+          {receiverInfo && (
+            <View style={{ width: 100, gap: 10, alignItems: "center" }}>
+              <TouchableOpacity
+                onPress={() =>
+                  navigation.navigate("ViewProfile", {
+                    foundUser: receiverInfo,
+                  })
+                }
+              >
+                <Image
+                  source={require("../../assets/icons/me.png")}
+                  style={styles.icon}
+                />
+              </TouchableOpacity>
+              <Text>Xem hồ sơ</Text>
+            </View>
+          )}
+        </View>
+      )}
+
+      {/* Function under Avatar - Group */}
+      {adminGroup && (
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "center",
+            gap: 10,
+            paddingVertical: 15,
+          }}
+        >
+          {/* 1. Tìm tin nhắn */}
+          <View style={{ width: 100, gap: 10, alignItems: "center" }}>
+            <TouchableOpacity>
+              <Image
+                source={require("../../assets/icons/search.png")}
+                style={styles.icon}
+              />
+            </TouchableOpacity>
+            <Text style={{ textAlign: "center" }}>Tìm tin nhắn</Text>
+          </View>
+          {/* 2. Thêm thành viên */}
+          <View style={{ width: 105, gap: 10, alignItems: "center" }}>
+            <TouchableOpacity
+              onPress={() => navigation.navigate("AddMember", { groupId: id })}
+            >
+              <Image
+                source={require("../../assets/icons/add-friend.png")}
+                style={styles.icon}
+              />
+            </TouchableOpacity>
+            <Text>Thêm thành viên</Text>
+          </View>
+          {/* 3. Đổi ảnh nhóm */}
+          <View style={{ width: 105, gap: 10, alignItems: "center" }}>
+            <TouchableOpacity>
+              <Image
+                source={require("../../assets/icons/image.png")}
+                style={styles.icon}
+              />
+            </TouchableOpacity>
+            <Text>Đổi ảnh đại diện</Text>
+          </View>
+        </View>
+      )}
 
       <ScrollView
         style={{ flex: 1, paddingLeft: 20 }}
@@ -302,7 +379,8 @@ const Option = ({ route }) => {
           )}
         </View>
 
-        {adminGroup === true && (
+        {/* Dành cho nhóm */}
+        <View style={{ gap: 15 }}>
           <View
             style={{
               height: 15,
@@ -310,26 +388,31 @@ const Option = ({ route }) => {
               marginHorizontal: -20,
             }}
           ></View>
-        )}
-        {adminGroup === true && (
-          <TouchableOpacity style={styles.component}>
+          {adminGroup === true && (
+            <TouchableOpacity style={styles.component}>
+              <Image
+                source={require("../../assets/icons/setting.png")}
+                style={styles.icon}
+              />
+              <Text style={styles.title}>Cài đặt nhóm</Text>
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity
+            style={styles.component}
+            onPress={() =>
+              navigation.navigate("MemberManagement", {
+                groupId: id,
+                adminGroup,
+              })
+            }
+          >
             <Image
-              source={require("../../assets/icons/storage.png")}
+              source={require("../../assets/icons/friend.png")}
               style={styles.icon}
             />
-            <Text style={styles.title}>Cài đặt nhóm</Text>
+            <Text style={styles.title}>Danh sách thành viên</Text>
           </TouchableOpacity>
-        )}
-
-        {adminGroup === true && (
-          <TouchableOpacity style={styles.component}>
-            <Image
-              source={require("../../assets/icons/add-friend.png")}
-              style={styles.icon}
-            />
-            <Text style={styles.title}>Thêm thành viên</Text>
-          </TouchableOpacity>
-        )}
+        </View>
 
         <View style={{ gap: 15 }}>
           <View
@@ -377,7 +460,10 @@ const Option = ({ route }) => {
           </TouchableOpacity>
 
           {receiverGroup && !receiverInfo && (
-            <TouchableOpacity style={styles.component}>
+            <TouchableOpacity
+              style={styles.component}
+              onPress={handleLeaveGroup}
+            >
               <Image
                 source={require("../../assets/icons/out-group.png")}
                 style={styles.icon}
@@ -411,6 +497,24 @@ const Option = ({ route }) => {
           )}
         </View>
       </ScrollView>
+
+      {/* Modal Rename Group */}
+      <ModalRenameGroup
+        visible={isRenameModalVisible}
+        onClose={() => setIsRenameModalVisible(false)}
+        groupId={id}
+        currentName={name}
+      />
+
+      {/* Modal Select Admin Before Leave */}
+      <ModalSelectAdmin
+        visible={isSelectAdminModalVisible}
+        onClose={() => {
+          setIsSelectAdminModalVisible(false);
+        }}
+        groupId={id}
+        currentAdminId={user.id}
+      />
     </View>
   );
 };
