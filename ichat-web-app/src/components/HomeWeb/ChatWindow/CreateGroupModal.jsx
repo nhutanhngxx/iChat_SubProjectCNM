@@ -57,7 +57,7 @@ const CreateGroupModal = ({ visible, onCancel, onOk, userMessageId }) => {
         }
     }, [visible, currentUser, userMessageId]);
 
-    // lọc theo tên hoặc số điện thoại
+    // lọc theo tên 
     useEffect(() => {
         if (searchText.trim() === "") {
             setFilteredFriends(friendsData);
