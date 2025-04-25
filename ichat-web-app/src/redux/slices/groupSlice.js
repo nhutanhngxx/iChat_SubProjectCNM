@@ -127,14 +127,14 @@ export const addMember = createAsyncThunk(
 // Thêm nhiều thành viên vào nhóm
 export const addMembers = createAsyncThunk(
   "groups/addMembers",
-  async ({ groupId, userIds }, { rejectWithValue }) => {
+  async ({ groupId, userIds, inviterId }, { rejectWithValue }) => {
     try {
       const response = await fetch(`${API_URL}add-members`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ groupId, userIds }),
+        body: JSON.stringify({ groupId, userIds, inviterId }),
       });
 
       const data = await response.json();
@@ -496,6 +496,144 @@ export const joinGroupByInvitation = createAsyncThunk(
     }
   }
 );
+// Kiểm tra trạng thái của phê duyệt thành viên của nhóm
+export const checkMemberApproval = createAsyncThunk(
+  "groups/checkMemberApproval",
+  async (groupId, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${API_URL}/member-approval/${groupId}`);
+      const data = await response.json();
+
+      if (data.status === "error") {
+        return rejectWithValue(data.message);
+      }
+
+      return data.data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+// Cập nhật trạng thái của phê duyệt thành viên của nhóm
+export const updateMemberApproval = createAsyncThunk(
+  "groups/updateMemberApproval",
+  async ({ groupId, requireApproval }, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${API_URL}/member-approval/${groupId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ requireApproval }),
+      });
+
+      const data = await response.json();
+
+      if (data.status === "error") {
+        return rejectWithValue(data.message);
+      }
+
+      return data.data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+// Lấy danh sách yêu cầu tham gia nhóm đang chờ duyệt
+export const getPendingMembers = createAsyncThunk(
+  "groups/getPendingMembers",
+  async (groupId, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${API_URL}/pending-members/${groupId}`);
+      const data = await response.json();
+
+      if (data.status === "error") {
+        return rejectWithValue(data.message);
+      }
+
+      return data.data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+// Lấy danh sách thành viên được mời bởi người dùng
+export const getInvitedMembersByUserId = createAsyncThunk(
+  "groups/getInvitedMembersByUserId",
+  async (userId, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${API_URL}invited-members/${userId}`);
+      const data = await response.json();
+
+      if (data.status === "error") {
+        return rejectWithValue(data.message);
+      }
+
+      return data.data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+// Chấp nhận thành viên vào nhóm
+export const acceptMember = createAsyncThunk(
+  "groups/acceptMember",
+  async ({ groupId, memberId }, { rejectWithValue }) => {
+    try {
+      const response = await fetch(
+        `${API_URL}/accept-member/${groupId}/${memberId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      if (data.status === "error") {
+        return rejectWithValue(data.message);
+      }
+
+      return data.data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+// Từ chối thành viên vào nhóm
+export const rejectMember = createAsyncThunk(
+  "groups/rejectMember",
+  async ({ groupId, memberId }, { rejectWithValue }) => {
+    try {
+      const response = await fetch(
+        `${API_URL}/reject-member/${groupId}/${memberId}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      if (data.status === "error") {
+        return rejectWithValue(data.message);
+      }
+
+      return { groupId, memberId };
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
 
 // Initial state
 const initialState = {
@@ -749,6 +887,102 @@ const groupSlice = createSlice({
       .addCase(joinGroupByInvitation.rejected, (state, action) => {
         state.invitationStatus = "failed";
         state.invitationError = action.payload || action.error.message;
+      })
+      // checkMemberApproval
+      .addCase(checkMemberApproval.pending, (state) => {
+        state.status = "loading";
+      })
+      .addCase(checkMemberApproval.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        state.memberApprovalStatus = action.payload;
+      })
+      .addCase(checkMemberApproval.rejected, (state, action) => {
+        state.status = "failed";
+        state.error = action.payload || action.error.message;
+      })
+
+      // updateMemberApproval
+      .addCase(updateMemberApproval.pending, (state) => {
+        state.status = "loading";
+      })
+      .addCase(updateMemberApproval.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        state.memberApprovalStatus = action.payload;
+        if (state.currentGroup) {
+          state.currentGroup = {
+            ...state.currentGroup,
+            member_approval: action.payload,
+          };
+        }
+      })
+      .addCase(updateMemberApproval.rejected, (state, action) => {
+        state.status = "failed";
+        state.error = action.payload || action.error.message;
+      })
+
+      // getPendingMembers
+      .addCase(getPendingMembers.pending, (state) => {
+        state.pendingMembersStatus = "loading";
+      })
+      .addCase(getPendingMembers.fulfilled, (state, action) => {
+        state.pendingMembersStatus = "succeeded";
+        state.pendingMembers = action.payload;
+      })
+      .addCase(getPendingMembers.rejected, (state, action) => {
+        state.pendingMembersStatus = "failed";
+        state.pendingMembersError = action.payload || action.error.message;
+      })
+
+      // getInvitedMembersByUserId
+      .addCase(getInvitedMembersByUserId.pending, (state) => {
+        state.status = "loading";
+      })
+      .addCase(getInvitedMembersByUserId.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        state.invitedMembers = action.payload;
+      })
+      .addCase(getInvitedMembersByUserId.rejected, (state, action) => {
+        state.status = "failed";
+        state.error = action.payload || action.error.message;
+      })
+
+      // acceptMember
+      .addCase(acceptMember.pending, (state) => {
+        state.status = "loading";
+      })
+      .addCase(acceptMember.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        // Remove member from pending list
+        state.pendingMembers = state.pendingMembers.filter(
+          (member) => member.user_id !== action.payload.user_id
+        );
+        // Add to members list if we're viewing that group
+        if (
+          state.currentGroup &&
+          state.currentGroup._id === action.payload.group_id
+        ) {
+          state.groupMembers.push(action.payload);
+        }
+      })
+      .addCase(acceptMember.rejected, (state, action) => {
+        state.status = "failed";
+        state.error = action.payload || action.error.message;
+      })
+
+      // rejectMember
+      .addCase(rejectMember.pending, (state) => {
+        state.status = "loading";
+      })
+      .addCase(rejectMember.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        // Remove member from pending list
+        state.pendingMembers = state.pendingMembers.filter(
+          (member) => member.user_id !== action.payload.memberId
+        );
+      })
+      .addCase(rejectMember.rejected, (state, action) => {
+        state.status = "failed";
+        state.error = action.payload || action.error.message;
       });
   },
 });

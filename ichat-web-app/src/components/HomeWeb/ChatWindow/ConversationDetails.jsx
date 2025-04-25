@@ -1,6 +1,6 @@
 import React from "react";
 import { useEffect, useRef, useState } from "react";
-import { Avatar, Button, message, Modal,Alert,Spin} from "antd"; // Thêm message, Modal
+import { Avatar, Button, message, Modal,Alert,Spin,Badge,List,Empty,Tabs} from "antd"; // Thêm message, Modal
 import "./ConversationDetails.css";
 import { FaCaretDown } from "react-icons/fa";
 import { FaCaretRight } from "react-icons/fa";
@@ -49,6 +49,14 @@ import { useNavigate } from 'react-router-dom';
 import { sendFriendRequest } from '../../../redux/slices/friendSlice';
 import GroupInviteModal from './GroupInviteModal';
 import { ShareAltOutlined } from '@ant-design/icons';
+import {
+  updateMemberApproval,
+  getPendingMembers,
+  getInvitedMembersByUserId,
+  acceptMember,
+  rejectMember,
+  checkMemberApproval
+} from "../../../redux/slices/groupSlice";
 const ConversationDetails = ({
   isVisible,
   selectedChat,
@@ -128,6 +136,146 @@ const navigate = useNavigate();
 // State để quản lý modal chuyển quyền admin 
 const [showTransferAdminChooserModal, setShowTransferAdminChooserModal] = useState(false);
 const [newAdminIdForTransfer, setNewAdminIdForTransfer] = useState(null);
+// State cho quản lý thành viên (Phê duyệt)
+const [pendingMembers, setPendingMembers] = useState([]);
+const [invitedMembers, setInvitedMembers] = useState([]);
+const [memberApprovalLoading, setMemberApprovalLoading] = useState(false);
+const [pendingMembersLoading, setPendingMembersLoading] = useState(false);
+const [showPendingMembersModal, setShowPendingMembersModal] = useState(false);
+const [membersTabActive, setMembersTabActive] = useState('pending'); // 'pending' | 'aprroved'
+//  hàm lấy trạng thái phê duyệt
+const fetchMemberApprovalStatus = async () => {
+  try {
+    const response = await dispatch(checkMemberApproval(selectedChat.id)).unwrap();
+    // setRequireApproval(response);
+    if (response && typeof response === 'object' && 'data' in response) {
+      setRequireApproval(response.data);
+    } else {
+      // If response is directly the boolean value
+      setRequireApproval(response);
+    }
+    console.log("Member approval status:", response);
+  } catch (error) {
+    console.error("Error fetching member approval status:", error);
+  }
+};
+
+//  hàm lấy danh sách thành viên chờ duyệt
+const fetchPendingMembers = async () => {
+  setPendingMembersLoading(true);
+  try {
+    const response = await dispatch(getPendingMembers(selectedChat.id)).unwrap();
+    setPendingMembers(response || []);
+  } catch (error) {
+    console.error("Error fetching pending members:", error);
+    message.error("Không thể tải danh sách thành viên chờ duyệt");
+  } finally {
+    setPendingMembersLoading(false);
+  }
+};
+
+//  hàm lấy danh sách thành viên đã được mời
+const fetchInvitedMembers = async () => {
+  try {
+    const response = await dispatch(getInvitedMembersByUserId(user.id)).unwrap();
+    setInvitedMembers(response || []);
+  } catch (error) {
+    console.error("Error fetching invited members:", error);
+  }
+};
+// hàm xử lý cập nhật trạng thái phê duyệt
+const handleUpdateApprovalSetting = async (checked) => {
+  setMemberApprovalLoading(true);
+  try {
+    await dispatch(updateMemberApproval({
+      groupId: selectedChat.id,
+      requireApproval: checked
+    })).unwrap();
+    
+    setRequireApproval(checked);
+    message.success("Đã cập nhật cài đặt phê duyệt thành viên");
+  } catch (error) {
+    console.error("Error updating member approval setting:", error);
+    message.error("Không thể cập nhật cài đặt phê duyệt thành viên");
+    // Khôi phục lại giá trị cũ nếu có lỗi
+    setRequireApproval(!checked);
+  } finally {
+    setMemberApprovalLoading(false);
+  }
+};
+// Thêm hàm xử lý chấp nhận thành viên
+const handleAcceptMember = async (memberId, memberName) => {
+  try {
+    message.loading({ content: "Đang chấp nhận thành viên...", key: "acceptMember" });
+    
+    await dispatch(acceptMember({
+      groupId: selectedChat.id,
+      memberId: memberId
+    })).unwrap();
+    
+    message.success({ 
+      content: `Đã chấp nhận ${memberName} vào nhóm`, 
+      key: "acceptMember" 
+    });
+    
+    // Cập nhật lại danh sách thành viên chờ duyệt
+    fetchPendingMembers();
+    // Cập nhật lại danh sách thành viên nhóm
+    fetchGroupMembers();
+  } catch (error) {
+    message.error({ 
+      content: error.message || "Không thể chấp nhận thành viên", 
+      key: "acceptMember" 
+    });
+    console.error("Error accepting member:", error);
+  }
+};
+
+// Thêm hàm xử lý từ chối thành viên
+const handleRejectMember = async (memberId, memberName) => {
+  try {
+    message.loading({ content: "Đang từ chối yêu cầu...", key: "rejectMember" });
+    
+    await dispatch(rejectMember({
+      groupId: selectedChat.id,
+      memberId: memberId
+    })).unwrap();
+    
+    message.success({ 
+      content: `Đã từ chối yêu cầu của ${memberName}`, 
+      key: "rejectMember" 
+    });
+    
+    // Cập nhật lại danh sách thành viên chờ duyệt
+    fetchPendingMembers();
+  } catch (error) {
+    message.error({ 
+      content: error.message || "Không thể từ chối yêu cầu", 
+      key: "rejectMember" 
+    });
+    console.error("Error rejecting member:", error);
+  }
+};
+// Thêm useEffect để kiểm tra định kỳ yêu cầu tham gia mới
+useEffect(() => {
+  let interval;
+  
+  if (selectedChat?.chat_type === "group" && selectedChat?.id && (isMainAdmin || isSubAdmin)) {
+    // Gọi API lần đầu
+    fetchPendingMembers();
+    
+    // Thiết lập interval để kiểm tra định kỳ (mỗi 30 giây)
+    interval = setInterval(() => {
+      fetchPendingMembers();
+    }, 30000);
+  }
+  
+  return () => {
+    if (interval) {
+      clearInterval(interval);
+    }
+  };
+}, [selectedChat, isMainAdmin, isSubAdmin]);
 // Hàm xử lý chuyển quyền admin chính
 const handleTransferAdmin = async () => {
   if (!newAdminIdForTransfer) {
@@ -704,8 +852,16 @@ const fetchFriends = async () => {
     if (selectedChat?.chat_type === "group" && selectedChat?.id) {
       fetchGroupMembers();
       fetchGroupSettings();
-    }
+      fetchMemberApprovalStatus(); // lấy trạng thái chờ duyệt
+          }
   }, [selectedChat]);
+  // Effect modal thành viên chờ duyệt
+  useEffect(() => {
+    if (showPendingMembersModal && selectedChat?.id) {
+      fetchPendingMembers();
+      fetchInvitedMembers();
+    }
+  }, [showPendingMembersModal]);
 // Thêm hàm để lấy cài đặt nhóm
 const fetchGroupSettings = async () => {
   try {
@@ -858,7 +1014,8 @@ const handleAddMembers = async () => {
     
     await dispatch(addMembers({
       groupId: selectedChat.id,
-      userIds: selectedMembers
+      userIds: selectedMembers,
+      inviterId: user.id // ID của người mời (người dùng hiện tại)
     })).unwrap();
     
     message.success({ 
@@ -1001,6 +1158,8 @@ const handleTransferAdminAndLeave = async () => {
   const visibleMedia = showAll ? mediaItems : mediaItems.slice(0, 8);
   console.log("Group members:", groupMembers);
   console.log("Selected chat:", selectedChat);
+  console.log("Pending members:", pendingMembers);
+  
   
   if (!isVisible) return null;
 
@@ -1292,12 +1451,15 @@ const handleTransferAdminAndLeave = async () => {
                         <div style={{ marginBottom: 10 }}>
                           <Checkbox 
                             checked={requireApproval}
-                            onChange={e => setRequireApproval(e.target.checked)}
+                            // onChange={e => setRequireApproval(e.target.checked)}
+                            onChange={e => handleUpdateApprovalSetting(e.target.checked)}
+                            disabled={memberApprovalLoading}
                           >
                             Yêu cầu phê duyệt khi có thành viên mới muốn tham gia
                           </Checkbox>
+                          {memberApprovalLoading && <Spin size="small" style={{ marginLeft: 8 }} />}
                         </div>
-                        
+                                               
                         <div style={{ marginBottom: 10 }}>
                           <Checkbox
                             checked={groupSettings.allow_add_members}
@@ -1458,7 +1620,306 @@ const handleTransferAdminAndLeave = async () => {
                         </div>
                     </>
                   )}
+                  {isMainAdmin || isSubAdmin &&(
+                    <>
+                    <div
+                        className="select-wrapper"
+                        onClick={() => setIsOpenMembers(!isOpenMembers)}
+                      >
+                        <h3>
+                          Thành viên nhóm ({groupMembers.length})
+                          {pendingMembers.length > 0 && isAdmin && (
+                            <Badge 
+                              count={pendingMembers.length} 
+                              style={{ backgroundColor: '#ff4d4f', marginLeft: 8 }}
+                              title={`${pendingMembers.length} yêu cầu tham gia đang chờ duyệt`}
+                            />
+                          )}
+                        </h3>
+                        {isOpenMembers ? (
+                          <FaCaretDown className="anticon" />
+                        ) : (
+                          <FaCaretRight className="anticon" />
+                        )}
+                      </div>
+                      {isAdmin && pendingMembers.length > 0 && (
+                        <Button 
+                          type="primary" 
+                          size="small"
+                          icon={<UserOutlined />}
+                          style={{ margin: '10px 0' }}
+                          onClick={() => setShowPendingMembersModal(true)}
+                        >
+                          {pendingMembers.length} yêu cầu tham gia mới
+                        </Button>
+                      )}
+                    </>
+                  )}
+                  { (
+                          <div style={{ marginTop: 15 }}>
+                            <Button 
+                              type="primary" 
+                              icon={<UserOutlined />} 
+                              onClick={() => setShowPendingMembersModal(true)}
+                            >
+                              Quản lý yêu cầu tham gia
+                              {pendingMembers.length > 0 && (
+                                <Badge 
+                                  count={pendingMembers.length} 
+                                  offset={[5, -5]}
+                                  style={{ backgroundColor: '#ff4d4f' }}
+                                />
+                              )}
+                            </Button>
+                          </div>
+                        )}
+                  
+
                 </Modal>
+                {/* Modal quản lý yêu cầu tham gia và thành viên đã mời */}
+                  {/* <Modal
+                    title="Quản lý thành viên"
+                    open={showPendingMembersModal}
+                    onCancel={() => setShowPendingMembersModal(false)}
+                    footer={[
+                      <Button key="close" onClick={() => setShowPendingMembersModal(false)}>
+                        Đóng
+                      </Button>
+                    ]}
+                    width={600}
+                  >
+                    <Tabs 
+                      activeKey={membersTabActive} 
+                      onChange={setMembersTabActive}
+                      items={[
+                        {
+                          key: 'pending',
+                          label: (
+                            <span>
+                              Yêu cầu tham gia
+                              {pendingMembers.length > 0 && (
+                                <Badge 
+                                  count={pendingMembers.length} 
+                                  style={{ backgroundColor: '#ff4d4f', marginLeft: 8 }}
+                                />
+                              )}
+                            </span>
+                          ),
+                          children: (
+                            <>
+                              {pendingMembersLoading ? (
+                                <div style={{ textAlign: 'center', padding: '30px 0' }}>
+                                  <Spin />
+                                  <div style={{ marginTop: 10, color: '#999' }}>Đang tải danh sách...</div>
+                                </div>
+                              ) : pendingMembers.length > 0 ? (
+                                <List
+                                  itemLayout="horizontal"
+                                  dataSource={pendingMembers}
+                                  renderItem={member => (
+                                    <List.Item
+                                      actions={[
+                                        <Button 
+                                          type="primary" 
+                                          size="small" 
+                                          onClick={() => handleAcceptMember(member.user_id, member.member.full_name)}
+                                        >
+                                          Chấp nhận
+                                        </Button>,
+                                        <Button 
+                                          danger 
+                                          size="small" 
+                                          onClick={() => handleRejectMember(member.user_id, member.member.full_name)}
+                                        >
+                                          Từ chối
+                                        </Button>
+                                      ]}
+                                    >
+                                      <List.Item.Meta
+                                        avatar={<Avatar src={member.member.avatar_path}>
+                                          {!member.member.avatar_path && member.member.full_name?.charAt(0).toUpperCase()}
+                                        </Avatar>}
+                                        title={member.member.full_name}
+                                        description={
+                                          <span>
+                                            Yêu cầu tham gia vào {new Date(member.requested_at).toLocaleString()}
+                                          </span>
+                                        }
+                                      />
+                                    </List.Item>
+                                  )}
+                                />
+                              ) : (
+                                <Empty 
+                                  image={Empty.PRESENTED_IMAGE_SIMPLE} 
+                                  description="Không có yêu cầu tham gia nào" 
+                                />
+                              )}
+                            </>
+                          )
+                        },
+                        {
+                          key: 'invited',
+                          label: 'Thành viên đã mời',
+                          children: (
+                            <>
+                              {invitedMembers.length > 0 ? (
+                                <List
+                                  itemLayout="horizontal"
+                                  dataSource={invitedMembers}
+                                  renderItem={member => (
+                                    <List.Item>
+                                      <List.Item.Meta
+                                        avatar={<Avatar src={member.member.avatar_path}>
+                                          {!member.member.avatar_path && member.member.full_name?.charAt(0).toUpperCase()}
+                                        </Avatar>}
+                                        title={member.member.full_name || member.phone || 'Không có tên'}
+                                        description={
+                                          <span>
+                                            Đã mời vào {new Date(member.joined_at).toLocaleString()}
+                                            {member.status === 'pending' && ' - Đang chờ chấp nhận'}
+                                            {member.status === 'approved' && ' - Đã chấp nhận'}
+                                            {member.status === '' && ' - Đã từ chối'}
+                                          </span>
+                                        }
+                                      />
+                                    </List.Item>
+                                  )}
+                                />
+                              ) : (
+                                <Empty 
+                                  image={Empty.PRESENTED_IMAGE_SIMPLE} 
+                                  description="Bạn chưa mời ai vào nhóm này" 
+                                />
+                              )}
+                            </>
+                          )
+                        }
+                      ]}
+                    />
+                  </Modal> */}
+                  <Modal
+                      title="Quản lý thành viên"
+                      open={showPendingMembersModal}
+                      onCancel={() => setShowPendingMembersModal(false)}
+                      footer={[
+                        <Button key="close" onClick={() => setShowPendingMembersModal(false)}>
+                          Đóng
+                        </Button>
+                      ]}
+                      width={600}
+                    >
+                      <Tabs 
+                        activeKey={isAdmin ? membersTabActive : 'invited'} 
+                        onChange={isAdmin ? setMembersTabActive : undefined}
+                        items={[
+                          // Only show pending tab for admins
+                          ...(isAdmin || isSubAdmin ? [{
+                            key: 'pending',
+                            label: (
+                              <span>
+                                Yêu cầu tham gia
+                                {pendingMembers.length > 0 && (
+                                  <Badge 
+                                    count={pendingMembers.length} 
+                                    style={{ backgroundColor: '#ff4d4f', marginLeft: 8 }}
+                                  />
+                                )}
+                              </span>
+                            ),
+                            children: (
+                              <>
+                                {pendingMembersLoading ? (
+                                  <div style={{ textAlign: 'center', padding: '30px 0' }}>
+                                    <Spin />
+                                    <div style={{ marginTop: 10, color: '#999' }}>Đang tải danh sách...</div>
+                                  </div>
+                                ) : pendingMembers.length > 0 ? (
+                                  <List
+                                    itemLayout="horizontal"
+                                    dataSource={pendingMembers}
+                                    renderItem={member => (
+                                      <List.Item
+                                        actions={[
+                                          <Button 
+                                            type="primary" 
+                                            size="small" 
+                                            onClick={() => handleAcceptMember(member.user_id, member.member.full_name)}
+                                          >
+                                            Chấp nhận
+                                          </Button>,
+                                          <Button 
+                                            danger 
+                                            size="small" 
+                                            onClick={() => handleRejectMember(member.user_id, member.member.full_name)}
+                                          >
+                                            Từ chối
+                                          </Button>
+                                        ]}
+                                      >
+                                        <List.Item.Meta
+                                          avatar={<Avatar src={member.member.avatar_path}>
+                                            {!member.member.avatar_path && member.member.full_name?.charAt(0).toUpperCase()}
+                                          </Avatar>}
+                                          title={member.member.full_name}
+                                          description={
+                                            <span>
+                                              Yêu cầu tham gia vào {new Date(member.requested_at).toLocaleString()}
+                                            </span>
+                                          }
+                                        />
+                                      </List.Item>
+                                    )}
+                                  />
+                                ) : (
+                                  <Empty 
+                                    image={Empty.PRESENTED_IMAGE_SIMPLE} 
+                                    description="Không có yêu cầu tham gia nào" 
+                                  />
+                                )}
+                              </>
+                            )
+                          }] : []), // If not admin, don't include this tab
+                          {
+                            key: 'invited',
+                            label: 'Thành viên đã mời',
+                            children: (
+                              <>
+                                {invitedMembers.length > 0 ? (
+                                  <List
+                                    itemLayout="horizontal"
+                                    dataSource={invitedMembers}
+                                    renderItem={member => (
+                                      <List.Item>
+                                        <List.Item.Meta
+                                          avatar={<Avatar src={member.member.avatar_path}>
+                                            {!member.member.avatar_path && member.member.full_name?.charAt(0).toUpperCase()}
+                                          </Avatar>}
+                                          title={member.member.full_name || member.phone || 'Không có tên'}
+                                          description={
+                                            <span>
+                                              Đã mời vào {new Date(member.joined_at).toLocaleString()}
+                                              {member.status === 'pending' && ' - Đang chờ chấp nhận'}
+                                              {member.status === 'approved' && ' - Đã chấp nhận'}
+                                              {member.status === '' && ' - Đã từ chối'}
+                                            </span>
+                                          }
+                                        />
+                                      </List.Item>
+                                    )}
+                                  />
+                                ) : (
+                                  <Empty 
+                                    image={Empty.PRESENTED_IMAGE_SIMPLE} 
+                                    description="Bạn chưa mời ai vào nhóm này" 
+                                  />
+                                )}
+                              </>
+                            )
+                          }
+                        ]}
+                      />
+                    </Modal>
                 {/* Modal chọn thành viên để chuyển quyền admin */}
                     <Modal
                       title="Chuyển quyền nhóm trưởng"
