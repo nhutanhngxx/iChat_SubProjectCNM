@@ -2,6 +2,7 @@ import React from "react";
 import { useEffect, useRef, useState } from "react";
 import { Avatar, Button, message, Modal,Alert,Spin,Badge,List,Empty,Tabs} from "antd"; // Thêm message, Modal
 import "./ConversationDetails.css";
+import socket from "../../services/socket";
 import { FaCaretDown } from "react-icons/fa";
 import { FaCaretRight } from "react-icons/fa";
 import { BiSolidFilePdf } from "react-icons/bi";
@@ -191,7 +192,10 @@ const handleUpdateApprovalSetting = async (checked) => {
       groupId: selectedChat.id,
       requireApproval: checked
     })).unwrap();
-    
+    socket.emit("update-member-approval", {
+      groupId: selectedChat.id,
+      requireApproval: checked
+    });
     setRequireApproval(checked);
     message.success("Đã cập nhật cài đặt phê duyệt thành viên");
   } catch (error) {
@@ -212,7 +216,10 @@ const handleAcceptMember = async (memberId, memberName) => {
       groupId: selectedChat.id,
       memberId: memberId
     })).unwrap();
-    
+    socket.emit("accept-member", {
+      groupId: selectedChat.id,
+      memberId: memberId
+    });
     message.success({ 
       content: `Đã chấp nhận ${memberName} vào nhóm`, 
       key: "acceptMember" 
@@ -240,7 +247,10 @@ const handleRejectMember = async (memberId, memberName) => {
       groupId: selectedChat.id,
       memberId: memberId
     })).unwrap();
-    
+    socket.emit("reject-member", {
+      groupId: selectedChat.id,
+      memberId: memberId
+    });
     message.success({ 
       content: `Đã từ chối yêu cầu của ${memberName}`, 
       key: "rejectMember" 
@@ -630,6 +640,7 @@ const handleDisbandGroup = async () => {
     message.loading({ content: "Đang giải tán nhóm...", key: "disbandGroup" });
     
     await dispatch(deleteGroup(selectedChat.id)).unwrap();
+    socket.emit("delete-group", selectedChat.id);
     
     message.success({ 
       content: "Đã giải tán nhóm thành công", 
@@ -674,7 +685,11 @@ const updateGroupSettings = async () => {
       allow_change_name: groupSettings.allow_change_name,
       allow_change_avatar: groupSettings.allow_change_avatar
     })).unwrap();
-
+    socket.emit("update-group", {
+      groupId: selectedChat.id,
+      name: groupName,
+      avatar: groupAvatar ? true : false // Just indicate if avatar was changed
+    });
     message.success({ 
       content: "Đã cập nhật thông tin nhóm thành công", 
       key: "updateGroup" 
@@ -985,7 +1000,10 @@ const handleRemoveMember = async (userId, userName,isTargetAdmin) => {
           groupId: selectedChat.id,
           userId: userId
         })).unwrap();
-        
+        socket.emit("remove-member", {
+          groupId: selectedChat.id,
+          userId: userId
+        });
         message.success({ 
           content: "Đã xóa thành viên khỏi nhóm", 
           key: "removeMember" 
@@ -1017,6 +1035,11 @@ const handleAddMembers = async () => {
       userIds: selectedMembers,
       inviterId: user.id // ID của người mời (người dùng hiện tại)
     })).unwrap();
+    socket.emit("add-members", {
+      groupId: selectedChat.id,
+      userIds: selectedMembers
+    });
+    console.log("Selected đã chọn cho handel Message:",selectedChat.id);
     
     message.success({ 
       content: `Đã thêm ${selectedMembers.length} thành viên vào nhóm`, 
@@ -1051,7 +1074,10 @@ const handleLeaveGroup = async () => {
       groupId: selectedChat.id,
       userId: user.id
     })).unwrap();
-    
+    socket.emit("leave-group", {
+      groupId: selectedChat.id,
+      userId: user.id
+    });
     message.success({ 
       content: "Đã rời nhóm thành công", 
       key: "leaveGroup" 
@@ -1096,7 +1122,10 @@ const handleTransferAdminAndLeave = async () => {
       groupId: selectedChat.id,
       userId: newAdminId
     })).unwrap();
-    
+    socket.emit("transfer-admin", {
+      groupId: selectedChat.id,
+      userId: newAdminIdForTransfer
+    });
     message.success({ 
       content: "Đã chuyển quyền admin thành công", 
       key: "transferAdmin" 
@@ -1160,7 +1189,98 @@ const handleTransferAdminAndLeave = async () => {
   console.log("Selected chat:", selectedChat);
   console.log("Pending members:", pendingMembers);
   
-  
+  // useEffect for group-specific socket events
+useEffect(() => {
+  if (!selectedChat?.id || selectedChat.chat_type !== "group") return;
+    // Tham gia phòng quản lý nhóm - chỉ dùng groupId trực tiếp
+    console.log("Joining group management room:", selectedChat.id);
+    socket.emit("join-room", selectedChat.id); // Không cần prefix "group_"
+    
+  // Define a prefix for easier logging
+  const logPrefix = "[Group Socket]";
+
+  // Function to handle general member updates that require refetching members
+  const handleMemberUpdate = (data) => {
+    if (data.groupId === selectedChat.id) {
+      console.log(`${logPrefix} Member update detected for current group:`, data);
+      fetchGroupMembers();
+      fetchPendingMembers();
+    }
+  };
+
+  // Listen for member approval status change
+  const handleApprovalUpdate = (data) => {
+    if (data.groupId === selectedChat.id) {
+      console.log(`${logPrefix} Approval setting updated:`, data);
+      setRequireApproval(data.requireApproval);
+    }
+  };
+
+  // Group info updates
+  const handleGroupUpdate = (data) => {
+    if (data.groupId === selectedChat.id) {
+      console.log(`${logPrefix} Group info updated:`, data);
+      fetchGroupSettings();
+      // If onUpdateSelectedChat exists, update the group name
+      if (typeof onUpdateSelectedChat === 'function' && data.name) {
+        onUpdateSelectedChat({
+          ...selectedChat,
+          name: data.name
+        });
+      }
+    }
+  };
+
+  // Handle admin transfer
+  const handleAdminTransfer = (data) => {
+    if (data.groupId === selectedChat.id) {
+      console.log(`${logPrefix} Admin transferred:`, data);
+      fetchGroupMembers();
+      fetchGroupSettings();
+      // Update isMainAdmin status if current user is the new admin
+      setIsMainAdmin(data.userId === user.id);
+    }
+  };
+
+  // Handle group deletion
+  const handleGroupDeleted = (groupId) => {
+    if (groupId === selectedChat.id) {
+      console.log(`${logPrefix} Group was deleted:`, groupId);
+      message.info("Nhóm đã bị giải tán bởi quản trị viên.");
+      if (onLeaveGroup && typeof onLeaveGroup === 'function') {
+        onLeaveGroup();
+      } else {
+        window.dispatchEvent(new CustomEvent('group-left', { 
+          detail: { groupId: selectedChat.id }
+        }));
+      }
+    }
+  };
+
+  // Register listeners
+  socket.on("members-added", handleMemberUpdate);
+  socket.on("member-removed", handleMemberUpdate);
+  socket.on("member-accepted", handleMemberUpdate);
+  socket.on("member-rejected", handleMemberUpdate);
+  socket.on("member-left", handleMemberUpdate);
+  socket.on("member-approval-updated", handleApprovalUpdate);
+  socket.on("group-updated", handleGroupUpdate);
+  socket.on("admin-transferred", handleAdminTransfer);
+  socket.on("group-deleted", handleGroupDeleted);
+
+  // Clean up listeners when component unmounts or selectedChat changes
+  return () => {
+    socket.off("members-added", handleMemberUpdate);
+    socket.off("member-removed", handleMemberUpdate);
+    socket.off("member-accepted", handleMemberUpdate);
+    socket.off("member-rejected", handleMemberUpdate);
+    socket.off("member-left", handleMemberUpdate);
+    socket.off("member-approval-updated", handleApprovalUpdate);
+    socket.off("group-updated", handleGroupUpdate);
+    socket.off("admin-transferred", handleAdminTransfer);
+    socket.off("group-deleted", handleGroupDeleted);
+  };
+}, [selectedChat?.id, selectedChat?.chat_type, user.id]);
   if (!isVisible) return null;
 
   return (
