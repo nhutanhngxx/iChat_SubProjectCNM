@@ -5,7 +5,7 @@ import { SearchOutlined, CloseOutlined } from "@ant-design/icons";
 import { message as AntdMessage } from "antd";
 import { getUserFriends } from "../../../redux/slices/friendSlice";
 import { getUserGroups } from "../../../redux/slices/groupSlice";
-import { forwardMessage } from "../../../redux/slices/messagesSlice";
+import { forwardMessage, fetchMessages, fetchChatMessages, updateMessages } from "../../../redux/slices/messagesSlice";
 import { useDispatch, useSelector } from "react-redux";
 
 const ShareDialog = ({ open, onClose, message }) => {
@@ -18,8 +18,6 @@ const ShareDialog = ({ open, onClose, message }) => {
 
     const dispatch = useDispatch();
     const currentUser = useSelector((state) => state.auth.user);
-
-    console.log("danh sách bạn bè", friendsData);
 
     useEffect(() => {
         const fetchUserData = async () => {
@@ -102,6 +100,9 @@ const ShareDialog = ({ open, onClose, message }) => {
                     )
                 )
             );
+            await dispatch(fetchMessages(currentUser.id || currentUser._id)).unwrap();
+            // await dispatch(fetchChatMessages({ senderId: currentUser.id, receiverId: message.sender_id })).unwrap();
+
             AntdMessage.success("Chuyển tiếp thành công!");
             onClose();
         } catch (error) {
@@ -109,6 +110,7 @@ const ShareDialog = ({ open, onClose, message }) => {
         }
     };
 
+    console.log("user current from ShareDialog", currentUser);
     return (
         <Modal
             style={{ overflow: "hidden", height: "100vh", width: "552px" }}
