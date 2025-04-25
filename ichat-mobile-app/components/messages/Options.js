@@ -304,6 +304,17 @@ const Option = ({ route }) => {
             </TouchableOpacity>
             <Text style={{ textAlign: "center" }}>Tìm tin nhắn</Text>
           </View>
+          <View style={{ width: 105, gap: 10, alignItems: "center" }}>
+            <TouchableOpacity
+              onPress={() => navigation.navigate("AddMember", { groupId: id })}
+            >
+              <Image
+                source={require("../../assets/icons/add-friend.png")}
+                style={styles.icon}
+              />
+            </TouchableOpacity>
+            <Text>Thêm thành viên</Text>
+          </View>
           {receiverInfo && (
             <View style={{ width: 100, gap: 10, alignItems: "center" }}>
               <TouchableOpacity
@@ -357,7 +368,7 @@ const Option = ({ route }) => {
             <Text>Thêm thành viên</Text>
           </View>
           {/* 3. Đổi ảnh nhóm */}
-          <View style={{ width: 105, gap: 10, alignItems: "center" }}>
+          {/* <View style={{ width: 105, gap: 10, alignItems: "center" }}>
             <TouchableOpacity>
               <Image
                 source={require("../../assets/icons/image.png")}
@@ -365,7 +376,7 @@ const Option = ({ route }) => {
               />
             </TouchableOpacity>
             <Text>Đổi ảnh đại diện</Text>
-          </View>
+          </View> */}
         </View>
       )}
 

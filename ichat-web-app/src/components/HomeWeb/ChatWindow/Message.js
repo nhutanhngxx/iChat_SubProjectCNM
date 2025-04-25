@@ -26,6 +26,7 @@ import { getUserFriends } from "../../../redux/slices/friendSlice";
 import { SmileOutlined } from "@ant-design/icons";
 import { Tooltip, Popover } from "antd";
 import { fetchChatMessages } from "../../../redux/slices/messagesSlice";
+import ShareDialog from "./ShareDialog";
 // import { LikeOutlined, CheckOutlined } from "@ant-design/icons";
 
 const Message = ({
@@ -537,9 +538,11 @@ const Message = ({
     closeContextMenu();
   };
 
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+
   const handleShare = () => {
     // Implement share functionality
-    console.log("Share message:", message._id);
+    setShareDialogOpen(true);
     closeContextMenu();
   };
 
@@ -1365,6 +1368,12 @@ const Message = ({
             )}
           </div>
         )}
+
+        <ShareDialog
+          open={shareDialogOpen}
+          onClose={() => setShareDialogOpen(false)}
+          message={message}
+        />
       </div>
     </>
   );

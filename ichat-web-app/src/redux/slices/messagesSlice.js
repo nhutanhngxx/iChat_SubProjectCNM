@@ -3,6 +3,31 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 // const API_URL = "http://localhost:5001/messages/";
 const API_URL = `http://${window.location.hostname}:5001/api/messages/`;
 
+// Chuyển tiếp tin nhắn
+export const forwardMessage = createAsyncThunk(
+  "messages/forwardMessage",
+  async ({ messageId, receiverId, currentUserId }, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${API_URL}forward`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ messageId, receiverId, currentUserId }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        return rejectWithValue(errorData);
+      }
+
+      return await response.json();
+    } catch (error) {
+      return rejectWithValue({ error: "Network error" });
+    }
+  }
+);
+
 // Lấy tất cả tin nhắn của một người dùng
 export const getUserMessages = createAsyncThunk(
   "messages/getUserMessages",
