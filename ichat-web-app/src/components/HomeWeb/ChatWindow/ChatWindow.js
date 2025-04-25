@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Layout, Modal } from "antd";
+import { Layout, Modal, message } from "antd";
 
 import HelloWindow from "./HelloWindow";
 import MessageArea from "./MessageArea";
@@ -317,6 +317,128 @@ const ChatWindow = ({ user, selectedFriend }) => {
       window.removeEventListener("user-left-group", handleUserLeftGroup);
     };
   }, []);
+  //global group event listeners in your existing useEffect
+  useEffect(() => {
+    if (!user?.id) return;
+
+    console.log("Setting up global group event listeners for user:", user.id);
+
+    const handleGroupDeleted = (groupId) => {
+      console.log("Group deleted globally:", groupId);
+      // Update the messages list to remove the deleted group
+      dispatch(fetchMessages(user.id));
+
+      // If the deleted group is the currently selected one, clear the selection
+      if (
+        selectedUser &&
+        selectedUser.chat_type === "group" &&
+        selectedUser.id === groupId
+      ) {
+        setSelectedUser(null);
+        message.info("Nhóm đã bị giải tán bởi quản trị viên.");
+      }
+    };
+    const handleMembersAdded = (data) => {
+      console.log("Members added to group globally:", data);
+
+      // Nếu người dùng hiện tại được thêm vào nhóm
+      if (Array.isArray(data.userIds) && data.userIds.includes(user.id)) {
+        // Cập nhật danh sách chat trong sidebar
+        dispatch(fetchMessages(user.id));
+
+        // Hiển thị thông báo
+        message.success(
+          `Bạn đã được thêm vào nhóm "${data.groupName || "mới"}"`
+        );
+      } else {
+        // Nếu không phải người dùng hiện tại, chỉ cập nhật sidebar
+        dispatch(fetchMessages(user.id));
+      }
+    };
+    const handleMemberRemoved = (data) => {
+      console.log("Member removed from group globally:", data);
+
+      // If the current user was removed from a group
+      if (data.userId === user.id) {
+        dispatch(fetchMessages(user.id));
+
+        // If the group the user was removed from is currently selected
+        if (
+          selectedUser &&
+          selectedUser.chat_type === "group" &&
+          selectedUser.id === data.groupId
+        ) {
+          setSelectedUser(null);
+          message.info("Bạn đã bị xóa khỏi nhóm.");
+        }
+      } else {
+        // Just update the messages list
+        dispatch(fetchMessages(user.id));
+      }
+    };
+
+    const handleGroupUpdated = (data) => {
+      console.log("Group updated globally:", data);
+      // Update messages to show new group name/avatar
+      dispatch(fetchMessages(user.id));
+
+      // If this is the currently selected group, update its name/avatar
+      if (
+        selectedUser &&
+        selectedUser.chat_type === "group" &&
+        selectedUser.id === data.groupId
+      ) {
+        setSelectedUser((prev) => ({
+          ...prev,
+          name: data.name || prev.name,
+          // Update avatar if available
+          avatar_path: data.avatar
+            ? `${prev.avatar_path}?t=${Date.now()}`
+            : prev.avatar_path,
+        }));
+      }
+    };
+
+    const handleMemberLeft = (data) => {
+      console.log("Member left group globally:", data);
+      dispatch(fetchMessages(user.id));
+    };
+
+    const handleAdminTransferred = (data) => {
+      console.log("Admin transferred globally:", data);
+      dispatch(fetchMessages(user.id));
+
+      // If this is the currently selected group, update admin_id
+      if (
+        selectedUser &&
+        selectedUser.chat_type === "group" &&
+        selectedUser.id === data.groupId
+      ) {
+        setSelectedUser((prev) => ({
+          ...prev,
+          admin_id: data.userId,
+        }));
+      }
+    };
+
+    // Register listeners
+    socket.on("members-added", handleMembersAdded);
+    socket.on("group-deleted", handleGroupDeleted);
+    socket.on("member-removed", handleMemberRemoved);
+    socket.on("group-updated", handleGroupUpdated);
+    socket.on("member-left", handleMemberLeft);
+    socket.on("admin-transferred", handleAdminTransferred);
+
+    return () => {
+      // Cleanup listeners
+      socket.off("group-deleted", handleGroupDeleted);
+      socket.off("member-removed", handleMemberRemoved);
+      socket.off("group-updated", handleGroupUpdated);
+      socket.off("member-left", handleMemberLeft);
+      socket.off("admin-transferred", handleAdminTransferred);
+      socket.off("members-added", handleMembersAdded);
+    };
+  }, [user?.id, selectedUser, dispatch]);
 
   return (
     <Layout className="chat-window">
