@@ -504,7 +504,6 @@ const GroupModel = {
         {
           $match: {
             invited_by: new mongoose.Types.ObjectId(userId),
-            status: "approved",
           },
         },
         {
