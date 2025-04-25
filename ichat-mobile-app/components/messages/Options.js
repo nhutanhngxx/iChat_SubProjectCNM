@@ -442,39 +442,42 @@ const Option = ({ route }) => {
         </View>
 
         {/* Dành cho nhóm */}
-        <View style={{ gap: 15 }}>
-          <View
-            style={{
-              height: 15,
-              backgroundColor: "rgba(0, 0, 0, 0.1)",
-              marginHorizontal: -20,
-            }}
-          ></View>
-          {adminGroup === true && (
-            <TouchableOpacity style={styles.component}>
+        {isGroup && (
+          <View style={{ gap: 15 }}>
+            <View
+              style={{
+                height: 15,
+                backgroundColor: "rgba(0, 0, 0, 0.1)",
+                marginHorizontal: -20,
+              }}
+            ></View>
+            {adminGroup === true && (
+              <TouchableOpacity style={styles.component}>
+                <Image
+                  source={require("../../assets/icons/setting.png")}
+                  style={styles.icon}
+                />
+                <Text style={styles.title}>Cài đặt nhóm</Text>
+              </TouchableOpacity>
+            )}
+
+            <TouchableOpacity
+              style={styles.component}
+              onPress={() =>
+                navigation.navigate("MemberManagement", {
+                  groupId: id,
+                  adminGroup,
+                })
+              }
+            >
               <Image
-                source={require("../../assets/icons/setting.png")}
+                source={require("../../assets/icons/friend.png")}
                 style={styles.icon}
               />
-              <Text style={styles.title}>Cài đặt nhóm</Text>
+              <Text style={styles.title}>Danh sách thành viên</Text>
             </TouchableOpacity>
-          )}
-          <TouchableOpacity
-            style={styles.component}
-            onPress={() =>
-              navigation.navigate("MemberManagement", {
-                groupId: id,
-                adminGroup,
-              })
-            }
-          >
-            <Image
-              source={require("../../assets/icons/friend.png")}
-              style={styles.icon}
-            />
-            <Text style={styles.title}>Danh sách thành viên</Text>
-          </TouchableOpacity>
-        </View>
+          </View>
+        )}
 
         <View style={{ gap: 15 }}>
           <View
