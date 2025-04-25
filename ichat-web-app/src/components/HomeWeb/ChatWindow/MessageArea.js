@@ -695,6 +695,7 @@ const MessageArea = ({ selectedChat, user, onChatChange, onSelectUser }) => {
         ...sentMessages,
         chatId: roomId,
       });
+
       dispatch(fetchMessages(user?.id));
       dispatch(updateMessages(sentMessages));
     } catch (error) {

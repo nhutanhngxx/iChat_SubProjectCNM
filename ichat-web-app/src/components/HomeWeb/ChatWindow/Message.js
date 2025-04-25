@@ -378,7 +378,7 @@ const Message = ({
 
       // Refresh messages
       dispatch(fetchMessages(user.id || user._id));
-      dispatch(updateMessages(result));
+      dispatch(updateMessages(result.data));
       closeContextMenu();
       setThreeDotsMenuVisible(false);
     } catch (error) {
@@ -566,11 +566,9 @@ const Message = ({
       if (selectedChat.chat_type === "group") {
         dispatch(getUserMessages(selectedChat.id));
       }
-
+      dispatch(updateMessages(result));
       // Gọi fetchMessages sau khi đã cập nhật store
-      await dispatch(fetchMessages(user.id || user._id));
-
-      // Show success message
+      await dispatch(fetchMessages(user.id || user._id)); // Show success message
       antMessage.success({
         content: "Đã xóa tin nhắn thành công!",
         key,
