@@ -58,6 +58,15 @@ const Message = ({
 
   // Thêm state vào component Message để theo dõi xem đã render nhóm ảnh này chưa
   const [isFirstInGroup, setIsFirstInGroup] = useState(true);
+  //Kiểm tra tin nhắn có phải là link không
+  const isValidURL = (str) => {
+    try {
+      new URL(str);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  };
 
   // Thêm useEffect để kiểm tra xem message này có phải là tin nhắn đầu tiên trong nhóm không
   useEffect(() => {
@@ -1203,7 +1212,19 @@ const Message = ({
                 backgroundColor: isSender ? "#e6f7ff" : "#fff",
               }}
             >
-              <p>{message.content}</p>
+              <p>
+                {isValidURL(message.content) ? (
+                  <a
+                    href={message.content}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {message.content}
+                  </a>
+                ) : (
+                  message.content
+                )}
+              </p>
               <span className="timestamp">
                 {new Date(message.timestamp).toLocaleTimeString([], {
                   hour: "2-digit",

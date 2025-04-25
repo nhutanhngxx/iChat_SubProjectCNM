@@ -114,28 +114,52 @@ const MessageModel = {
     chat_type,
     file,
     reply_to,
+    duration,
   }) => {
-    if (!sender_id || !receiver_id || !chat_type || (!content && !file)) {
+    if (!sender_id || !receiver_id || !chat_type) {
       throw { status: 400, message: "Thiếu dữ liệu" };
     }
 
-    let messageContent = content;
-    if (file) {
-      const imageUrl = await uploadFile(file);
-      messageContent = imageUrl;
+    try {
+      let messageContent = content;
+
+      // Xử lý file nếu có
+      if (file) {
+        const fileUrl = await uploadFile(file);
+        messageContent = fileUrl;
+      }
+
+      // Tạo object messageData
+      const messageData = {
+        sender_id,
+        receiver_id,
+        content: messageContent,
+        type,
+        chat_type,
+        reply_to: reply_to || null,
+      };
+
+      // Xử lý đặc biệt cho audio message
+      if (type === "audio") {
+        if (!duration) {
+          throw {
+            status: 400,
+            message: "Thiếu thông tin duration cho audio message",
+          };
+        }
+        messageData.duration = parseInt(duration, 10);
+      }
+
+      const newMessage = new Messages(messageData);
+      await newMessage.save();
+      return newMessage;
+    } catch (error) {
+      console.error("Lỗi khi gửi tin nhắn:", error);
+      throw {
+        status: error.status || 500,
+        message: error.message || "Lỗi server khi gửi tin nhắn",
+      };
     }
-
-    const newMessage = new Messages({
-      sender_id,
-      receiver_id,
-      content: messageContent,
-      type,
-      chat_type,
-      reply_to: reply_to || null,
-    });
-
-    await newMessage.save();
-    return newMessage;
   },
 
   sendGroupMessage: async ({ sender_id, receiver_id, content, type }) => {

@@ -42,6 +42,7 @@ const GroupList = ({ onSelectGroup }) => {
 
     fetchGroups();
   }, [dispatch, currentUser?.id]);
+  
 
   // Hàm lấy số lượng thành viên cho mỗi nhóm
   const fetchMemberCounts = async (groupsList) => {

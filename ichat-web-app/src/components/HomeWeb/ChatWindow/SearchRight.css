@@ -236,7 +236,7 @@
 .conttent-searchRight {
   background-color: rgb(255, 255, 255);
   overflow-y: auto;
-  height: 77%;
+  height: 79vh;
   max-height: 79vh;
 }
 .conttent-searchRight .search-right-empty {

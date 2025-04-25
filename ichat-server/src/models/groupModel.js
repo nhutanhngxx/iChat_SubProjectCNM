@@ -5,6 +5,8 @@ const Message = require("../schemas/Messages");
 const mongoose = require("mongoose");
 const { uploadFile } = require("../services/upload-file");
 const { get } = require("http");
+const crypto = require("crypto");
+const GroupInvitation = require("../schemas/GroupInvitation");
 
 const GroupModel = {
   //   Lấy danh sách nhóm mà người dùng tham gia
@@ -31,7 +33,7 @@ const GroupModel = {
       // Sử dụng aggregate để join dữ liệu từ GroupMember và UserInfo
       const members = await GroupMember.aggregate([
         // Lọc theo group_id
-        { $match: { group_id: groupObjectId } },
+        { $match: { group_id: groupObjectId, status: "approved" } },
 
         // Join với collection UserInfo để lấy thông tin user
         {
@@ -102,9 +104,26 @@ const GroupModel = {
         : [];
 
       // Xử lý avatar nếu có
-      let avatarUrl = null;
-      if (avatar) {
-        avatarUrl = await uploadFile(avatar);
+      // let avatarUrl = null;
+      // if (avatar) {
+      //   avatarUrl = await uploadFile(avatar);
+      // }
+
+      // Xử lý avatar nếu có (Merge code)
+      let avatarUrl =
+        "https://nhutanhngxx.s3.ap-southeast-1.amazonaws.com/root/new-logo.png"; // default avatar
+      if (avatar && avatar.buffer) {
+        try {
+          avatarUrl = await uploadFile({
+            buffer: avatar.buffer,
+            mimetype: avatar.mimetype,
+            originalname: avatar.originalname,
+            size: avatar.size,
+          });
+        } catch (error) {
+          console.error("Lỗi upload avatar:", error);
+          // Tiếp tục với avatar mặc định nếu upload thất bại
+        }
       }
 
       // Tạo group
@@ -165,8 +184,14 @@ const GroupModel = {
   },
 
   // Thêm nhiều thành viên cùng lúc
-  addMembers: async (groupId, userIds) => {
+  addMembers: async (groupId, userIds, inviterId) => {
     try {
+      // Kiểm tra groupId và userIds
+      const group = await GroupChat.findById(groupId);
+      if (!group) {
+        throw new Error("Nhóm không tồn tại");
+      }
+
       // Chuyển đổi thành mảng nếu chỉ là một ID
       const userIdArray = Array.isArray(userIds) ? userIds : [userIds];
 
@@ -202,6 +227,8 @@ const GroupModel = {
       const membersToAdd = newUserIds.map((userId) => ({
         group_id: groupId,
         user_id: new mongoose.Types.ObjectId(userId),
+        invited_by: inviterId,
+        status: group.require_approval ? "pending" : "approved",
       }));
 
       // Thêm các thành viên mới
@@ -377,6 +404,7 @@ const GroupModel = {
       throw new Error("Không thể kiểm tra quyền admin phụ của nhóm");
     }
   },
+
   transferAdmin: async (groupId, userId) => {
     try {
       // Cập nhật admin_id trong GroupChat
@@ -393,6 +421,310 @@ const GroupModel = {
       return updatedGroup;
     } catch (error) {
       console.error("Lỗi khi chuyển nhường quyền admin:", error);
+      throw error;
+    }
+  },
+  // Tạo lời mời nhóm
+  createGroupInvitation: async (
+    groupId,
+    userId,
+    expiresInHours = 24,
+    maxUses = null
+  ) => {
+    // Kiểm tra xem nhóm có tồn tại không
+    const group = await GroupChat.findById(groupId);
+    if (!group) {
+      throw new Error("Không tìm thấy nhóm");
+    }
+
+    // Kiểm tra xem người tạo có phải là thành viên nhóm
+    const isMember = await GroupMember.findOne({
+      group_id: groupId,
+      user_id: userId,
+    });
+
+    if (!isMember) {
+      throw new Error("Bạn không phải là thành viên của nhóm này");
+    }
+    const existingInvite = await GroupInvitation.findOne({
+      group_id: groupId,
+      active: true,
+      expires_at: { $gt: new Date() },
+      max_uses: maxUses,
+    });
+
+    if (existingInvite) {
+      return existingInvite; // Trả về lời mời hiện có thay vì tạo mới
+    }
+
+    // Tạo token ngẫu nhiên
+    const token = crypto.randomBytes(16).toString("hex");
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + expiresInHours);
+
+    // Tạo lời mời mới
+    const invitation = await GroupInvitation.create({
+      group_id: groupId,
+      token,
+      created_by: userId,
+      expires_at: expiresAt,
+      max_uses: maxUses,
+      use_count: 0,
+      active: true,
+    });
+
+    return invitation;
+  },
+
+  // Xác thực và sử dụng lời mời
+  validateAndJoinGroup: async (token, userId) => {
+    // Tìm lời mời theo token
+    const invitation = await GroupInvitation.findOne({
+      token,
+      active: true,
+      expires_at: { $gt: new Date() },
+    });
+
+    if (!invitation) {
+      throw new Error("Lời mời không hợp lệ hoặc đã hết hạn");
+    }
+
+    // Kiểm tra số lần sử dụng
+    if (invitation.max_uses && invitation.use_count >= invitation.max_uses) {
+      throw new Error("Lời mời đã đạt giới hạn sử dụng");
+    }
+
+    // Kiểm tra xem người dùng đã là thành viên chưa
+    const existingMember = await GroupMember.findOne({
+      group_id: invitation.group_id,
+      user_id: userId,
+    });
+
+    if (existingMember) {
+      throw new Error("Bạn đã là thành viên của nhóm này");
+    }
+
+    // Thêm người dùng vào nhóm (nếu thành viên đã có thì không thêm chỉ cập nhật)
+    await GroupMember.updateOne(
+      { group_id: invitation.group_id, user_id: userId },
+      { $setOnInsert: { role: "member", joined_at: new Date() } },
+      { upsert: true }
+    );
+
+    // Cập nhật số lần sử dụng
+    invitation.use_count += 1;
+    await invitation.save();
+
+    // Lấy thông tin nhóm để trả về
+    const group = await GroupChat.findById(invitation.group_id);
+    return group;
+  },
+
+  // Hủy lời mời
+  revokeInvitation: async (inviteId, userId) => {
+    const invitation = await GroupInvitation.findById(inviteId);
+
+    if (!invitation) {
+      throw new Error("Không tìm thấy lời mời");
+    }
+
+    // Kiểm tra quyền (chỉ người tạo hoặc admin nhóm mới có thể hủy)
+    const group = await GroupChat.findById(invitation.group_id);
+    const isAdmin = group.admin_id.toString() === userId.toString();
+    const isCreator = invitation.created_by.toString() === userId.toString();
+
+    if (!isAdmin && !isCreator) {
+      throw new Error("Bạn không có quyền hủy lời mời này");
+    }
+
+    invitation.active = false;
+    await invitation.save();
+
+    return invitation;
+  },
+
+  // Lấy danh sách lời mời của nhóm
+  getGroupInvitations: async (groupId, userId) => {
+    // Kiểm tra xem người dùng có quyền xem không (là thành viên nhóm)
+    const member = await GroupMember.findOne({
+      group_id: groupId,
+      user_id: userId,
+    });
+    console.log("Group ID:", groupId);
+    console.log("User ID:", userId);
+    console.log("Member:", member);
+
+    if (!member) {
+      throw new Error("Bạn không phải là thành viên của nhóm này");
+    }
+
+    // Lấy các lời mời còn hoạt động
+    const invitations = await GroupInvitation.find({
+      group_id: groupId,
+      active: true,
+      expires_at: { $gt: new Date() },
+    }).populate("created_by", "full_name avatar_path");
+
+    return invitations;
+  },
+  // Kiểm tra trạn thái của phê duyệt thành viên của nhóm
+  checkMemberApproval: async (groupId) => {
+    try {
+      const group = await GroupChat.findById(groupId);
+      if (!group) {
+        throw new Error("Nhóm không tồn tại");
+      }
+      return group.require_approval;
+    } catch (error) {
+      console.error("Lỗi khi kiểm tra trạng thái phê duyệt thành viên:", error);
+      throw error;
+    }
+  },
+
+  // Cập nhật trạng thái của phê duyệt thành viên của nhóm
+  updateMemberApproval: async ({ groupId, requireApproval }) => {
+    try {
+      const updatedGroup = await GroupChat.findByIdAndUpdate(
+        groupId,
+        { require_approval: requireApproval },
+        { new: true }
+      );
+      if (!updatedGroup) {
+        throw new Error("Nhóm không tồn tại");
+      }
+      return updatedGroup;
+    } catch (error) {
+      console.error("Lỗi khi cập nhật trạng thái phê duyệt thành viên:", error);
+      throw error;
+    }
+  },
+
+  // Lấy danh sách yêu cầu tham gia nhóm đang đợi được duyệt
+  getPendingMembers: async (groupId) => {
+    try {
+      const pendingMembers = await GroupMember.aggregate([
+        {
+          $match: {
+            group_id: new mongoose.Types.ObjectId(groupId),
+            status: "pending",
+          },
+        },
+        {
+          $lookup: {
+            from: "UserInfo",
+            localField: "user_id",
+            foreignField: "_id",
+            as: "userDetails",
+          },
+        },
+        {
+          $lookup: {
+            from: "UserInfo",
+            localField: "invited_by",
+            foreignField: "_id",
+            as: "inviterDetails",
+          },
+        },
+        {
+          $unwind: "$userDetails",
+        },
+        {
+          $unwind: "$inviterDetails",
+        },
+        {
+          $project: {
+            _id: 1,
+            user_id: 1,
+            status: 1,
+            requested_at: "$joined_at",
+            member: {
+              _id: "$userDetails._id",
+              full_name: "$userDetails.full_name",
+              avatar_path: "$userDetails.avatar_path",
+            },
+            invited_by: {
+              _id: "$inviterDetails._id",
+              full_name: "$inviterDetails.full_name",
+              avatar_path: "$inviterDetails.avatar_path",
+            },
+          },
+        },
+      ]);
+
+      return pendingMembers;
+    } catch (error) {
+      console.error("Lỗi khi lấy danh sách yêu cầu tham gia:", error);
+      throw error;
+    }
+  },
+
+  // Lấy danh sách thành viên được mời bởi bạn
+  getInvitedMembersByUserId: async (userId) => {
+    try {
+      const invitedMembers = await GroupMember.aggregate([
+        {
+          $match: {
+            invited_by: new mongoose.Types.ObjectId(userId),
+            status: "approved",
+          },
+        },
+        {
+          $lookup: {
+            from: "UserInfo",
+            localField: "user_id",
+            foreignField: "_id",
+            as: "userDetails",
+          },
+        },
+        {
+          $unwind: "$userDetails",
+        },
+        {
+          $project: {
+            _id: 1,
+            user_id: 1,
+            status: 1,
+            joined_at: "$joined_at",
+            member: {
+              _id: "$userDetails._id",
+              full_name: "$userDetails.full_name",
+              avatar_path: "$userDetails.avatar_path",
+            },
+          },
+        },
+      ]);
+
+      return invitedMembers;
+    } catch (error) {
+      console.error("Lỗi khi lấy danh sách thành viên được mời:", error);
+      throw error;
+    }
+  },
+
+  // Chấp nhận thành viên vào nhóm
+  acceptMember: async ({ groupId, memberId }) => {
+    try {
+      return await GroupMember.findOneAndUpdate(
+        { group_id: groupId, user_id: memberId },
+        { status: "approved" },
+        { new: true }
+      );
+    } catch (error) {
+      console.error("Lỗi khi chấp nhận thành viên:", error);
+      throw error;
+    }
+  },
+
+  // Từ chối thành viên vào nhóm
+  rejectMember: async ({ groupId, memberId }) => {
+    try {
+      return await GroupMember.findOneAndDelete({
+        group_id: groupId,
+        user_id: memberId,
+        status: "pending",
+      });
+    } catch (error) {
+      console.error("Lỗi khi từ chối thành viên:", error);
       throw error;
     }
   },

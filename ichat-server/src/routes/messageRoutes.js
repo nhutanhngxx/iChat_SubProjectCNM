@@ -11,6 +11,7 @@ router.post(
   upload.fields([
     { name: "image", maxCount: 1 },
     { name: "file", maxCount: 1 },
+    { name: "audio", maxCount: 1 },
   ]),
   MessageController.uploadImage
 );
@@ -22,6 +23,7 @@ router.post(
     { name: "image", maxCount: 1 },
     { name: "video", maxCount: 1 },
     { name: "file", maxCount: 1 },
+    { name: "audio", maxCount: 1 },
   ]),
   MessageController.sendMessage
 );

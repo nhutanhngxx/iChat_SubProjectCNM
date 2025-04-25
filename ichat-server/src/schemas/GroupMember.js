@@ -11,10 +11,19 @@ const groupMemberSchema = new mongoose.Schema(
       ref: "UserInfo",
       required: true,
     },
+    invited_by: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "UserInfo",
+    },
     role: {
       type: String,
       enum: ["admin", "member"],
       default: "member",
+    },
+    status: {
+      type: String,
+      enum: ["pending", "approved"],
+      default: "approved",
     },
     joined_at: { type: Date, default: Date.now },
   },

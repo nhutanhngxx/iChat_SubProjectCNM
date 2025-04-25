@@ -19,6 +19,7 @@ import QRScanner from "../components/camera/QRScannerScreen";
 import ProfileInformation from "../components/profile/ProfileInformation";
 import ViewImagePost from "../components/view/ViewImagePost";
 import ViewImageChat from "../components/view/ViewImageChat";
+import ViewVideoChat from "../components/view/ViewVideoChat";
 import Option from "../components/messages/Options";
 import ChangeInformation from "../components/profile/ChangeInformation";
 import AddFriend from "../components/contact/AddFriend";
@@ -30,6 +31,9 @@ import ForgotPasswordScreen from "../components/profile/ForgotPassword";
 import ChangePasswordScreen from "../components/profile/ChangePassword";
 import ManageUserBlock from "../components/profile/ManageUserBlock";
 import ModalCreateGroup from "../components/contact/ModalCreateGroup";
+import ModalAddMember from "../components/group/ModalAddMember";
+import ModalMemberManagement from "../components/group/ModalMemberManagement";
+import PendingInvitations from "../components/group/PendingInvitations";
 
 const Stack = createStackNavigator();
 
@@ -64,7 +68,16 @@ export default function AppNavigator() {
           <Stack.Screen name="ViewProfile" component={ViewProfile} />
           <Stack.Screen name="QRScanner" component={QRScanner} />
           <Stack.Screen name="ViewImagePost" component={ViewImagePost} />
-          <Stack.Screen name="ViewImageChat" component={ViewImageChat} />
+          <Stack.Screen
+            name="ViewImageChat"
+            component={ViewImageChat}
+            options={{ animation: "none" }}
+          />
+          <Stack.Screen
+            name="ViewVideoChat"
+            component={ViewVideoChat}
+            options={{ animation: "none" }}
+          />
           <Stack.Screen name="Option" component={Option} />
           <Stack.Screen
             name="AddFriend"
@@ -106,6 +119,21 @@ export default function AppNavigator() {
           <Stack.Screen
             name="ManageUserBlock"
             component={ManageUserBlock}
+            options={{ animation: "none" }}
+          />
+          <Stack.Screen
+            name="AddMember"
+            component={ModalAddMember}
+            options={{ animation: "none" }}
+          />
+          <Stack.Screen
+            name="MemberManagement"
+            component={ModalMemberManagement}
+            options={{ animation: "none" }}
+          />
+          <Stack.Screen
+            name="PendingInvitations"
+            component={PendingInvitations}
             options={{ animation: "none" }}
           />
         </>

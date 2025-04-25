@@ -1,15 +1,6 @@
 import React, { useState, useEffect } from "react";
-import {
-    Avatar,
-    Button,
-    Modal,
-    Checkbox,
-    message,
-} from "antd";
-import {
-    SearchOutlined,
-    CloseOutlined,
-} from "@ant-design/icons";
+import { Avatar, Button, Modal, Checkbox, message } from "antd";
+import { SearchOutlined, CloseOutlined } from "@ant-design/icons";
 import { useDispatch, useSelector } from "react-redux";
 import "./MessageArea.css";
 import { getUserFriends } from "../../../redux/slices/friendSlice";
@@ -86,7 +77,7 @@ const CreateGroupModal = ({ visible, onCancel, onOk, userMessageId }) => {
             ).unwrap();
 
             message.success("Tạo nhóm thành công");
-            onOk();
+            //   onOk();
             resetFields();
         } catch (error) {
             message.error("Tạo nhóm thất bại: " + error);
@@ -108,7 +99,6 @@ const CreateGroupModal = ({ visible, onCancel, onOk, userMessageId }) => {
 
         setSelectedContacts(defaultContacts);
     };
-
 
     const handleAvatarChange = async (event) => {
         const file = event.target.files[0];
@@ -289,7 +279,6 @@ const CreateGroupModal = ({ visible, onCancel, onOk, userMessageId }) => {
                                 const contact =
                                     friendsData.find((c) => c.id === contactId) ||
                                     (currentUser?.id === contactId ? currentUser : null);
-
 
                                 if (!contact) return null; // nếu vẫn không có thì bỏ qua
                                 return (

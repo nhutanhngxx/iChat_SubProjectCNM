@@ -7,8 +7,10 @@ import store from "./redux/store";
 import Login from "./components/Login";
 import HomeWeb from "./components/HomeWeb";
 import Test from "./components/HomeWeb/ChatWindow/test";
-import {PersistGate} from "redux-persist/integration/react";
-import {persistor} from "./redux/store";
+import { PersistGate } from "redux-persist/integration/react";
+import { persistor } from "./redux/store";
+import InvitePage from "./pages/InvitePage";
+
 function App() {
   return (
     <Provider store={store}>
@@ -18,6 +20,7 @@ function App() {
             <Route path="/" element={<Login />} />
             <Route path="/home" element={<HomeWeb />} />
             <Route path="/test" element={<Test />} />
+            <Route path="/invite/:token" element={<InvitePage />} />
           </Routes>
         </BrowserRouter>
       </PersistGate>

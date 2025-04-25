@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import {
   View,
   TextInput,
@@ -12,9 +12,9 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { Video } from "expo-av";
-import * as ImagePicker from "expo-image-picker";
 
 import attachmentIcon from "../../assets/icons/attachment.png";
+import AudioRecorder from "./AudioRecorder";
 
 const MessageInputBar = ({
   inputMessage,
@@ -28,11 +28,19 @@ const MessageInputBar = ({
   sendMessage,
   pickImage,
   pickFile,
+  pickVideo,
   isUploading,
+  onRecordComplete,
 }) => {
+  const videoRef = useRef(null);
   const [videoStatus, setVideoStatus] = useState({});
+  const [isRecording, setIsRecording] = useState(false);
+  const [recording, setRecording] = useState(null);
+  const [recordingDuration, setRecordingDuration] = useState(0);
+  let recordingInterval = null;
 
   const hasText = inputMessage.trim();
+  const hasContent = inputMessage.trim() || selectedVideo;
   const canSend =
     hasText ||
     (selectedImages && selectedImages.length > 0) ||
@@ -40,7 +48,7 @@ const MessageInputBar = ({
     selectedVideo;
 
   // Hàm cắt ngắn tên file nếu quá dài
-  const truncateFileName = (name, maxLength = 20) => {
+  const truncateFileName = (name, maxLength = 30) => {
     if (name.length <= maxLength) return name;
     const extension = name.split(".").pop();
     const nameWithoutExt = name.substring(
@@ -67,11 +75,12 @@ const MessageInputBar = ({
       {selectedVideo && (
         <View style={styles.videoPreviewContainer}>
           <Video
-            source={{ uri: selectedVideo.uri || selectedVideo }}
+            ref={videoRef}
+            source={{ uri: selectedVideo.uri }}
             style={styles.videoPreview}
             resizeMode="contain"
             shouldPlay={false}
-            isLooping={true}
+            isLooping={false}
             useNativeControls
             onPlaybackStatusUpdate={(status) => setVideoStatus(() => status)}
           />
@@ -81,15 +90,17 @@ const MessageInputBar = ({
               <Text style={styles.uploadingText}>Đang tải video...</Text>
             </View>
           ) : (
-            <TouchableOpacity
-              style={styles.removeMediaButton}
-              onPress={() => setSelectedVideo(null)}
-            >
-              <Image
-                source={require("../../assets/icons/close.png")}
-                style={styles.closeIcon}
-              />
-            </TouchableOpacity>
+            <View style={styles.videoControls}>
+              <TouchableOpacity
+                style={styles.removeVideoButton}
+                onPress={() => setSelectedVideo(null)}
+              >
+                <Image
+                  source={require("../../assets/icons/close.png")}
+                  style={styles.closeIcon}
+                />
+              </TouchableOpacity>
+            </View>
           )}
         </View>
       )}
@@ -177,12 +188,7 @@ const MessageInputBar = ({
 
         {!hasText && (
           <>
-            <TouchableOpacity>
-              <Image
-                source={require("../../assets/icons/microphone.png")}
-                style={styles.icon}
-              />
-            </TouchableOpacity>
+            <AudioRecorder onRecordComplete={onRecordComplete} />
 
             <TouchableOpacity onPress={pickImage}>
               <Image
@@ -190,6 +196,14 @@ const MessageInputBar = ({
                 style={styles.icon}
               />
             </TouchableOpacity>
+
+            <TouchableOpacity onPress={pickVideo}>
+              <Image
+                source={require("../../assets/icons/video.png")}
+                style={styles.icon}
+              />
+            </TouchableOpacity>
+
             <TouchableOpacity onPress={pickFile}>
               <Image source={attachmentIcon} style={styles.icon} />
             </TouchableOpacity>
@@ -296,8 +310,9 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   previewContainer: {
-    marginRight: 8,
+    marginRight: 10,
     position: "relative",
+    marginTop: 5,
   },
   removeMediaButton: {
     position: "absolute",
@@ -313,18 +328,26 @@ const styles = StyleSheet.create({
     shadowRadius: 1,
   },
   videoPreviewContainer: {
-    marginBottom: 8,
-    borderRadius: 8,
-    overflow: "hidden",
-    position: "relative",
+    margin: 10,
     height: 200,
-    backgroundColor: "#000", // Add black background
-    width: "100%",
+    borderRadius: 10,
+    overflow: "hidden",
+    backgroundColor: "#000",
   },
   videoPreview: {
-    flex: 1,
     width: "100%",
     height: "100%",
+  },
+  videoControls: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    flexDirection: "row",
+  },
+  removeVideoButton: {
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    borderRadius: 15,
+    padding: 5,
   },
   uploadingOverlay: {
     position: "absolute",
@@ -340,5 +363,18 @@ const styles = StyleSheet.create({
     color: "#ffffff",
     marginTop: 10,
     fontSize: 14,
+  },
+  recordingButton: {
+    backgroundColor: "#ffe0e0",
+    borderRadius: 20,
+    padding: 5,
+  },
+  recordingDuration: {
+    position: "absolute",
+    top: -20,
+    width: 50,
+    textAlign: "center",
+    fontSize: 12,
+    color: "#ff4444",
   },
 });
