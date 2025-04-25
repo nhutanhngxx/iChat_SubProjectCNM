@@ -94,6 +94,10 @@ const ModalSelectAdmin = ({ visible, onClose, groupId, currentAdminId }) => {
             groupId,
             userId: selectedMemberId,
           });
+          socketService.handleLeaveGroup({
+            groupId,
+            userId: currentAdminId,
+          });
           Alert.alert("Thông báo", response.message, [
             {
               text: "OK",

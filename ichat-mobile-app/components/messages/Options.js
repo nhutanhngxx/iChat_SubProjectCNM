@@ -204,15 +204,54 @@ const Option = ({ route }) => {
 
   // Rời khỏi nhóm
   const handleLeaveGroup = async () => {
-    Alert.alert("Thông báo", "Bạn có chắc chắn muốn rời khỏi nhóm này không?", [
-      { text: "Hủy" },
-      {
-        text: "Đồng ý",
-        onPress: async () => {
-          setIsSelectAdminModalVisible(true);
-        },
-      },
-    ]);
+    try {
+      // const isAdmin = user.id === receiverGroup.admin_id;
+
+      if (adminGroup) {
+        // Nếu là admin chính, hiển thị modal chọn admin mới
+        setIsSelectAdminModalVisible(true);
+      } else {
+        // Nếu là thành viên thường, hiển thị xác nhận rời nhóm
+        Alert.alert("Xác nhận", "Bạn có chắc chắn muốn rời khỏi nhóm này?", [
+          { text: "Hủy" },
+          {
+            text: "Xác nhận",
+            onPress: async () => {
+              try {
+                const response = await groupService.removeMember({
+                  groupId: id,
+                  userId: user.id,
+                });
+
+                if (response.status === "ok") {
+                  socketService.handleLeaveGroup({
+                    groupId: id,
+                    userId: user.id,
+                  });
+                  Alert.alert("Thông báo", "Rời nhóm thành công.", [
+                    { text: "OK", onPress: () => navigation.navigate("Home") },
+                  ]);
+                } else {
+                  Alert.alert(
+                    "Thông báo",
+                    "Không thể rời khỏi nhóm. Vui lòng thử lại sau."
+                  );
+                }
+              } catch (error) {
+                console.error("Lỗi khi rời nhóm:", error);
+                Alert.alert(
+                  "Thông báo",
+                  "Đã có lỗi xảy ra. Vui lòng thử lại sau."
+                );
+              }
+            },
+          },
+        ]);
+      }
+    } catch (error) {
+      console.error("Lỗi khi xử lý rời nhóm:", error);
+      Alert.alert("Thông báo", "Đã có lỗi xảy ra. Vui lòng thử lại sau.");
+    }
   };
 
   return (

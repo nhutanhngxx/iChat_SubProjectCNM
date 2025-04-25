@@ -204,12 +204,20 @@ const GroupModel = {
         };
       }
 
+      console.log("require_approval:", group.require_approval);
+      console.log("inviterId:", inviterId);
+      console.log("admin_id:", group.admin_id);
+
       // Tạo mảng các đối tượng thành viên mới để thêm vào
       const membersToAdd = newUserIds.map((userId) => ({
         group_id: groupId,
         user_id: new mongoose.Types.ObjectId(userId),
-        invited_by: inviterId,
-        status: group.require_approval ? "pending" : "approved",
+        invited_by: new mongoose.Types.ObjectId(inviterId),
+        status: group.require_approval
+          ? inviterId === group.admin_id.toString()
+            ? "approved"
+            : "pending"
+          : "approved",
       }));
 
       // Thêm các thành viên mới

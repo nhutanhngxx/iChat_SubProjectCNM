@@ -96,17 +96,48 @@ const ModalMemberManagement = ({ route }) => {
       }
     );
 
-    // Lắng nghe sự kiện chấp nhận thành viên vào nhóm
+    // Lắng nghe sự kiện thành viên được chấp nhận vào nhóm
+    socketService.onMemberAccepted(({ groupId: receivedGroupId, memberId }) => {
+      if (groupId === receivedGroupId) {
+        setMembers((prev) =>
+          prev.map((member) =>
+            member.user_id === memberId
+              ? { ...member, status: "approved" }
+              : member
+          )
+        );
+        setFilteredMembers((prev) =>
+          prev.map((member) =>
+            member.user_id === memberId
+              ? { ...member, status: "approved" }
+              : member
+          )
+        );
+      }
+    });
+
+    // Lắng nghe sự kiện thành viên rời nhóm
     socketService.onMemberLeft(({ groupId: receivedGroupId, userId }) => {
-      if (groupId === receivedGroupId && userId === user.id) {
-        navigation.navigate("Home");
+      if (groupId === receivedGroupId) {
+        if (userId === user.id) {
+          navigation.navigate("Home");
+        } else {
+          setMembers((prev) =>
+            prev.filter((member) => member.user_id !== userId)
+          );
+          setFilteredMembers((prev) =>
+            prev.filter((member) => member.user_id !== userId)
+          );
+        }
+        console.log(`Member ${userId} left group ${groupId}`);
+        console.log("Updated members:", members);
       }
     });
 
     return () => {
       socketService.removeAllListeners();
     };
-  }, [groupId]);
+  }, [groupId, user.id]);
 
   const fetchGroupInfo = async () => {
     try {
@@ -313,20 +344,28 @@ const ModalMemberManagement = ({ route }) => {
         text: "Đồng ý",
         onPress: async () => {
           try {
-            const response = await groupService.removeMember(groupId, user.id);
+            const response = await groupService.removeMember({
+              groupId,
+              userId: user.id,
+            });
+
             if (response.status === "ok") {
               socketService.handleLeaveGroup({
                 groupId,
                 userId: user.id,
               });
-              Alert.alert("Thông báo", "Rời nhóm thành công.");
-              navigation.navigate("Home");
+              Alert.alert("Thông báo", "Rời nhóm thành công.", [
+                { text: "OK", onPress: () => navigation.navigate("Home") },
+              ]);
             } else {
-              Alert.alert("Thông báo", "Rời nhóm thất bại");
+              Alert.alert(
+                "Thông báo",
+                "Không thể rời khỏi nhóm. Vui lòng thử lại sau."
+              );
             }
           } catch (error) {
             console.error("Lỗi khi rời nhóm:", error);
-            Alert.alert("Thông báo", "Rời nhóm thất bại");
+            Alert.alert("Thông báo", "Đã có lỗi xảy ra. Vui lòng thử lại sau.");
           }
         },
       },

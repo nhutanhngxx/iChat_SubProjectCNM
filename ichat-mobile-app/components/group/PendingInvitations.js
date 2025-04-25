@@ -18,6 +18,7 @@ import { IconButton } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
 import { UserContext } from "../../config/context/UserContext";
 import groupService from "../../services/groupService";
+import socketService from "../../services/socketService";
 
 const PendingInvitations = ({ route }) => {
   const { groupId } = route.params || {};
@@ -26,6 +27,35 @@ const PendingInvitations = ({ route }) => {
   const [pendingMembers, setPendingMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+
+  // Lắng nghe sự kiện từ socket
+  useEffect(() => {
+    if (!groupId) return;
+    socketService.joinRoom(groupId);
+
+    socketService.handleRejectMember(
+      ({ groupId: receivedGroupId, memberId }) => {
+        if (groupId === receivedGroupId) {
+          fetchPendingMembers();
+        }
+      }
+    );
+
+    socketService.handleAcceptMember(
+      ({ groupId: receivedGroupId, memberId }) => {
+        if (groupId === receivedGroupId) {
+          fetchPendingMembers();
+        }
+      }
+    );
+
+    return () => {
+      if (groupId) {
+        socketService.removeAllListeners();
+        socketService.leaveRoom(groupId);
+      }
+    };
+  }, [groupId, user?.id]);
 
   // Lấy danh sách yêu cầu tham gia nhóm đang chờ duyệt
   const fetchPendingMembers = async () => {
