@@ -25,7 +25,8 @@ import ModalSelectAdmin from "./ModalSelectAdmin";
 import socketService from "../../services/socketService";
 
 const ModalMemberManagement = ({ route }) => {
-  const { groupId, adminGroup } = route.params || {};
+  const { groupId } = route.params || {};
+  const [adminGroup, setAdminGroup] = useState(route.params.adminGroup);
   const navigation = useNavigation();
   const { user } = useContext(UserContext);
   const [index, setIndex] = useState(0); // Tab hiện tại
@@ -83,6 +84,7 @@ const ModalMemberManagement = ({ route }) => {
           }))
         );
       }
+      setAdminGroup(userId === user.id);
     });
 
     // Lắng nghe sự kiện cập nhật trạng thái phê duyệt thành viên
@@ -317,8 +319,8 @@ const ModalMemberManagement = ({ route }) => {
                 groupId,
                 userId: user.id,
               });
-              Alert.alert("Thông báo", response.message);
-              navigation.goBack();
+              Alert.alert("Thông báo", "Rời nhóm thành công.");
+              navigation.navigate("Home");
             } else {
               Alert.alert("Thông báo", "Rời nhóm thất bại");
             }

@@ -176,6 +176,11 @@ class SocketService {
       this.socket.emit("transfer-admin", { groupId, userId });
     }
   }
+  onAdminTransferred(callback) {
+    if (this.ensureConnection()) {
+      this.socket.on("admin-transferred", callback);
+    }
+  }
 
   // Cập nhật trạng thái phê duyệt thành viên
   handleUpdateMemberApproval({ groupId, requireApproval }) {
@@ -210,13 +215,6 @@ class SocketService {
   onMemberRemoved(callback) {
     if (this.ensureConnection()) {
       this.socket.on("member-removed", callback);
-    }
-  }
-
-  // Chuyển quyền quản trị viên
-  onAdminTransferred(callback) {
-    if (this.ensureConnection()) {
-      this.socket.on("admin-transferred", callback);
     }
   }
 
