@@ -19,6 +19,7 @@ import friendService from "../../services/friendService";
 import { UserContext } from "../../config/context/UserContext";
 import { useNavigation } from "@react-navigation/native";
 import groupService from "../../services/groupService";
+import socketService from "../../services/socketService";
 
 const ModalAddMember = ({ route }) => {
   // Dữ liệu được truyền qua navigation - params
@@ -117,6 +118,10 @@ const ModalAddMember = ({ route }) => {
         inviterId: user.id,
       });
       if (response.status === "ok") {
+        socketService.handleAddMember({
+          groupId,
+          userIds: memberList.map((item) => item.id),
+        });
         Alert.alert("Thông báo", response.message, [
           {
             text: "OK",

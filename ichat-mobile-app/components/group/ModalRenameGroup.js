@@ -11,10 +11,27 @@ import {
   TouchableWithoutFeedback,
 } from "react-native";
 import groupService from "../../services/groupService";
+import socketService from "../../services/socketService";
 
 const ModalRenameGroup = ({ visible, onClose, groupId, currentName }) => {
   const [newGroupName, setNewGroupName] = useState(currentName);
   const [loading, setLoading] = useState(false);
+
+  // Lắng nghe sự kiện từ socket
+  useEffect(() => {
+    if (visible && groupId) {
+      socketService.joinRoom(groupId);
+    }
+    return () => {
+      if (groupId) {
+        socketService.leaveRoom(groupId);
+      }
+    };
+  }, [visible, groupId]);
+
+  useEffect(() => {
+    setNewGroupName(currentName);
+  }, [visible, currentName]);
 
   // Cập nhật giá trị mới khi modal được hiển thị
   useEffect(() => {
@@ -33,9 +50,13 @@ const ModalRenameGroup = ({ visible, onClose, groupId, currentName }) => {
         groupId,
         name: newGroupName.trim(),
       });
-      console.log("Response:", response);
 
       if (response.status === "ok") {
+        socketService.handleUpdateGroup({
+          groupId,
+          name: newGroupName.trim(),
+          avatar: "",
+        });
         Alert.alert("Thông báo", "Đổi tên nhóm thành công", [
           { text: "OK", onPress: onClose },
         ]);

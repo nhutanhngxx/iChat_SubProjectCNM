@@ -22,9 +22,11 @@ import groupService from "../../services/groupService";
 import friendService from "../../services/friendService";
 import ModalMemberInfo from "./ModalMemberInfo";
 import ModalSelectAdmin from "./ModalSelectAdmin";
+import socketService from "../../services/socketService";
 
 const ModalMemberManagement = ({ route }) => {
-  const { groupId, adminGroup } = route.params || {};
+  const { groupId } = route.params || {};
+  const [adminGroup, setAdminGroup] = useState(route.params.adminGroup);
   const navigation = useNavigation();
   const { user } = useContext(UserContext);
   const [index, setIndex] = useState(0); // Tab hiện tại
@@ -42,29 +44,123 @@ const ModalMemberManagement = ({ route }) => {
   const [currentAdminId, setCurrentAdminId] = useState(null); // ID của quản trị viên hiện tại
   const [invitedMembers, setInvitedMembers] = useState([]); // Danh sách thành viên được mời bởi người dùng hiện tại
 
-  // Lấy thông tin nhóm và thành viên
+  // Lắng nghe sự kiện từ socket
   useEffect(() => {
     if (!groupId) return;
 
-    const fetchGroupInfo = async () => {
-      try {
-        const groupInfo = await groupService.getGroupById(groupId);
-        setGroup(groupInfo);
-      } catch (error) {
-        console.error("Lỗi khi lấy thông tin nhóm:", error);
-      }
-    };
+    socketService.joinRoom(groupId);
 
-    const fetchGroupMembers = async () => {
-      try {
-        const membersList = await groupService.getGroupMembers(groupId);
-        setMembers(membersList);
-        setFilteredMembers(membersList);
-      } catch (error) {
-        console.error("Lỗi khi lấy danh sách thành viên:", error);
+    // Lắng nghe sự kiện thêm/xóa thành viên
+    socketService.onMemberAdded(({ groupId: receivedGroupId, userIds }) => {
+      if (groupId === receivedGroupId) {
+        fetchGroupMembers();
+        fetchInvitedMembers();
       }
-    };
+    });
+    socketService.onMemberRemoved(({ groupId: receivedGroupId, userId }) => {
+      if (groupId === receivedGroupId) {
+        setMembers((prev) =>
+          prev.filter((member) => member.user_id !== userId)
+        );
+        setFilteredMembers((prev) =>
+          prev.filter((member) => member.user_id !== userId)
+        );
+      }
+    });
 
+    // Lắng nghe sự kiện chuyển quyền quản trị viên
+    socketService.onAdminTransferred(({ groupId: receivedGroupId, userId }) => {
+      if (groupId === receivedGroupId) {
+        setMembers((prev) =>
+          prev.map((member) => ({
+            ...member,
+            role: member.user_id === userId ? "admin" : "member",
+          }))
+        );
+        setFilteredMembers((prev) =>
+          prev.map((member) => ({
+            ...member,
+            role: member.user_id === userId ? "admin" : "member",
+          }))
+        );
+      }
+      setAdminGroup(userId === user.id);
+    });
+
+    // Lắng nghe sự kiện cập nhật trạng thái phê duyệt thành viên
+    socketService.onMemberApprovalUpdated(
+      ({ groupId: receivedGroupId, requireApproval }) => {
+        if (groupId === receivedGroupId) {
+          setIsChecked(requireApproval);
+        }
+      }
+    );
+
+    // Lắng nghe sự kiện thành viên được chấp nhận vào nhóm
+    socketService.onMemberAccepted(({ groupId: receivedGroupId, memberId }) => {
+      if (groupId === receivedGroupId) {
+        setMembers((prev) =>
+          prev.map((member) =>
+            member.user_id === memberId
+              ? { ...member, status: "approved" }
+              : member
+          )
+        );
+        setFilteredMembers((prev) =>
+          prev.map((member) =>
+            member.user_id === memberId
+              ? { ...member, status: "approved" }
+              : member
+          )
+        );
+      }
+    });
+
+    // Lắng nghe sự kiện thành viên rời nhóm
+    socketService.onMemberLeft(({ groupId: receivedGroupId, userId }) => {
+      if (groupId === receivedGroupId) {
+        if (userId === user.id) {
+          navigation.navigate("Home");
+        } else {
+          setMembers((prev) =>
+            prev.filter((member) => member.user_id !== userId)
+          );
+          setFilteredMembers((prev) =>
+            prev.filter((member) => member.user_id !== userId)
+          );
+        }
+        console.log(`Member ${userId} left group ${groupId}`);
+        console.log("Updated members:", members);
+      }
+    });
+
+    return () => {
+      socketService.removeAllListeners();
+    };
+  }, [groupId, user.id]);
+
+  const fetchGroupInfo = async () => {
+    try {
+      const groupInfo = await groupService.getGroupById(groupId);
+      setGroup(groupInfo);
+    } catch (error) {
+      console.error("Lỗi khi lấy thông tin nhóm:", error);
+    }
+  };
+
+  const fetchGroupMembers = async () => {
+    try {
+      const membersList = await groupService.getGroupMembers(groupId);
+      setMembers(membersList);
+      setFilteredMembers(membersList);
+    } catch (error) {
+      console.error("Lỗi khi lấy danh sách thành viên:", error);
+    }
+  };
+
+  // Lấy thông tin nhóm và thành viên
+  useEffect(() => {
+    if (!groupId) return;
     fetchGroupInfo();
     fetchGroupMembers();
   }, [groupId]);
@@ -102,20 +198,18 @@ const ModalMemberManagement = ({ route }) => {
   }, [user?.id, members]);
 
   // Lấy danh sách thành viên được mời bởi người dùng
+  const fetchInvitedMembers = async () => {
+    try {
+      const invitedMembersList = await groupService.getInvitedMembersByUserId(
+        user.id
+      );
+      setInvitedMembers(invitedMembersList);
+    } catch (error) {
+      console.error("Lỗi khi lấy danh sách thành viên được mời:", error);
+    }
+  };
   useEffect(() => {
     if (!user?.id || index !== 2) return;
-
-    const fetchInvitedMembers = async () => {
-      try {
-        const invitedMembersList = await groupService.getInvitedMembersByUserId(
-          user.id
-        );
-        setInvitedMembers(invitedMembersList);
-      } catch (error) {
-        console.error("Lỗi khi lấy danh sách thành viên được mời:", error);
-      }
-    };
-
     fetchInvitedMembers();
   }, [user?.id, index]);
 
@@ -194,10 +288,15 @@ const ModalMemberManagement = ({ route }) => {
   }, [groupId]);
 
   // Hàm xử lý switch phê duyệt thành viên
-  const handleCheckMemberApproval = async (value) => {
+  const handleUpdateMemberApproval = async (value) => {
     try {
       setIsChecked(value);
       const response = await groupService.updateMemberApproval({
+        groupId,
+        requireApproval: value,
+      });
+
+      socketService.handleUpdateMemberApproval({
         groupId,
         requireApproval: value,
       });
@@ -245,16 +344,28 @@ const ModalMemberManagement = ({ route }) => {
         text: "Đồng ý",
         onPress: async () => {
           try {
-            const response = await groupService.leaveGroup(groupId, user.id);
+            const response = await groupService.removeMember({
+              groupId,
+              userId: user.id,
+            });
+
             if (response.status === "ok") {
-              Alert.alert("Thông báo", response.message);
-              navigation.goBack();
+              socketService.handleLeaveGroup({
+                groupId,
+                userId: user.id,
+              });
+              Alert.alert("Thông báo", "Rời nhóm thành công.", [
+                { text: "OK", onPress: () => navigation.navigate("Home") },
+              ]);
             } else {
-              Alert.alert("Thông báo", "Rời nhóm thất bại");
+              Alert.alert(
+                "Thông báo",
+                "Không thể rời khỏi nhóm. Vui lòng thử lại sau."
+              );
             }
           } catch (error) {
             console.error("Lỗi khi rời nhóm:", error);
-            Alert.alert("Thông báo", "Rời nhóm thất bại");
+            Alert.alert("Thông báo", "Đã có lỗi xảy ra. Vui lòng thử lại sau.");
           }
         },
       },
@@ -396,7 +507,7 @@ const ModalMemberManagement = ({ route }) => {
             <View style={{ flexDirection: "row", alignItems: "center" }}>
               <Switch
                 value={isChecked}
-                onValueChange={() => handleCheckMemberApproval(!isChecked)}
+                onValueChange={() => handleUpdateMemberApproval(!isChecked)}
                 color="#2F80ED"
               />
             </View>
@@ -495,6 +606,10 @@ const ModalMemberManagement = ({ route }) => {
                     });
 
                     if (response.status === "ok") {
+                      socketService.handleTransferAdmin({
+                        groupId,
+                        userId: selectedMember?.user_id,
+                      });
                       Alert.alert("Thông báo", response.message);
                     } else {
                       Alert.alert(
@@ -528,6 +643,10 @@ const ModalMemberManagement = ({ route }) => {
                     });
 
                     if (response.status === "ok") {
+                      socketService.handleRemoveMember({
+                        groupId,
+                        userId: selectedMember?.user_id,
+                      });
                       Alert.alert("Thông báo", response.message);
                     } else {
                       Alert.alert("Thông báo", "Xóa thành viên thất bại");
@@ -542,14 +661,11 @@ const ModalMemberManagement = ({ route }) => {
           );
         }}
         onAddFriend={() => {
-          // Thêm logic kết bạn
           console.log("Gửi lời mời kết bạn tới:", selectedMember?.full_name);
         }}
         onSendMessage={() => {
-          // Thêm logic nhắn tin
           console.log("Mở cuộc trò chuyện với:", selectedMember?.full_name);
           closeMemberModal();
-          // navigation.navigate("Chat", { userId: selectedMember?.user_id });
         }}
         onLeaveGroup={handleLeaveGroup}
       />

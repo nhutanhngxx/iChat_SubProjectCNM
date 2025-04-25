@@ -15,6 +15,7 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { Avatar } from "@rneui/themed";
 import groupService from "../../services/groupService";
+import socketService from "../../services/socketService";
 
 const ModalSelectAdmin = ({ visible, onClose, groupId, currentAdminId }) => {
   const [isLoading, setIsLoading] = useState(false);
@@ -23,6 +24,18 @@ const ModalSelectAdmin = ({ visible, onClose, groupId, currentAdminId }) => {
   const [members, setMembers] = useState([]);
   const [filteredMembers, setFilteredMembers] = useState(members);
   const navigation = useNavigation();
+
+  // Lắng nghe sự kiện từ socket
+  useEffect(() => {
+    if (visible && groupId) {
+      socketService.joinRoom(groupId);
+    }
+    return () => {
+      if (groupId) {
+        socketService.leaveRoom(groupId);
+      }
+    };
+  }, [visible, groupId]);
 
   // Cập nhật searchText khi modal được hiển thị
   useEffect(() => {
@@ -77,6 +90,14 @@ const ModalSelectAdmin = ({ visible, onClose, groupId, currentAdminId }) => {
         });
         await groupService.removeMember({ groupId, userId: currentAdminId });
         if (response.status === "ok") {
+          socketService.handleTransferAdmin({
+            groupId,
+            userId: selectedMemberId,
+          });
+          socketService.handleLeaveGroup({
+            groupId,
+            userId: currentAdminId,
+          });
           Alert.alert("Thông báo", response.message, [
             {
               text: "OK",

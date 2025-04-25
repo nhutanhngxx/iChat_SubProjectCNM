@@ -20,6 +20,7 @@ import messageService from "../../services/messageService";
 import friendService from "../../services/friendService";
 import ModalRenameGroup from "../group/ModalRenameGroup";
 import ModalSelectAdmin from "../group/ModalSelectAdmin";
+import socketService from "../../services/socketService";
 
 const Option = ({ route }) => {
   // const API_iChat = `http://${getHostIP()}:5001/api`;
@@ -34,6 +35,28 @@ const Option = ({ route }) => {
   const [isRenameModalVisible, setIsRenameModalVisible] = useState(false); // Modal đổi tên nhóm
   const [isSelectAdminModalVisible, setIsSelectAdminModalVisible] =
     useState(false); // Modal chọn quản trị viên mới trước khi rời khỏi nhóm
+
+  // Lắng nghe sự kiện từ socket
+  useEffect(() => {
+    if (!id) return;
+
+    socketService.joinRoom(id);
+
+    socketService.onGroupUpdated(({ groupId, name, avatar }) => {
+      if (id === groupId) {
+        setReceiverGroup((prev) => ({
+          ...prev,
+          name: name || prev.name,
+          avatar: avatar || prev.avatar,
+        }));
+      }
+    });
+
+    return () => {
+      socketService.leaveRoom(id);
+      socketService.removeAllListeners();
+    };
+  }, [id]);
 
   useEffect(() => {
     const fetchReceiverInfo = async () => {
@@ -181,15 +204,54 @@ const Option = ({ route }) => {
 
   // Rời khỏi nhóm
   const handleLeaveGroup = async () => {
-    Alert.alert("Thông báo", "Bạn có chắc chắn muốn rời khỏi nhóm này không?", [
-      { text: "Hủy" },
-      {
-        text: "Đồng ý",
-        onPress: async () => {
-          setIsSelectAdminModalVisible(true);
-        },
-      },
-    ]);
+    try {
+      // const isAdmin = user.id === receiverGroup.admin_id;
+
+      if (adminGroup) {
+        // Nếu là admin chính, hiển thị modal chọn admin mới
+        setIsSelectAdminModalVisible(true);
+      } else {
+        // Nếu là thành viên thường, hiển thị xác nhận rời nhóm
+        Alert.alert("Xác nhận", "Bạn có chắc chắn muốn rời khỏi nhóm này?", [
+          { text: "Hủy" },
+          {
+            text: "Xác nhận",
+            onPress: async () => {
+              try {
+                const response = await groupService.removeMember({
+                  groupId: id,
+                  userId: user.id,
+                });
+
+                if (response.status === "ok") {
+                  socketService.handleLeaveGroup({
+                    groupId: id,
+                    userId: user.id,
+                  });
+                  Alert.alert("Thông báo", "Rời nhóm thành công.", [
+                    { text: "OK", onPress: () => navigation.navigate("Home") },
+                  ]);
+                } else {
+                  Alert.alert(
+                    "Thông báo",
+                    "Không thể rời khỏi nhóm. Vui lòng thử lại sau."
+                  );
+                }
+              } catch (error) {
+                console.error("Lỗi khi rời nhóm:", error);
+                Alert.alert(
+                  "Thông báo",
+                  "Đã có lỗi xảy ra. Vui lòng thử lại sau."
+                );
+              }
+            },
+          },
+        ]);
+      }
+    } catch (error) {
+      console.error("Lỗi khi xử lý rời nhóm:", error);
+      Alert.alert("Thông báo", "Đã có lỗi xảy ra. Vui lòng thử lại sau.");
+    }
   };
 
   return (
@@ -212,7 +274,7 @@ const Option = ({ route }) => {
               gap: 10,
             }}
           >
-            <Text style={styles.name}>{name}</Text>
+            <Text style={styles.name}>{receiverGroup?.name}</Text>
             <TouchableOpacity onPress={() => setIsRenameModalVisible(true)}>
               <Image
                 source={require("../../assets/icons/edit.png")}
@@ -380,39 +442,42 @@ const Option = ({ route }) => {
         </View>
 
         {/* Dành cho nhóm */}
-        <View style={{ gap: 15 }}>
-          <View
-            style={{
-              height: 15,
-              backgroundColor: "rgba(0, 0, 0, 0.1)",
-              marginHorizontal: -20,
-            }}
-          ></View>
-          {adminGroup === true && (
-            <TouchableOpacity style={styles.component}>
+        {isGroup && (
+          <View style={{ gap: 15 }}>
+            <View
+              style={{
+                height: 15,
+                backgroundColor: "rgba(0, 0, 0, 0.1)",
+                marginHorizontal: -20,
+              }}
+            ></View>
+            {adminGroup === true && (
+              <TouchableOpacity style={styles.component}>
+                <Image
+                  source={require("../../assets/icons/setting.png")}
+                  style={styles.icon}
+                />
+                <Text style={styles.title}>Cài đặt nhóm</Text>
+              </TouchableOpacity>
+            )}
+
+            <TouchableOpacity
+              style={styles.component}
+              onPress={() =>
+                navigation.navigate("MemberManagement", {
+                  groupId: id,
+                  adminGroup,
+                })
+              }
+            >
               <Image
-                source={require("../../assets/icons/setting.png")}
+                source={require("../../assets/icons/friend.png")}
                 style={styles.icon}
               />
-              <Text style={styles.title}>Cài đặt nhóm</Text>
+              <Text style={styles.title}>Danh sách thành viên</Text>
             </TouchableOpacity>
-          )}
-          <TouchableOpacity
-            style={styles.component}
-            onPress={() =>
-              navigation.navigate("MemberManagement", {
-                groupId: id,
-                adminGroup,
-              })
-            }
-          >
-            <Image
-              source={require("../../assets/icons/friend.png")}
-              style={styles.icon}
-            />
-            <Text style={styles.title}>Danh sách thành viên</Text>
-          </TouchableOpacity>
-        </View>
+          </View>
+        )}
 
         <View style={{ gap: 15 }}>
           <View
@@ -503,7 +568,7 @@ const Option = ({ route }) => {
         visible={isRenameModalVisible}
         onClose={() => setIsRenameModalVisible(false)}
         groupId={id}
-        currentName={name}
+        currentName={receiverGroup?.name || ""}
       />
 
       {/* Modal Select Admin Before Leave */}
