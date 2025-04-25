@@ -20,21 +20,26 @@ import { UserContext } from "../../config/context/UserContext";
 import { useNavigation } from "@react-navigation/native";
 import groupService from "../../services/groupService";
 
-const ModalCreateGroup = () => {
-  const [groupList, setGroupList] = useState([]);
+const ModalAddMember = ({ route }) => {
+  // Dữ liệu được truyền qua navigation - params
+  const { groupId } = route.params;
+
+  // Các state
+  const [memberList, setMemberList] = useState([]);
+  const [group, setGroup] = useState();
+  const [groupMembers, setGroupMembers] = useState([]);
   const [isChecked, setIsChecked] = useState({});
   const [isDisabled, setIsDisabled] = useState(true);
-  const [groupName, setGroupName] = useState("");
   const [searchText, setSearchText] = useState("");
   const [friendList, setFriendList] = useState([]);
   const [displayedFriendList, setDisplayedFriendList] = useState(friendList);
   const { user } = useContext(UserContext);
   const navigation = useNavigation();
 
+  //   Hàm đóng modal
   const handleCloseModal = () => {
-    setGroupList([]);
+    setMemberList([]);
     setIsChecked({});
-    setGroupName("");
     setSearchText("");
     setDisplayedFriendList(friendList);
     navigation.goBack();
@@ -51,22 +56,44 @@ const ModalCreateGroup = () => {
     fetchFriendList();
   }, [user?.id]);
 
+  //  Lấy thông tin nhóm
+  useEffect(() => {
+    if (!groupId) return;
+    const fetchGroupInfo = async () => {
+      const group = await groupService.getGroupById(groupId);
+      setGroup(group);
+    };
+    fetchGroupInfo();
+  }, [groupId]);
+
+  //   Lấy danh sách thành viên của nhóm
+  useEffect(() => {
+    if (!groupId) return;
+    const fetchGroupMembers = async () => {
+      const members = await groupService.getGroupMembers(groupId);
+      setGroupMembers(members);
+    };
+    fetchGroupMembers();
+  }, [groupId]);
+
+  //   Hàm thêm/xóa bạn bè vào danh sách thành viên
   const handleToggleFriend = (friend) => {
-    // Kiểm tra xem friend đã có trong groupList chưa
-    const isExist = groupList.some((item) => item.id === friend.id);
+    // Kiểm tra xem friend đã có trong memberList chưa
+    const isExist = memberList.some((item) => item.id === friend.id);
     if (isExist) {
-      // Nếu có thì xóa ra khỏi groupList
-      const newGroupList = groupList.filter((item) => item.id !== friend.id);
-      setGroupList(newGroupList);
+      // Nếu có thì xóa ra khỏi memberList
+      const newGroupList = memberList.filter((item) => item.id !== friend.id);
+      setMemberList(newGroupList);
       setIsChecked({ ...isChecked, [friend.id]: false });
     }
-    // Nếu chưa có thì thêm vào groupList
+    // Nếu chưa có thì thêm vào memberList
     else {
-      setGroupList([...groupList, friend]);
+      setMemberList([...memberList, friend]);
       setIsChecked({ ...isChecked, [friend.id]: true });
     }
   };
 
+  //   Hàm tìm kiếm bạn bè
   const handleSearchFriend = (text) => {
     setSearchText(text);
     if (!text) {
@@ -82,62 +109,81 @@ const ModalCreateGroup = () => {
     setDisplayedFriendList(newFriendList);
   };
 
-  useEffect(() => {
-    // Kiểm tra xem đã chọn thành viên và đã được đặt tên chưa
-    if (groupList.length < 2 || groupName === "") {
-      setIsDisabled(true);
-    } else {
-      setIsDisabled(false);
-    }
-  }, [groupList, groupName]);
-
-  const handleCreateGroup = async () => {
+  const handleAddMember = async () => {
     try {
-      // Tạo mảng participantIds - chứa id của các thành viên trong nhóm
-      const participantIds = groupList.map((item) => item.id);
-      // Gọi API tạo nhóm
-      const response = await groupService.createGroup({
-        groupName,
-        adminId: user.id,
-        participantIds,
+      const response = await groupService.addMember({
+        groupId,
+        userIds: memberList.map((item) => item.id),
+        inviterId: user.id,
       });
       if (response.status === "ok") {
-        Alert.alert("Thông báo", "Tạo nhóm thành công", [
+        Alert.alert("Thông báo", response.message, [
           {
             text: "OK",
             onPress: () => handleCloseModal(),
           },
         ]);
       } else {
-        Alert.alert("Thông báo", "Tạo nhóm thất bại");
+        Alert.alert("Thông báo", "Thêm thành viên vào nhóm thất bại");
       }
     } catch (error) {
-      console.error("Create group error:", error);
-      Alert.alert("Lỗi", "Không thể tạo nhóm. Vui lòng thử lại.");
+      console.error("Lỗi khi thêm thành viên vào nhóm:", error);
+      Alert.alert(
+        "Lỗi",
+        "Không thể thêm thành viên vào nhóm. Vui lòng thử lại."
+      );
     }
   };
 
-  const renderItem = ({ item }) => (
-    <TouchableOpacity
-      style={styles.itemContainer}
-      onPress={() => handleToggleFriend(item)}
-    >
-      <View style={styles.item_leftSide}>
-        <Avatar size={50} rounded source={{ uri: item.avatar_path }} />
-        <Text style={{ fontWeight: "500", fontSize: 16 }}>
-          {item.full_name}
-        </Text>
-      </View>
-      <TouchableOpacity onPress={() => handleToggleFriend(item)}>
-        <Checkbox
-          status={isChecked[item.id] ? "checked" : "unchecked"}
-          onPress={() => handleToggleFriend(item)}
-          color="#1E6DF7"
-        />
-      </TouchableOpacity>
-    </TouchableOpacity>
-  );
+  //   Cập nhật trạng thái của nút thêm thành viên
+  useEffect(() => {
+    // Kiểm tra xem đã chọn thành viên hay chưa
+    if (memberList.length < 1) {
+      setIsDisabled(true);
+    } else {
+      setIsDisabled(false);
+    }
+  }, [memberList]);
 
+  //   Kiểm tra xem bạn bè đã là thành viên của nhóm chưa
+  const isUserInGroup = (userId) => {
+    const result = groupMembers.some((member) => member.user_id === userId);
+    return result;
+  };
+  //   Render danh sách bạn bè
+  const renderItem = ({ item }) => {
+    // Kiểm tra xem bạn bè đã là thành viên của nhóm chưa
+    const isAlreadyMember = isUserInGroup(item.id);
+
+    return (
+      <TouchableOpacity
+        style={styles.itemContainer}
+        onPress={() => !isAlreadyMember && handleToggleFriend(item)}
+      >
+        <View style={styles.item_leftSide}>
+          <Avatar size={50} rounded source={{ uri: item.avatar_path }} />
+          <Text style={{ fontWeight: "500", fontSize: 16 }}>
+            {item.full_name}
+          </Text>
+        </View>
+        {isAlreadyMember ? (
+          <Text style={{ color: "#888", fontStyle: "italic" }}>
+            Đã tham gia
+          </Text>
+        ) : (
+          <TouchableOpacity onPress={() => handleToggleFriend(item)}>
+            <Checkbox
+              status={isChecked[item.id] ? "checked" : "unchecked"}
+              onPress={() => handleToggleFriend(item)}
+              color="#1E6DF7"
+            />
+          </TouchableOpacity>
+        )}
+      </TouchableOpacity>
+    );
+  };
+
+  //   Render danh sách thành viên/bạn bè đã được chọn
   const renderAddedItem = ({ item }) => (
     <TouchableOpacity
       style={{ position: "relative" }}
@@ -188,62 +234,14 @@ const ModalCreateGroup = () => {
                   paddingTop: 10,
                 }}
               >
-                Tạo nhóm mới
+                Thêm thành viên vào nhóm
               </Text>
             </TouchableOpacity>
           </SafeAreaView>
           <Text style={{ textAlign: "center", fontSize: 16, paddingTop: 10 }}>
             Số người đã chọn:{" "}
-            <Text style={{ fontWeight: "bold" }}>{groupList.length}</Text>
+            <Text style={{ fontWeight: "bold" }}>{memberList.length}</Text>
           </Text>
-          <Text
-            style={{
-              textAlign: "center",
-              fontSize: 14,
-              paddingTop: 5,
-              color: "gray",
-            }}
-          >
-            (Nhóm phải có ít nhất 3 thành viên)
-          </Text>
-
-          {/* Input Group Name */}
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              marginTop: 10,
-              gap: 10,
-              padding: 10,
-              height: 50,
-            }}
-          >
-            <TouchableOpacity>
-              <Image
-                source={require("../../assets/icons/image.png")}
-                style={
-                  Platform.OS === "ios"
-                    ? { width: 40, height: 40 }
-                    : { width: 30, height: 30 }
-                }
-              />
-            </TouchableOpacity>
-            <TextInput
-              placeholder="Đặt tên nhóm"
-              style={
-                Platform.OS === "ios"
-                  ? { fontSize: 20, width: "80%", borderBottomWidth: 1 }
-                  : {
-                      fontSize: 16,
-                      width: "90%",
-                      height: 40,
-                      borderBottomWidth: 1,
-                    }
-              }
-              value={groupName}
-              onChangeText={setGroupName}
-            />
-          </View>
 
           {/* Input Search Friend To Add */}
           <View
@@ -307,7 +305,7 @@ const ModalCreateGroup = () => {
             <View style={styles.bottomView}>
               <View style={{ flex: 1 }}>
                 <FlatList
-                  data={groupList}
+                  data={memberList}
                   renderItem={renderAddedItem}
                   horizontal={true}
                   ItemSeparatorComponent={() => <View style={{ width: 10 }} />}
@@ -316,7 +314,7 @@ const ModalCreateGroup = () => {
               <View style={Platform.OS === "ios" && { paddingBottom: 20 }}>
                 <TouchableOpacity
                   disabled={isDisabled}
-                  onPress={handleCreateGroup}
+                  onPress={handleAddMember}
                   style={{
                     height: 50,
                     width: 50,
@@ -403,4 +401,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ModalCreateGroup;
+export default ModalAddMember;

@@ -10,6 +10,7 @@ const routes = require("./src/routes/index"); // import routes từ index.js
 const socketHandler = require("./src/sockets/socketHandler");
 const initSocketMessage = require("./src/sockets/socketMessage");
 const socketFriend = require("./src/sockets/socketFriend");
+const socketGroup = require("./src/sockets/socketGroup");
 
 // Khởi tạo Express app và HTTP server
 const app = express();
@@ -78,6 +79,7 @@ app.use("/api", routes); // prefix cho các routes
 socketHandler(io);
 initSocketMessage(io);
 socketFriend(io);
+socketGroup(io);
 // Khởi chạy server
 const PORT = process.env.PORT || 5001;
 server.listen(PORT, () => {

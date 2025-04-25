@@ -130,7 +130,7 @@ const GroupController = {
   // Thêm nhiều thành viên cùng lúc
   addMembers: async (req, res) => {
     try {
-      const { groupId, userIds } = req.body;
+      const { groupId, userIds, inviterId } = req.body;
 
       if (!groupId) {
         return res
@@ -144,7 +144,7 @@ const GroupController = {
           .json({ status: "error", message: "Thiếu userIds" });
       }
 
-      const result = await GroupModel.addMembers(groupId, userIds);
+      const result = await GroupModel.addMembers(groupId, userIds, inviterId);
 
       res.json({
         status: "ok",
@@ -200,6 +200,9 @@ const GroupController = {
       const allow_add_members = req.body.allow_add_members || true;
       const allow_change_name = req.body.allow_change_name || true;
       const allow_change_avatar = req.body.allow_change_avatar || true;
+
+      console.log(groupId, name, avatar);
+
       const upd = await GroupModel.updateGroup(groupId, {
         name,
         avatar,
@@ -285,6 +288,7 @@ const GroupController = {
       });
     }
   },
+
   // Chuyển nhường quyền admin cho người khác
   transferAdmin: async (req, res) => {
     try {
@@ -302,6 +306,101 @@ const GroupController = {
         status: "error",
         message: error.message,
       });
+    }
+  },
+
+  // Kiểm tra trạng thái của phê duyệt thành viên của nhóm
+  checkMemberApproval: async (req, res) => {
+    try {
+      const { groupId } = req.params;
+
+      const result = await GroupModel.checkMemberApproval(groupId);
+
+      return res.status(200).json({
+        status: "ok",
+        data: result,
+      });
+    } catch (error) {
+      console.error("Lỗi khi kiểm tra trạng thái phê duyệt thành viên:", error);
+      return res.status(500).json({
+        status: "error",
+        message: error.message,
+      });
+    }
+  },
+
+  // Cập nhật trạng thái của phê duyệt thành viên của nhóm
+  updateMemberApproval: async (req, res) => {
+    try {
+      const { groupId } = req.params;
+      const { requireApproval } = req.body;
+
+      const result = await GroupModel.updateMemberApproval({
+        groupId,
+        requireApproval,
+      });
+
+      return res.status(200).json({
+        status: "ok",
+        data: result,
+      });
+    } catch (error) {
+      console.error("Lỗi khi cập nhật trạng thái phê duyệt thành viên:", error);
+      return res.status(500).json({
+        status: "error",
+        message: error.message,
+      });
+    }
+  },
+
+  // Lấy danh sách yêu cầu tham gia nhóm đang chờ duyệt
+  getPendingMembers: async (req, res) => {
+    try {
+      const { groupId } = req.params;
+      const pendingMembers = await GroupModel.getPendingMembers(groupId);
+      return res.json({ status: "ok", data: pendingMembers });
+    } catch (error) {
+      console.error("Lỗi khi lấy danh sách yêu cầu tham gia:", error);
+      res.status(500).json({ status: "error", message: error.message });
+    }
+  },
+
+  // Lấy danh sách thành viên được mời bởi bạn
+  getInvitedMembersByUserId: async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const invitedMembers = await GroupModel.getInvitedMembersByUserId(userId);
+      return res.json({ status: "ok", data: invitedMembers });
+    } catch (error) {
+      console.error("Lỗi khi lấy danh sách thành viên được mời:", error);
+      res.status(500).json({ status: "error", message: error.message });
+    }
+  },
+
+  // Chấp nhận thành viên vào nhóm
+  acceptMember: async (req, res) => {
+    try {
+      const { groupId, memberId } = req.params;
+      const acceptedMember = await GroupModel.acceptMember({
+        groupId,
+        memberId,
+      });
+      return res.json({ status: "ok", data: acceptedMember });
+    } catch (error) {
+      console.error("Lỗi khi chấp nhận thành viên:", error);
+      res.status(500).json({ status: "error", message: error.message });
+    }
+  },
+
+  // Từ chối thành viên vào nhóm
+  rejectMember: async (req, res) => {
+    try {
+      const { groupId, memberId } = req.params;
+      await GroupModel.rejectMember({ groupId, memberId });
+      return res.json({ status: "ok" });
+    } catch (error) {
+      console.error("Lỗi khi từ chối thành viên:", error);
+      res.status(500).json({ status: "error", message: error.message });
     }
   },
 };

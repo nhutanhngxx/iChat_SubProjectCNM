@@ -31,6 +31,9 @@ import ForgotPasswordScreen from "../components/profile/ForgotPassword";
 import ChangePasswordScreen from "../components/profile/ChangePassword";
 import ManageUserBlock from "../components/profile/ManageUserBlock";
 import ModalCreateGroup from "../components/contact/ModalCreateGroup";
+import ModalAddMember from "../components/group/ModalAddMember";
+import ModalMemberManagement from "../components/group/ModalMemberManagement";
+import PendingInvitations from "../components/group/PendingInvitations";
 
 const Stack = createStackNavigator();
 
@@ -116,6 +119,21 @@ export default function AppNavigator() {
           <Stack.Screen
             name="ManageUserBlock"
             component={ManageUserBlock}
+            options={{ animation: "none" }}
+          />
+          <Stack.Screen
+            name="AddMember"
+            component={ModalAddMember}
+            options={{ animation: "none" }}
+          />
+          <Stack.Screen
+            name="MemberManagement"
+            component={ModalMemberManagement}
+            options={{ animation: "none" }}
+          />
+          <Stack.Screen
+            name="PendingInvitations"
+            component={PendingInvitations}
             options={{ animation: "none" }}
           />
         </>
