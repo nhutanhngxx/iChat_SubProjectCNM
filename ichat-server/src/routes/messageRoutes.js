@@ -85,4 +85,7 @@ router.post(
   MessageController.sendMultipleImages
 );
 
+//Chuyển tiếp tin nhắn
+router.post("/forward", MessageController.forwardMessage);
+
 module.exports = router;

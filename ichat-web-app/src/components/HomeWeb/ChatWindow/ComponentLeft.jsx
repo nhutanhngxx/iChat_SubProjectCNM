@@ -21,7 +21,7 @@ import {
   DownOutlined,
   PushpinOutlined,
   MoreOutlined,
-  MutedOutlined 
+  MutedOutlined
 } from "@ant-design/icons";
 import { MdMoreHoriz } from "react-icons/md";
 import "./ComponentLeft.css";
@@ -127,12 +127,12 @@ const ChatItem = ({ item, onSelectUser, onPin }) => {
   const formatTime = (timestamp) => {
     const now = dayjs();
     const messageTime = dayjs(timestamp);
-  
+
     const diffInSeconds = now.diff(messageTime, "second");
     const diffInMinutes = now.diff(messageTime, "minute");
     const diffInHours = now.diff(messageTime, "hour");
     const diffInDays = now.diff(messageTime, "day");
-  
+
     if (diffInSeconds < 60) {
       return `${diffInSeconds} giây trước`;
     } else if (diffInMinutes < 60) {
@@ -145,7 +145,7 @@ const ChatItem = ({ item, onSelectUser, onPin }) => {
       return messageTime.format("D/M/YY");
     }
   };
-  
+
   const handleOnSelectUser = (user) => {
     onSelectUser(user);
     // setIsSearchOpen(false);
@@ -184,11 +184,11 @@ const ChatItem = ({ item, onSelectUser, onPin }) => {
           style={{ width: "100%", display: "inline-flex" }}
         >
           <Col>
-          <span className={`last-message ${item.type || "text"}`}>
+            <span className={`last-message ${item.type || "text"}`}>
               {item.type === "video" && <VideoCameraOutlined />}
               {item.type === "audio" && <MutedOutlined />}
               {item.type === "notification" && <NotificationOutlined />}
-              {`${item.isLastMessageFromMe === true ? "Bạn: " : 
+              {`${item.isLastMessageFromMe === true ? "Bạn: " :
                 (item.chat_type === "group" ? `${item.sender_name || ""}: ` : `${item.name}: `)
                 }${item.type === "image"
                   ? "Đã gửi một ảnh"
@@ -216,15 +216,23 @@ const ChatItem = ({ item, onSelectUser, onPin }) => {
 
 // Component ChatList: Hiển thị danh sách các ChatItem
 const ChatList = ({ filteredChatList, onSelectUser, onPin }) => (
-  <List
-    itemLayout="horizontal"
-    dataSource={filteredChatList}
-    renderItem={(item) => <ChatItem item={item} onSelectUser={onSelectUser} onPin={onPin} />}
-  />
+  <div style={{ height: 'calc(100vh - 90px)', overflowY: 'auto' }}>
+    <List
+      itemLayout="horizontal"
+      dataSource={filteredChatList}
+      renderItem={(item) => (
+        <ChatItem
+          item={item}
+          onSelectUser={onSelectUser}
+          onPin={onPin}
+        />
+      )}
+    />
+  </div>
 );
 
 // Component chính: ComponentLeft
-const ComponentLeft = ({ userList, setUserList, onSelectUser,user }) => {
+const ComponentLeft = ({ userList, setUserList, onSelectUser, user }) => {
   const [activeTab, setActiveTab] = useState("priority");
   const [searchText] = useState("");
   const [showInterface, setShowInterface] = useState(false);
@@ -318,7 +326,7 @@ const ComponentLeft = ({ userList, setUserList, onSelectUser,user }) => {
       </Button>
     </div>
   );
-  
+
   return (
     <div>
       {showInterface ? (

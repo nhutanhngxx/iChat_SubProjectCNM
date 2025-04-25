@@ -47,12 +47,13 @@ const CreateGroupModal = ({ visible, onCancel, onOk, userMessageId }) => {
         }
     }, [dispatch, currentUser, friendsData]);
 
-    // lấy 2 giá trị currentUser.id và userMessageId làm mặc định cho selectedContacts (thành viên được chọn sẵn)
+    // lấy 2 giá trị userMessageId làm mặc định cho selectedContacts (thành viên được chọn sẵn)
     useEffect(() => {
         if (visible && currentUser) {
-            const defaultContacts = userMessageId
-                ? [currentUser.id, userMessageId]
-                : [currentUser.id];
+            const defaultContacts = [];
+            if (userMessageId) {
+                defaultContacts.push(userMessageId);
+            }
             setSelectedContacts(defaultContacts);
         }
     }, [visible, currentUser, userMessageId]);
@@ -100,9 +101,10 @@ const CreateGroupModal = ({ visible, onCancel, onOk, userMessageId }) => {
         setFilteredFriends(friendsData);
         setActiveCategory("all");
 
-        const defaultContacts = userMessageId
-            ? [currentUser.id, userMessageId]
-            : [currentUser.id];
+        const defaultContacts = [];
+        if (userMessageId) {
+            defaultContacts.push(userMessageId);
+        }
 
         setSelectedContacts(defaultContacts);
     };
@@ -127,14 +129,6 @@ const CreateGroupModal = ({ visible, onCancel, onOk, userMessageId }) => {
             console.error("Lỗi khi nén ảnh avatar:", error);
         }
     };
-
-    const categories = [
-        { id: "all", label: "Tất cả" },
-        { id: "customers", label: "Khách hàng" },
-        { id: "family", label: "Gia đình" },
-        { id: "work", label: "Công việc" },
-        { id: "friends", label: "Bạn bè" },
-    ];
 
     // Hàm để chọn hoặc bỏ chọn một liên hệ
     const toggleContact = (contactId) => {
@@ -163,7 +157,7 @@ const CreateGroupModal = ({ visible, onCancel, onOk, userMessageId }) => {
                 <Button
                     key="submit"
                     type="primary"
-                    disabled={!groupName || selectedContacts.length < 3}
+                    disabled={!groupName || selectedContacts.length < 2}
                     onClick={handleCreateGroup}
                 >
                     Tạo nhóm
