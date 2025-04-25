@@ -538,7 +538,10 @@ const Option = ({ route }) => {
           )}
 
           {adminGroup === true && (
-            <TouchableOpacity style={styles.component}>
+            <TouchableOpacity
+              style={styles.component}
+              onPress={handleDeleteGroup}
+            >
               <Image
                 source={require("../../assets/icons/delete-group.png")}
                 style={{ width: 25, height: 25 }}

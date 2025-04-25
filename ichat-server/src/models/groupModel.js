@@ -68,7 +68,7 @@ const GroupModel = {
       ]);
 
       if (!members || members.length === 0) {
-        console.log("Không tìm thấy thành viên nào trong nhóm:", groupId);
+        // console.log("Không tìm thấy thành viên nào trong nhóm:", groupId);
       }
 
       return members;
@@ -114,12 +114,21 @@ const GroupModel = {
         "https://nhutanhngxx.s3.ap-southeast-1.amazonaws.com/root/new-logo.png"; // default avatar
       if (avatar && avatar.buffer) {
         try {
-          avatarUrl = await uploadFile({
-            buffer: avatar.buffer,
-            mimetype: avatar.mimetype,
-            originalname: avatar.originalname,
-            size: avatar.size,
-          });
+          console.log("Processing avatar...");
+          console.log("Avatar:", avatar);
+          console.log("Avatar buffer:", avatar.buffer);
+          console.log("Avatar mimetype:", avatar.mimetype);
+          console.log("Avatar originalname:", avatar.originalname);
+          console.log("Avatar size:", avatar.size);
+
+          // avatarUrl = await uploadFile({
+          //   buffer: avatar.buffer,
+          //   mimetype: avatar.mimetype,
+          //   originalname: avatar.originalname,
+          //   size: avatar.size,
+          // });
+          avatarUrl = await uploadFile(avatar);
+          console.log("Avatar URL:", avatarUrl);
         } catch (error) {
           console.error("Lỗi upload avatar:", error);
           // Tiếp tục với avatar mặc định nếu upload thất bại
@@ -132,9 +141,7 @@ const GroupModel = {
           {
             name,
             admin_id,
-            avatar:
-              avatarUrl ||
-              "https://nhutanhngxx.s3.ap-southeast-1.amazonaws.com/root/new-logo.png",
+            avatar: avatarUrl,
           },
         ],
         { session }

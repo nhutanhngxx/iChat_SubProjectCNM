@@ -549,7 +549,10 @@ const ModalMemberManagement = ({ route }) => {
           ) : (
             <FlatList
               data={filteredMembers}
-              keyExtractor={(item) => item.user_id.toString()}
+              keyExtractor={(item) => item.user_id.toString() + index}
+              // keyExtractor={(item, index) =>
+              //   `${item.chatType}_${item.id}_${index}`
+              // }
               renderItem={renderMemberItem}
               showsVerticalScrollIndicator={false}
             />
