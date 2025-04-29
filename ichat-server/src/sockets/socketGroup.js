@@ -7,7 +7,11 @@ module.exports = (io) => {
       socket.join(groupId);
       console.log(` Socket ${socket.id} joined room: ${groupId}`);
     });
-
+    //lawng nghe tao nhom
+    socket.on("create-group", (groupId, groupData) => {
+      console.log("Create group:", groupId, groupData);
+      io.to(groupId).emit("group-created", groupId, groupData);
+    });
     // Lắng nghe rời room theo groupId
     socket.on("leave-room", (groupId) => {
       socket.leave(groupId);
