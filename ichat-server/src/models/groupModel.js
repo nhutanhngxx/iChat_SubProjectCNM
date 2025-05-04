@@ -5,6 +5,8 @@ const Message = require("../schemas/Messages");
 const mongoose = require("mongoose");
 const { uploadFile } = require("../services/upload-file");
 const { get } = require("http");
+const crypto = require("crypto");
+const GroupInvitation = require("../schemas/GroupInvitation");
 
 const GroupModel = {
   //   Lấy danh sách nhóm mà người dùng tham gia
@@ -66,7 +68,7 @@ const GroupModel = {
       ]);
 
       if (!members || members.length === 0) {
-        console.log("Không tìm thấy thành viên nào trong nhóm:", groupId);
+        // console.log("Không tìm thấy thành viên nào trong nhóm:", groupId);
       }
 
       return members;
@@ -102,9 +104,35 @@ const GroupModel = {
         : [];
 
       // Xử lý avatar nếu có
-      let avatarUrl = null;
-      if (avatar) {
-        avatarUrl = await uploadFile(avatar);
+      // let avatarUrl = null;
+      // if (avatar) {
+      //   avatarUrl = await uploadFile(avatar);
+      // }
+
+      // Xử lý avatar nếu có (Merge code)
+      let avatarUrl =
+        "https://nhutanhngxx.s3.ap-southeast-1.amazonaws.com/root/new-logo.png"; // default avatar
+      if (avatar && avatar.buffer) {
+        try {
+          console.log("Processing avatar...");
+          console.log("Avatar:", avatar);
+          console.log("Avatar buffer:", avatar.buffer);
+          console.log("Avatar mimetype:", avatar.mimetype);
+          console.log("Avatar originalname:", avatar.originalname);
+          console.log("Avatar size:", avatar.size);
+
+          // avatarUrl = await uploadFile({
+          //   buffer: avatar.buffer,
+          //   mimetype: avatar.mimetype,
+          //   originalname: avatar.originalname,
+          //   size: avatar.size,
+          // });
+          avatarUrl = await uploadFile(avatar);
+          console.log("Avatar URL:", avatarUrl);
+        } catch (error) {
+          console.error("Lỗi upload avatar:", error);
+          // Tiếp tục với avatar mặc định nếu upload thất bại
+        }
       }
 
       // Tạo group
@@ -113,9 +141,7 @@ const GroupModel = {
           {
             name,
             admin_id,
-            avatar:
-              avatarUrl ||
-              "https://nhutanhngxx.s3.ap-southeast-1.amazonaws.com/root/new-logo.png",
+            avatar: avatarUrl,
           },
         ],
         { session }
@@ -262,7 +288,10 @@ const GroupModel = {
   },
 
   // 5. Đổi tên Group / Set avatar
-  updateGroup: async (groupId, { name, avatar }) => {
+  updateGroup: async (
+    groupId,
+    { name, avatar, allow_add_members, allow_change_name, allow_change_avatar }
+  ) => {
     try {
       const update = {};
 
@@ -276,6 +305,10 @@ const GroupModel = {
         const avatarUrl = await uploadFile(avatar);
         update.avatar = avatarUrl; // Sửa từ avatarUrl thành avatar để phù hợp
       }
+
+      update.allow_add_members = allow_add_members;
+      update.allow_change_name = allow_change_name;
+      update.allow_change_avatar = allow_change_avatar;
 
       return GroupChat.findByIdAndUpdate(groupId, update, { new: true });
     } catch (error) {
@@ -293,7 +326,7 @@ const GroupModel = {
     );
   },
 
-  // 7. Xóa nhóm (chỉ creator)
+  // 7. Xóa nhóm (chỉ creator || admin chính)
   deleteGroup: async (groupId) => {
     await GroupMember.deleteMany({ group_id: groupId });
     return GroupChat.findByIdAndDelete(groupId);
@@ -395,6 +428,7 @@ const GroupModel = {
         { admin_id: userId },
         { new: true }
       );
+
       if (!updatedGroup) {
         throw new Error("Nhóm không tồn tại");
       }
@@ -405,7 +439,149 @@ const GroupModel = {
       throw error;
     }
   },
+  // Tạo lời mời nhóm
+  createGroupInvitation: async (
+    groupId,
+    userId,
+    expiresInHours = 24,
+    maxUses = null
+  ) => {
+    // Kiểm tra xem nhóm có tồn tại không
+    const group = await GroupChat.findById(groupId);
+    if (!group) {
+      throw new Error("Không tìm thấy nhóm");
+    }
 
+    // Kiểm tra xem người tạo có phải là thành viên nhóm
+    const isMember = await GroupMember.findOne({
+      group_id: groupId,
+      user_id: userId,
+    });
+
+    if (!isMember) {
+      throw new Error("Bạn không phải là thành viên của nhóm này");
+    }
+    const existingInvite = await GroupInvitation.findOne({
+      group_id: groupId,
+      active: true,
+      expires_at: { $gt: new Date() },
+      max_uses: maxUses,
+    });
+
+    if (existingInvite) {
+      return existingInvite; // Trả về lời mời hiện có thay vì tạo mới
+    }
+
+    // Tạo token ngẫu nhiên
+    const token = crypto.randomBytes(16).toString("hex");
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + expiresInHours);
+
+    // Tạo lời mời mới
+    const invitation = await GroupInvitation.create({
+      group_id: groupId,
+      token,
+      created_by: userId,
+      expires_at: expiresAt,
+      max_uses: maxUses,
+      use_count: 0,
+      active: true,
+    });
+
+    return invitation;
+  },
+
+  // Xác thực và sử dụng lời mời
+  validateAndJoinGroup: async (token, userId) => {
+    // Tìm lời mời theo token
+    const invitation = await GroupInvitation.findOne({
+      token,
+      active: true,
+      expires_at: { $gt: new Date() },
+    });
+
+    if (!invitation) {
+      throw new Error("Lời mời không hợp lệ hoặc đã hết hạn");
+    }
+
+    // Kiểm tra số lần sử dụng
+    if (invitation.max_uses && invitation.use_count >= invitation.max_uses) {
+      throw new Error("Lời mời đã đạt giới hạn sử dụng");
+    }
+
+    // Kiểm tra xem người dùng đã là thành viên chưa
+    const existingMember = await GroupMember.findOne({
+      group_id: invitation.group_id,
+      user_id: userId,
+    });
+
+    if (existingMember) {
+      throw new Error("Bạn đã là thành viên của nhóm này");
+    }
+
+    // Thêm người dùng vào nhóm (nếu thành viên đã có thì không thêm chỉ cập nhật)
+    await GroupMember.updateOne(
+      { group_id: invitation.group_id, user_id: userId },
+      { $setOnInsert: { role: "member", joined_at: new Date() } },
+      { upsert: true }
+    );
+
+    // Cập nhật số lần sử dụng
+    invitation.use_count += 1;
+    await invitation.save();
+
+    // Lấy thông tin nhóm để trả về
+    const group = await GroupChat.findById(invitation.group_id);
+    return group;
+  },
+
+  // Hủy lời mời
+  revokeInvitation: async (inviteId, userId) => {
+    const invitation = await GroupInvitation.findById(inviteId);
+
+    if (!invitation) {
+      throw new Error("Không tìm thấy lời mời");
+    }
+
+    // Kiểm tra quyền (chỉ người tạo hoặc admin nhóm mới có thể hủy)
+    const group = await GroupChat.findById(invitation.group_id);
+    const isAdmin = group.admin_id.toString() === userId.toString();
+    const isCreator = invitation.created_by.toString() === userId.toString();
+
+    if (!isAdmin && !isCreator) {
+      throw new Error("Bạn không có quyền hủy lời mời này");
+    }
+
+    invitation.active = false;
+    await invitation.save();
+
+    return invitation;
+  },
+
+  // Lấy danh sách lời mời của nhóm
+  getGroupInvitations: async (groupId, userId) => {
+    // Kiểm tra xem người dùng có quyền xem không (là thành viên nhóm)
+    const member = await GroupMember.findOne({
+      group_id: groupId,
+      user_id: userId,
+    });
+    console.log("Group ID:", groupId);
+    console.log("User ID:", userId);
+    console.log("Member:", member);
+
+    if (!member) {
+      throw new Error("Bạn không phải là thành viên của nhóm này");
+    }
+
+    // Lấy các lời mời còn hoạt động
+    const invitations = await GroupInvitation.find({
+      group_id: groupId,
+      active: true,
+      expires_at: { $gt: new Date() },
+    }).populate("created_by", "full_name avatar_path");
+
+    return invitations;
+  },
   // Kiểm tra trạn thái của phê duyệt thành viên của nhóm
   checkMemberApproval: async (groupId) => {
     try {
@@ -489,6 +665,7 @@ const GroupModel = {
           },
         },
       ]);
+      console.log("Pending members:", pendingMembers);
 
       return pendingMembers;
     } catch (error) {
@@ -504,6 +681,7 @@ const GroupModel = {
         {
           $match: {
             invited_by: new mongoose.Types.ObjectId(userId),
+            // status: "approved",
           },
         },
         {

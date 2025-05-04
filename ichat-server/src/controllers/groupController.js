@@ -100,7 +100,7 @@ const GroupController = {
       console.log("Giá trị gốc:", participant_ids);
       console.log("Mảng đã xử lý:", participantArray);
 
-      const avatar = req.file ? req.file.buffer : null;
+      const avatar = req.file;
 
       const group = await GroupModel.createGroup({
         name,
@@ -166,43 +166,24 @@ const GroupController = {
     }
   },
 
-  // // 4. Gửi tin nhắn nhóm
-  // sendGroupMessage: async (req, res) => {
-  //   try {
-  //     const { groupId } = req.params;
-  //     const { content, type, sender_id } = req.body; // Lấy sender_id từ req.body
-
-  //     // Xử lý file nếu cần
-  //     const imageFile = req.files?.image?.[0] || null;
-  //     const docFile = req.files?.file?.[0] || null;
-  //     const file = imageFile || docFile;
-
-  //     const msg = await GroupModel.sendGroupMessage({
-  //       groupId,
-  //       sender_id,
-  //       content,
-  //       type,
-  //       file, // Truyền file nếu có
-  //     });
-
-  //     res.status(201).json({ status: "ok", data: msg });
-  //   } catch (e) {
-  //     res.status(500).json({ status: "error", message: e.message });
-  //   }
-  // },
-
   // 5. Đổi tên / set background
   updateGroup: async (req, res) => {
     try {
       const { groupId } = req.params;
       const { name } = req.body;
-      const avatar = req.file ? req.file.buffer : null;
+      const avatar = req.file || null;
+      const allow_add_members = req.body.allow_add_members || true;
+      const allow_change_name = req.body.allow_change_name || true;
+      const allow_change_avatar = req.body.allow_change_avatar || true;
 
       console.log(groupId, name, avatar);
 
       const upd = await GroupModel.updateGroup(groupId, {
         name,
         avatar,
+        allow_add_members,
+        allow_change_name,
+        allow_change_avatar,
       });
 
       res.json({ status: "ok", data: upd });
@@ -302,7 +283,35 @@ const GroupController = {
       });
     }
   },
+  // Tạo lời mời nhóm
+  createInvitation: async (req, res) => {
+    try {
+      const { groupId } = req.params;
+      const { userId, expiresInHours, maxUses } = req.body;
 
+      const invitation = await GroupModel.createGroupInvitation(
+        groupId,
+        userId,
+        expiresInHours || 24,
+        maxUses || null
+      );
+
+      const inviteUrl = `${
+        process.env.FRONTEND_URL || "http://localhost:3000"
+      }/invite/${invitation.token}`;
+
+      res.status(201).json({
+        status: "ok",
+        data: {
+          invitation,
+          inviteUrl,
+          qrData: invitation.token,
+        },
+      });
+    } catch (error) {
+      res.status(400).json({});
+    }
+  },
   // Kiểm tra trạng thái của phê duyệt thành viên của nhóm
   checkMemberApproval: async (req, res) => {
     try {
@@ -347,6 +356,65 @@ const GroupController = {
     }
   },
 
+  // Xác thực và tham gia nhóm
+  joinByInvitation: async (req, res) => {
+    try {
+      const { token, userId } = req.body;
+
+      const group = await GroupModel.validateAndJoinGroup(token, userId);
+
+      res.status(200).json({
+        status: "ok",
+        message: "Đã tham gia nhóm thành công",
+        data: group,
+      });
+    } catch (error) {
+      res.status(400).json({
+        status: "error",
+        message: error.message,
+      });
+    }
+  },
+
+  // Hủy lời mời
+  revokeInvitation: async (req, res) => {
+    try {
+      const { inviteId } = req.params;
+      const { userId } = req.body;
+
+      await GroupModel.revokeInvitation(inviteId, userId);
+
+      res.status(200).json({
+        status: "ok",
+        message: "Đã hủy lời mời thành công",
+      });
+    } catch (error) {
+      res.status(400).json({
+        status: "error",
+        message: error.message,
+      });
+    }
+  },
+
+  // Lấy danh sách lời mời của nhóm
+  getGroupInvitations: async (req, res) => {
+    try {
+      const { groupId } = req.params;
+      const { userId } = req.query;
+
+      const invitations = await GroupModel.getGroupInvitations(groupId, userId);
+
+      res.status(200).json({
+        status: "ok",
+        data: invitations,
+      });
+    } catch (error) {
+      res.status(400).json({
+        status: "error",
+        message: error.message,
+      });
+    }
+  },
   // Lấy danh sách yêu cầu tham gia nhóm đang chờ duyệt
   getPendingMembers: async (req, res) => {
     try {

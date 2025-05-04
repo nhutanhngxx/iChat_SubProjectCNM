@@ -32,15 +32,26 @@ const MessageController = {
   sendMessage: async (req, res) => {
     try {
       const imageFile = req.files?.image?.[0] || null;
+      const videoFile = req.files?.video?.[0] || null;
       const docFile = req.files?.file?.[0] || null;
+      const audioFile = req.files?.audio?.[0] || null;
+      const file = videoFile || imageFile || docFile || audioFile;
+
+      // Nếu là audio, thêm duration vào payload
+      const additionalData = {};
+      if (req.body.type === "audio" && req.body.duration) {
+        additionalData.duration = parseInt(req.body.duration, 10);
+      }
+
       const result = await MessageModel.sendMessage({
         sender_id: req.body.sender_id,
         receiver_id: req.body.receiver_id,
         content: req.body.content || "",
         type: req.body.type,
         chat_type: req.body.chat_type,
-        file: imageFile || docFile,
+        file: file,
         reply_to: req.body.reply_to || null,
+        ...additionalData,
       });
 
       res.status(201).json({
@@ -51,6 +62,39 @@ const MessageController = {
       res
         .status(err.status || 500)
         .json({ error: err.message || "Internal server error" });
+    }
+  },
+
+  // Xử lý gửi nhiều ảnh
+  sendMultipleImages: async (req, res) => {
+    try {
+      const { sender_id, receiver_id, chat_type } = req.body;
+      const files = req.files;
+
+      if (!files || files.length === 0) {
+        return res.status(400).json({
+          status: "error",
+          message: "No images provided",
+        });
+      }
+
+      const messages = await MessageModel.sendMultipleImages({
+        files,
+        sender_id,
+        receiver_id,
+        chat_type,
+      });
+
+      res.status(201).json({
+        status: "ok",
+        data: messages,
+      });
+    } catch (error) {
+      console.error("Error in sendMultipleImages controller:", error);
+      res.status(500).json({
+        status: "error",
+        message: error.message || "Internal server error",
+      });
     }
   },
 
@@ -301,6 +345,54 @@ const MessageController = {
         },
       ]);
 
+      // PHẦN MỚI: LẤY DANH SÁCH BẠN BÈ CHƯA CÓ TIN NHẮN
+      // Lấy ID của những người đã có tin nhắn (để loại trừ)
+      const existingChatPartnerIds = recentPrivateReceivers.map((chat) =>
+        chat.receiver_id.toString()
+      );
+
+      // Lấy danh sách bạn bè của user hiện tại
+      const friendships = await mongoose.connection
+        .collection("Friendship")
+        .find({
+          $or: [
+            { user_id: senderObjectId, status: "accepted" },
+            { friend_id: senderObjectId, status: "accepted" },
+          ],
+        })
+        .toArray();
+
+      // Lọc ra những bạn bè chưa có tin nhắn
+      const friendsWithNoMessages = [];
+
+      for (const friendship of friendships) {
+        // Xác định ID của người bạn
+        const friendId = friendship.user_id.equals(senderObjectId)
+          ? friendship.friend_id
+          : friendship.user_id;
+
+        // Kiểm tra nếu chưa có trong danh sách tin nhắn
+        if (!existingChatPartnerIds.includes(friendId.toString())) {
+          // Lấy thông tin chi tiết của người bạn
+          const friendInfo = await Users.findById(friendId);
+          if (friendInfo) {
+            friendsWithNoMessages.push({
+              receiver_id: friendId,
+              name: friendInfo.full_name,
+              avatar_path: friendInfo.avatar_path,
+              lastMessage: "", // Tin nhắn trống
+              timestamp: friendship.createdAt || new Date(),
+              status: "none",
+              user_status: friendInfo.status || "offline",
+              type: "text",
+              unread: 0,
+              isLastMessageFromMe: false,
+              chat_type: "private",
+            });
+          }
+        }
+      }
+
       // PHẦN 2: LẤY TIN NHẮN NHÓM GẦN NHẤT
       // 1. Tìm tất cả nhóm mà người dùng là thành viên
       const userGroups = await GroupMembers.find({
@@ -320,14 +412,14 @@ const MessageController = {
             isdelete: { $not: { $elemMatch: { $eq: senderObjectId } } },
           },
         },
-        { $sort: { timestamp: -1 } },
+        { $sort: { timestamp: -1 } }, // Sắp xếp theo thời gian giảm dần
         {
           $group: {
             _id: "$receiver_id", // Group by group_id (stored in receiver_id for group messages)
             lastMessage: { $first: "$content" },
             timestamp: { $first: "$timestamp" },
             status: { $first: "$status" },
-            type: { $first: "$type" },
+            type: { $first: "$type" }, // Đảm bảo type được giữ lại
             lastMessageSender: { $first: "$sender_id" },
             chat_type: { $first: "$chat_type" },
           },
@@ -342,6 +434,23 @@ const MessageController = {
           },
         },
         { $unwind: "$groupInfo" },
+
+        // Thêm lookup để lấy thông tin người gửi tin nhắn cuối cùng
+        {
+          $lookup: {
+            from: "UserInfo", // Collection chứa thông tin người dùng
+            localField: "lastMessageSender",
+            foreignField: "_id",
+            as: "senderInfo",
+          },
+        },
+        {
+          $unwind: {
+            path: "$senderInfo",
+            preserveNullAndEmptyArrays: true, // Giữ lại các message không có senderInfo
+          },
+        },
+
         // Đếm tin nhắn chưa đọc trong nhóm
         {
           $lookup: {
@@ -377,30 +486,102 @@ const MessageController = {
             isLastMessageFromMe: {
               $eq: ["$lastMessageSender", senderObjectId],
             },
+            // Tạo trường hiển thị "Người gửi: Nội dung" cho tin nhắn
+            displayMessage: {
+              $concat: [
+                { $ifNull: [{ $concat: ["$senderInfo.full_name", ": "] }, ""] },
+                {
+                  $cond: [
+                    { $eq: ["$type", "image"] },
+                    "[Hình ảnh]",
+                    {
+                      $cond: [
+                        { $eq: ["$type", "file"] },
+                        "[Tệp đính kèm]",
+                        {
+                          $cond: [
+                            { $eq: ["$type", "video"] },
+                            "[Video]",
+                            {
+                              $cond: [
+                                { $eq: ["$type", "audio"] },
+                                "[Âm thanh]",
+                                { $ifNull: ["$lastMessage", ""] },
+                              ],
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
           },
         },
         {
           $project: {
             _id: 0,
             receiver_id: "$_id",
-            name: "$groupInfo.name",
+            name: "$groupInfo.name", // Giữ lại tên nhóm
+            group_name: "$groupInfo.name", // Thêm trường tên nhóm
+            sender_name: { $ifNull: ["$senderInfo.full_name", ""] }, // Thêm tên người gửi
             avatar_path: "$groupInfo.avatar",
-            lastMessage: 1,
+            lastMessage: "$displayMessage", // Hiển thị tin nhắn kèm tên người gửi
+            originalMessage: "$lastMessage", // Giữ lại tin nhắn gốc nếu cần
             timestamp: 1,
             status: 1,
             user_status: "online", // Nhóm luôn "online"
-            type: 1,
+            type: 1, // Giữ lại type để frontend có thể hiển thị đúng định dạng
             unread: 1,
             isLastMessageFromMe: 1,
             chat_type: 1,
+            admin_id: "$groupInfo.admin_id",
           },
         },
       ]);
 
+      // PHẦN MỚI: LẤY DANH SÁCH NHÓM CHƯA CÓ TIN NHẮN
+      // Lấy ID của các nhóm đã có tin nhắn
+      const existingGroupChatIds = recentGroupMessages.map((group) =>
+        group.receiver_id.toString()
+      );
+
+      // Tìm các nhóm chưa có tin nhắn
+      const groupsWithNoMessages = [];
+
+      for (const groupId of groupObjectIds) {
+        if (!existingGroupChatIds.includes(groupId.toString())) {
+          // Lấy thông tin của nhóm
+          const groupInfo = await GroupChat.findById(groupId);
+          if (groupInfo) {
+            groupsWithNoMessages.push({
+              receiver_id: groupId,
+              name: groupInfo.name,
+              group_name: groupInfo.name,
+              avatar_path: groupInfo.avatar,
+              lastMessage: "", // Tin nhắn trống
+              originalMessage: "",
+              timestamp: groupInfo.created_at || new Date(),
+              status: "none",
+              user_status: "online", // Nhóm luôn "online"
+              type: "text",
+              unread: 0,
+              isLastMessageFromMe: false,
+              chat_type: "group",
+              sender_name: "",
+              admin_id: groupInfo.admin_id,
+            });
+          }
+        }
+      }
+
       // PHẦN 3: KẾT HỢP CẢ HAI VÀ SẮP XẾP
       const allRecentMessages = [
         ...recentPrivateReceivers,
+        ...friendsWithNoMessages,
         ...recentGroupMessages,
+        ...groupsWithNoMessages,
       ].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
       res.status(200).json({ success: true, data: allRecentMessages });

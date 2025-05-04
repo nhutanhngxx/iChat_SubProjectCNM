@@ -51,8 +51,12 @@ export default function LoginWithPass() {
   //  Hàm xử lý đăng nhập
   const handleLogin = async (e) => {
     e.preventDefault();
+    console.log("Form submitted", e); // Thêm log để kiểm tra
+    
     try {
       const phoneNumber = parsePhoneNumberFromString(phone, countryCode);
+      console.log("Sending login request with:", { phone: phoneNumber?.number, password: '***' });
+      
       await dispatch(loginUser({ phone: phoneNumber.number, password })).unwrap(); // unwrap để lấy dữ liệu từ createAsyncThunk
       if (token || localStorage.getItem("token")) {
         navigate("/home");
@@ -155,122 +159,80 @@ export default function LoginWithPass() {
         </div>
 
         {loginWithQR ? (
-          // <div className="qr-container">
-          //   <IoMdQrScanner className="qr-icon" />
-          //   <p>Chỉ dùng đăng nhập iChat trên máy tính</p>
-          // </div>
           <LoginWithQR />
         ) : (
           <>
-            <div className="input-container">
-              <div className="input-wrapper">
-                <div className="icons">
-                  <MdPhoneAndroid className="icon" />
-                </div>
-                <div className="country-code-wrapper">
-                  {/* <select value={countryCode} onChange={(e) => {
-                    setCountryCode(e.target.value);
-                    setPhoneError(validatePhone(phone)); // Revalidate khi đổi mã quốc gia
-                  }}
-                    style={{ width: "30px", border: "none", }}
-
-                  >
-                    <option value="+84">+84 (Việt Nam)</option>
-                    <option value="+1">+1 (Mỹ)</option>
-                    <option value="+44">+44 (Anh)</option>
-                    <option value="+91">+91 (Ấn Độ)</option>
-                    <option value="+81">+81 (Nhật)</option>
-                  </select> */}
-                  <select value={countryCode} onChange={(e) => setCountryCode(e.target.value)} style={{ width: "30px", border: "none", }}>
-                    <option value="VN">+84 (VN)</option>
-                    <option value="US">+1 (US)</option>
-                    <option value="KR">+82 (KR)</option>
-                    <option value="JP">+81 (JP)</option>
-                    <option value="CN">+86 (CN)</option>
-                  </select>
+            <form onSubmit={handleLogin} className="login-form">
+              <div className="input-container">
+                <div className="input-wrapper">
+                  {/* Country code và phone input */}
                   <div className="icons">
-                    <FaCaretDown className="icon" />
+                    <MdPhoneAndroid className="icon" />
                   </div>
-                </div>
-
-                <input
-                  type="text"
-                  value={phone}
-                  onChange={handleChange}
-                  placeholder="Nhập số điện thoại"
-                  style={{ marginBottom: "0px" }}
-                  className={`phone-input ${phone === "" ? "" : phoneError ? "error" : "success"}`}
-                />
-
-                <style jsx>{`
-                  .input-field {
-                    width: 100%;
-                    padding: 8px;
-                    font-size: 16px;
-                    border: 2px solid ${error ? "red" : "#ccc"};
-                    border-radius: 5px;
-                    outline: none;
-                  }
-                  .error-message {
-                    color: red;
-                    font-size: 14px;
-                    margin-top: 5px;
-                  }
-                `}</style>
-              </div>
-
-              <div className="input-wrapper">
-                <div className="icons">
-                  <IoLockClosedOutline className="icon" />
-                </div>
-                <input
-                  // type="password"
-                  type={showPassword ? 'text' : 'password'}
-                  className="input-field"
-                  placeholder="Nhập mật khẩu"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-                <span
-                  onClick={() => setShowPassword(!showPassword)}
-
-                >
-                  {showPassword ? <FaEyeSlash /> : <FaEye />}
-                </span>
-              </div>
-            </div>
-            {phone !== "" && phoneError && (
-              <p className="error-text" style={{ color: "red", marginLeft: "30px", fontSize: "10px" }}>{phoneError}</p>
-            )}
-            {error && (
-              <p className="error" style={{ color: "red", marginLeft: "30px", fontSize: "10px" }}>
-                {error}
-              </p>
-            )}
-            {loading && (
-              // <p className="loading" style={{ marginLeft: "30px" }}>
-              //   Đang xử lý...
-              // </p>
-
-              <div className="loading-overlay">
-                <div className="loading-spinner">
-                  <div className="loader-dots">
-                    <div className="dot"></div>
-                    <div className="dot"></div>
-                    <div className="dot"></div>
-                    <div className="dot"></div>
+                  <div className="country-code-wrapper">
+                    <select value={countryCode} onChange={(e) => setCountryCode(e.target.value)} style={{ width: "30px", border: "none", }}>
+                      <option value="VN">+84 (VN)</option>
+                      <option value="US">+1 (US)</option>
+                      <option value="KR">+82 (KR)</option>
+                      <option value="JP">+81 (JP)</option>
+                      <option value="CN">+86 (CN)</option>
+                    </select>
+                    <div className="icons">
+                      <FaCaretDown className="icon" />
+                    </div>
                   </div>
-                  <div className="loading-text">Đang xử lý...</div>
+
+                  <input
+                    type="text"
+                    value={phone}
+                    onChange={handleChange}
+                    placeholder="Nhập số điện thoại"
+                    style={{ marginBottom: "0px" }}
+                    className={`phone-input ${phone === "" ? "" : phoneError ? "error" : "success"}`}
+                  />
+                </div>
+
+                <div className="input-wrapper">
+                  <div className="icons">
+                    <IoLockClosedOutline className="icon" />
+                  </div>
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    className="input-field"
+                    placeholder="Nhập mật khẩu"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleLogin(e);
+                      }
+                    }}
+                  />
+                  <span
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? <FaEyeSlash /> : <FaEye />}
+                  </span>
                 </div>
               </div>
-            )}
-
-            <div className="container-body-button">
-              <button onClick={handleLogin} disabled={loading}>
-                {loading ? "Đang đăng nhập..." : "Đăng nhập với mật khẩu"}
-              </button>
-            </div>
-
+              
+              {phone !== "" && phoneError && (
+                <p className="error-text" style={{ color: "red", marginLeft: "30px", fontSize: "10px" }}>{phoneError}</p>
+              )}
+              {error && (
+                <p className="error" style={{ color: "red", marginLeft: "30px", fontSize: "10px" }}>
+                  {error}
+                </p>
+              )}
+              
+              <div className="container-body-button">
+                <button type="submit" disabled={loading}>
+                  {loading ? "Đang đăng nhập..." : "Đăng nhập với mật khẩu"}
+                </button>
+              </div>
+            </form>
+            
             <div className="container-body-link">
               <button style={{}} onClick={() => setShowForgotPassword(true)} >Quên mật khẩu?</button>
               <button onClick={() => setShowRegister(true)}>
@@ -281,10 +243,8 @@ export default function LoginWithPass() {
               />
               <RegisterModal
                 visible={showRegister} onClose={() => setShowRegister(false)}
-              // onRegister={handleRegister}
               />
             </div>
-
 
             <div className="container-body-link_QR">
               <a href="#" onClick={() => setLoginWithQR(!loginWithQR)}>

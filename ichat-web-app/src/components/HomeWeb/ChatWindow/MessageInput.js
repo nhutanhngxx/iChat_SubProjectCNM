@@ -66,6 +66,7 @@ const MessageInput = ({
   clearReplyingTo,
   user,
   selectedChat,
+  onImageMutippleUpload,
 }) => {
   const [selectedImage, setSelectedImage] = useState(null); // State để lưu ảnh đã chọn
   const [selectedFile, setSelectedFile] = useState(null); // State để lưu file đã chọn
@@ -87,6 +88,11 @@ const MessageInput = ({
   const [isFriendWithReceiver, setIsFriendWithReceiver] = useState(true);
   const [friends, setFriends] = useState({ friends: [] });
   const dispatch = useDispatch();
+  // State lưu trữ nhiều ảnh
+  const [selectedImages, setSelectedImages] = useState([]);
+  const [showMultipleImagePreview, setShowMultipleImagePreview] =
+    useState(false);
+
   // effect để lấy danh sách bạn bè
   useEffect(() => {
     const fetchFriends = async () => {
@@ -98,13 +104,19 @@ const MessageInput = ({
 
         // Check if the selected user is a friend
         if (result && result.friends && selectedChat) {
-          const isFriend = result.friends.some(
-            (friend) =>
-              friend.id === selectedChat.id ||
-              friend._id === selectedChat.id ||
-              String(friend.id) === String(selectedChat.id)
-          );
-          setIsFriendWithReceiver(isFriend);
+          // Nếu là chat nhóm, luôn coi như là bạn bè
+          if (selectedChat.chat_type === "group") {
+            setIsFriendWithReceiver(true);
+          } else {
+            // Chỉ kiểm tra bạn bè đối với chat cá nhân
+            const isFriend = result.friends.some(
+              (friend) =>
+                friend.id === selectedChat.id ||
+                friend._id === selectedChat.id ||
+                String(friend.id) === String(selectedChat.id)
+            );
+            setIsFriendWithReceiver(isFriend);
+          }
         }
       } catch (err) {
         console.error("Error fetching friends:", err);
@@ -117,7 +129,11 @@ const MessageInput = ({
   }, [dispatch, user, selectedChat]);
   const handleShowPickerTop = () => {
     // Check if users are friends before sending
-    if (!isFriendWithReceiver && selectedChat.id !== user.id) {
+    if (
+      !isFriendWithReceiver &&
+      selectedChat.id !== user.id &&
+      selectedChat?.chat_type !== "group"
+    ) {
       message.warning("Bạn cần kết bạn để gửi tin nhắn.");
       return;
     }
@@ -154,7 +170,11 @@ const MessageInput = ({
 
   const handleShowPickerRight = () => {
     // Check if users are friends before sending
-    if (!isFriendWithReceiver && selectedChat.id !== user.id) {
+    if (
+      !isFriendWithReceiver &&
+      selectedChat.id !== user.id &&
+      selectedChat?.chat_type !== "group"
+    ) {
       message.warning("Bạn cần kết bạn để gửi tin nhắn.");
       return;
     }
@@ -169,7 +189,11 @@ const MessageInput = ({
   };
   const onEmojiClick = (event) => {
     // Check if users are friends before sending
-    if (!isFriendWithReceiver && selectedChat.id !== user.id) {
+    if (
+      !isFriendWithReceiver &&
+      selectedChat.id !== user.id &&
+      selectedChat?.chat_type !== "group"
+    ) {
       message.warning("Bạn cần kết bạn để gửi tin nhắn.");
       return;
     }
@@ -189,7 +213,11 @@ const MessageInput = ({
   // Hàm xử lý khi chọn file ảnh (mở hộp thoại tải ảnh trực tiếp)
   const handleImageUpload = (event) => {
     // Check if users are friends before sending
-    if (!isFriendWithReceiver && selectedChat.id !== user.id) {
+    if (
+      !isFriendWithReceiver &&
+      selectedChat.id !== user.id &&
+      selectedChat?.chat_type !== "group"
+    ) {
       message.warning("Bạn cần kết bạn để gửi tin nhắn.");
       return;
     }
@@ -208,34 +236,58 @@ const MessageInput = ({
 
     event.target.value = null;
   };
+  // Hàm xử lý khi người dùng chọn nhiều ảnh
+  const handleMultipleImageUpload = (event) => {
+    // Check if users are friends
+    if (
+      !isFriendWithReceiver &&
+      selectedChat.id !== user.id &&
+      selectedChat?.chat_type !== "group"
+    ) {
+      message.warning("Bạn cần kết bạn để gửi tin nhắn.");
+      return;
+    }
 
+    // Verify selected chat
+    if (!selectedChat || !selectedChat.id) {
+      console.error("No selected chat or invalid chat", selectedChat);
+      return;
+    }
+
+    const files = Array.from(event.target.files);
+
+    if (files.length === 0) return;
+
+    // Kiểm tra nếu chỉ có 1 ảnh thì xử lý như bình thường
+    if (files.length === 1) {
+      onImageUpload(files[0]);
+      message.success("Ảnh đã được tải lên thành công!");
+    } else {
+      // Nếu có nhiều ảnh, hiển thị preview và xác nhận
+      setSelectedImages(files);
+      setShowMultipleImagePreview(true);
+      message.info(`Đã chọn ${files.length} ảnh. Nhấn gửi để tải lên.`);
+    }
+
+    // Reset input để có thể chọn lại cùng một file
+    event.target.value = null;
+  };
+  // Hàm xử lý khi người dùng xác nhận gửi nhiều ảnh
+  const handleSendMultipleImages = () => {
+    if (selectedImages.length > 0) {
+      message.success(`Đã gửi ${selectedImages.length} ảnh thành công!`);
+      onImageMutippleUpload(selectedImages); // Gọi hàm gửi nhiều ảnh
+      setShowMultipleImagePreview(false); // Đóng preview sau khi gửi
+    }
+  };
   // Hàm xử lý khi chọn file (mở hộp thoại tải file trực tiếp)
-  // const handleFileUpload = (event) => {
-  //   // Check if users are friends before sending
-  //   if (!isFriendWithReceiver && selectedChat.id !== user.id) {
-  //     message.warning("Bạn cần kết bạn để gửi tin nhắn.");
-  //     return;
-  //   }
-
-  //   // Always check if you have a valid selected chat and message ID before using
-  //   if (!selectedChat || !selectedChat.id) {
-  //     console.error("No selected chat or invalid chat", selectedChat);
-  //     return;
-  //   }
-  //   const file = event.target.files[0];
-  //   if (file) {
-  //     // setSelectedFile(file); // Lưu file object
-  //     onFileUpload(file); // Truyền file lên MessageArea
-  //     message.success(`File "${file.name}" đã được tải lên thành công!`);
-  //   }
-  //   // Reset input để có thể chọn lại cùng file
-  //   event.target.value = null;
-  // };
-  //Hàm xử lý khi chọn file (mở hộp thoại tải file trực tiếp) upload file (audio, video, docx, pdf)
-  // Enhanced file upload handler with media type detection
   const handleFileUpload = (event) => {
     // Check if users are friends before sending
-    if (!isFriendWithReceiver && selectedChat.id !== user.id) {
+    if (
+      !isFriendWithReceiver &&
+      selectedChat.id !== user.id &&
+      selectedChat?.chat_type !== "group"
+    ) {
       message.warning("Bạn cần kết bạn để gửi tin nhắn.");
       return;
     }
@@ -401,7 +453,11 @@ const MessageInput = ({
   // Hàm gửi tin nhắn (bao gồm gửi ảnh hoặc file nếu có)
   const handleSend = () => {
     // Check if users are friends before sending
-    if (!isFriendWithReceiver && selectedChat.id !== user.id) {
+    if (
+      !isFriendWithReceiver &&
+      selectedChat.id !== user.id &&
+      selectedChat?.chat_type !== "group"
+    ) {
       message.warning("Bạn cần kết bạn để gửi tin nhắn.");
       return;
     }
@@ -457,7 +513,11 @@ const MessageInput = ({
   // Hàm gửi danh thiếp
   const handleSendContacts = () => {
     // Check if users are friends before sending
-    if (!isFriendWithReceiver && selectedChat.id !== user.id) {
+    if (
+      !isFriendWithReceiver &&
+      selectedChat.id !== user.id &&
+      selectedChat?.chat_type !== "group"
+    ) {
       message.warning("Bạn cần kết bạn để gửi tin nhắn.");
       return;
     }
@@ -559,7 +619,11 @@ const MessageInput = ({
   const handleGifSelect = async (gifUrl) => {
     try {
       // Check if users are friends before sending
-      if (!isFriendWithReceiver && selectedChat.id !== user.id) {
+      if (
+        !isFriendWithReceiver &&
+        selectedChat.id !== user.id &&
+        selectedChat?.chat_type !== "group"
+      ) {
         message.warning("Bạn cần kết bạn để gửi tin nhắn.");
         return;
       }
@@ -638,6 +702,45 @@ const MessageInput = ({
         </div>
       )}
       {mediaPreview && <MediaPreviewComponent />}
+      {/* Preview nhiều ảnh */}
+      {showMultipleImagePreview && selectedImages.length > 0 && (
+        <div className="multiple-image-preview">
+          <div className="preview-header">
+            <span>Đã chọn {selectedImages.length} ảnh</span>
+            <Button
+              type="text"
+              icon={<CloseCircleOutlined />}
+              onClick={() => {
+                setSelectedImages([]);
+                setShowMultipleImagePreview(false);
+              }}
+            />
+          </div>
+
+          <div className="preview-grid">
+            {selectedImages.slice(0, 4).map((image, index) => (
+              <div key={index} className="preview-image-container">
+                <img
+                  src={URL.createObjectURL(image)}
+                  alt={`Preview ${index}`}
+                  className="preview-image"
+                />
+                {index === 3 && selectedImages.length > 4 && (
+                  <div className="more-images">
+                    +{selectedImages.length - 4}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <div className="preview-footer">
+            <Button type="primary" onClick={handleSendMultipleImages}>
+              Gửi {selectedImages.length} ảnh
+            </Button>
+          </div>
+        </div>
+      )}
       {/* Thanh công cụ trên */}
       <div className="message-toolbar">
         <div style={{ bottom: "102px", position: "absolute", left: "0px" }}>
@@ -687,7 +790,8 @@ const MessageInput = ({
             type="file"
             id="image-upload"
             accept="image/*"
-            onChange={handleImageUpload}
+            onChange={handleMultipleImageUpload}
+            multiple
             style={{ display: "none" }} // Ẩn input file
           />
           <PictureOutlined />

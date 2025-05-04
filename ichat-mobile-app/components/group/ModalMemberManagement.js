@@ -99,20 +99,7 @@ const ModalMemberManagement = ({ route }) => {
     // Lắng nghe sự kiện thành viên được chấp nhận vào nhóm
     socketService.onMemberAccepted(({ groupId: receivedGroupId, memberId }) => {
       if (groupId === receivedGroupId) {
-        setMembers((prev) =>
-          prev.map((member) =>
-            member.user_id === memberId
-              ? { ...member, status: "approved" }
-              : member
-          )
-        );
-        setFilteredMembers((prev) =>
-          prev.map((member) =>
-            member.user_id === memberId
-              ? { ...member, status: "approved" }
-              : member
-          )
-        );
+        fetchGroupMembers();
       }
     });
 
@@ -562,7 +549,10 @@ const ModalMemberManagement = ({ route }) => {
           ) : (
             <FlatList
               data={filteredMembers}
-              keyExtractor={(item) => item.user_id.toString()}
+              keyExtractor={(item) => item.user_id.toString() + index}
+              // keyExtractor={(item, index) =>
+              //   `${item.chatType}_${item.id}_${index}`
+              // }
               renderItem={renderMemberItem}
               showsVerticalScrollIndicator={false}
             />

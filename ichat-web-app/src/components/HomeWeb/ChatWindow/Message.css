@@ -144,6 +144,7 @@
 .file-info {
   display: flex;
   flex-direction: column;
+  max-width: 176px;
 }
 
 .file-name {
@@ -493,26 +494,6 @@
 .message.sent .message-reactions {
   left: 0;
 }
-
-/* .reaction-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 8px;
-  background-color: #f0f2f5;
-  border-radius: 12px;
-  font-size: 12px;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.reaction-badge.user-reacted {
-  background-color: #e6f7ff;
-  border: 1px solid #1890ff;
-}
-
-.reaction-badge:hover {
-  background-color: #e6f7ff;
-} */
 /* Add this to your Message.css file */
 .reaction-badge {
   display: inline-flex;
@@ -557,16 +538,17 @@
 }
 
 .video-controls {
-  position: absolute;
+  position: revert;
   bottom: 8px;
   right: 8px;
   display: flex;
   align-items: center;
+  justify-content: end;
 }
 
 .video-timestamp {
-  background: rgba(0, 0, 0, 0.6);
-  color: white;
+  /* background: rgba(0, 0, 0, 0.6); */
+  color: #999;
   padding: 2px 8px;
   border-radius: 10px;
   font-size: 12px;
@@ -630,4 +612,248 @@
 .received .message-video-container,
 .received .message-audio-container {
   background-color: #f0f2f5;
+}
+/* Thêm vào file Message.css */
+.sender-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: #555;
+  margin-bottom: 2px;
+  padding-left: 4px;
+}
+
+/* Tạo thêm khoảng cách giữa các tin nhắn từ những người gửi khác nhau */
+.message.received + .message.received {
+  margin-top: 8px;
+}
+/* Styles for grouped images */
+.grouped-images-container {
+  position: relative;
+  margin: 5px 0;
+}
+
+.grouped-images-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-gap: 2px;
+  max-width: 300px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.grouped-image-item {
+  position: relative;
+  aspect-ratio: 1/1;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.grouped-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.more-images-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+/* Modal image viewer styles */
+.image-group-modal .ant-modal-content {
+  height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.image-viewer-container {
+  display: flex;
+  height: 100%;
+}
+
+.main-image-section {
+  flex: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 15px;
+  position: relative;
+  background-color: #f0f0f0;
+}
+
+.main-image {
+  max-height: 80vh;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+.image-controls {
+  margin-top: 15px;
+}
+
+.download-button {
+  background-color: #1890ff;
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.download-button:hover {
+  background-color: #096dd9;
+}
+
+.thumbnails-section {
+  flex: 1;
+  background-color: white;
+  padding: 15px;
+  border-left: 1px solid #e0e0e0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.thumbnails-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+}
+
+.thumbnail-item {
+  cursor: pointer;
+  border: 2px solid transparent;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.thumbnail-item.active {
+  border-color: #1890ff;
+}
+
+.thumbnail-image {
+  width: 100%;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 2px;
+}
+/* Thêm vào file CSS của bạn */
+.image-viewer-container {
+  display: flex;
+  height: 80vh;
+}
+
+.main-image-section {
+  flex: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.85);
+  padding: 20px;
+  position: relative;
+}
+
+.main-image, .main-video {
+  max-height: 70vh;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+.image-controls {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+}
+
+.download-button {
+  background-color: #1890ff;
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.thumbnails-section {
+  flex: 1;
+  background-color: white;
+  padding: 15px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.thumbnails-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.thumbnail-item {
+  cursor: pointer;
+  border: 2px solid transparent;
+  border-radius: 4px;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.thumbnail-item.active {
+  border-color: #1890ff;
+}
+
+.thumbnail-image, .thumbnail-video {
+  width: 100%;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 2px;
+}
+
+.video-thumbnail {
+  position: relative;
+}
+
+.video-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 24px;
+  color: white;
+  text-shadow: 0 0 3px rgba(0,0,0,0.7);
+}
+/* Add this to your existing CSS */
+.highlighted-message {
+  animation: highlight-pulse 3s;
+}
+
+@keyframes highlight-pulse {
+  0% {
+    background-color: rgba(24, 144, 255, 0.1);
+  }
+  50% {
+    background-color: rgba(24, 144, 255, 0.2);
+  }
+  100% {
+    background-color: transparent;
+  }
 }
