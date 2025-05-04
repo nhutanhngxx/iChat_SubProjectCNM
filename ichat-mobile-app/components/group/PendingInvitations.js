@@ -94,6 +94,10 @@ const PendingInvitations = ({ route }) => {
       });
 
       if (response) {
+        socketService.handleAcceptMember({
+          groupId,
+          memberId,
+        });
         Alert.alert("Thông báo", "Đã chấp nhận yêu cầu tham gia");
       } else {
         Alert.alert("Thông báo", "Không thể chấp nhận yêu cầu tham gia");

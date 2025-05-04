@@ -29,6 +29,18 @@ const ModalSelectAdmin = ({ visible, onClose, groupId, currentAdminId }) => {
   useEffect(() => {
     if (visible && groupId) {
       socketService.joinRoom(groupId);
+
+      socketService.onMemberLeft(({ groupId: receivedGroupId, userId }) => {
+        if (groupId === receivedGroupId) {
+          fetchGroupMembers();
+        }
+      });
+
+      socketService.onMemberRemoved(({ groupId: receivedGroupId, userId }) => {
+        if (groupId === receivedGroupId) {
+          fetchGroupMembers();
+        }
+      });
     }
     return () => {
       if (groupId) {
@@ -43,16 +55,14 @@ const ModalSelectAdmin = ({ visible, onClose, groupId, currentAdminId }) => {
   }, [visible]);
 
   // Lấy danh sách thành viên của nhóm
+  const fetchGroupMembers = async () => {
+    const membersList = await groupService.getGroupMembers(groupId);
+    setMembers(membersList);
+  };
   useEffect(() => {
     if (!groupId) return;
-
-    const fetchGroupMembers = async () => {
-      const membersList = await groupService.getGroupMembers(groupId);
-      setMembers(membersList);
-    };
-
     fetchGroupMembers();
-  }, [groupId]);
+  }, [groupId, visible]);
 
   // Lọc thành viên theo từ khóa tìm kiếm
   useEffect(() => {

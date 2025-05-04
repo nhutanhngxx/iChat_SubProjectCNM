@@ -100,8 +100,7 @@ const GroupController = {
       console.log("Giá trị gốc:", participant_ids);
       console.log("Mảng đã xử lý:", participantArray);
 
-      // const avatar = req.file ? req.file.buffer : null;
-      const avatar = req.file || null;
+      const avatar = req.file;
 
       const group = await GroupModel.createGroup({
         name,
@@ -167,37 +166,12 @@ const GroupController = {
     }
   },
 
-  // // 4. Gửi tin nhắn nhóm
-  // sendGroupMessage: async (req, res) => {
-  //   try {
-  //     const { groupId } = req.params;
-  //     const { content, type, sender_id } = req.body; // Lấy sender_id từ req.body
-
-  //     // Xử lý file nếu cần
-  //     const imageFile = req.files?.image?.[0] || null;
-  //     const docFile = req.files?.file?.[0] || null;
-  //     const file = imageFile || docFile;
-
-  //     const msg = await GroupModel.sendGroupMessage({
-  //       groupId,
-  //       sender_id,
-  //       content,
-  //       type,
-  //       file, // Truyền file nếu có
-  //     });
-
-  //     res.status(201).json({ status: "ok", data: msg });
-  //   } catch (e) {
-  //     res.status(500).json({ status: "error", message: e.message });
-  //   }
-  // },
-
   // 5. Đổi tên / set background
   updateGroup: async (req, res) => {
     try {
       const { groupId } = req.params;
       const { name } = req.body;
-      const avatar = req.file ? req.file.buffer : null;
+      const avatar = req.file || null;
       const allow_add_members = req.body.allow_add_members || true;
       const allow_change_name = req.body.allow_change_name || true;
       const allow_change_avatar = req.body.allow_change_avatar || true;
