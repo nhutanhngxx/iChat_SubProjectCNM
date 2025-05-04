@@ -100,7 +100,8 @@ const GroupController = {
       console.log("Giá trị gốc:", participant_ids);
       console.log("Mảng đã xử lý:", participantArray);
 
-      const avatar = req.file ? req.file.buffer : null;
+      // const avatar = req.file ? req.file.buffer : null;
+      const avatar = req.file || null;
 
       const group = await GroupModel.createGroup({
         name,
