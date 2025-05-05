@@ -66,7 +66,11 @@ const Option = ({ route }) => {
           if (groupRes && groupRes._id) {
             setReceiverGroup(groupRes);
             setIsGroup(true);
-            setAdminGroup(String(user.id) === String(groupRes.admin_id));
+            if (user.id === groupRes.admin_id) {
+              setAdminGroup(true);
+            } else {
+              setAdminGroup(false);
+            }
           } else {
             console.log("Không tìm thấy thông tin user hoặc group");
           }
@@ -363,7 +367,7 @@ const Option = ({ route }) => {
             <Text>Thêm thành viên</Text>
           </View>
           {/* 3. Đổi ảnh nhóm */}
-          <View style={{ width: 105, gap: 10, alignItems: "center" }}>
+          {/* <View style={{ width: 105, gap: 10, alignItems: "center" }}>
             <TouchableOpacity>
               <Image
                 source={require("../../assets/icons/image.png")}
@@ -371,7 +375,7 @@ const Option = ({ route }) => {
               />
             </TouchableOpacity>
             <Text>Đổi ảnh đại diện</Text>
-          </View>
+          </View> */}
         </View>
       )}
 

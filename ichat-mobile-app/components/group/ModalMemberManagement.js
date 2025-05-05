@@ -225,9 +225,10 @@ const ModalMemberManagement = ({ route }) => {
   // Lấy danh sách thành viên được mời bởi người dùng
   const fetchInvitedMembers = async () => {
     try {
-      const invitedMembersList = await groupService.getInvitedMembersByUserId(
-        user.id
-      );
+      const invitedMembersList = await groupService.getInvitedMembersByUserId({
+        groupId: groupId,
+        userId: user.id,
+      });
       setInvitedMembers(invitedMembersList);
     } catch (error) {
       console.error("Lỗi khi lấy danh sách thành viên được mời:", error);
@@ -625,8 +626,6 @@ const ModalMemberManagement = ({ route }) => {
         // Xem thông tin thành viên
         onViewProfile={() => {
           closeMemberModal();
-          // Thêm logic xem thông tin thành viên
-          console.log("Xem thông tin thành viên:", selectedMember?.full_name);
         }}
         // Chỉ định làm quản trị viên
         onAppointAdmin={() => {
@@ -659,6 +658,72 @@ const ModalMemberManagement = ({ route }) => {
                     }
                   } catch (error) {
                     console.error("Lỗi khi chỉ định quản trị viên:", error);
+                  }
+                  closeMemberModal();
+                },
+              },
+            ]
+          );
+        }}
+        onAppointSubAdmin={() => {
+          Alert.alert(
+            "Thông báo",
+            `Bạn có chắc chắn muốn chỉ định ${selectedMember?.full_name} làm phó nhóm không?`,
+            [
+              { text: "Hủy" },
+              {
+                text: "Đồng ý",
+                onPress: async () => {
+                  try {
+                    const response = await groupService.setRole({
+                      groupId,
+                      userId: selectedMember?.user_id,
+                      role: "admin",
+                    });
+
+                    if (response.status === "ok") {
+                      Alert.alert("Thông báo", "Chỉ định phó nhóm thành công!");
+                    } else {
+                      Alert.alert("Thông báo", "Chỉ định phó nhóm thất bại");
+                    }
+                  } catch (error) {
+                    console.error("Lỗi khi chỉ định phó nhóm:", error);
+                  }
+                  closeMemberModal();
+                },
+              },
+            ]
+          );
+        }}
+        onRecallSubAdmin={() => {
+          Alert.alert(
+            "Thông báo",
+            `Bạn có chắc chắn muốn thu hồi quyền phó nhóm của ${selectedMember?.full_name} không?`,
+            [
+              { text: "Hủy" },
+              {
+                text: "Đồng ý",
+                onPress: async () => {
+                  try {
+                    const response = await groupService.setRole({
+                      groupId,
+                      userId: selectedMember?.user_id,
+                      role: "member",
+                    });
+
+                    if (response.status === "ok") {
+                      Alert.alert(
+                        "Thông báo",
+                        "Thu hồi quyền phó nhóm thành công!"
+                      );
+                    } else {
+                      Alert.alert(
+                        "Thông báo",
+                        "Thu hồi quyền phó nhóm thất bại"
+                      );
+                    }
+                  } catch (error) {
+                    console.error("Lỗi khi thu hồi quyền phó nhóm:", error);
                   }
                   closeMemberModal();
                 },

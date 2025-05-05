@@ -675,12 +675,13 @@ const GroupModel = {
   },
 
   // Lấy danh sách thành viên được mời bởi bạn
-  getInvitedMembersByUserId: async (userId) => {
+  getInvitedMembersByUserId: async ({ userId, groupId }) => {
     try {
       const invitedMembers = await GroupMember.aggregate([
         {
           $match: {
             invited_by: new mongoose.Types.ObjectId(userId),
+            group_id: new mongoose.Types.ObjectId(groupId),
             // status: "approved",
           },
         },
