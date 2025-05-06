@@ -199,11 +199,21 @@ class SocketService {
       this.socket.emit("add-members", { groupId, userIds });
     }
   }
+  onMemberAdded(callback) {
+    if (this.ensureConnection()) {
+      this.socket.on("members-added", callback);
+    }
+  }
 
   // Xóa thành viên
   handleRemoveMember({ groupId, userId }) {
     if (this.ensureConnection()) {
       this.socket.emit("remove-member", { groupId, userId });
+    }
+  }
+  onMemberRemoved(callback) {
+    if (this.ensureConnection()) {
+      this.socket.on("member-removed", callback);
     }
   }
 
@@ -247,6 +257,11 @@ class SocketService {
       this.socket.emit("delete-group", groupId);
     }
   }
+  onGroupDeleted(callback) {
+    if (this.ensureConnection()) {
+      this.socket.on("group-deleted", callback);
+    }
+  }
 
   // Chuyển quyền quản trị viên
   handleTransferAdmin({ groupId, userId }) {
@@ -260,10 +275,27 @@ class SocketService {
     }
   }
 
+  // Cập nhật quyền thành viên
+  handleSetRole({ groupId, userId, role }) {
+    if (this.ensureConnection()) {
+      this.socket.emit("set-role", { groupId, userId, role });
+    }
+  }
+  onRoleUpdated(callback) {
+    if (this.ensureConnection()) {
+      this.socket.on("role-updated", callback);
+    }
+  }
+
   // Cập nhật trạng thái phê duyệt thành viên
   handleUpdateMemberApproval({ groupId, requireApproval }) {
     if (this.ensureConnection()) {
       this.socket.emit("update-member-approval", { groupId, requireApproval });
+    }
+  }
+  onMemberApprovalUpdated(callback) {
+    if (this.ensureConnection()) {
+      this.socket.on("member-approval-updated", callback);
     }
   }
 
@@ -273,44 +305,6 @@ class SocketService {
       this.socket.emit("accept-member", { groupId, memberId });
     }
   }
-
-  // Từ chối thành viên vào nhóm
-  handleRejectMember({ groupId, memberId }) {
-    if (this.ensureConnection()) {
-      this.socket.emit("reject-member", { groupId, memberId });
-    }
-  }
-
-  // Lắng nghe sự kiện từ nhóm
-  // Thêm thàn viên
-  onMemberAdded(callback) {
-    if (this.ensureConnection()) {
-      this.socket.on("members-added", callback);
-    }
-  }
-
-  // Xóa thành viên
-  onMemberRemoved(callback) {
-    if (this.ensureConnection()) {
-      this.socket.on("member-removed", callback);
-    }
-  }
-
-  // Xóa/giải tán nhóm
-  onGroupDeleted(callback) {
-    if (this.ensureConnection()) {
-      this.socket.on("group-deleted", callback);
-    }
-  }
-
-  // Cập nhật trạng thái phê duyệt thành viên
-  onMemberApprovalUpdated(callback) {
-    if (this.ensureConnection()) {
-      this.socket.on("member-approval-updated", callback);
-    }
-  }
-
-  // Chấp nhận thành viên vào nhóm
   onMemberAccepted(callback) {
     if (this.ensureConnection()) {
       this.socket.on("member-accepted", callback);
@@ -318,6 +312,11 @@ class SocketService {
   }
 
   // Từ chối thành viên vào nhóm
+  handleRejectMember({ groupId, memberId }) {
+    if (this.ensureConnection()) {
+      this.socket.emit("reject-member", { groupId, memberId });
+    }
+  }
   onMemberRejected(callback) {
     if (this.ensureConnection()) {
       this.socket.on("member-rejected", callback);

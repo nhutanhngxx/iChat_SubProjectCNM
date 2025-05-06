@@ -66,63 +66,58 @@ const ModalMemberManagement = ({ route }) => {
           ]);
           return;
         }
+        fetchGroupMembers();
         // Cập nhật danh sách thành viên
-        setMembers((prev) =>
-          prev.filter((member) => member.user_id !== userId)
-        );
-        setFilteredMembers((prev) =>
-          prev.filter((member) => member.user_id !== userId)
-        );
+        // setMembers((prev) =>
+        //   prev.filter((member) => member.user_id !== userId)
+        // );
+        // setFilteredMembers((prev) =>
+        //   prev.filter((member) => member.user_id !== userId)
+        // );
       }
     });
 
     // Lắng nghe sự kiện chuyển quyền quản trị viên
-    socketService.onAdminTransferred(({ groupId: receivedGroupId, userId }) => {
-      if (groupId === receivedGroupId) {
-        // Cập nhật trạng thái admin
-        const isCurrentUserNewAdmin = userId === user.id;
-        setAdminGroup(isCurrentUserNewAdmin);
+    socketService.onAdminTransferred(
+      async ({ groupId: receivedGroupId, userId }) => {
+        if (groupId === receivedGroupId) {
+          fetchGroupInfo();
+          fetchGroupMembers();
+          // Cập nhật trạng thái admin
+          const isCurrentUserNewAdmin = user.id === group.admin_id;
+          setAdminGroup(isCurrentUserNewAdmin);
 
-        // Cập nhật danh sách thành viên
-        setMembers((prev) =>
-          prev.map((member) => ({
-            ...member,
-            role:
-              member.user_id === userId
-                ? "admin"
-                : member.role === "admin"
-                ? "member"
-                : member.role,
-          }))
-        );
-        setFilteredMembers((prev) =>
-          prev.map((member) => ({
-            ...member,
-            role:
-              member.user_id === userId
-                ? "admin"
-                : member.role === "admin"
-                ? "member"
-                : member.role,
-          }))
-        );
-
-        // Cập nhật thông tin thành viên được chọn khi modal đang hiển thị
-        if (selectedMember) {
-          if (selectedMember.user_id === userId) {
-            setSelectedMember({
-              ...selectedMember,
-              role: "admin",
-            });
-          } else if (selectedMember.role === "admin") {
-            setSelectedMember({
-              ...selectedMember,
-              role: "member",
-            });
+          // Cập nhật thông tin thành viên được chọn khi modal đang hiển thị
+          if (selectedMember) {
+            if (selectedMember.user_id === userId) {
+              setSelectedMember({
+                ...selectedMember,
+                role: "admin",
+              });
+            } else if (selectedMember.role === "admin") {
+              setSelectedMember({
+                ...selectedMember,
+                role: "member",
+              });
+            }
           }
         }
       }
-    });
+    );
+
+    // Lắng nghe sự kiện cập nhật quyền thành viên
+    socketService.onRoleUpdated(
+      async ({ groupId: receivedGroupId, userId, role }) => {
+        if (groupId === receivedGroupId) {
+          const updatedMembers = await groupService.getGroupMembers(groupId);
+          setMembers(updatedMembers);
+
+          if (selectedMember && selectedMember.user_id === userId) {
+            setSelectedMember({ ...selectedMember, role });
+          }
+        }
+      }
+    );
 
     // Lắng nghe sự kiện cập nhật trạng thái phê duyệt thành viên
     socketService.onMemberApprovalUpdated(
@@ -153,8 +148,6 @@ const ModalMemberManagement = ({ route }) => {
             prev.filter((member) => member.user_id !== userId)
           );
         }
-        console.log(`Member ${userId} left group ${groupId}`);
-        console.log("Updated members:", members);
       }
     });
 
@@ -413,6 +406,12 @@ const ModalMemberManagement = ({ route }) => {
   // Render thành viên
   const renderMemberItem = ({ item }) => {
     const isCurrentUser = item.user_id === user.id;
+    let roleDisplay = "";
+    if (group && String(item.user_id) === String(group.admin_id)) {
+      roleDisplay = "Nhóm trưởng";
+    } else if (item.role === "admin") {
+      roleDisplay = "Nhóm phó";
+    }
     return (
       <TouchableOpacity
         style={styles.memberItem}
@@ -424,13 +423,7 @@ const ModalMemberManagement = ({ route }) => {
             <Text style={styles.memberName}>
               {isCurrentUser ? "Bạn" : item.full_name}
             </Text>
-            <Text style={styles.memberRole}>
-              {item.role === "admin"
-                ? "Quản trị viên"
-                : item.invited_by_current_user
-                ? "Được mời bởi bạn"
-                : "Thành viên"}
-            </Text>
+            <Text style={styles.memberRole}>{roleDisplay}</Text>
           </View>
         </View>
         <TouchableOpacity
@@ -649,6 +642,7 @@ const ModalMemberManagement = ({ route }) => {
                         groupId,
                         userId: selectedMember?.user_id,
                       });
+                      // setAdminGroup(false);
                       Alert.alert("Thông báo", response.message);
                     } else {
                       Alert.alert(
@@ -680,6 +674,11 @@ const ModalMemberManagement = ({ route }) => {
                       userId: selectedMember?.user_id,
                       role: "admin",
                     });
+                    socketService.handleSetRole({
+                      groupId,
+                      userId: selectedMember?.user_id,
+                      role: "admin",
+                    });
 
                     if (response.status === "ok") {
                       Alert.alert("Thông báo", "Chỉ định phó nhóm thành công!");
@@ -706,6 +705,11 @@ const ModalMemberManagement = ({ route }) => {
                 onPress: async () => {
                   try {
                     const response = await groupService.setRole({
+                      groupId,
+                      userId: selectedMember?.user_id,
+                      role: "member",
+                    });
+                    socketService.handleSetRole({
                       groupId,
                       userId: selectedMember?.user_id,
                       role: "member",

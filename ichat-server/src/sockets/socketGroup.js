@@ -60,6 +60,12 @@ module.exports = (io) => {
       io.to(groupId).emit("admin-transferred", { groupId, userId });
     });
 
+    // Lắng nghe sự kiện cập nhật quyền thành viên
+    socket.on("set-role", ({ groupId, userId, role }) => {
+      console.log("Set role:", groupId, userId, role);
+      io.to(groupId).emit("role-updated", { groupId, userId, role });
+    });
+
     // Lắng nghe sự kiện cập nhật trạng thái phê duyệt thành viên
     socket.on("update-member-approval", ({ groupId, requireApproval }) => {
       console.log("Update member approval:", groupId, requireApproval);

@@ -253,6 +253,22 @@ const groupService = {
     }
   },
 
+  // Kiểm tra quyền admin (nhóm trưởng hay nhóm phó)
+  isGroupSubAdmin: async ({ groupId, userId }) => {
+    try {
+      const response = await apiService.get(
+        `/${PREFIX}/${groupId}/admin-check/${userId}`
+      );
+      if (response.data.status === "error") {
+        throw new Error(response.data.message);
+      }
+      return response.data.data;
+    } catch (error) {
+      console.log("Không thể kiểm tra quyền admin: ", error);
+      throw error;
+    }
+  },
+
   // Chuyển quyền quản trị viên
   appointAdmin: async ({ groupId, newAdimUserId, userId }) => {
     try {
