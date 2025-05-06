@@ -132,6 +132,24 @@ const ChatItem = ({ item, onSelectUser, onPin }) => {
     // setIsSearchOpen(false);
     setIsClicked(true);
   };
+  // Hàm tạo nội dung tin nhắn cuối cùng
+const generateLastMessageText = (item) => {
+  // Xác định prefix (người gửi)
+  const prefix = item.isLastMessageFromMe === true 
+    ? "Bạn: " 
+    : (item.chat_type === "group" ? `${item.sender_name || ""}: ` : `${item.name}: `);
+  
+  // Xác định nội dung tin nhắn
+  let content = "";
+  if (item.type === "image") content = "Đã gửi một ảnh";
+  else if (item.type === "file") content = "Đã gửi một tệp tin";
+  else if (item.type === "video") content = "Đã gửi một video";
+  else if (item.type === "audio") content = "Đã gửi một audio";
+  else if (item.originalMessage?.length > 30) content = item.originalMessage.slice(0, 30) + "...";
+  else content = item.originalMessage || item.lastMessage || "Chưa có tin nhắn";
+  
+  return `${prefix}${content}`;
+};
   return (
     <List.Item
       key={item.id}
@@ -169,7 +187,7 @@ const ChatItem = ({ item, onSelectUser, onPin }) => {
               {item.type === "video" && <VideoCameraOutlined />}
               {item.type === "audio" && <MutedOutlined />}
               {item.type === "notification" && <NotificationOutlined />}
-              {`${item.isLastMessageFromMe === true ? "Bạn: " : 
+              {/* {`${item.isLastMessageFromMe === true ? "Bạn: " : 
                 (item.chat_type === "group" ? `${item.sender_name || ""}: ` : `${item.name}: `)
                 }${item.type === "image"
                   ? "Đã gửi một ảnh"
@@ -182,7 +200,11 @@ const ChatItem = ({ item, onSelectUser, onPin }) => {
                         : item.originalMessage?.length > 30
                           ? item.originalMessage.slice(0, 30) + "..."
                           : item.originalMessage || item.lastMessage
-                }`}
+                }`} */}
+                {!item.originalMessage && !item.lastMessage 
+    ? "Chưa có tin nhắn" 
+    : generateLastMessageText(item)
+  }
             </span>
           </Col>
           <Col>
