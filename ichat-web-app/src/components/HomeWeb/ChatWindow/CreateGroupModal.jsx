@@ -70,6 +70,7 @@ const CreateGroupModal = ({ visible, onCancel, onOk, userMessageId }) => {
 
   const handleCreateGroup = async () => {
     try {
+      const newGroup = 
       await dispatch(
         createGroup({
           name: groupName,
@@ -78,21 +79,38 @@ const CreateGroupModal = ({ visible, onCancel, onOk, userMessageId }) => {
           participant_ids: selectedContacts,
         })
       ).unwrap();
-      // socket.emit("create-group", {
-      //   name: groupName,
-      //   admin_id: currentUser.id,
-      //   avatar: compressedAvatarFile,
-      //   participant_ids: selectedContacts,
-      // });
+      console.log("Nhóm mới đã được tạo:", newGroup);
+    socket.emit("join-room", newGroup._id);
+      
+      socket.emit("create-group", newGroup._id || newGroup.id, {
+        name: groupName,
+        admin_id: currentUser.id,
+        participant_ids: selectedContacts,
+      });
 
       // onOk();
       resetFields();
       dispatch(fetchMessages(currentUser.id || currentUser._id)).unwrap();
       onCancel();
+      
     } catch (error) {
       console.error("Tạo nhóm thất bại:", error);
     }
   };
+  // Thêm trong useEffect hoặc sau khi tạo nhóm thành công
+useEffect(() => {
+  const handleGroupCreated = (groupId) => {
+    // Tham gia vào phòng nhóm mới
+    socket.emit("join-room", groupId);
+    console.log("Đã tham gia vào phòng nhóm mới:", groupId);
+  };
+
+  socket.on("group-created", handleGroupCreated);
+
+  return () => {
+    socket.off("group-created", handleGroupCreated);
+  };
+}, []);
 
   const handleAvatarChange = async (event) => {
     const file = event.target.files[0];

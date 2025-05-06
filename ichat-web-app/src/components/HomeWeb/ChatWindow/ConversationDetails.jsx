@@ -173,6 +173,7 @@ const ConversationDetails = ({
   const [pendingMembersLoading, setPendingMembersLoading] = useState(false);
   const [showPendingMembersModal, setShowPendingMembersModal] = useState(false);
   const [membersTabActive, setMembersTabActive] = useState("pending"); // 'pending' | 'aprroved'
+  const [groupAvatarPreview, setGroupAvatarPreview] = useState(null);
   //  hàm lấy trạng thái phê duyệt
   const fetchMemberApprovalStatus = async () => {
     try {
@@ -533,24 +534,6 @@ const ConversationDetails = ({
   const canDisbandGroup = () => {
     return isMainAdmin; // Chỉ admin chính mới được giải tán nhóm
   };
-  // useEffect(() => {
-  //   if (selectedChat?.chat_type === "group" && selectedChat?.id && user?.id) {
-  //     dispatch(isGroupSubAdmin({
-  //       groupId: selectedChat.id,
-  //       userId: user.id
-  //     }))
-  //     .unwrap()
-  //     .then(result => {
-  //       const { isAdmin: isUserAdmin, isMainAdmin: isUserMainAdmin } = result;
-  //       setIsAdmin(isUserAdmin);
-  //       setIsMainAdmin(isUserMainAdmin);
-  //       setIsSubAdmin(isUserAdmin && !isUserMainAdmin);
-  //     })
-  //     .catch(error => {
-  //       console.error("Error checking admin status:", error);
-  //     });
-  //   }
-  // }, [selectedChat, user, dispatch]);
   useEffect(() => {
     if (selectedChat?.chat_type === "group" && selectedChat?.id && user?.id) {
       dispatch(
@@ -786,6 +769,7 @@ const ConversationDetails = ({
       // Cập nhật lại state
       fetchGroupMembers();
       fetchGroupSettings();
+      
 
       setShowGroupSettingsModal(false);
       return response;
@@ -1323,10 +1307,6 @@ const ConversationDetails = ({
     // Function to handle general member updates that require refetching members
     const handleMemberUpdate = (data) => {
       if (data.groupId === selectedChat.id) {
-        // console.log(
-        //   `${logPrefix} Member update detected for current group:`,
-        //   data
-        // );
         fetchGroupMembers();
         fetchPendingMembers();
       }
@@ -1407,6 +1387,15 @@ const ConversationDetails = ({
       socket.off("group-deleted", handleGroupDeleted);
     };
   }, [selectedChat?.id, selectedChat?.chat_type, user.id]);
+  // 4. cleanup URL preview avatar
+useEffect(() => {
+  return () => {
+    // Cleanup URL khi component unmount
+    if (groupAvatarPreview) {
+      URL.revokeObjectURL(groupAvatarPreview);
+    }
+  };
+}, [groupAvatarPreview]);
   if (!isVisible) return null;
 
   return (
@@ -1683,27 +1672,23 @@ const ConversationDetails = ({
                   }}
                 >
                   <div style={{ marginRight: 15 }}>
-                    <Avatar
-                      size={64}
-                      src={selectedChat.avatar_path}
-                      style={{
-                        cursor: canChangeAvatar() ? "pointer" : "default",
-                      }}
-                      onClick={() => {
-                        if (canChangeAvatar()) {
-                          document
-                            .getElementById("group-avatar-upload")
-                            .click();
-                        } else if (!isMainAdmin && !isSubAdmin) {
-                          message.info(
-                            "Chỉ quản trị viên mới có quyền thay đổi ảnh nhóm"
-                          );
-                        }
-                      }}
-                    >
-                      {!selectedChat.avatar_path &&
-                        (selectedChat.name || "G").charAt(0).toUpperCase()}
-                    </Avatar>
+                  <Avatar
+                    size={64}
+                    src={groupAvatarPreview || selectedChat.avatar_path}
+                    style={{
+                      cursor: canChangeAvatar() ? "pointer" : "default",
+                    }}
+                    onClick={() => {
+                      if (canChangeAvatar()) {
+                        document.getElementById("group-avatar-upload").click();
+                      } else if (!isMainAdmin && !isSubAdmin) {
+                        message.info("Chỉ quản trị viên mới có quyền thay đổi ảnh nhóm");
+                      }
+                    }}
+                  >
+                    {!groupAvatarPreview && !selectedChat.avatar_path &&
+                      (selectedChat.name || "G").charAt(0).toUpperCase()}
+                  </Avatar>
                     <input
                       type="file"
                       id="group-avatar-upload"
@@ -1712,7 +1697,11 @@ const ConversationDetails = ({
                       accept="image/*"
                       onChange={(e) => {
                         if (e.target.files[0]) {
-                          setGroupAvatar(e.target.files[0]);
+                          const file = e.target.files[0];
+                          setGroupAvatar(file);
+                          // Tạo URL preview
+                          const previewUrl = URL.createObjectURL(file);
+                          setGroupAvatarPreview(previewUrl);
                         }
                       }}
                     />
@@ -1722,6 +1711,17 @@ const ConversationDetails = ({
                           type="text"
                           icon={<UploadOutlined />}
                           size="small"
+                          onClick={() => {
+                            if (canChangeAvatar()) {
+                              document
+                                .getElementById("group-avatar-upload")
+                                .click();
+                            } else if (!isMainAdmin && !isSubAdmin) {
+                              message.info(
+                                "Chỉ quản trị viên mới có quyền thay đổi ảnh nhóm"
+                              );
+                            }
+                          }}
                         >
                           Đổi ảnh
                         </Button>

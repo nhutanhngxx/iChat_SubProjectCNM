@@ -10,7 +10,22 @@ module.exports = (io) => {
     //lawng nghe tao nhom
     socket.on("create-group", (groupId, groupData) => {
       console.log("Create group:", groupId, groupData);
-      io.to(groupId).emit("group-created", groupId, groupData);
+      // io.to(groupId).emit("group-created", groupId, groupData);
+      // Emit đến người tạo nhóm
+      socket.emit("group-created", groupId, groupData);
+
+      // Emit đến tất cả thành viên được mời
+      if (
+        groupData.participant_ids &&
+        Array.isArray(groupData.participant_ids)
+      ) {
+        groupData.participant_ids.forEach((userId) => {
+          // Đảm bảo không gửi trùng lặp đến người tạo
+          if (userId !== socket.userId && userId !== groupData.admin_id) {
+            io.to(userId).emit("group-created", groupId, groupData);
+          }
+        });
+      }
     });
     // Lắng nghe rời room theo groupId
     socket.on("leave-room", (groupId) => {

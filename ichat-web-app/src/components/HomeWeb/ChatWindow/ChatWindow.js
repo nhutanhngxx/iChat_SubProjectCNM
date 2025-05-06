@@ -13,6 +13,7 @@ import {
 } from "../../../redux/slices/messagesSlice";
 import socket from "../../services/socket";
 import "./ChatWindow.css";
+import { getGroupById } from "../../../redux/slices/groupSlice";
 
 const ChatWindow = ({ user, selectedFriend }) => {
   // Load ttin nhan tu Backend
@@ -42,11 +43,7 @@ const ChatWindow = ({ user, selectedFriend }) => {
   useEffect(() => {
     if (!user?.id) return;
 
-
     const handleReceiveMessage = (message) => {
-
-      // Xác định message này thuộc về cuộc trò chuyện nào
-      // Để ComponentLeft luôn hiển thị tin nhắn mới nhất
       dispatch(fetchMessages(user.id));
 
       // Nếu chưa có cuộc trò chuyện nào được mở, chỉ cập nhật sidebar
@@ -61,7 +58,6 @@ const ChatWindow = ({ user, selectedFriend }) => {
         return;
       }
 
-      // *** QUAN TRỌNG: Logic xác định đúng cuộc trò chuyện ***
       // Tin nhắn thuộc cuộc trò chuyện hiện tại nếu:
       // (người gửi hiện tại + người nhận là selected) HOẶC (người nhận hiện tại + người gửi là selected)
       const conversation1 = [user.id, selectedUser.id].sort().join("-");
@@ -69,16 +65,6 @@ const ChatWindow = ({ user, selectedFriend }) => {
         .sort()
         .join("-");
       const isCurrentChat = conversation1 === conversation2;
-
-      // console.log("Message belongs to current conversation?", isCurrentChat, {
-      //   currentConversation: conversation1,
-      //   messageConversation: conversation2,
-      //   selectedUserId: selectedUser.id,
-      //   currentUserId: user.id,
-      //   messageSender: message.sender_id,
-      //   messageReceiver: message.receiver_id,
-      // });
-
       if (isCurrentChat) {
         // Cập nhật tin nhắn đơn lẻ trước
         dispatch(updateMessages(message));
@@ -97,7 +83,6 @@ const ChatWindow = ({ user, selectedFriend }) => {
       }
     };
     const handleReactionEvent = (data) => {
-
       // Luôn cập nhật danh sách sidebar
       dispatch(fetchMessages(user.id));
 
@@ -143,7 +128,7 @@ const ChatWindow = ({ user, selectedFriend }) => {
     socket.on("message-reaction-update", handleReactionEvent);
 
     // Join user's global room
-    // socket.emit("join-user-room", user.id);
+    socket.emit("join-user-room", user.id);
 
     return () => {
       // console.log("Cleaning up global socket listeners");
@@ -319,7 +304,16 @@ const ChatWindow = ({ user, selectedFriend }) => {
     if (!user?.id) return;
 
     // console.log("Setting up global group event listeners for user:", user.id);
+    // Xử lý khi có nhóm mới được tạo
+    const handleGroupCreated = (groupId, groupData) => {
+      console.log("Nhóm đã được tạo:", groupId, groupData);
 
+      // Cập nhật danh sách tin nhắn/nhóm
+      dispatch(fetchMessages(user.id));
+
+      // Hiển thị thông báo
+      message.success(`Nhóm "${groupData.name}" đã được tạo thành công!`);
+    };
     const handleGroupDeleted = (groupId) => {
       // console.log("Group deleted globally:", groupId);
       // Update the messages list to remove the deleted group
@@ -374,7 +368,7 @@ const ChatWindow = ({ user, selectedFriend }) => {
       }
     };
 
-    const handleGroupUpdated = (data) => {
+    const handleGroupUpdated = async (data) => {
       // console.log("Group updated globally:", data);
       // Update messages to show new group name/avatar
       dispatch(fetchMessages(user.id));
@@ -385,13 +379,14 @@ const ChatWindow = ({ user, selectedFriend }) => {
         selectedUser.chat_type === "group" &&
         selectedUser.id === data.groupId
       ) {
+        const updatedGroup = await dispatch(
+          getGroupById(data.groupId)
+        ).unwrap();
         setSelectedUser((prev) => ({
           ...prev,
           name: data.name || prev.name,
           // Update avatar if available
-          avatar_path: data.avatar
-            ? `${prev.avatar_path}?t=${Date.now()}`
-            : prev.avatar_path,
+          avatar_path: updatedGroup.avatar || prev.avatar_path,
         }));
       }
     };
@@ -419,6 +414,7 @@ const ChatWindow = ({ user, selectedFriend }) => {
     };
 
     // Register listeners
+    socket.on("group-created", handleGroupCreated);
     socket.on("members-added", handleMembersAdded);
     socket.on("group-deleted", handleGroupDeleted);
     socket.on("member-removed", handleMemberRemoved);
@@ -428,6 +424,7 @@ const ChatWindow = ({ user, selectedFriend }) => {
 
     return () => {
       // Cleanup listeners
+      socket.off("group-created", handleGroupCreated);
       socket.off("group-deleted", handleGroupDeleted);
       socket.off("member-removed", handleMemberRemoved);
       socket.off("group-updated", handleGroupUpdated);
