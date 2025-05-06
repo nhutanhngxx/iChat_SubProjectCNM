@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useCallback } from "react";
 import {
   Text,
   View,
@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 
-import { useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { UserContext } from "../../config/context/UserContext";
 
 import HeaderOption from "../header/HeaderOption";
@@ -55,16 +55,21 @@ const Option = ({ route }) => {
 
     // Lắng nghe sự kiện chuyển quyền quản trị viên
     socketService.onAdminTransferred(({ groupId, userId }) => {
-      if (id === groupId && userId === user.id) {
-        setAdminGroup(userId === user.id);
-        setSubAdminGroup(false);
+      if (id === groupId) {
+        // Update admin status if current user is the new admin
+        if (userId === user.id) {
+          setAdminGroup(true);
+        } else if (adminGroup) {
+          // If current user was admin and now someone else is
+          setAdminGroup(false);
+        }
       }
     });
 
     // Lắng nghe sự kiện cập nhật quyền thành viên
     socketService.onRoleUpdated(({ groupId, userId, role }) => {
       if (id === groupId && userId === user.id) {
-        setAdminGroup(role === "admin");
+        // Update subAdmin status if role changed for current user
         setSubAdminGroup(role === "admin");
       }
     });
@@ -73,7 +78,7 @@ const Option = ({ route }) => {
       socketService.leaveRoom(id);
       socketService.removeAllListeners();
     };
-  }, [id, user.id, navigation, adminGroup, subAdminGroup]);
+  }, [id, user.id, adminGroup, subAdminGroup]);
 
   useEffect(() => {
     const fetchReceiverInfo = async () => {
@@ -106,6 +111,43 @@ const Option = ({ route }) => {
       fetchReceiverInfo();
     }
   }, [id, name, avatar, user.id]);
+
+  useFocusEffect(
+    useCallback(() => {
+      // Chỉ fetch lại thông tin nhóm nếu đã xác định là nhóm
+      const fetchGroupInfo = async () => {
+        if (id && isGroup) {
+          try {
+            console.log("Fetching group info on focus...");
+            const groupRes = await groupService.getGroupById(id);
+            const roleRes = await groupService.isGroupSubAdmin({
+              groupId: id,
+              userId: user.id,
+            });
+
+            if (groupRes && groupRes._id) {
+              console.log("Group info fetched:", groupRes);
+              console.log("Role info:", roleRes);
+              setReceiverGroup(groupRes);
+              setAdminGroup(roleRes.isMainAdmin);
+              setSubAdminGroup(roleRes.isSubAdmin);
+            }
+          } catch (error) {
+            console.error("Lỗi khi fetch thông tin nhóm:", error);
+          }
+        }
+      };
+
+      // Thêm một khoảng thời gian nhỏ để đảm bảo isGroup đã được xác định
+      const timer = setTimeout(() => {
+        fetchGroupInfo();
+      }, 100);
+
+      return () => {
+        clearTimeout(timer);
+      };
+    }, [id, user.id, isGroup])
+  );
 
   // Xóa tất cả tin nhắn giữa 2 người
   const handleDeleteChatHistory = async () => {
