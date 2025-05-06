@@ -23,7 +23,6 @@ import ModalSelectAdmin from "../group/ModalSelectAdmin";
 import socketService from "../../services/socketService";
 
 const Option = ({ route }) => {
-  // const API_iChat = `http://${getHostIP()}:5001/api`;
   const navigation = useNavigation();
   const { user } = useContext(UserContext); // Lấy thông tin người dùng từ context
   const { id, name, avatar } = route.params || {}; // Nhận id, name, avatar từ route.params

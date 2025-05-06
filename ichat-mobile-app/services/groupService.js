@@ -289,6 +289,26 @@ const groupService = {
     }
   },
 
+  // Cập nhật quyền thành viên trong nhóm
+  setRole: async ({ groupId, userId, role }) => {
+    try {
+      const response = await apiService.put(
+        `/${PREFIX}/${groupId}/members/${userId}/role`,
+        { role }
+      );
+
+      if (response.data.status === "error") {
+        console.error("API trả về lỗi:", response.data.message);
+        return null;
+      }
+
+      return response.data;
+    } catch (error) {
+      console.error("Lỗi khi cập nhật quyền thành viên:", error);
+      return null;
+    }
+  },
+
   // Kiểm tra trạng thái phê duyệt thành viên của nhóm
   checkMemberApproval: async (groupId) => {
     try {
@@ -348,10 +368,10 @@ const groupService = {
   },
 
   // Lấy danh sách thành được mời bởi bạn
-  getInvitedMembersByUserId: async (userId) => {
+  getInvitedMembersByUserId: async ({ userId, groupId }) => {
     try {
       const response = await apiService.get(
-        `/${PREFIX}/invited-members/${userId}`
+        `/${PREFIX}/invited-members/${groupId}/${userId}`
       );
 
       if (response.data.status === "error") {

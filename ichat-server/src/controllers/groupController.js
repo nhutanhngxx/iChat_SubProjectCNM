@@ -430,8 +430,11 @@ const GroupController = {
   // Lấy danh sách thành viên được mời bởi bạn
   getInvitedMembersByUserId: async (req, res) => {
     try {
-      const { userId } = req.params;
-      const invitedMembers = await GroupModel.getInvitedMembersByUserId(userId);
+      const { userId, groupId } = req.params;
+      const invitedMembers = await GroupModel.getInvitedMembersByUserId({
+        userId,
+        groupId,
+      });
       return res.json({ status: "ok", data: invitedMembers });
     } catch (error) {
       console.error("Lỗi khi lấy danh sách thành viên được mời:", error);
