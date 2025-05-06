@@ -219,23 +219,14 @@ class SocketService {
 
   // Cập nhật thông tin nhóm
   handleUpdateGroup({ groupId, name, avatar }) {
-    console.log("Socket Service -  Handling update group:", {
-      groupId,
-      name,
-      avatar,
-    });
     if (this.ensureConnection()) {
       this.socket.emit("update-group", { groupId, name, avatar });
     }
   }
   onGroupUpdated(callback) {
-    console.log("SocketService - Setting up group-updated listener");
     if (this.ensureConnection()) {
       this.socket.off("group-updated");
-      this.socket.on("group-updated", (data) => {
-        console.log("Received group-updated event:", data);
-        callback(data);
-      });
+      this.socket.on("group-updated", callback);
     }
   }
 
