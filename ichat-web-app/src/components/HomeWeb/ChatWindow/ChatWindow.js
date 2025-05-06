@@ -29,7 +29,7 @@ const ChatWindow = ({ user, selectedFriend }) => {
   }, [dispatch, senderId]);
 
   useEffect(() => {
-    console.log("selectedUser updated:", selectedUser);
+    // console.log("selectedUser updated:", selectedUser);
   }, [selectedUser]);
 
   // Process selectedFriend from props (when coming from FriendList)
@@ -42,10 +42,8 @@ const ChatWindow = ({ user, selectedFriend }) => {
   useEffect(() => {
     if (!user?.id) return;
 
-    console.log("Setting up socket listeners for user:", user.id);
 
     const handleReceiveMessage = (message) => {
-      console.log("Received message globally:", message);
 
       // Xác định message này thuộc về cuộc trò chuyện nào
       // Để ComponentLeft luôn hiển thị tin nhắn mới nhất
@@ -72,14 +70,14 @@ const ChatWindow = ({ user, selectedFriend }) => {
         .join("-");
       const isCurrentChat = conversation1 === conversation2;
 
-      console.log("Message belongs to current conversation?", isCurrentChat, {
-        currentConversation: conversation1,
-        messageConversation: conversation2,
-        selectedUserId: selectedUser.id,
-        currentUserId: user.id,
-        messageSender: message.sender_id,
-        messageReceiver: message.receiver_id,
-      });
+      // console.log("Message belongs to current conversation?", isCurrentChat, {
+      //   currentConversation: conversation1,
+      //   messageConversation: conversation2,
+      //   selectedUserId: selectedUser.id,
+      //   currentUserId: user.id,
+      //   messageSender: message.sender_id,
+      //   messageReceiver: message.receiver_id,
+      // });
 
       if (isCurrentChat) {
         // Cập nhật tin nhắn đơn lẻ trước
@@ -93,13 +91,12 @@ const ChatWindow = ({ user, selectedFriend }) => {
           })
         );
       } else {
-        console.log(
-          "Message is for a different conversation - only updating sidebar"
-        );
+        // console.log(
+        //   "Message is for a different conversation - only updating sidebar"
+        // );
       }
     };
     const handleReactionEvent = (data) => {
-      console.log("Reaction event received:", data);
 
       // Luôn cập nhật danh sách sidebar
       dispatch(fetchMessages(user.id));
@@ -118,7 +115,7 @@ const ChatWindow = ({ user, selectedFriend }) => {
       }
 
       if (data.chatId === currentRoomId) {
-        console.log("Reaction belongs to current conversation, updating chat");
+        // console.log("Reaction belongs to current conversation, updating chat");
         // Cập nhật tin nhắn dựa trên loại chat
         if (selectedUser.chat_type === "group") {
           dispatch(getUserMessages(selectedUser.id));
@@ -132,8 +129,8 @@ const ChatWindow = ({ user, selectedFriend }) => {
         }
       }
     };
-    console.log("Setting up socket listeners for user:", user.id);
-    console.log("Selected user:", selectedUser);
+    // console.log("Setting up socket listeners for user:", user.id);
+    // console.log("Selected user:", selectedUser);
 
     // const userIds = [user.id, selectedUser.id].sort();
     // const roomId = `chat_${userIds[0]}_${userIds[1]}`;
@@ -149,7 +146,7 @@ const ChatWindow = ({ user, selectedFriend }) => {
     // socket.emit("join-user-room", user.id);
 
     return () => {
-      console.log("Cleaning up global socket listeners");
+      // console.log("Cleaning up global socket listeners");
       socket.off("receive-message", handleReceiveMessage);
       socket.off("reaction-added", handleReactionEvent);
       socket.off("reaction-removed", handleReactionEvent);
@@ -158,7 +155,7 @@ const ChatWindow = ({ user, selectedFriend }) => {
   }, [user?.id, selectedUser, dispatch]);
 
   const handleSelectUser = (user) => {
-    console.log("Setting selected user to:", user);
+    // console.log("Setting selected user to:", user);
 
     // Normalize the user object structure to ensure consistent properties
     const normalizedUser = {
@@ -188,11 +185,11 @@ const ChatWindow = ({ user, selectedFriend }) => {
     let roomId;
     if (normalizedUser.chat_type === "group") {
       roomId = `group_${normalizedUser.id}`;
-      console.log("Joining group room:", roomId);
+      // console.log("Joining group room:", roomId);
     } else {
       const userIds = [user.id, normalizedUser.id].sort();
       roomId = `chat_${userIds[0]}_${userIds[1]}`;
-      console.log("Joining private chat room:", roomId);
+      // console.log("Joining private chat room:", roomId);
     }
     socket.emit("join-room", roomId);
 
@@ -230,7 +227,7 @@ const ChatWindow = ({ user, selectedFriend }) => {
       }));
 
       setUserListFromState(formattedUsers);
-      console.log("formattedUsers", formattedUsers);
+      // console.log("formattedUsers", formattedUsers);
     }
   }, [messages]);
 
@@ -244,16 +241,16 @@ const ChatWindow = ({ user, selectedFriend }) => {
       // Kiểm tra loại chat và fetch tin nhắn phù hợp
       if (selectedUser.chat_type === "group") {
         // Nếu là chat nhóm, dùng getUserMessages để lấy tin nhắn nhóm
-        console.log("Fetching GROUP messages for:", selectedUser.id);
+        // console.log("Fetching GROUP messages for:", selectedUser.id);
         dispatch(getUserMessages(selectedUser.id));
       } else {
         // Nếu là chat riêng tư (private), dùng fetchChatMessages
-        console.log(
-          "Fetching PRIVATE messages between:",
-          senderId,
-          "and",
-          selectedUser.id
-        );
+        // console.log(
+        //   "Fetching PRIVATE messages between:",
+        //   senderId,
+        //   "and",
+        //   selectedUser.id
+        // );
         dispatch(
           fetchChatMessages({
             senderId,
@@ -276,11 +273,11 @@ const ChatWindow = ({ user, selectedFriend }) => {
     let roomId;
     if (selectedUser.chat_type === "group") {
       roomId = `group_${selectedUser.id}`;
-      console.log("Re-joining group room on change:", roomId);
+      // console.log("Re-joining group room on change:", roomId);
     } else {
       const userIds = [user.id, selectedUser.id].sort();
       roomId = `chat_${userIds[0]}_${userIds[1]}`;
-      console.log("Re-joining private chat room on change:", roomId);
+      // console.log("Re-joining private chat room on change:", roomId);
     }
 
     // Tham gia phòng
@@ -288,7 +285,7 @@ const ChatWindow = ({ user, selectedFriend }) => {
 
     // Lắng nghe sự kiện nhóm cụ thể
     const handleGroupEvent = (data) => {
-      console.log("Group event received:", data);
+      // console.log("Group event received:", data);
       if (
         selectedUser.chat_type === "group" &&
         selectedUser.id === data.groupId
@@ -321,10 +318,10 @@ const ChatWindow = ({ user, selectedFriend }) => {
   useEffect(() => {
     if (!user?.id) return;
 
-    console.log("Setting up global group event listeners for user:", user.id);
+    // console.log("Setting up global group event listeners for user:", user.id);
 
     const handleGroupDeleted = (groupId) => {
-      console.log("Group deleted globally:", groupId);
+      // console.log("Group deleted globally:", groupId);
       // Update the messages list to remove the deleted group
       dispatch(fetchMessages(user.id));
 
@@ -339,7 +336,7 @@ const ChatWindow = ({ user, selectedFriend }) => {
       }
     };
     const handleMembersAdded = (data) => {
-      console.log("Members added to group globally:", data);
+      // console.log("Members added to group globally:", data);
 
       // Nếu người dùng hiện tại được thêm vào nhóm
       if (Array.isArray(data.userIds) && data.userIds.includes(user.id)) {
@@ -356,7 +353,7 @@ const ChatWindow = ({ user, selectedFriend }) => {
       }
     };
     const handleMemberRemoved = (data) => {
-      console.log("Member removed from group globally:", data);
+      // console.log("Member removed from group globally:", data);
 
       // If the current user was removed from a group
       if (data.userId === user.id) {
@@ -378,7 +375,7 @@ const ChatWindow = ({ user, selectedFriend }) => {
     };
 
     const handleGroupUpdated = (data) => {
-      console.log("Group updated globally:", data);
+      // console.log("Group updated globally:", data);
       // Update messages to show new group name/avatar
       dispatch(fetchMessages(user.id));
 
@@ -400,12 +397,12 @@ const ChatWindow = ({ user, selectedFriend }) => {
     };
 
     const handleMemberLeft = (data) => {
-      console.log("Member left group globally:", data);
+      // console.log("Member left group globally:", data);
       dispatch(fetchMessages(user.id));
     };
 
     const handleAdminTransferred = (data) => {
-      console.log("Admin transferred globally:", data);
+      // console.log("Admin transferred globally:", data);
       dispatch(fetchMessages(user.id));
 
       // If this is the currently selected group, update admin_id

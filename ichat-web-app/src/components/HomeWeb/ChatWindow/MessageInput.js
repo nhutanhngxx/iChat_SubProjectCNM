@@ -155,17 +155,15 @@ const MessageInput = ({
 
     if (renderCount.current === 1) {
       setShowPicker(false);
-      console.log("Lần 1: setShowPicker(false)");
       return;
     }
 
     if (renderCount.current === 2) {
-      console.log("Lần 2: Không làm gì cả");
       return;
     }
     // Chỉ chạy khi renderCount > 2
     setShowPicker(showPickerFromMessArea);
-    console.log("showPickerFromMessArea: " + showPickerFromMessArea);
+    // console.log("showPickerFromMessArea: " + showPickerFromMessArea);
   }, [showPickerFromMessArea]);
 
   const handleShowPickerRight = () => {
@@ -448,7 +446,7 @@ const MessageInput = ({
   };
   //hàm fect lại replyingTo khi có thay đổi
   useEffect(() => {
-    console.log("MessageInput replyingTo:", replyingTo);
+    // console.log("MessageInput replyingTo:", replyingTo);
   }, [replyingTo]);
   // Hàm gửi tin nhắn (bao gồm gửi ảnh hoặc file nếu có)
   const handleSend = () => {
@@ -469,15 +467,15 @@ const MessageInput = ({
     }
 
     if (inputMessage.trim() || selectedImage || selectedFile || selectedGif) {
-      if (selectedGif) {
-        console.log("Gửi GIF:", selectedGif);
-      }
-      if (selectedImage) {
-        console.log("Gửi ảnh:", selectedImage);
-      }
-      if (selectedFile) {
-        console.log("Gửi file:", selectedFile.name);
-      }
+      // if (selectedGif) {
+      //   console.log("Gửi GIF:", selectedGif);
+      // }
+      // if (selectedImage) {
+      //   console.log("Gửi ảnh:", selectedImage);
+      // }
+      // if (selectedFile) {
+      //   console.log("Gửi file:", selectedFile.name);
+      // }
 
       // Call the handleSendMessage with reply info if available
       handleSendMessage(

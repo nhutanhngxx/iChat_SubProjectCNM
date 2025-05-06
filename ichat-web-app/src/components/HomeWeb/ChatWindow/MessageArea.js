@@ -430,7 +430,6 @@ const MessageArea = ({ selectedChat, user, onChatChange, onSelectUser }) => {
       }
 
       const data = await res.json();
-      console.log("Token received:", data.token); // Kiểm tra token nhận được
       setToken(data.token);
 
       // Kiểm tra xem token có hợp lệ không
@@ -508,7 +507,6 @@ const MessageArea = ({ selectedChat, user, onChatChange, onSelectUser }) => {
     setshowPickerFromMessArea(false);
     handleExpandContract();
   };
-  console.log(handleExpandContract);
   // At the top of your MessageArea component
   useEffect(() => {}, [selectedChat]);
   // Gọi API khi component render
@@ -522,7 +520,6 @@ const MessageArea = ({ selectedChat, user, onChatChange, onSelectUser }) => {
       );
     }
   }, [dispatch, user?.id, selectedChat?.receiver_id]);
-  // console.log("Chat Messages in MessageArea", chatMessages);
   // Near the top of your component
   const [isFriendWithReceiver, setIsFriendWithReceiver] = useState(true);
   const [friends, setFriends] = useState({ friends: [] });
@@ -572,7 +569,6 @@ const MessageArea = ({ selectedChat, user, onChatChange, onSelectUser }) => {
   ) => {
     // Kiểm tra xem có phải là chat nhóm không
     const isGroupChat = selectedChat?.chat_type === "group";
-    console.log("Is group chat?", isGroupChat);
 
     // Chỉ kiểm tra bạn bè nếu là chat private
     if (!isGroupChat && !isFriendWithReceiver && selectedChat.id !== user.id) {
@@ -585,7 +581,6 @@ const MessageArea = ({ selectedChat, user, onChatChange, onSelectUser }) => {
       console.error("No selected chat or invalid chat", selectedChat);
       return;
     }
-    console.log("ReplyToId in MessageArea", replyToId);
 
     if ((text.trim() || image || file) && selectedChat) {
       const newMessage = {
@@ -602,7 +597,6 @@ const MessageArea = ({ selectedChat, user, onChatChange, onSelectUser }) => {
 
         const sentMessage = response.data; // Tin nhắn vừa gửi
         // Gửi qua socket để bên kia nhận real-time
-        console.log("ChatId khi gửi tin nhắn", selectedChat?.id);
         let roomId;
         if (selectedChat.chat_type === "group") {
           roomId = `group_${selectedChat.id}`;
@@ -624,7 +618,6 @@ const MessageArea = ({ selectedChat, user, onChatChange, onSelectUser }) => {
           }
         }, 100);
       } catch (error) {
-        console.log("Error sending message:", error);
       }
     }
   };
@@ -674,7 +667,6 @@ const MessageArea = ({ selectedChat, user, onChatChange, onSelectUser }) => {
         })
       ).unwrap();
 
-      console.log("Sent multiple images successfully:", response.data);
       const sentMessages = response.data; // Danh sách tin nhắn vừa gửi
 
       // Nếu là chat nhóm, cập nhật lại tin nhắn nhóm
@@ -710,7 +702,6 @@ const MessageArea = ({ selectedChat, user, onChatChange, onSelectUser }) => {
         // Determine file type if not provided
         const fileType = mediaType || determineFileType(file);
 
-        console.log("Uploading file type:", fileType, file.name);
 
         // Create form data
         const formData = new FormData();
@@ -754,7 +745,6 @@ const MessageArea = ({ selectedChat, user, onChatChange, onSelectUser }) => {
           key: "uploadMedia",
         });
       } catch (error) {
-        console.log("Error sending file message:", error);
         message.error({
           content: "Không thể gửi tệp. Vui lòng thử lại.",
           key: "uploadMedia",
@@ -830,7 +820,6 @@ const MessageArea = ({ selectedChat, user, onChatChange, onSelectUser }) => {
         .filter((id) => id); // Lọc ra các ID hợp lệ
 
       if (repliedIds.length > 0) {
-        console.log("Fetching replied messages:", repliedIds);
 
         try {
           // API call với danh sách ID để lấy tất cả tin nhắn cùng lúc
@@ -843,7 +832,6 @@ const MessageArea = ({ selectedChat, user, onChatChange, onSelectUser }) => {
             })
           ).unwrap();
 
-          console.log("Fetched all messages including replies:", response);
         } catch (error) {
           console.error("Failed to fetch replies:", error);
         }

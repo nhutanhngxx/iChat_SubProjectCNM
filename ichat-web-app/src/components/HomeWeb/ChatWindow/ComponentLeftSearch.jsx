@@ -857,7 +857,7 @@ const ComponentLeftSearch = ({ userList, onClose,onSelectChat,user,onSelectUser 
   });
   // Add this function to handle user selection
 const handleUserSelect = (selectedUser) => {
-  console.log("Selected user from handleUserSelect :", selectedUser);
+  // console.log("Selected user from handleUserSelect :", selectedUser);
   
   // Get current user from localStorage or your auth state
   const currentUser = JSON.parse(localStorage.getItem('user')) || {};

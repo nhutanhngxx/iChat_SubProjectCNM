@@ -90,7 +90,7 @@ const BlockerUserList = () => {
     const fetchList = async () => {
       try {
         const result = await dispatch(getBlockedUsers(currentUser.id)).unwrap();
-        console.log("API Response:", result); // Log để kiểm tra cấu trúc dữ liệu
+        // console.log("API Response:", result); // Log để kiểm tra cấu trúc dữ liệu
 
         // Kiểm tra và xử lý dữ liệu từ API
         let users = [];
@@ -112,7 +112,7 @@ const BlockerUserList = () => {
     }
   }, [dispatch, currentUser, blockedUsersData]);
 
-  console.log("blockedUsersData before filter:", blockedUsersData); // Log để kiểm tra dữ liệu
+  // console.log("blockedUsersData before filter:", blockedUsersData); // Log để kiểm tra dữ liệu
 
   // Đảm bảo blockedUsersData là mảng trước khi filter
   const dataArray = Array.isArray(blockedUsersData) ? blockedUsersData : [];

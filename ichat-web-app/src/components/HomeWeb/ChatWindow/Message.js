@@ -179,7 +179,6 @@ const Message = ({
 
     // Chuẩn hóa ID thành chuỗi để so sánh
     const replyIdStr = String(replyId).trim();
-    console.log("Finding replied message:", replyIdStr);
 
     // Thử một số cách định dạng ID khác nhau
     const exactMatch = allMessages.find((msg) => {
@@ -188,7 +187,6 @@ const Message = ({
     });
 
     if (exactMatch) {
-      console.log("Exact match found:", exactMatch.content);
       return exactMatch;
     }
 
@@ -199,20 +197,19 @@ const Message = ({
       );
 
       if (messageFromRedux) {
-        console.log("Found in Redux state:", messageFromRedux);
         return messageFromRedux;
       }
     }
 
     // Debug info
-    console.log("Reply message not found:", {
-      replyId,
-      replyIdType: typeof replyId,
-      allMessagesCount: allMessages?.length || 0,
-      sampleIds: (allMessages || [])
-        .slice(0, 3)
-        .map((m) => ({ id: m._id, content: m.content?.substring(0, 20) })),
-    });
+    // console.log("Reply message not found:", {
+    //   replyId,
+    //   replyIdType: typeof replyId,
+    //   allMessagesCount: allMessages?.length || 0,
+    //   sampleIds: (allMessages || [])
+    //     .slice(0, 3)
+    //     .map((m) => ({ id: m._id, content: m.content?.substring(0, 20) })),
+    // });
 
     return null;
   };
@@ -315,7 +312,6 @@ const Message = ({
     if (friends && friends.friends) {
       const result = checkIsFriend();
       setIsFriendWithReceiver(result);
-      console.log("Is friend with receiver:", result);
     }
   }, [friends, selectedChat]);
   // State reaction
@@ -339,10 +335,10 @@ const Message = ({
         return;
       }
 
-      console.log("Attempting to recall message:", {
-        messageId: message._id,
-        userId: user?.id || user?._id,
-      });
+      // console.log("Attempting to recall message:", {
+      //   messageId: message._id,
+      //   userId: user?.id || user?._id,
+      // });
 
       // Pass both IDs as an object
       const result = await dispatch(
@@ -352,7 +348,7 @@ const Message = ({
         })
       ).unwrap();
 
-      console.log("Recall result:", result);
+      // console.log("Recall result:", result);
 
       // Notify other users via socket
       let roomId;
@@ -398,18 +394,15 @@ const Message = ({
     let roomId;
     if (selectedChat.chat_type === "group") {
       roomId = `group_${selectedChat.id}`;
-      console.log("Joining group room:", roomId);
     } else {
       const userIds = [user.id, selectedChat.id].sort();
       roomId = `chat_${userIds[0]}_${userIds[1]}`;
-      console.log("Joining private chat room:", roomId);
     }
 
     // Join the consistent room
     socket.emit("join-room", roomId);
 
     const handleRecalledMessage = (data) => {
-      console.log("Message recalled event received:", data);
 
       // Update the recalled message in your Redux store
       if (data.messageId) {
@@ -428,7 +421,6 @@ const Message = ({
     socket.on("message-recalled", handleRecalledMessage);
 
     return () => {
-      console.log("Cleaning up socket listener");
       socket.off("message-recalled", handleRecalledMessage);
     };
   }, [selectedChat?.id, user?.id, dispatch]);
@@ -533,7 +525,6 @@ const Message = ({
   }, [contextMenuVisible]);
   // Handler functions for message actions
   const handleReply = () => {
-    console.log("Reply to message:", message);
     onReplyToMessage(message);
     closeContextMenu();
   };
@@ -548,7 +539,6 @@ const Message = ({
 
   const handlePin = () => {
     // Implement pin functionality
-    console.log("Pin message:", message._id);
     closeContextMenu();
   };
 
@@ -564,7 +554,6 @@ const Message = ({
           messageId: message._id || message.id,
         })
       ).unwrap();
-      console.log("Delete result:", result);
       // Cập nhật Redux store với tin nhắn đã được xóa
       if (selectedChat.chat_type === "group") {
         dispatch(getUserMessages(selectedChat.id));
@@ -602,7 +591,6 @@ const Message = ({
   const handleCopy = () => {
     // Copy message content to clipboard
     navigator.clipboard.writeText(message.content);
-    console.log("Copied message:", message._id);
     closeContextMenu();
   };
 
@@ -647,7 +635,6 @@ const Message = ({
         reaction: reaction, // Match server parameter name
       };
 
-      console.log("Emitting add-reaction with payload:", payload);
       socket.emit("add-reaction", payload);
       dispatch(fetchMessages(user.id)); // Fetch updated messages
       // Close menus
@@ -680,11 +667,9 @@ const Message = ({
       let roomId;
       if (selectedChat.chat_type === "group") {
         roomId = `group_${selectedChat.id}`;
-        console.log("Joining group room:", roomId);
       } else {
         const userIds = [user.id, selectedChat.id].sort();
         roomId = `chat_${userIds[0]}_${userIds[1]}`;
-        console.log("Joining private chat room:", roomId);
       }
 
       // Format payload exactly as server expects it
@@ -695,7 +680,6 @@ const Message = ({
       };
 
       dispatch(fetchMessages(user._id)); // Fetch updated messages
-      console.log("Emitting remove-reaction with payload:", payload);
       socket.emit("remove-reaction", payload);
     } catch (error) {
       console.error("Error removing reaction:", error);
@@ -709,14 +693,11 @@ const Message = ({
     let roomId;
     if (selectedChat.chat_type === "group") {
       roomId = `group_${selectedChat.id}`;
-      console.log("Joining group room:", roomId);
     } else {
       const userIds = [user.id, selectedChat.id].sort();
       roomId = `chat_${userIds[0]}_${userIds[1]}`;
-      console.log("Joining private chat room:", roomId);
     }
 
-    console.log("Joining chat room:", roomId);
     socket.emit("join-room", roomId);
 
     // No return cleanup needed for joining
@@ -871,11 +852,11 @@ const Message = ({
 
     if (message.reply_to) {
       const found = findRepliedMessage(message.reply_to);
-      console.log(
-        "Replied message found:",
-        found ? "Yes" : "No",
-        found ? { content: found.content } : null
-      );
+      // console.log(
+      //   "Replied message found:",
+      //   found ? "Yes" : "No",
+      //   found ? { content: found.content } : null
+      // );
     }
   }, [message, allMessages]);
   useEffect(() => {
@@ -884,17 +865,13 @@ const Message = ({
     let roomId;
     if (selectedChat.chat_type === "group") {
       roomId = `group_${selectedChat.id}`;
-      console.log("Joining group room:", roomId);
     } else {
       const userIds = [user.id, selectedChat.id].sort();
       roomId = `chat_${userIds[0]}_${userIds[1]}`;
-      console.log("Joining private chat room:", roomId);
     }
-    console.log("Message component joining room:", roomId);
     socket.emit("join-room", roomId);
     return () => {
       // socket.off("message-reaction-update", handleMessageReaction);
-      console.log("Cleaning up socket listener for message reactions");
     };
   }, [selectedChat?.id, user?.id, dispatch]);
   // if (message.type === "image" && message.is_group_images && message.group_id) {

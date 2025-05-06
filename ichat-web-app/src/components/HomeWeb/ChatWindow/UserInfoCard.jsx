@@ -32,10 +32,10 @@ const UserInfoCard = ({ user, onClose, onSelectUser }) => {
     return receiveRequest.some((request) => request.sender_id === userId);
   };
 
-  console.log(" isSentRequest:  ", isSentRequest(user.id));
-  console.log(" isReceiveRequest:  ", isReceiveRequest(user.id));
-  console.log("sentRequest + useEffect:", sentRequest);
-  console.log("receiveRequest + useEffect:", receiveRequest);
+  // console.log(" isSentRequest:  ", isSentRequest(user.id));
+  // console.log(" isReceiveRequest:  ", isReceiveRequest(user.id));
+  // console.log("sentRequest + useEffect:", sentRequest);
+  // console.log("receiveRequest + useEffect:", receiveRequest);
 
   useEffect(() => {
     const fetchData = async () => {

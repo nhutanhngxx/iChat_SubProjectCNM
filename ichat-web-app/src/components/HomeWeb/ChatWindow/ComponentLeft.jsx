@@ -103,27 +103,8 @@ dayjs.locale("vi"); // đặt ngôn ngữ
 // Component ChatItem: Render từng mục trong danh sách chat
 const ChatItem = ({ item, onSelectUser, onPin }) => {
   const [isClicked, setIsClicked] = useState(false);
-  console.log("Item từ componetnLeft", item);
-  console.log(typeof item.isLastMessageFromMe, item.isLastMessageFromMe);
-
-  // Tính thời gian từ timestamp
-  // const formatTime = (timestamp) => {
-  //   const now = dayjs();
-  //   const messageTime = dayjs(timestamp);
-
-  //   if (messageTime.isSame(now, "day")) {
-  //     // Nếu trong hôm nay, hiển thị giờ:phút AM/PM
-  //     return messageTime.format("h:mm A");
-  //   } else if (messageTime.isSame(now.subtract(1, "day"), "day")) {
-  //     // Nếu là hôm qua
-  //     return "Yesterday";
-  //   } else {
-  //     // Nếu xa hơn, hiển thị tháng/ngày
-  //     return messageTime.format("MMM D");
-  //   }
-  //   // const localTime = new Date(timestamp).toLocaleString();
-  //   // return localTime;
-  // };
+  // console.log("Item từ componetnLeft", item);
+  // console.log(typeof item.isLastMessageFromMe, item.isLastMessageFromMe);
   const formatTime = (timestamp) => {
     const now = dayjs();
     const messageTime = dayjs(timestamp);

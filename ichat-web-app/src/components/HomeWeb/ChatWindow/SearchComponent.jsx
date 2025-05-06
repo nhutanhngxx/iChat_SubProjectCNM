@@ -23,7 +23,6 @@ const SearchComponent = ({ searchText, setSearchText, onClose, onSelectUser,user
     try {
       const result = await dispatch(getUserFriends(user._id || user.id)).unwrap();
       setFriends(result);
-      console.log("friends from Search component", user._id || user.id, result);
     } catch (err) {
       console.error("Lỗi khi lấy danh sách bạn bè:", err);
     }
@@ -34,7 +33,6 @@ const SearchComponent = ({ searchText, setSearchText, onClose, onSelectUser,user
   }
 }, [dispatch, user._id, user.id]);
 
-  console.log("friends from Search component",user._id||user.id,friends);
   // Kiêm tra xem người dùng đã là bạn hay chưa
   const isFriend = (userId) => {
     return friends.friends.some(friend => friend.id === userId);
@@ -72,59 +70,6 @@ const SearchComponent = ({ searchText, setSearchText, onClose, onSelectUser,user
     }
   };
 
-  // const handleSearch = async () => {
-  //   if (searchText.trim()) {
-  //     setIsSearching(true);
-  //     try {
-  //       let query = searchText.trim();
-  //       let searchType = 'name';
-        
-  //       // Check if input is a phone number (starts with 0 or +)
-  //       const isPhoneNumber = /^[0+]\d{8,}$/.test(query);
-        
-  //       if (isPhoneNumber) {
-  //         // Normalize the phone number format
-  //         query = normalizePhoneNumber(query);
-  //         searchType = 'phone';
-  //         console.log("Searching for phone number:", query);
-  //       }
-        
-  //       // Dispatch an action to search users by name or exact phone
-  //       const response = await dispatch(searchUsersByPhone({
-  //         query: query,
-  //         searchType: searchType,
-  //         exactMatch: searchType === 'phone' // Use exact match for phone numbers
-  //       })).unwrap();
-        
-  //       // If no results and was a phone search, try alternative format
-  //       if (response.length === 0 && searchType === 'phone') {
-  //         // Try without the + sign if it had one
-  //         const altQuery = query.startsWith('+') ? query.substring(1) : '+' + query;
-  //         console.log("Trying alternative phone format:", altQuery);
-          
-  //         const altResponse = await dispatch(searchUsersByPhone({
-  //           query: altQuery,
-  //           searchType: 'phone',
-  //           exactMatch: true
-  //         })).unwrap();
-          
-  //         setSearchResults(altResponse);
-  //       } else {
-  //         setSearchResults(response);
-  //       }
-        
-  //       if (searchType === 'phone' && response.length === 0) {
-  //         message.info("Không tìm thấy người dùng với số điện thoại này");
-  //       }
-  //     } catch (error) {
-  //       console.error("Search failed:", error);
-  //       message.error("Không thể thực hiện tìm kiếm. Vui lòng thử lại sau.");
-  //     } finally {
-  //       setIsSearching(false);
-  //     }
-  //   }
-  // };
-
   // Format phone number for display
   const handleSearch = async () => {
     if (!searchText.trim()) return;
@@ -143,7 +88,6 @@ const SearchComponent = ({ searchText, setSearchText, onClose, onSelectUser,user
   
     try {
       // Dùng action mới
-      console.log("Searching for phone number:", normalizedPhone);
       const response = await dispatch(searchUsersByPhone(normalizedPhone)).unwrap();
   
       if (response.length === 0) {
@@ -195,7 +139,6 @@ const SearchComponent = ({ searchText, setSearchText, onClose, onSelectUser,user
     try {
       // Dispatch action to send friend request
       // await dispatch(sendFriendRequest(userId)).unwrap();
-      console.log("Friend request sent to:", userId);
       message.success("Đã gửi lời mời kết bạn");
     } catch (error) {
       console.error("Failed to send friend request:", error);
@@ -233,7 +176,7 @@ const SearchComponent = ({ searchText, setSearchText, onClose, onSelectUser,user
         receiver_id: user.id  // This is very important
       };
       
-      console.log("Starting chat with user:", normalizedUser);
+      // console.log("Starting chat with user:", normalizedUser);
       onSelectUser(normalizedUser);
     }
     // Close the search panel

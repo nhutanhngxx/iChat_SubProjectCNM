@@ -50,12 +50,12 @@ const GroupInviteModal = ({
   const [isCreating, setIsCreating] = useState(false);
 
    // Log state for debugging
-   console.log("GroupInviteModal Redux State:", {
-    invitations,
-    invitationStatus,
-    currentInvitation,
-    reduxGroups: useSelector(state => state.groups)
-  });
+  //  console.log("GroupInviteModal Redux State:", {
+  //   invitations,
+  //   invitationStatus,
+  //   currentInvitation,
+  //   reduxGroups: useSelector(state => state.groups)
+  // });
   // Tải danh sách lời mời khi mở modal
   useEffect(() => {
     if (visible && groupId && userId) {

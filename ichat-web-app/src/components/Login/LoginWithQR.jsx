@@ -22,7 +22,7 @@ export default function LoginWithQR() {
       try {
         const res = await axios.get(`auth/qr-session`);
         setSessionId(res.data.sessionId);
-        console.log("Tạo session QR với sessionId:", res.data.sessionId);
+        // console.log("Tạo session QR với sessionId:", res.data.sessionId);
 
 
         // Tự động hết hạn sau 2 phút
@@ -57,7 +57,6 @@ export default function LoginWithQR() {
     if (!sessionId) return;
 
     socket.emit("register-session", sessionId);
-    console.log("✅ Đã đăng ký socket session:", sessionId);
 
     socket.emit("join-session", sessionId);
 
@@ -71,16 +70,15 @@ export default function LoginWithQR() {
   }, [sessionId]);
 
   const handleConfirmLogin = async () => {
-    console.log("👉 Đã nhấn nút xác nhận"); // THÊM LOG NÀY
     try {
-      console.log("Gửi request xác nhận với sessionId:", sessionId);
+      // console.log("Gửi request xác nhận với sessionId:", sessionId);
       const res = await axios.post(`auth/confirm-login`, { sessionId });
-      console.log("Phản hồi từ confirm-login:", res.data);
+      // console.log("Phản hồi từ confirm-login:", res.data);
 
-      console.log("Đã xác nhận đăng nhập:", res.data); // THÊM LOG NÀY
+      // console.log("Đã xác nhận đăng nhập:", res.data); // THÊM LOG NÀY
       if (res.data.token) {
         localStorage.setItem("token", res.data.token);
-        console.log("Nhận token:", res.data.token);
+        // console.log("Nhận token:", res.data.token);
         // gọi hàm đăng nhập 
         await dispatch(authenticateWithToken());
         navigate("/home");

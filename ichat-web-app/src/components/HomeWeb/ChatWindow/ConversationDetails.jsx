@@ -186,7 +186,7 @@ const ConversationDetails = ({
         // If response is directly the boolean value
         setRequireApproval(response);
       }
-      console.log("Member approval status:", response);
+      // console.log("Member approval status:", response);
     } catch (error) {
       console.error("Error fetching member approval status:", error);
     }
@@ -202,7 +202,7 @@ const ConversationDetails = ({
       setPendingMembers(response || []);
     } catch (error) {
       console.error("Error fetching pending members:", error);
-      message.error("Không thể tải danh sách thành viên chờ duyệt");
+      // message.error("Không thể tải danh sách thành viên chờ duyệt");
     } finally {
       setPendingMembersLoading(false);
     }
@@ -212,7 +212,7 @@ const ConversationDetails = ({
   const fetchInvitedMembers = async () => {
     try {
       const response = await dispatch(
-        getInvitedMembersByUserId(user.id)
+        getInvitedMembersByUserId({groupId:selectedChat.id,userId:user.id})
       ).unwrap();
       setInvitedMembers(response || []);
     } catch (error) {
@@ -447,11 +447,6 @@ const ConversationDetails = ({
             // Kiểm tra cả id và _id vì có thể có sự khác nhau trong cấu trúc dữ liệu
             friend.id === memberId || friend._id === memberId
         );
-
-        console.log(
-          `Kiểm tra bạn bè giữa ${user.id} và ${memberId}:`,
-          isFriend ? "Đã là bạn bè" : "Chưa là bạn bè"
-        );
         setIsCheckingFriend(false);
         return isFriend;
       }
@@ -517,7 +512,7 @@ const ConversationDetails = ({
       unread: 0,
       timestamp: new Date().toISOString(),
     };
-    console.log("Chat user:", chatUser);
+    // console.log("Chat user:", chatUser);
     onSelectUser(chatUser); // Gọi hàm selectedChat với đối tượng chatUser
     // Đóng modal thông tin
     setShowMemberInfoModal(false);
@@ -566,7 +561,7 @@ const ConversationDetails = ({
       )
         .unwrap()
         .then((result) => {
-          console.log("Check admin result:", result);
+          // console.log("Check admin result:", result);
           const { isAdmin: isUserAdmin, isMainAdmin: isUserMainAdmin } = result;
           setIsAdmin(isUserAdmin);
           setIsMainAdmin(isUserMainAdmin);
@@ -584,16 +579,16 @@ const ConversationDetails = ({
     // Xử lý tự động xác định isSubAdmin khi isAdmin hoặc isMainAdmin thay đổi
     if (isAdmin === true && isMainAdmin === false) {
       setIsSubAdmin(true);
-      console.log("Tự động cập nhật: isSubAdmin = true");
+      // console.log("Tự động cập nhật: isSubAdmin = true");
     }
   }, [isAdmin, isMainAdmin]);
-  console.log("Debug phân quyền:", {
-    isMainAdmin,
-    isSubAdmin,
-    isAdmin,
-    userId: user.id,
-    adminId: selectedChat.admin_id,
-  });
+  // console.log("Debug phân quyền:", {
+  //   isMainAdmin,
+  //   isSubAdmin,
+  //   isAdmin,
+  //   userId: user.id,
+  //   adminId: selectedChat.admin_id,
+  // });
   // Hàm tạo nhóm trò chuyện với chat 1-1
 
   const handleCreateGroupClick = async () => {
@@ -928,7 +923,7 @@ const ConversationDetails = ({
       const response = await axios.get(
         `http://${window.location.hostname}:5001/api/friendships/${user.id}`
       );
-      console.log("Friends response:", response.data.friends);
+      // console.log("Friends response:", response.data.friends);
 
       if (response.data && response.data.friends) {
         // Lọc ra bạn bè chưa có trong nhóm
@@ -1001,7 +996,7 @@ const ConversationDetails = ({
       const response = await axios.get(
         `http://${window.location.hostname}:5001/api/groups/${selectedChat.id}/members`
       );
-      console.log("Group members response:", response);
+      // console.log("Group members response:", response);
 
       if (response.data && Array.isArray(response.data.data)) {
         setGroupMembers(response.data.data);
@@ -1150,7 +1145,7 @@ const ConversationDetails = ({
         groupId: selectedChat.id,
         userIds: selectedMembers,
       });
-      console.log("Selected đã chọn cho handel Message:", selectedChat.id);
+      // console.log("Selected đã chọn cho handel Message:", selectedChat.id);
 
       message.success({
         content: `Đã thêm ${selectedMembers.length} thành viên vào nhóm`,
@@ -1311,15 +1306,15 @@ const ConversationDetails = ({
   };
 
   const visibleMedia = showAll ? mediaItems : mediaItems.slice(0, 8);
-  console.log("Group members:", groupMembers);
-  console.log("Selected chat:", selectedChat);
-  console.log("Pending members:", pendingMembers);
+  // console.log("Group members:", groupMembers);
+  // console.log("Selected chat:", selectedChat);
+  // console.log("Pending members:", pendingMembers);
 
   // useEffect for group-specific socket events
   useEffect(() => {
     if (!selectedChat?.id || selectedChat.chat_type !== "group") return;
     // Tham gia phòng quản lý nhóm - chỉ dùng groupId trực tiếp
-    console.log("Joining group management room:", selectedChat.id);
+    // console.log("Joining group management room:", selectedChat.id);
     socket.emit("join-room", selectedChat.id); // Không cần prefix "group_"
 
     // Define a prefix for easier logging
@@ -1328,10 +1323,10 @@ const ConversationDetails = ({
     // Function to handle general member updates that require refetching members
     const handleMemberUpdate = (data) => {
       if (data.groupId === selectedChat.id) {
-        console.log(
-          `${logPrefix} Member update detected for current group:`,
-          data
-        );
+        // console.log(
+        //   `${logPrefix} Member update detected for current group:`,
+        //   data
+        // );
         fetchGroupMembers();
         fetchPendingMembers();
       }
@@ -1340,7 +1335,7 @@ const ConversationDetails = ({
     // Listen for member approval status change
     const handleApprovalUpdate = (data) => {
       if (data.groupId === selectedChat.id) {
-        console.log(`${logPrefix} Approval setting updated:`, data);
+        // console.log(`${logPrefix} Approval setting updated:`, data);
         setRequireApproval(data.requireApproval);
       }
     };
@@ -1348,7 +1343,7 @@ const ConversationDetails = ({
     // Group info updates
     const handleGroupUpdate = (data) => {
       if (data.groupId === selectedChat.id) {
-        console.log(`${logPrefix} Group info updated:`, data);
+        // console.log(`${logPrefix} Group info updated:`, data);
         fetchGroupSettings();
         // If onUpdateSelectedChat exists, update the group name
         if (typeof onUpdateSelectedChat === "function" && data.name) {
@@ -1363,7 +1358,7 @@ const ConversationDetails = ({
     // Handle admin transfer
     const handleAdminTransfer = (data) => {
       if (data.groupId === selectedChat.id) {
-        console.log(`${logPrefix} Admin transferred:`, data);
+        // console.log(`${logPrefix} Admin transferred:`, data);
         fetchGroupMembers();
         fetchGroupSettings();
         // Update isMainAdmin status if current user is the new admin
@@ -1374,7 +1369,7 @@ const ConversationDetails = ({
     // Handle group deletion
     const handleGroupDeleted = (groupId) => {
       if (groupId === selectedChat.id) {
-        console.log(`${logPrefix} Group was deleted:`, groupId);
+        // console.log(`${logPrefix} Group was deleted:`, groupId);
         message.info("Nhóm đã bị giải tán bởi quản trị viên.");
         if (onLeaveGroup && typeof onLeaveGroup === "function") {
           onLeaveGroup();

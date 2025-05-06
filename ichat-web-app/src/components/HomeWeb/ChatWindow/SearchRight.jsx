@@ -224,9 +224,9 @@ const SearchRight = ({
     
     loadChatMembers();
   }, [messages, selectedChat, user]);
-  console.log("messages", messages);
+  // console.log("messages", messages);
   
-  console.log("chatMembers from SearchRight", chatMembers);
+  // console.log("chatMembers from SearchRight", chatMembers);
   
 
   // Thực hiện tìm kiếm khi text hoặc filters thay đổi

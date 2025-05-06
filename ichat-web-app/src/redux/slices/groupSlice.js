@@ -563,9 +563,11 @@ export const getPendingMembers = createAsyncThunk(
 // Lấy danh sách thành viên được mời bởi người dùng
 export const getInvitedMembersByUserId = createAsyncThunk(
   "groups/getInvitedMembersByUserId",
-  async (userId, { rejectWithValue }) => {
+  async ({ groupId, userId }, { rejectWithValue }) => {
     try {
-      const response = await fetch(`${API_URL}invited-members/${userId}`);
+      const response = await fetch(
+        `${API_URL}invited-members/${groupId}/${userId}`
+      );
       const data = await response.json();
 
       if (data.status === "error") {

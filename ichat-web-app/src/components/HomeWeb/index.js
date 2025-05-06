@@ -55,7 +55,7 @@ const App = () => {
   const handleCloseSettings = () => {
     setSettingsModalVisible(false); // Đóng modal
   };
-  console.log("User from Redux and index.js:", user);
+  // console.log("User from Redux and index.js:", user);
   // Render component tương ứng dựa trên state
   const renderComponent = () => {
     switch (activeComponent) {
