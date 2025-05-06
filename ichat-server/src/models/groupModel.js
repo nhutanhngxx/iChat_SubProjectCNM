@@ -108,7 +108,15 @@ const GroupModel = {
       // if (avatar) {
       //   avatarUrl = await uploadFile(avatar);
       // }
-
+      console.log("Avatar received:", avatar);
+      if (avatar) {
+        console.log("Avatar properties:", {
+          hasBuffer: !!avatar.buffer,
+          mimetype: avatar.mimetype,
+          originalname: avatar.originalname,
+          size: avatar.size,
+        });
+      }
       // Xử lý avatar nếu có (Merge code)
       let avatarUrl =
         "https://nhutanhngxx.s3.ap-southeast-1.amazonaws.com/root/new-logo.png"; // default avatar
