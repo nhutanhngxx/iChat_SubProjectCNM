@@ -113,7 +113,7 @@ const ModalMemberInfo = ({
                     <Text style={styles.optionText}>Xem thông tin</Text>
                   </TouchableOpacity>
 
-                  {member.role !== "admin" && adminGroup && (
+                  {adminGroup && !isCurrentUser && (
                     <TouchableOpacity
                       style={styles.memberModalOption}
                       onPress={onAppointAdmin}

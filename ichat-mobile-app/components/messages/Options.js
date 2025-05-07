@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useCallback } from "react";
 import {
   Text,
   View,
@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 
-import { useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { UserContext } from "../../config/context/UserContext";
 
 import HeaderOption from "../header/HeaderOption";
@@ -29,7 +29,8 @@ const Option = ({ route }) => {
   const [receiverInfo, setReceiverInfo] = useState(null); // Thông tin người nhận
   const [receiverGroup, setReceiverGroup] = useState([]); // Thông tin nhóm
   const [isGroup, setIsGroup] = useState(false); // Kiểm tra xem có phải nhóm không
-  const [adminGroup, setAdminGroup] = useState(null); // Kiểm tra xem có phải admin của nhóm không
+  const [adminGroup, setAdminGroup] = useState(null); // Kiểm tra xem có phải nhóm trưởng của nhóm không
+  const [subAdminGroup, setSubAdminGroup] = useState(null); // Kiểm tra xem có phải nhóm phó phụ của nhóm không
   const [sharedGroups, setSharedGroups] = useState([]); // Danh sách nhóm chung giữa 2 người
   const [isRenameModalVisible, setIsRenameModalVisible] = useState(false); // Modal đổi tên nhóm
   const [isSelectAdminModalVisible, setIsSelectAdminModalVisible] =
@@ -41,6 +42,7 @@ const Option = ({ route }) => {
 
     socketService.joinRoom(id);
 
+    // Lắng nghe sự kiện cập nhật thông tin nhóm
     socketService.onGroupUpdated(({ groupId, name, avatar }) => {
       if (id === groupId) {
         setReceiverGroup((prev) => ({
@@ -51,11 +53,32 @@ const Option = ({ route }) => {
       }
     });
 
+    // Lắng nghe sự kiện chuyển quyền quản trị viên
+    socketService.onAdminTransferred(({ groupId, userId }) => {
+      if (id === groupId) {
+        // Update admin status if current user is the new admin
+        if (userId === user.id) {
+          setAdminGroup(true);
+        } else if (adminGroup) {
+          // If current user was admin and now someone else is
+          setAdminGroup(false);
+        }
+      }
+    });
+
+    // Lắng nghe sự kiện cập nhật quyền thành viên
+    socketService.onRoleUpdated(({ groupId, userId, role }) => {
+      if (id === groupId && userId === user.id) {
+        // Update subAdmin status if role changed for current user
+        setSubAdminGroup(role === "admin");
+      }
+    });
+
     return () => {
       socketService.leaveRoom(id);
       socketService.removeAllListeners();
     };
-  }, [id]);
+  }, [id, user.id, adminGroup, subAdminGroup]);
 
   useEffect(() => {
     const fetchReceiverInfo = async () => {
@@ -63,14 +86,16 @@ const Option = ({ route }) => {
         const userRes = await userService.getUserById(id);
         if (!userRes || !userRes._id) {
           const groupRes = await groupService.getGroupById(id);
+          const roleRes = await groupService.isGroupSubAdmin({
+            groupId: id,
+            userId: user.id,
+          });
+
           if (groupRes && groupRes._id) {
             setReceiverGroup(groupRes);
             setIsGroup(true);
-            if (user.id === groupRes.admin_id) {
-              setAdminGroup(true);
-            } else {
-              setAdminGroup(false);
-            }
+            setAdminGroup(roleRes.isMainAdmin);
+            setSubAdminGroup(roleRes.isSubAdmin);
           } else {
             console.log("Không tìm thấy thông tin user hoặc group");
           }
@@ -86,6 +111,43 @@ const Option = ({ route }) => {
       fetchReceiverInfo();
     }
   }, [id, name, avatar, user.id]);
+
+  useFocusEffect(
+    useCallback(() => {
+      // Chỉ fetch lại thông tin nhóm nếu đã xác định là nhóm
+      const fetchGroupInfo = async () => {
+        if (id && isGroup) {
+          try {
+            console.log("Fetching group info on focus...");
+            const groupRes = await groupService.getGroupById(id);
+            const roleRes = await groupService.isGroupSubAdmin({
+              groupId: id,
+              userId: user.id,
+            });
+
+            if (groupRes && groupRes._id) {
+              console.log("Group info fetched:", groupRes);
+              console.log("Role info:", roleRes);
+              setReceiverGroup(groupRes);
+              setAdminGroup(roleRes.isMainAdmin);
+              setSubAdminGroup(roleRes.isSubAdmin);
+            }
+          } catch (error) {
+            console.error("Lỗi khi fetch thông tin nhóm:", error);
+          }
+        }
+      };
+
+      // Thêm một khoảng thời gian nhỏ để đảm bảo isGroup đã được xác định
+      const timer = setTimeout(() => {
+        fetchGroupInfo();
+      }, 100);
+
+      return () => {
+        clearTimeout(timer);
+      };
+    }, [id, user.id, isGroup])
+  );
 
   // Xóa tất cả tin nhắn giữa 2 người
   const handleDeleteChatHistory = async () => {
@@ -264,8 +326,10 @@ const Option = ({ route }) => {
           }}
           style={styles.avatar}
         />
-        {!adminGroup && <Text style={styles.name}>{name}</Text>}
-        {adminGroup && (
+        {!adminGroup && !subAdminGroup && (
+          <Text style={styles.name}>{name}</Text>
+        )}
+        {(adminGroup || subAdminGroup) && (
           <View
             style={{
               flexDirection: "row",
@@ -285,7 +349,7 @@ const Option = ({ route }) => {
       </View>
 
       {/* Function under Avatar - User */}
-      {!adminGroup && (
+      {!adminGroup && !subAdminGroup && (
         <View
           style={{
             flexDirection: "row",
@@ -335,7 +399,7 @@ const Option = ({ route }) => {
       )}
 
       {/* Function under Avatar - Group */}
-      {adminGroup && (
+      {(adminGroup || subAdminGroup) && (
         <View
           style={{
             flexDirection: "row",
@@ -461,7 +525,7 @@ const Option = ({ route }) => {
                 marginHorizontal: -20,
               }}
             ></View>
-            {adminGroup === true && (
+            {(adminGroup || subAdminGroup) && (
               <TouchableOpacity style={styles.component}>
                 <Image
                   source={require("../../assets/icons/setting.png")}
@@ -547,7 +611,7 @@ const Option = ({ route }) => {
             </TouchableOpacity>
           )}
 
-          {adminGroup === true && (
+          {adminGroup && !subAdminGroup && (
             <TouchableOpacity
               style={styles.component}
               onPress={handleDeleteGroup}

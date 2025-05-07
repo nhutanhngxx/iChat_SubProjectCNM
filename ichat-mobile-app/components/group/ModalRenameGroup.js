@@ -52,6 +52,7 @@ const ModalRenameGroup = ({ visible, onClose, groupId, currentName }) => {
       });
 
       if (response.status === "ok") {
+        console.log("ModalRenameGroup - Emitting group update via socket");
         socketService.handleUpdateGroup({
           groupId,
           name: newGroupName.trim(),
