@@ -7,8 +7,41 @@ const { uploadFile } = require("../services/upload-file");
 const { get } = require("http");
 const crypto = require("crypto");
 const GroupInvitation = require("../schemas/GroupInvitation");
+const UserModel = require("./userModel");
 
 const GroupModel = {
+  // Thông báo
+  createGroupNotification: async (options) => {
+    try {
+      const {
+        groupId,
+        content,
+        excludeUserIds = [], // Những user không nhận thông báo này
+      } = options;
+
+      // Lấy thông tin nhóm
+      const group = await GroupChat.findById(groupId);
+      if (!group) {
+        console.error("Không tìm thấy nhóm để tạo thông báo");
+        return null;
+      }
+
+      // Tạo tin nhắn thông báo
+      const notification = await Message.create({
+        sender_id: null, // Không có người gửi cụ thể
+        receiver_id: groupId,
+        content: content,
+        type: "notify", // Loại thông báo
+        chat_type: "group",
+        status: "sent",
+      });
+
+      return notification;
+    } catch (error) {
+      console.error("Lỗi khi tạo thông báo nhóm:", error);
+      return null;
+    }
+  },
   //   Lấy danh sách nhóm mà người dùng tham gia
   getUserGroups: async (userId) => {
     try {
@@ -256,6 +289,40 @@ const GroupModel = {
 
       // Thêm các thành viên mới
       const result = await GroupMember.insertMany(membersToAdd);
+      // Lấy thông tin người mời và nhóm
+      const inviter = await User.findById(inviterId);
+      // const group = await GroupChat.findById(groupId);
+
+      if (inviter && group && membersToAdd.length > 0) {
+        // Lấy danh sách tên người dùng được thêm vào
+        const addedUsers = await Promise.all(
+          membersToAdd.map(async (member) => {
+            const user = await User.findById(member.user_id);
+            return user ? user.full_name : "Unknown user";
+          })
+        );
+
+        // Tạo nội dung thông báo
+        let notificationContent = "";
+
+        // Điều chỉnh nội dung thông báo dựa trên người gửi và số người được thêm
+        if (addedUsers.length === 1) {
+          notificationContent = `${inviter.full_name} đã thêm ${addedUsers[0]} vào nhóm "${group.name}"`;
+        } else if (addedUsers.length > 1) {
+          const lastUser = addedUsers.pop();
+          notificationContent = `${inviter.full_name} đã thêm ${addedUsers.join(
+            ", "
+          )} và ${lastUser} vào nhóm "${group.name}"`;
+        }
+
+        if (notificationContent) {
+          // Tạo thông báo trong nhóm
+          await GroupModel.createGroupNotification({
+            groupId,
+            content: notificationContent,
+          });
+        }
+      }
 
       return {
         // added: result.map((m) => String(m.user_id)),
