@@ -412,6 +412,22 @@ const ChatWindow = ({ user, selectedFriend }) => {
         }));
       }
     };
+    const handleSetRole = (data) => {
+      // console.log("Role set globally:", data);
+      dispatch(fetchMessages(user.id));
+
+      // If this is the currently selected group, update admin_id
+      if (
+        selectedUser &&
+        selectedUser.chat_type === "group" &&
+        selectedUser.id === data.groupId
+      ) {
+        setSelectedUser((prev) => ({
+          ...prev,
+          admin_id: data.userId,
+        }));
+      }
+    };
 
     // Register listeners
     socket.on("group-created", handleGroupCreated);
@@ -421,6 +437,7 @@ const ChatWindow = ({ user, selectedFriend }) => {
     socket.on("group-updated", handleGroupUpdated);
     socket.on("member-left", handleMemberLeft);
     socket.on("admin-transferred", handleAdminTransferred);
+    socket.on("role-updated", handleSetRole);
 
     return () => {
       // Cleanup listeners
@@ -431,6 +448,7 @@ const ChatWindow = ({ user, selectedFriend }) => {
       socket.off("member-left", handleMemberLeft);
       socket.off("admin-transferred", handleAdminTransferred);
       socket.off("members-added", handleMembersAdded);
+      socket.off("role-updated", handleSetRole);
     };
   }, [user?.id, selectedUser, dispatch]);
 

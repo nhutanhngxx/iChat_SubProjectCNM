@@ -857,3 +857,30 @@
     background-color: transparent;
   }
 }
+/* Css của thông báo */
+.message-notification-container {
+  display: flex;
+  align-items: center;
+  margin: 12px 0;
+  width: 100%;
+  justify-content: center;
+}
+
+.message-notification {
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 16px;
+  padding: 5px 15px;
+  font-size: 13px;
+  color: #575656;
+  max-width: 90%;
+  text-align: center;
+  display: flex;
+  gap: 10px;
+
+} 
+
+.message-notification-time {
+  font-size: 10px;
+  color: #575656;
+  margin-top: 3px;
+}

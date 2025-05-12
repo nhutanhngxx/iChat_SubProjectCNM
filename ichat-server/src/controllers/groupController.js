@@ -158,8 +158,8 @@ const GroupController = {
   // 3. Remove member / leave group
   removeMember: async (req, res) => {
     try {
-      const { groupId, userId } = req.body;
-      await GroupModel.removeMember(groupId, userId);
+      const { groupId, userId, adminId } = req.body;
+      await GroupModel.removeMember(groupId, userId, adminId);
       res.json({ status: "ok" });
     } catch (e) {
       res.status(500).json({ status: "error", message: e.message });
@@ -172,19 +172,45 @@ const GroupController = {
       const { groupId } = req.params;
       const { name } = req.body;
       const avatar = req.file || null;
-      const allow_add_members = req.body.allow_add_members || true;
-      const allow_change_name = req.body.allow_change_name || true;
-      const allow_change_avatar = req.body.allow_change_avatar || true;
+      // const allow_add_members = req.body.allow_add_members;
+      // const allow_change_name = req.body.allow_change_name;
+      // const allow_change_avatar = req.body.allow_change_avatar;
+      const currentUserId = req.body.currentUserId;
+      // console.log(groupId, name, avatar);
 
-      console.log(groupId, name, avatar);
+      // const upd = await GroupModel.updateGroup(
+      //   groupId,
+      //   {
+      //     name,
+      //     avatar,
+      //     allow_add_members,
+      //     allow_change_name,
+      //     allow_change_avatar,
+      //   },
+      //   currentUserId
+      // );
 
-      const upd = await GroupModel.updateGroup(groupId, {
+      const update = {
         name,
         avatar,
-        allow_add_members,
-        allow_change_name,
-        allow_change_avatar,
-      });
+      };
+
+      // Chỉ thêm vào update nếu client thực sự gửi các giá trị này
+      if (req.body.allow_add_members !== undefined) {
+        update.allow_add_members = req.body.allow_add_members === "true";
+      }
+
+      if (req.body.allow_change_name !== undefined) {
+        update.allow_change_name = req.body.allow_change_name === "true";
+      }
+
+      if (req.body.allow_change_avatar !== undefined) {
+        update.allow_change_avatar = req.body.allow_change_avatar === "true";
+      }
+
+      console.log("Update data:", update, "currentUserId:", currentUserId);
+
+      const upd = await GroupModel.updateGroup(groupId, update, currentUserId);
 
       res.json({ status: "ok", data: upd });
     } catch (e) {
@@ -196,8 +222,8 @@ const GroupController = {
   setRole: async (req, res) => {
     try {
       const { groupId, userId } = req.params;
-      const { role } = req.body;
-      const r = await GroupModel.setRole(groupId, userId, role);
+      const { role, adminId } = req.body;
+      const r = await GroupModel.setRole(groupId, userId, role, adminId);
       res.json({ status: "ok", data: r });
     } catch (e) {
       res.status(500).json({ status: "error", message: e.message });
@@ -268,8 +294,12 @@ const GroupController = {
   transferAdmin: async (req, res) => {
     try {
       const { groupId, userId } = req.params; // hoặc req.body
-
-      const result = await GroupModel.transferAdmin(groupId, userId);
+      const { currentAdminId } = req.body; // ID của admin hiện tại
+      const result = await GroupModel.transferAdmin(
+        groupId,
+        userId,
+        currentAdminId
+      );
 
       return res.status(200).json({
         status: "ok",
@@ -446,9 +476,11 @@ const GroupController = {
   acceptMember: async (req, res) => {
     try {
       const { groupId, memberId } = req.params;
+      const { adminId } = req.body;
       const acceptedMember = await GroupModel.acceptMember({
         groupId,
         memberId,
+        adminId,
       });
       return res.json({ status: "ok", data: acceptedMember });
     } catch (error) {
@@ -461,7 +493,8 @@ const GroupController = {
   rejectMember: async (req, res) => {
     try {
       const { groupId, memberId } = req.params;
-      await GroupModel.rejectMember({ groupId, memberId });
+      const { adminId } = req.body;
+      await GroupModel.rejectMember({ groupId, memberId , adminId });
       return res.json({ status: "ok" });
     } catch (error) {
       console.error("Lỗi khi từ chối thành viên:", error);

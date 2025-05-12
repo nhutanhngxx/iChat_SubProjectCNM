@@ -403,7 +403,6 @@ const Message = ({
     socket.emit("join-room", roomId);
 
     const handleRecalledMessage = (data) => {
-
       // Update the recalled message in your Redux store
       if (data.messageId) {
         // Create an updated message object
@@ -918,6 +917,24 @@ const Message = ({
     !isFirstImageInGroup
   ) {
     return null;
+  }
+  if (message.type === "notify") {
+    return (
+      <div
+        id={`message-${message._id}`}
+        className="message-notification-container"
+      >
+        <div className="message-notification">
+          <span>{message.content}</span>
+          <div className="message-notification-time">
+            {new Date(message.timestamp).toLocaleTimeString("vi-VN", {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </div>
+        </div>
+      </div>
+    );
   }
   return (
     <>

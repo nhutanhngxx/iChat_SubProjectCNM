@@ -67,6 +67,7 @@ import {
 import {
   fetchChatMessages,
   fetchMessages,
+  getUserMessages,
 } from "../../../redux/slices/messagesSlice";
 import { GrContract } from "react-icons/gr";
 import GifPicker from "./GifPicker";
@@ -257,6 +258,7 @@ const ConversationDetails = ({
         acceptMember({
           groupId: selectedChat.id,
           memberId: memberId,
+          adminId: user.id,
         })
       ).unwrap();
       socket.emit("accept-member", {
@@ -267,7 +269,7 @@ const ConversationDetails = ({
         content: `Đã chấp nhận ${memberName} vào nhóm`,
         key: "acceptMember",
       });
-
+      await dispatch(getUserMessages(selectedChat.id));
       // Cập nhật lại danh sách thành viên chờ duyệt
       fetchPendingMembers();
       // Cập nhật lại danh sách thành viên nhóm
@@ -293,6 +295,7 @@ const ConversationDetails = ({
         rejectMember({
           groupId: selectedChat.id,
           memberId: memberId,
+          adminId: user.id,
         })
       ).unwrap();
       socket.emit("reject-member", {
@@ -357,6 +360,7 @@ const ConversationDetails = ({
         transferAdmin({
           groupId: selectedChat.id,
           userId: newAdminIdForTransfer,
+          currentAdminId: user.id,
         })
       ).unwrap();
       socket.emit("transfer-admin", {
@@ -370,6 +374,7 @@ const ConversationDetails = ({
           groupId: selectedChat.id,
           userId: user.id,
           role: "member",
+          adminId:user.id,
         })
       ).unwrap();
       socket.emit("set-role", {
@@ -680,6 +685,7 @@ const ConversationDetails = ({
           groupId: selectedChat.id,
           userId: userId,
           role: newRole,
+          adminId: user.id,
         })
       ).unwrap();
 
@@ -754,6 +760,7 @@ const ConversationDetails = ({
           allow_add_members: groupSettings.allow_add_members,
           allow_change_name: groupSettings.allow_change_name,
           allow_change_avatar: groupSettings.allow_change_avatar,
+          currentUserId: user.id,
         })
       ).unwrap();
       socket.emit("update-group", {
@@ -1083,12 +1090,14 @@ const ConversationDetails = ({
             removeMember({
               groupId: selectedChat.id,
               userId: userId,
+              adminId: user.id,
             })
           ).unwrap();
           socket.emit("remove-member", {
             groupId: selectedChat.id,
             userId: userId,
           });
+          await dispatch(getUserMessages(selectedChat.id));
           message.success({
             content: "Đã xóa thành viên khỏi nhóm",
             key: "removeMember",
@@ -1128,9 +1137,14 @@ const ConversationDetails = ({
       socket.emit("add-members", {
         groupId: selectedChat.id,
         userIds: selectedMembers,
-      });
+      }); 
       // console.log("Selected đã chọn cho handel Message:", selectedChat.id);
-
+      await dispatch(
+        fetchChatMessages({
+          senderId: user.id || user._id,
+          receiverId: selectedChat.id,
+        })
+      ).unwrap();
       message.success({
         content: `Đã thêm ${selectedMembers.length} thành viên vào nhóm`,
         key: "addMembers",
@@ -1164,6 +1178,7 @@ const ConversationDetails = ({
         removeMember({
           groupId: selectedChat.id,
           userId: user.id,
+          adminId: user.id,
         })
       ).unwrap();
       socket.emit("leave-group", {
@@ -1221,6 +1236,7 @@ const ConversationDetails = ({
         transferAdmin({
           groupId: selectedChat.id,
           userId: newAdminId,
+          currentAdminId: user.id,
         })
       ).unwrap();
       socket.emit("transfer-admin", {
@@ -1239,6 +1255,7 @@ const ConversationDetails = ({
         removeMember({
           groupId: selectedChat.id,
           userId: user.id,
+          adminId: user.id,
         })
       ).unwrap();
 
@@ -1309,6 +1326,7 @@ const ConversationDetails = ({
       if (data.groupId === selectedChat.id) {
         fetchGroupMembers();
         fetchPendingMembers();
+        dispatch(getUserMessages(selectedChat.id));
       }
     };
 
