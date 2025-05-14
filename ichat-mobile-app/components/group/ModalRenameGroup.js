@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import {
   Modal,
   View,
@@ -12,8 +12,15 @@ import {
 } from "react-native";
 import groupService from "../../services/groupService";
 import socketService from "../../services/socketService";
+import { UserContext } from "../../config/context/UserContext";
 
-const ModalRenameGroup = ({ visible, onClose, groupId, currentName }) => {
+const ModalRenameGroup = ({
+  visible,
+  onClose,
+  groupId,
+  currentName,
+  currentUserId,
+}) => {
   const [newGroupName, setNewGroupName] = useState(currentName);
   const [loading, setLoading] = useState(false);
 
@@ -46,9 +53,12 @@ const ModalRenameGroup = ({ visible, onClose, groupId, currentName }) => {
     }
     setLoading(true);
     try {
+      console.log("updatedById: ", currentUserId);
+
       const response = await groupService.renameGroup({
         groupId,
         name: newGroupName.trim(),
+        currentUserId,
       });
 
       if (response.status === "ok") {

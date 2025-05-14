@@ -28,7 +28,7 @@ const GroupController = {
     }
   },
 
-  //   Lấy danh sách nhóm mà người dùng tham gia - Cách 1 trả về Array
+  // Lấy danh sách nhóm mà người dùng tham gia - Cách 1 trả về Array
   getGroupMembers: async (req, res) => {
     const groupId = req.params.groupId;
     try {
@@ -39,7 +39,7 @@ const GroupController = {
     }
   },
 
-  //   Tìm kiếm nhóm
+  // Tìm kiếm nhóm
   searchGroup: async (req, res) => {
     const { search } = req.query;
     if (!search) {
@@ -195,6 +195,8 @@ const GroupController = {
         avatar,
       };
 
+      console.log("Update data:", update);
+
       // Chỉ thêm vào update nếu client thực sự gửi các giá trị này
       if (req.body.allow_add_members !== undefined) {
         update.allow_add_members = req.body.allow_add_members === "true";
@@ -313,6 +315,7 @@ const GroupController = {
       });
     }
   },
+
   // Tạo lời mời nhóm
   createInvitation: async (req, res) => {
     try {
@@ -342,6 +345,7 @@ const GroupController = {
       res.status(400).json({});
     }
   },
+
   // Kiểm tra trạng thái của phê duyệt thành viên của nhóm
   checkMemberApproval: async (req, res) => {
     try {
@@ -445,6 +449,7 @@ const GroupController = {
       });
     }
   },
+
   // Lấy danh sách yêu cầu tham gia nhóm đang chờ duyệt
   getPendingMembers: async (req, res) => {
     try {
@@ -494,7 +499,7 @@ const GroupController = {
     try {
       const { groupId, memberId } = req.params;
       const { adminId } = req.body;
-      await GroupModel.rejectMember({ groupId, memberId , adminId });
+      await GroupModel.rejectMember({ groupId, memberId, adminId });
       return res.json({ status: "ok" });
     } catch (error) {
       console.error("Lỗi khi từ chối thành viên:", error);

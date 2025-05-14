@@ -193,10 +193,11 @@ const groupService = {
   },
 
   // Đổi tên nhóm
-  renameGroup: async ({ groupId, name }) => {
+  renameGroup: async ({ groupId, name, currentUserId }) => {
     try {
       const response = await apiService.put(`/${PREFIX}/${groupId}`, {
         name,
+        currentUserId,
       });
 
       if (response.data.status === "error") {

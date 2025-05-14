@@ -19,7 +19,7 @@ const messageSchema = new mongoose.Schema(
     content: { type: String, required: true },
     type: {
       type: String,
-      enum: ["text", "image", "video", "audio", "file","notify"],
+      enum: ["text", "image", "video", "audio", "file", "notify"],
       required: true,
     },
     timestamp: { type: Date, default: Date.now },

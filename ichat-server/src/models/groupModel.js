@@ -8,6 +8,7 @@ const { get } = require("http");
 const crypto = require("crypto");
 const GroupInvitation = require("../schemas/GroupInvitation");
 const UserModel = require("./userModel");
+const { log } = require("console");
 
 const GroupModel = {
   // Thông báo
@@ -510,6 +511,9 @@ const GroupModel = {
         new: true,
       });
 
+      console.log("updatedGroup: ", updatedGroup);
+      console.log("updatedFields: ", updatedFields);
+
       // Tạo thông báo nếu có cập nhật và biết người cập nhật
       if (updatedFields.length > 0 && updatedById) {
         const updater = await User.findById(updatedById);
@@ -524,6 +528,8 @@ const GroupModel = {
               updater.full_name
             } đã cập nhật ${updatedFields.join(", ")} và ${lastField}`;
           }
+
+          console.log("notificationContent: ", notificationContent);
 
           await GroupModel.createGroupNotification({
             groupId,
