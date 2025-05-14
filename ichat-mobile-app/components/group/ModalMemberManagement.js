@@ -27,6 +27,7 @@ import socketService from "../../services/socketService";
 const ModalMemberManagement = ({ route }) => {
   const { groupId } = route.params || {};
   const [adminGroup, setAdminGroup] = useState(false);
+  const [subAdminGroup, setSubAdminGroup] = useState(false);
   const navigation = useNavigation();
   const { user } = useContext(UserContext);
   const [index, setIndex] = useState(0); // Tab hiện tại
@@ -43,6 +44,9 @@ const ModalMemberManagement = ({ route }) => {
   const [selectAdminModalVisible, setSelectAdminModalVisible] = useState(false); // Modal chọn quản trị viên mới
   const [currentAdminId, setCurrentAdminId] = useState(null); // ID của quản trị viên hiện tại
   const [invitedMembers, setInvitedMembers] = useState([]); // Danh sách thành viên được mời bởi người dùng hiện tại
+
+  console.log("Admin group:", adminGroup);
+  console.log("Sub admin group:", subAdminGroup);
 
   // Lắng nghe sự kiện từ socket
   useEffect(() => {
@@ -154,8 +158,13 @@ const ModalMemberManagement = ({ route }) => {
   const fetchGroupInfo = async () => {
     try {
       const groupInfo = await groupService.getGroupById(groupId);
+      const roleRes = await groupService.isGroupSubAdmin({
+        groupId: groupId,
+        userId: user.id,
+      });
       setGroup(groupInfo);
-      setAdminGroup(user.id === groupInfo.admin_id);
+      setAdminGroup(roleRes.isMainAdmin);
+      setSubAdminGroup(roleRes.isSubAdmin);
     } catch (error) {
       console.error("Lỗi khi lấy thông tin nhóm:", error);
     }
@@ -349,7 +358,7 @@ const ModalMemberManagement = ({ route }) => {
     // Kiểm tra xem người dùng có phải là admin không
     const userMember = members.find((member) => member.user_id === user.id);
 
-    if (userMember?.role === "admin") {
+    if (adminGroup) {
       // Nếu là admin, hiển thị modal chọn admin mới
       const adminMember = members.find((member) => member.role === "admin");
       if (adminMember) {
@@ -515,61 +524,51 @@ const ModalMemberManagement = ({ route }) => {
 
       {/* Option */}
       {adminGroup && (
-        <>
-          <View style={styles.approvalContainer}>
-            <View style={styles.approvalInfo}>
-              <Image
-                source={require("../../assets/icons/setting.png")}
-                style={[styles.icon, { marginRight: 10, tintColor: "#2F80ED" }]}
-              />
-              <View>
-                <Text style={styles.approvalTitle}>Phê duyệt thành viên</Text>
-                <Text style={styles.approvalDescription}>
-                  Khi được bật, yêu cầu tham gia nhóm phải được duyệt bởi quản
-                  trị viên.
-                </Text>
-              </View>
-            </View>
-            <View style={{ flexDirection: "row", alignItems: "center" }}>
-              <Switch
-                value={isChecked}
-                onValueChange={() => handleUpdateMemberApproval(!isChecked)}
-                color="#2F80ED"
-              />
+        <View style={styles.approvalContainer}>
+          <View style={styles.approvalInfo}>
+            <Image
+              source={require("../../assets/icons/setting.png")}
+              style={[styles.icon, { marginRight: 10, tintColor: "#2F80ED" }]}
+            />
+            <View>
+              <Text style={styles.approvalTitle}>Phê duyệt thành viên</Text>
+              <Text style={styles.approvalDescription}>
+                Khi được bật, yêu cầu tham gia nhóm phải được duyệt bởi quản trị
+                viên.
+              </Text>
             </View>
           </View>
-
-          {isChecked && (
-            <TouchableOpacity
-              style={styles.pendingInvitationsContainer}
-              onPress={() =>
-                navigation.navigate("PendingInvitations", { groupId })
-              }
-            >
-              <View style={styles.approvalInfo}>
-                <Image
-                  source={require("../../assets/icons/notification.png")}
-                  style={[
-                    styles.icon,
-                    { marginRight: 10, tintColor: "#2F80ED" },
-                  ]}
-                />
-                <View>
-                  <Text style={styles.approvalTitle}>
-                    Lời mời đang chờ duyệt
-                  </Text>
-                  <Text style={styles.approvalDescription}>
-                    Xem danh sách các lời mời vào nhóm đang chờ được chấp thuận
-                  </Text>
-                </View>
-              </View>
-              <Image
-                source={require("../../assets/icons/next.png")}
-                style={[styles.icon, { tintColor: "#2F80ED" }]}
-              />
-            </TouchableOpacity>
-          )}
-        </>
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <Switch
+              value={isChecked}
+              onValueChange={() => handleUpdateMemberApproval(!isChecked)}
+              color="#2F80ED"
+            />
+          </View>
+        </View>
+      )}
+      {isChecked && (adminGroup || subAdminGroup) && (
+        <TouchableOpacity
+          style={styles.pendingInvitationsContainer}
+          onPress={() => navigation.navigate("PendingInvitations", { groupId })}
+        >
+          <View style={styles.approvalInfo}>
+            <Image
+              source={require("../../assets/icons/notification.png")}
+              style={[styles.icon, { marginRight: 10, tintColor: "#2F80ED" }]}
+            />
+            <View>
+              <Text style={styles.approvalTitle}>Lời mời đang chờ duyệt</Text>
+              <Text style={styles.approvalDescription}>
+                Xem danh sách các lời mời vào nhóm đang chờ được chấp thuận
+              </Text>
+            </View>
+          </View>
+          <Image
+            source={require("../../assets/icons/next.png")}
+            style={[styles.icon, { tintColor: "#2F80ED" }]}
+          />
+        </TouchableOpacity>
       )}
 
       <View style={styles.content}>

@@ -525,7 +525,7 @@ const Option = ({ route }) => {
                 marginHorizontal: -20,
               }}
             ></View>
-            {(adminGroup || subAdminGroup) && (
+            {adminGroup && (
               <TouchableOpacity
                 style={styles.component}
                 onPress={() =>
