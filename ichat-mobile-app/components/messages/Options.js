@@ -646,6 +646,7 @@ const Option = ({ route }) => {
         onClose={() => setIsRenameModalVisible(false)}
         groupId={id}
         currentName={receiverGroup?.name || ""}
+        userId={user.id}
       />
 
       {/* Modal Select Admin Before Leave */}

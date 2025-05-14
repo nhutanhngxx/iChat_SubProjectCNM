@@ -167,15 +167,26 @@ const Priority = () => {
                 const sender = usersResponse.find(
                   (u) => u._id === lastMessage.sender_id
                 );
-                const senderName = sender ? sender.full_name : "Thành viên";
-                const content = formatMessageContent(lastMessage);
+                // Nếu đó là thông báo, thì không hiển thị tên người gửi
+                if (lastMessage.type === "notify") {
+                  return {
+                    ...group,
+                    lastMessage: formatMessageContent(lastMessage),
+                    lastMessageTime: new Date(lastMessage.timestamp).getTime(),
+                    time: getTimeAgo(new Date(lastMessage.timestamp)),
+                  };
+                } else {
+                  // Nếu không phải thông báo, hiển thị tên người gửi
+                  const senderName = sender ? sender.full_name : "Thành viên";
+                  const content = formatMessageContent(lastMessage);
 
-                return {
-                  ...group,
-                  lastMessage: `${senderName}: ${content}`,
-                  lastMessageTime: new Date(lastMessage.timestamp).getTime(),
-                  time: getTimeAgo(new Date(lastMessage.timestamp)),
-                };
+                  return {
+                    ...group,
+                    lastMessage: `${senderName}: ${content}`,
+                    lastMessageTime: new Date(lastMessage.timestamp).getTime(),
+                    time: getTimeAgo(new Date(lastMessage.timestamp)),
+                  };
+                }
               }
 
               return group;
@@ -244,7 +255,7 @@ const Priority = () => {
               time: timeDiff,
               avatar: { uri: avatarPath },
               chatType: "private",
-              unreadCount: existingChat ? existingChat.unreadCount : 0, // Giữ nguyên số tin nhắn chưa đọc
+              unreadCount: existingChat ? existingChat.unreadCount : 0,
             });
           }
         }

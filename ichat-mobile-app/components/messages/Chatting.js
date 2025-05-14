@@ -89,6 +89,8 @@ const Chatting = ({ navigation, route }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
 
+  // console.log("Chatting: ", chat);
+
   // Thêm state để quản lý audio đang phát
   const [playingAudio, setPlayingAudio] = useState(null);
   const [audioStatus, setAudioStatus] = useState({});
@@ -372,19 +374,6 @@ const Chatting = ({ navigation, route }) => {
     [currentCallRoom, endAudioCall]
   );
 
-  // Thêm function để phát remote stream
-  // const playRemoteStream = async (stream) => {
-  //   try {
-  //     const audioContext = new (window.AudioContext ||
-  //       window.webkitAudioContext)();
-  //     const source = audioContext.createMediaStreamSource(stream);
-  //     const speaker = audioContext.destination;
-  //     source.connect(speaker);
-  //   } catch (error) {
-  //     console.error("[Chatting] Error playing remote stream:", error);
-  //   }
-  // };
-
   const handleRejectCall = (callerId, roomId) => {
     console.log(
       "[Chatting] Rejecting call from:",
@@ -461,8 +450,6 @@ const Chatting = ({ navigation, route }) => {
     blockedByTarget: false,
     blockedByUser: false,
   });
-
-  // Socket connection status is tracked by socketService directly
 
   // Thêm state ở đầu component
   const [downloadingFiles, setDownloadingFiles] = useState({}); // { messageId: progress }
@@ -1814,6 +1801,8 @@ const Chatting = ({ navigation, route }) => {
           keyExtractor={(item, index) => item._id?.toString() || `msg-${index}`}
           showsVerticalScrollIndicator={false}
           renderItem={({ item, index }) => {
+            // console.log("Tin nhắn:", item);
+
             const isLastMessage = index === messages.length - 1;
             const isMyMessage = item.sender_id === user.id;
             const isRecalled = item.content === "Tin nhắn đã được thu hồi";
@@ -1833,290 +1822,304 @@ const Chatting = ({ navigation, route }) => {
 
             return (
               <View>
-                <TouchableOpacity
-                  onLongPress={() => handleLongPress(item)}
-                  delayLongPress={300}
-                  style={[
-                    styles.message,
-                    item.sender_id === user.id
-                      ? styles.myMessage
-                      : styles.theirMessage,
-                    item.reactions?.length > 0 && { marginBottom: 15 }, // Thêm marginBottom nếu có reactions
-                  ]}
-                >
-                  {/* Tên người gửi */}
-                  {!isMyMessage && chat.chatType === "group" && (
-                    <Text style={styles.replySender}>
-                      {getMemberName(item.sender_id)}
-                    </Text>
-                  )}
-
-                  {/* Hiển thị tin nhắn Reply => Hiển thị tin nhắn gốc trước */}
-                  {repliedMessage && (
-                    <View style={styles.replyContainer}>
+                {item.type !== "notify" ? (
+                  <TouchableOpacity
+                    onLongPress={() => handleLongPress(item)}
+                    delayLongPress={300}
+                    style={[
+                      styles.message,
+                      item.sender_id === user.id
+                        ? styles.myMessage
+                        : styles.theirMessage,
+                      item.reactions?.length > 0 && { marginBottom: 15 }, // Thêm marginBottom nếu có reactions
+                    ]}
+                  >
+                    {/* Tên người gửi */}
+                    {!isMyMessage && chat.chatType === "group" && (
                       <Text style={styles.replySender}>
-                        {repliedMessage.sender_id === user.id
-                          ? "Bạn"
-                          : chat.chatType === "group"
-                          ? getMemberName(repliedMessage.sender_id)
-                          : chat.name}
+                        {getMemberName(item.sender_id)}
                       </Text>
-
-                      {repliedMessage.type === "text" && (
-                        <Text
-                          style={styles.replyText}
-                          numberOfLines={1}
-                          ellipsizeMode="tail"
-                        >
-                          {repliedMessage.content}
+                    )}
+                    {/* Hiển thị tin nhắn Reply => Hiển thị tin nhắn gốc trước */}
+                    {repliedMessage && (
+                      <View style={styles.replyContainer}>
+                        <Text style={styles.replySender}>
+                          {repliedMessage.sender_id === user.id
+                            ? "Bạn"
+                            : chat.chatType === "group"
+                            ? getMemberName(repliedMessage.sender_id)
+                            : chat.name}
                         </Text>
-                      )}
 
-                      {repliedMessage.type === "image" && (
-                        <Text style={styles.replyText}>[Hình ảnh]</Text>
-                      )}
-
-                      {repliedMessage.type === "file" && (
-                        <View style={styles.replyFileContainer}>
-                          <Image
-                            source={require("../../assets/icons/attachment.png")}
-                            style={styles.replyFileIcon}
-                          />
+                        {repliedMessage.type === "text" && (
                           <Text
-                            style={styles.replyFileName}
+                            style={styles.replyText}
                             numberOfLines={1}
                             ellipsizeMode="tail"
                           >
-                            {getFileNameFromUrl(repliedMessage.content) ||
-                              "Tệp đính kèm"}
+                            {repliedMessage.content}
                           </Text>
-                        </View>
-                      )}
-                    </View>
-                  )}
+                        )}
 
-                  {item.type === "image" ? (
-                    item.is_group_images ? (
-                      <GroupImagesMessage
-                        message={item}
-                        messages={messages}
-                        navigation={navigation}
-                        isMyMessage={item.sender_id === user.id}
-                      />
-                    ) : (
-                      <TouchableOpacity
-                        onPress={() =>
-                          navigation.navigate("ViewImageChat", {
-                            imageUrl: item.content,
-                            images: [item.content],
-                          })
-                        }
-                      >
-                        <Image
-                          source={{ uri: item.content }}
-                          style={{
-                            width: 200,
-                            height: 200,
-                            borderRadius: 10,
-                            marginTop: 5,
-                          }}
-                          resizeMode="cover"
-                        />
-                      </TouchableOpacity>
-                    )
-                  ) : item.type === "file" ? (
-                    <TouchableOpacity
-                      style={styles.fileContainer}
-                      onPress={() => {
-                        if (!downloadingFiles[item._id]) {
-                          Alert.alert(
-                            "Tải file",
-                            "Bạn muốn tải file này về máy?",
-                            [
-                              { text: "Hủy", style: "cancel" },
-                              {
-                                text: "Tải về",
-                                onPress: () =>
-                                  handleFileDownload(item.content, item._id),
-                              },
-                            ]
-                          );
-                        }
-                      }}
-                    >
-                      <Image
-                        source={require("../../assets/icons/attachment.png")}
-                        style={styles.fileIcon}
-                      />
-                      <View style={styles.fileInfoContainer}>
-                        <Text
-                          style={styles.fileName}
-                          numberOfLines={1}
-                          ellipsizeMode="tail"
-                        >
-                          {getFileNameFromUrl(item.content) || "Tệp đính kèm"}
-                        </Text>
-                        {downloadingFiles[item._id] !== undefined && (
-                          <View style={styles.downloadContainer}>
-                            <View style={styles.downloadProgressContainer}>
-                              <View
-                                style={[
-                                  styles.downloadProgressBar,
-                                  {
-                                    width: `${
-                                      downloadingFiles[item._id] * 100
-                                    }%`,
-                                  },
-                                ]}
-                              />
-                              <Text style={styles.downloadProgressText}>
-                                {Math.round(downloadingFiles[item._id] * 100)}%
-                              </Text>
-                            </View>
-                            <TouchableOpacity
-                              style={styles.cancelButton}
-                              onPress={() => handleCancelDownload(item._id)}
+                        {repliedMessage.type === "image" && (
+                          <Text style={styles.replyText}>[Hình ảnh]</Text>
+                        )}
+
+                        {repliedMessage.type === "file" && (
+                          <View style={styles.replyFileContainer}>
+                            <Image
+                              source={require("../../assets/icons/attachment.png")}
+                              style={styles.replyFileIcon}
+                            />
+                            <Text
+                              style={styles.replyFileName}
+                              numberOfLines={1}
+                              ellipsizeMode="tail"
                             >
-                              <Image
-                                source={require("../../assets/icons/close.png")}
-                                style={styles.cancelIcon}
-                              />
-                            </TouchableOpacity>
+                              {getFileNameFromUrl(repliedMessage.content) ||
+                                "Tệp đính kèm"}
+                            </Text>
                           </View>
                         )}
                       </View>
-                    </TouchableOpacity>
-                  ) : item.type === "video" ? (
-                    <View style={styles.videoMessageContainer}>
-                      <TouchableOpacity
-                        onPress={() =>
-                          navigation.navigate("ViewVideoChat", {
-                            videoUrl: item.content,
-                          })
-                        }
-                      >
-                        <Video
-                          source={{ uri: item.content }}
-                          style={styles.videoPlayer}
-                          useNativeControls
-                          resizeMode="contain"
-                          isLooping={false}
-                          shouldPlay={false}
-                          isMuted={false}
-                          usePoster={true}
-                          posterSource={{ uri: item.content }}
+                    )}
+                    {item.type === "image" ? (
+                      item.is_group_images ? (
+                        <GroupImagesMessage
+                          message={item}
+                          messages={messages}
+                          navigation={navigation}
+                          isMyMessage={item.sender_id === user.id}
                         />
-                      </TouchableOpacity>
-                    </View>
-                  ) : item.type === "audio" ? (
-                    <TouchableOpacity
-                      style={[
-                        styles.audioContainer,
-                        isMyMessage
-                          ? styles.myAudioMessage
-                          : styles.theirAudioMessage,
-                      ]}
-                      onPress={() => handlePlayAudio(item.content, item._id)}
-                    >
-                      <View style={styles.audioContent}>
-                        <Ionicons
-                          name={
-                            audioStatus[item._id]?.isPlaying ? "pause" : "play"
-                          }
-                          size={24}
-                          color={isMyMessage ? "#fff" : "#000"}
-                        />
-                        <View style={styles.audioInfo}>
-                          {/* {console.log(audioStatus[item._id]?.status)} */}
-                          <View style={styles.audioProgressBar}>
-                            <View
-                              style={[
-                                styles.audioProgress,
-                                {
-                                  width: `${
-                                    ((audioStatus[item._id]?.status
-                                      ?.positionMillis || 0) /
-                                      (audioStatus[item._id]?.status
-                                        ?.durationMillis || 1)) *
-                                    100
-                                  }%`,
-                                  backgroundColor: isMyMessage
-                                    ? "#fff"
-                                    : "#000",
-                                },
-                              ]}
-                            />
-                          </View>
-                          <Text
-                            style={[
-                              styles.audioDuration,
-                              { color: isMyMessage ? "#fff" : "#000" },
-                            ]}
-                          >
-                            {formatDuration(
-                              Math.floor(
-                                audioStatus[item._id]?.status.durationMillis /
-                                  1000
-                              ) || 0
-                            )}
-                          </Text>
-                        </View>
-                      </View>
-                    </TouchableOpacity>
-                  ) : (
-                    <Text
-                      style={[
-                        styles.messageText,
-                        isRecalled && styles.recalledText,
-                      ]}
-                    >
-                      {item.content}
-                    </Text>
-                  )}
-
-                  {/* Hiển thị thời gian hh:mm gửi tin nhắn */}
-                  {isLastMessage && (
-                    <Text style={styles.timestamp}>
-                      {new Date(item.timestamp).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </Text>
-                  )}
-
-                  {/* Hiển thị reactions */}
-                  {Array.isArray(item.reactions) &&
-                    item.reactions.length > 0 && (
-                      <View
-                        style={[
-                          styles.reactionsContainer,
-                          isMyMessage
-                            ? styles.reactionsRight
-                            : styles.reactionsLeft,
-                        ]}
-                      >
+                      ) : (
                         <TouchableOpacity
-                          style={styles.reactionsWrapper}
-                          onPress={() => Alert.alert("Đã thả react")}
+                          onPress={() =>
+                            navigation.navigate("ViewImageChat", {
+                              imageUrl: item.content,
+                              images: [item.content],
+                            })
+                          }
                         >
-                          {renderReactionIcons(item.reactions)}
+                          <Image
+                            source={{ uri: item.content }}
+                            style={{
+                              width: 200,
+                              height: 200,
+                              borderRadius: 10,
+                              marginTop: 5,
+                            }}
+                            resizeMode="cover"
+                          />
+                        </TouchableOpacity>
+                      )
+                    ) : item.type === "file" ? (
+                      <TouchableOpacity
+                        style={styles.fileContainer}
+                        onPress={() => {
+                          if (!downloadingFiles[item._id]) {
+                            Alert.alert(
+                              "Tải file",
+                              "Bạn muốn tải file này về máy?",
+                              [
+                                { text: "Hủy", style: "cancel" },
+                                {
+                                  text: "Tải về",
+                                  onPress: () =>
+                                    handleFileDownload(item.content, item._id),
+                                },
+                              ]
+                            );
+                          }
+                        }}
+                      >
+                        <Image
+                          source={require("../../assets/icons/attachment.png")}
+                          style={styles.fileIcon}
+                        />
+                        <View style={styles.fileInfoContainer}>
+                          <Text
+                            style={styles.fileName}
+                            numberOfLines={1}
+                            ellipsizeMode="tail"
+                          >
+                            {getFileNameFromUrl(item.content) || "Tệp đính kèm"}
+                          </Text>
+                          {downloadingFiles[item._id] !== undefined && (
+                            <View style={styles.downloadContainer}>
+                              <View style={styles.downloadProgressContainer}>
+                                <View
+                                  style={[
+                                    styles.downloadProgressBar,
+                                    {
+                                      width: `${
+                                        downloadingFiles[item._id] * 100
+                                      }%`,
+                                    },
+                                  ]}
+                                />
+                                <Text style={styles.downloadProgressText}>
+                                  {Math.round(downloadingFiles[item._id] * 100)}
+                                  %
+                                </Text>
+                              </View>
+                              <TouchableOpacity
+                                style={styles.cancelButton}
+                                onPress={() => handleCancelDownload(item._id)}
+                              >
+                                <Image
+                                  source={require("../../assets/icons/close.png")}
+                                  style={styles.cancelIcon}
+                                />
+                              </TouchableOpacity>
+                            </View>
+                          )}
+                        </View>
+                      </TouchableOpacity>
+                    ) : item.type === "video" ? (
+                      <View style={styles.videoMessageContainer}>
+                        <TouchableOpacity
+                          onPress={() =>
+                            navigation.navigate("ViewVideoChat", {
+                              videoUrl: item.content,
+                            })
+                          }
+                        >
+                          <Video
+                            source={{ uri: item.content }}
+                            style={styles.videoPlayer}
+                            useNativeControls
+                            resizeMode="contain"
+                            isLooping={false}
+                            shouldPlay={false}
+                            isMuted={false}
+                            usePoster={true}
+                            posterSource={{ uri: item.content }}
+                          />
                         </TouchableOpacity>
                       </View>
+                    ) : item.type === "audio" ? (
+                      <TouchableOpacity
+                        style={[
+                          styles.audioContainer,
+                          isMyMessage
+                            ? styles.myAudioMessage
+                            : styles.theirAudioMessage,
+                        ]}
+                        onPress={() => handlePlayAudio(item.content, item._id)}
+                      >
+                        <View style={styles.audioContent}>
+                          <Ionicons
+                            name={
+                              audioStatus[item._id]?.isPlaying
+                                ? "pause"
+                                : "play"
+                            }
+                            size={24}
+                            color={isMyMessage ? "#fff" : "#000"}
+                          />
+                          <View style={styles.audioInfo}>
+                            {/* {console.log(audioStatus[item._id]?.status)} */}
+                            <View style={styles.audioProgressBar}>
+                              <View
+                                style={[
+                                  styles.audioProgress,
+                                  {
+                                    width: `${
+                                      ((audioStatus[item._id]?.status
+                                        ?.positionMillis || 0) /
+                                        (audioStatus[item._id]?.status
+                                          ?.durationMillis || 1)) *
+                                      100
+                                    }%`,
+                                    backgroundColor: isMyMessage
+                                      ? "#fff"
+                                      : "#000",
+                                  },
+                                ]}
+                              />
+                            </View>
+                            <Text
+                              style={[
+                                styles.audioDuration,
+                                { color: isMyMessage ? "#fff" : "#000" },
+                              ]}
+                            >
+                              {formatDuration(
+                                Math.floor(
+                                  audioStatus[item._id]?.status.durationMillis /
+                                    1000
+                                ) || 0
+                              )}
+                            </Text>
+                          </View>
+                        </View>
+                      </TouchableOpacity>
+                    ) : (
+                      <Text
+                        style={[
+                          styles.messageText,
+                          isRecalled && styles.recalledText,
+                        ]}
+                      >
+                        {item.content}
+                      </Text>
                     )}
-                </TouchableOpacity>
-
-                {/* Hiển thị trạng thái của tin nhắn: Đã gửi, Đã nhận, Đã xem */}
-                {isLastMessage && item.sender_id === user.id && (
-                  <View style={styles.statusWrapper}>
-                    <Text style={styles.statusText}>
-                      {item.status === "sent"
-                        ? "Đã gửi"
-                        : item.status === "received"
-                        ? "Đã nhận"
-                        : "Đã xem"}
-                    </Text>
+                    {/* Hiển thị thời gian hh:mm gửi tin nhắn */}
+                    {isLastMessage && (
+                      <Text style={styles.timestamp}>
+                        {new Date(item.timestamp).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </Text>
+                    )}
+                    {/* Hiển thị reactions */}
+                    {Array.isArray(item.reactions) &&
+                      item.reactions.length > 0 && (
+                        <View
+                          style={[
+                            styles.reactionsContainer,
+                            isMyMessage
+                              ? styles.reactionsRight
+                              : styles.reactionsLeft,
+                          ]}
+                        >
+                          <TouchableOpacity
+                            style={styles.reactionsWrapper}
+                            onPress={() => Alert.alert("Đã thả react")}
+                          >
+                            {renderReactionIcons(item.reactions)}
+                          </TouchableOpacity>
+                        </View>
+                      )}
+                  </TouchableOpacity>
+                ) : (
+                  <View
+                    style={[
+                      styles.notification,
+                      isMyMessage
+                        ? styles.myNotification
+                        : styles.theirNotification,
+                    ]}
+                  >
+                    <Text style={styles.notificationText}>{item.content}</Text>
                   </View>
                 )}
+
+                {/* Hiển thị trạng thái của tin nhắn: Đã gửi, Đã nhận, Đã xem */}
+                {isLastMessage &&
+                  item.sender_id === user.id &&
+                  item.type !== "notify" && (
+                    <View style={styles.statusWrapper}>
+                      <Text style={styles.statusText}>
+                        {item.status === "sent"
+                          ? "Đã gửi"
+                          : item.status === "received"
+                          ? "Đã nhận"
+                          : "Đã xem"}
+                      </Text>
+                    </View>
+                  )}
               </View>
             );
           }}
@@ -2890,6 +2893,26 @@ const styles = StyleSheet.create({
     fontSize: 14,
     minWidth: 60,
     marginLeft: 10,
+  },
+  notification: {
+    alignSelf: "center",
+    backgroundColor: "white",
+    borderRadius: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    marginVertical: 5,
+    maxWidth: "80%", // Giới hạn chiều rộng
+  },
+  myNotification: {
+    borderColor: "#007AFF", // Viền xanh lam
+  },
+  theirNotification: {
+    borderColor: "#646464", // Viền xám
+  },
+  notificationText: {
+    fontSize: 12,
+    color: "#333",
+    textAlign: "center",
   },
 });
 
