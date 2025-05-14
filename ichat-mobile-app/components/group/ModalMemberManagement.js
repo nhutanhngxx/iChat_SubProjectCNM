@@ -141,12 +141,7 @@ const ModalMemberManagement = ({ route }) => {
         if (userId === user.id) {
           navigation.navigate("Home");
         } else {
-          setMembers((prev) =>
-            prev.filter((member) => member.user_id !== userId)
-          );
-          setFilteredMembers((prev) =>
-            prev.filter((member) => member.user_id !== userId)
-          );
+          fetchGroupMembers();
         }
       }
     });
@@ -673,6 +668,7 @@ const ModalMemberManagement = ({ route }) => {
                       groupId,
                       userId: selectedMember?.user_id,
                       role: "admin",
+                      adminId: user.id,
                     });
                     socketService.handleSetRole({
                       groupId,
@@ -708,6 +704,7 @@ const ModalMemberManagement = ({ route }) => {
                       groupId,
                       userId: selectedMember?.user_id,
                       role: "member",
+                      adminId: user.id,
                     });
                     socketService.handleSetRole({
                       groupId,
@@ -749,6 +746,7 @@ const ModalMemberManagement = ({ route }) => {
                     const response = await groupService.removeMember({
                       groupId,
                       userId: selectedMember?.user_id,
+                      adminId: user.id,
                     });
 
                     if (response.status === "ok") {

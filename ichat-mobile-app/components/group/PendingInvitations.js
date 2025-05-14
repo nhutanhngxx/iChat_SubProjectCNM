@@ -91,6 +91,7 @@ const PendingInvitations = ({ route }) => {
       const response = await groupService.acceptMember({
         groupId,
         memberId,
+        adminId: user.id,
       });
 
       if (response) {
@@ -115,6 +116,7 @@ const PendingInvitations = ({ route }) => {
       const response = await groupService.rejectMember({
         groupId,
         memberId,
+        adminId: user.id,
       });
       console.log(response);
 

@@ -212,6 +212,9 @@ const groupService = {
     }
   },
 
+  // Cập nhật ảnh đại diện nhóm
+  updateGroupAvatar: async ({ groupId, avatar, currentUserId }) => {},
+
   // Thêm thành viên mới
   addMember: async ({ groupId, userIds, inviterId }) => {
     try {
@@ -236,11 +239,12 @@ const groupService = {
   },
 
   // Xóa thành viên khỏi nhóm / Rời nhóm
-  removeMember: async ({ groupId, userId }) => {
+  removeMember: async ({ groupId, userId, adminId }) => {
     try {
       const response = await apiService.post(`/${PREFIX}/remove-member`, {
         groupId,
         userId,
+        adminId,
       });
       if (response.data.status === "ok") {
         return {
@@ -275,7 +279,8 @@ const groupService = {
     try {
       // Chuyển quyền quản trị viên
       const changeAdmin = await apiService.put(
-        `/${PREFIX}/transferAdmin/${groupId}/${newAdimUserId}`
+        `/${PREFIX}/transferAdmin/${groupId}/${newAdimUserId}`,
+        { userId }
       );
 
       // Cập nhật quyền của thành viên được chọn thành quản trị viên
@@ -307,11 +312,11 @@ const groupService = {
   },
 
   // Cập nhật quyền thành viên trong nhóm
-  setRole: async ({ groupId, userId, role }) => {
+  setRole: async ({ groupId, userId, role, adminId }) => {
     try {
       const response = await apiService.put(
         `/${PREFIX}/${groupId}/members/${userId}/role`,
-        { role }
+        { role, adminId }
       );
 
       if (response.data.status === "error") {
@@ -404,10 +409,11 @@ const groupService = {
   },
 
   // Chấp nhận thành viên vào nhóm
-  acceptMember: async ({ groupId, memberId }) => {
+  acceptMember: async ({ groupId, memberId, adminId }) => {
     try {
       const response = await apiService.put(
-        `/${PREFIX}/accept-member/${groupId}/${memberId}`
+        `/${PREFIX}/accept-member/${groupId}/${memberId}`,
+        { adminId }
       );
 
       if (response.data.status === "error") {
@@ -423,10 +429,11 @@ const groupService = {
   },
 
   // Từ chối thành viên vào nhóm
-  rejectMember: async ({ groupId, memberId }) => {
+  rejectMember: async ({ groupId, memberId, adminId }) => {
     try {
       const response = await apiService.put(
-        `/${PREFIX}/reject-member/${groupId}/${memberId}`
+        `/${PREFIX}/reject-member/${groupId}/${memberId}`,
+        { adminId }
       );
 
       if (response.data.status === "error") {
