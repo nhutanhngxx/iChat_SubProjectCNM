@@ -27,7 +27,7 @@ const GroupList = ({ onSelectGroup }) => {
       setIsLoading(true);
       try {
         const response = await dispatch(getUserGroups(currentUser.id)).unwrap();
-        console.log("Fetched user groups:", response);
+        // console.log("Fetched user groups:", response);
         setGroups(response || []);
         
         // Sau khi lấy danh sách nhóm, lấy số lượng thành viên cho mỗi nhóm
@@ -108,7 +108,7 @@ const GroupList = ({ onSelectGroup }) => {
       member_count: memberCounts[group._id] || 0 // Thêm số lượng thành viên
     };
     
-    console.log("Selected group:", formattedGroup);
+    // console.log("Selected group:", formattedGroup);
     // Store the selected friend in localStorage to retrieve in ChatWindow
     localStorage.setItem("selectedFriend", JSON.stringify(formattedGroup));
 

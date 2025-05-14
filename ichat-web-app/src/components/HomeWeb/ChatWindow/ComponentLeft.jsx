@@ -103,27 +103,8 @@ dayjs.locale("vi"); // đặt ngôn ngữ
 // Component ChatItem: Render từng mục trong danh sách chat
 const ChatItem = ({ item, onSelectUser, onPin }) => {
   const [isClicked, setIsClicked] = useState(false);
-  console.log("Item từ componetnLeft", item);
-  console.log(typeof item.isLastMessageFromMe, item.isLastMessageFromMe);
-
-  // Tính thời gian từ timestamp
-  // const formatTime = (timestamp) => {
-  //   const now = dayjs();
-  //   const messageTime = dayjs(timestamp);
-
-  //   if (messageTime.isSame(now, "day")) {
-  //     // Nếu trong hôm nay, hiển thị giờ:phút AM/PM
-  //     return messageTime.format("h:mm A");
-  //   } else if (messageTime.isSame(now.subtract(1, "day"), "day")) {
-  //     // Nếu là hôm qua
-  //     return "Yesterday";
-  //   } else {
-  //     // Nếu xa hơn, hiển thị tháng/ngày
-  //     return messageTime.format("MMM D");
-  //   }
-  //   // const localTime = new Date(timestamp).toLocaleString();
-  //   // return localTime;
-  // };
+  // console.log("Item từ componetnLeft", item);
+  // console.log(typeof item.isLastMessageFromMe, item.isLastMessageFromMe);
   const formatTime = (timestamp) => {
     const now = dayjs();
     const messageTime = dayjs(timestamp);
@@ -151,6 +132,24 @@ const ChatItem = ({ item, onSelectUser, onPin }) => {
     // setIsSearchOpen(false);
     setIsClicked(true);
   };
+  // Hàm tạo nội dung tin nhắn cuối cùng
+const generateLastMessageText = (item) => {
+  // Xác định prefix (người gửi)
+  const prefix = item.isLastMessageFromMe === true 
+    ? "Bạn: " 
+    : (item.chat_type === "group" ? `${item.sender_name || ""}: ` : `${item.name}: `);
+  
+  // Xác định nội dung tin nhắn
+  let content = "";
+  if (item.type === "image") content = "Đã gửi một ảnh";
+  else if (item.type === "file") content = "Đã gửi một tệp tin";
+  else if (item.type === "video") content = "Đã gửi một video";
+  else if (item.type === "audio") content = "Đã gửi một audio";
+  else if (item.originalMessage?.length > 30) content = item.originalMessage.slice(0, 30) + "...";
+  else content = item.originalMessage || item.lastMessage || "Chưa có tin nhắn";
+  
+  return `${prefix}${content}`;
+};
   return (
     <List.Item
       key={item.id}
@@ -188,7 +187,7 @@ const ChatItem = ({ item, onSelectUser, onPin }) => {
               {item.type === "video" && <VideoCameraOutlined />}
               {item.type === "audio" && <MutedOutlined />}
               {item.type === "notification" && <NotificationOutlined />}
-              {`${item.isLastMessageFromMe === true ? "Bạn: " : 
+              {/* {`${item.isLastMessageFromMe === true ? "Bạn: " : 
                 (item.chat_type === "group" ? `${item.sender_name || ""}: ` : `${item.name}: `)
                 }${item.type === "image"
                   ? "Đã gửi một ảnh"
@@ -201,7 +200,11 @@ const ChatItem = ({ item, onSelectUser, onPin }) => {
                         : item.originalMessage?.length > 30
                           ? item.originalMessage.slice(0, 30) + "..."
                           : item.originalMessage || item.lastMessage
-                }`}
+                }`} */}
+                {!item.originalMessage && !item.lastMessage 
+    ? "Chưa có tin nhắn" 
+    : generateLastMessageText(item)
+  }
             </span>
           </Col>
           <Col>

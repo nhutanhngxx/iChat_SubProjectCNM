@@ -25,40 +25,6 @@ const RegisterModal = ({ visible, onClose, onRegister }) => {
     const [countdown, setCountdown] = useState(60);
     const timerRef = useRef(null);
     const recaptchaVerifierRef = useRef(null);
-
-    // Khởi tạo và làm mới reCAPTCHA
-    // const initializeRecaptcha = () => {
-    //     try {
-    //         // Clear previous instance if exists
-    //         if (window.recaptchaVerifier) {
-    //             window.recaptchaVerifier.clear();
-    //             window.recaptchaVerifier = null;
-    //         }
-
-    //         // Make sure container exists
-    //         const container = document.getElementById('recaptcha-container');
-    //         if (!container) {
-    //             console.error('Recaptcha container not found');
-    //             return;
-    //         }
-
-    //         // Create new instance
-    //         window.recaptchaVerifier = new RecaptchaVerifier(
-    //             'recaptcha-container',
-    //             {
-    //                 size: 'invisible',
-    //                 callback: () => console.log('reCAPTCHA verified')
-    //             },
-    //             auth
-    //         );
-
-    //         recaptchaVerifierRef.current = window.recaptchaVerifier;
-    //         console.log('RecaptchaVerifier initialized successfully');
-    //     } catch (error) {
-    //         console.error('Error initializing RecaptchaVerifier:', error);
-    //     }
-    // };
-    // Update your initializeRecaptcha function:
     const initializeRecaptcha = () => {
         try {
             // Clear previous instance if exists
@@ -85,7 +51,7 @@ const RegisterModal = ({ visible, onClose, onRegister }) => {
             );
 
             recaptchaVerifierRef.current = window.recaptchaVerifier;
-            console.log('RecaptchaVerifier initialized successfully');
+            // console.log('RecaptchaVerifier initialized successfully');
         } catch (error) {
             console.error('Error initializing RecaptchaVerifier:', error);
         }
@@ -147,7 +113,7 @@ const RegisterModal = ({ visible, onClose, onRegister }) => {
     const handleCheckPhone = async (phoneNumber) => {
         const resultAction = await dispatch(checkExistedPhone(phoneNumber));
         if (checkExistedPhone.fulfilled.match(resultAction)) {
-            console.log("Số điện thoại hợp lệ, chưa tồn tại.");
+            // console.log("Số điện thoại hợp lệ, chưa tồn tại.");
             return true;
         } else {
             alert(resultAction.payload);
@@ -178,7 +144,7 @@ const RegisterModal = ({ visible, onClose, onRegister }) => {
                 if (!isPhoneValid) return;
 
                 const formattedNumber = parsedNumber.format("E.164");
-                console.log("Sending OTP to:", formattedNumber);
+                // console.log("Sending OTP to:", formattedNumber);
 
                 // Đảm bảo reCAPTCHA đã sẵn sàng
                 if (!recaptchaVerifierRef.current) {
@@ -216,7 +182,7 @@ const RegisterModal = ({ visible, onClose, onRegister }) => {
 
             const verifyResult = await dispatch(verifyOtpFirebase(otp));
             if (verifyOtpFirebase.fulfilled.match(verifyResult)) {
-                console.log("OTP xác thực thành công");
+                // console.log("OTP xác thực thành công");
                 setStep(3);
                 stopCountdown();
             } else {

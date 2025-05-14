@@ -9,6 +9,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { getUserFriends } from "../../../redux/slices/friendSlice";
 import { createGroup } from "../../../redux/slices/groupSlice";
 import imageCompression from "browser-image-compression";
+import { fetchMessages } from "../../../redux/slices/messagesSlice";
+import socket from "../../services/socket";
 
 const CreateGroupModal = ({ visible, onCancel, onOk, userMessageId }) => {
   const dispatch = useDispatch();
@@ -68,7 +70,7 @@ const CreateGroupModal = ({ visible, onCancel, onOk, userMessageId }) => {
 
   const handleCreateGroup = async () => {
     try {
-      await dispatch(
+      const newGroup = await dispatch(
         createGroup({
           name: groupName,
           admin_id: currentUser.id,
@@ -76,14 +78,37 @@ const CreateGroupModal = ({ visible, onCancel, onOk, userMessageId }) => {
           participant_ids: selectedContacts,
         })
       ).unwrap();
-      onCancel();
+      console.log("Nhóm mới đã được tạo:", newGroup);
+      socket.emit("join-room", newGroup._id);
+
+      socket.emit("create-group", newGroup._id || newGroup.id, {
+        name: groupName,
+        admin_id: currentUser.id,
+        participant_ids: selectedContacts,
+      });
+
       // onOk();
       resetFields();
+      dispatch(fetchMessages(currentUser.id || currentUser._id)).unwrap();
       onCancel();
     } catch (error) {
       console.error("Tạo nhóm thất bại:", error);
     }
   };
+  // Thêm trong useEffect hoặc sau khi tạo nhóm thành công
+  useEffect(() => {
+    const handleGroupCreated = (groupId) => {
+      // Tham gia vào phòng nhóm mới
+      socket.emit("join-room", groupId);
+      console.log("Đã tham gia vào phòng nhóm mới:", groupId);
+    };
+
+    socket.on("group-created", handleGroupCreated);
+
+    return () => {
+      socket.off("group-created", handleGroupCreated);
+    };
+  }, []);
 
   const handleAvatarChange = async (event) => {
     const file = event.target.files[0];

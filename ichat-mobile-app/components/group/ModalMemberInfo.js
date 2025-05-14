@@ -18,6 +18,8 @@ const ModalMemberInfo = ({
   adminGroup,
   onViewProfile,
   onAppointAdmin,
+  onAppointSubAdmin,
+  onRecallSubAdmin,
   onRemoveMember,
   onAddFriend,
   onSendMessage,
@@ -76,7 +78,7 @@ const ModalMemberInfo = ({
                     </Text>
                   </View>
                   {/* Nút kết bạn và nhắn tin */}
-                  <View style={styles.memberModalActions}>
+                  {/* <View style={styles.memberModalActions}>
                     {isStranger && (
                       <TouchableOpacity
                         style={styles.actionButton}
@@ -99,7 +101,7 @@ const ModalMemberInfo = ({
                         />
                       </TouchableOpacity>
                     )}
-                  </View>
+                  </View> */}
                 </View>
 
                 {/* Các tùy chọn */}
@@ -111,13 +113,35 @@ const ModalMemberInfo = ({
                     <Text style={styles.optionText}>Xem thông tin</Text>
                   </TouchableOpacity>
 
-                  {member.role !== "admin" && adminGroup && (
+                  {adminGroup && !isCurrentUser && (
                     <TouchableOpacity
                       style={styles.memberModalOption}
                       onPress={onAppointAdmin}
                     >
                       <Text style={styles.optionText}>
-                        Chỉ định làm quản trị viên
+                        Chỉ định làm trưởng nhóm
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+
+                  {member.role !== "admin" && adminGroup && (
+                    <TouchableOpacity
+                      style={styles.memberModalOption}
+                      onPress={onAppointSubAdmin}
+                    >
+                      <Text style={styles.optionText}>
+                        Chỉ định làm phó nhóm
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+
+                  {member.role === "admin" && adminGroup && !isCurrentUser && (
+                    <TouchableOpacity
+                      style={styles.memberModalOption}
+                      onPress={onRecallSubAdmin}
+                    >
+                      <Text style={styles.optionText}>
+                        Thu hồi quyền phó nhóm
                       </Text>
                     </TouchableOpacity>
                   )}

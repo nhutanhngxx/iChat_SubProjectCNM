@@ -42,7 +42,7 @@ export default function Login() {
         {
           size: "invisible",
           callback: () => {
-            console.log("reCAPTCHA verified");
+            // console.log("reCAPTCHA verified");
           },
         }
       );

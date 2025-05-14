@@ -23,7 +23,7 @@
     "axios": "^1.8.4",
     "dayjs": "^1.11.13",
     "dotenv": "^16.4.7",
-    "expo": "^52.0.42",
+    "expo": "~52.0.46",
     "expo-av": "~15.0.2",
     "expo-barcode-scanner": "^13.0.1",
     "expo-camera": "~16.0.18",

@@ -75,7 +75,7 @@ const SecuritySettings = () => {
     e.preventDefault();
     if (validateNewPassword(newPassword) && confirmPassword === newPassword) {
       try {
-        console.log("UserId of change password:", user.id);
+        // console.log("UserId of change password:", user.id);
 
         await dispatch(changePassword({ userId: user.id, currentPassword, newPassword })).unwrap();
 

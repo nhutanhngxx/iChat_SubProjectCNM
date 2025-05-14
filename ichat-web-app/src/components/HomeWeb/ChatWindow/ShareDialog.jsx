@@ -50,7 +50,7 @@ const ShareDialog = ({ open, onClose, message }) => {
       fetchUserData();
       fetchGroupData();
     }
-  }, [dispatch, currentUser, friendsData, groupsData]);
+  }, [dispatch, currentUser]);
 
   // Lọc danh sách bạn bè theo từ khóa tìm kiếm
   useEffect(() => {
@@ -111,7 +111,7 @@ const ShareDialog = ({ open, onClose, message }) => {
     }
   };
 
-  console.log("user current from ShareDialog", currentUser);
+  // console.log("user current from ShareDialog", currentUser);
   return (
     <Modal
       style={{ overflow: "hidden", height: "100vh", width: "552px" }}

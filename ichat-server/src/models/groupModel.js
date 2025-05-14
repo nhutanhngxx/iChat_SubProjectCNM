@@ -7,8 +7,42 @@ const { uploadFile } = require("../services/upload-file");
 const { get } = require("http");
 const crypto = require("crypto");
 const GroupInvitation = require("../schemas/GroupInvitation");
+const UserModel = require("./userModel");
 
 const GroupModel = {
+  // Thông báo
+  createGroupNotification: async (options) => {
+    try {
+      const {
+        groupId,
+        content,
+        senderId,
+        excludeUserIds = [], // Những user không nhận thông báo này
+      } = options;
+
+      // Lấy thông tin nhóm
+      const group = await GroupChat.findById(groupId);
+      if (!group) {
+        console.error("Không tìm thấy nhóm để tạo thông báo");
+        return null;
+      }
+
+      // Tạo tin nhắn thông báo
+      const notification = await Message.create({
+        sender_id: senderId,
+        receiver_id: groupId,
+        content: content,
+        type: "notify", // Loại thông báo
+        chat_type: "group",
+        status: "sent",
+      });
+
+      return notification;
+    } catch (error) {
+      console.error("Lỗi khi tạo thông báo nhóm:", error);
+      return null;
+    }
+  },
   //   Lấy danh sách nhóm mà người dùng tham gia
   getUserGroups: async (userId) => {
     try {
@@ -108,7 +142,15 @@ const GroupModel = {
       // if (avatar) {
       //   avatarUrl = await uploadFile(avatar);
       // }
-
+      console.log("Avatar received:", avatar);
+      if (avatar) {
+        console.log("Avatar properties:", {
+          hasBuffer: !!avatar.buffer,
+          mimetype: avatar.mimetype,
+          originalname: avatar.originalname,
+          size: avatar.size,
+        });
+      }
       // Xử lý avatar nếu có (Merge code)
       let avatarUrl =
         "https://nhutanhngxx.s3.ap-southeast-1.amazonaws.com/root/new-logo.png"; // default avatar
@@ -175,6 +217,32 @@ const GroupModel = {
 
       await GroupMember.insertMany(members, { session });
       await session.commitTransaction();
+      session.endSession();
+
+      // Lấy thông tin người tạo nhóm
+      const creator = await User.findById(admin_id);
+
+      // Danh sách thành viên ban đầu
+      let memberInfo = "";
+      if (participantArray.length > 0) {
+        // Lấy thông tin thành viên ban đầu
+        const memberUsers = await User.find({ _id: { $in: participantArray } });
+
+        if (memberUsers.length === 1) {
+          memberInfo = ` với ${memberUsers[0].full_name}`;
+        } else if (memberUsers.length > 1) {
+          const names = memberUsers.map((u) => u.full_name);
+          const lastMember = names.pop();
+          memberInfo = ` với ${names.join(", ")} và ${lastMember}`;
+        }
+      }
+
+      // Tạo thông báo
+      await GroupModel.createGroupNotification({
+        groupId: gid,
+        content: `${creator.full_name} đã tạo nhóm "${name}"${memberInfo}`,
+        senderId: admin_id,
+      });
       return group[0];
     } catch (err) {
       await session.abortTransaction();
@@ -230,24 +298,74 @@ const GroupModel = {
         };
       }
 
-      console.log("require_approval:", group.require_approval);
-      console.log("inviterId:", inviterId);
-      console.log("admin_id:", group.admin_id);
+      // Kiểm tra xem người thêm có phải admin không
+      const isAdmin = group.admin_id.toString() === inviterId.toString();
+
+      // Kiểm tra quyền subadmin nếu cần
+      const inviterMember = await GroupMember.findOne({
+        group_id: groupId,
+        user_id: inviterId,
+      });
+      const isSubAdmin = inviterMember && inviterMember.role === "admin";
+
+      // Người dùng được bypass yêu cầu phê duyệt nếu là admin chính hoặc phó nhóm
+      const bypassApproval = isAdmin || isSubAdmin;
 
       // Tạo mảng các đối tượng thành viên mới để thêm vào
       const membersToAdd = newUserIds.map((userId) => ({
         group_id: groupId,
         user_id: new mongoose.Types.ObjectId(userId),
         invited_by: new mongoose.Types.ObjectId(inviterId),
-        status: group.require_approval
-          ? inviterId === group.admin_id.toString()
-            ? "approved"
-            : "pending"
-          : "approved",
+        // Nếu nhóm yêu cầu phê duyệt và người thêm không có quyền bypass, thì đặt status là pending
+        status:
+          group.require_approval && !bypassApproval ? "pending" : "approved",
       }));
 
       // Thêm các thành viên mới
       const result = await GroupMember.insertMany(membersToAdd);
+
+      // Lấy thông tin người mời
+      const inviter = await User.findById(inviterId);
+
+      if (inviter && group && membersToAdd.length > 0) {
+        // Lấy danh sách tên người dùng được thêm vào
+        const addedUsers = await User.find({ _id: { $in: newUserIds } });
+
+        // Tạo nội dung thông báo
+        let notificationContent = "";
+
+        // Kiểm tra trạng thái phê duyệt
+        const needsApproval = group.require_approval && !bypassApproval;
+
+        // Điều chỉnh nội dung thông báo dựa vào số người được thêm và trạng thái phê duyệt
+        if (addedUsers.length === 1) {
+          if (needsApproval) {
+            notificationContent = `${inviter.full_name} đã mời ${addedUsers[0].full_name} vào nhóm (cần phê duyệt)`;
+          } else {
+            notificationContent = `${inviter.full_name} đã thêm ${addedUsers[0].full_name} vào nhóm`;
+          }
+        } else if (addedUsers.length > 1) {
+          const names = addedUsers.map((user) => user.full_name);
+          const lastUser = names.pop();
+          if (needsApproval) {
+            notificationContent = `${inviter.full_name} đã mời ${names.join(
+              ", "
+            )} và ${lastUser} vào nhóm (cần phê duyệt)`;
+          } else {
+            notificationContent = `${inviter.full_name} đã thêm ${names.join(
+              ", "
+            )} và ${lastUser} vào nhóm`;
+          }
+        }
+        if (notificationContent) {
+          // Tạo thông báo trong nhóm
+          await GroupModel.createGroupNotification({
+            groupId,
+            content: notificationContent,
+            senderId: inviterId,
+          });
+        }
+      }
 
       return {
         // added: result.map((m) => String(m.user_id)),
@@ -262,8 +380,49 @@ const GroupModel = {
   },
 
   // 3. Xóa thành viên / Rời nhóm
-  removeMember: async (groupId, userId) => {
-    return GroupMember.deleteOne({ group_id: groupId, user_id: userId });
+  removeMember: async (groupId, userId, removedById = null) => {
+    try {
+      // Lấy thông tin nhóm và người dùng trước khi xóa
+      const group = await GroupChat.findById(groupId);
+      const user = await User.findById(userId);
+
+      // Kiểm tra xem người xóa là ai
+      const isAdminRemoval = removedById && removedById !== userId;
+      const remover = isAdminRemoval ? await User.findById(removedById) : null;
+
+      // Thực hiện xóa thành viên
+      const result = await GroupMember.deleteOne({
+        group_id: groupId,
+        user_id: userId,
+      });
+
+      // Tạo nội dung thông báo
+      let notificationContent = "";
+
+      if (user) {
+        if (isAdminRemoval && remover) {
+          // Trường hợp bị admin/người khác xóa
+          notificationContent = `${remover.full_name} đã xóa ${user.full_name} khỏi nhóm`;
+        } else {
+          // Trường hợp tự rời nhóm
+          notificationContent = `${user.full_name} đã rời khỏi nhóm`;
+        }
+
+        // Tạo thông báo trong nhóm
+        if (notificationContent) {
+          await GroupModel.createGroupNotification({
+            groupId,
+            content: notificationContent,
+            senderId: isAdminRemoval ? removedById : userId,
+          });
+        }
+      }
+
+      return result;
+    } catch (error) {
+      console.error("Lỗi khi xóa thành viên:", error);
+      throw error;
+    }
   },
 
   // 4. Gửi tin nhắn nhóm
@@ -290,27 +449,91 @@ const GroupModel = {
   // 5. Đổi tên Group / Set avatar
   updateGroup: async (
     groupId,
-    { name, avatar, allow_add_members, allow_change_name, allow_change_avatar }
+    { name, avatar, allow_add_members, allow_change_name, allow_change_avatar },
+    updatedById
   ) => {
     try {
-      const update = {};
+      // Lấy thông tin hiện tại của nhóm để so sánh
+      const currentGroup = await GroupChat.findById(groupId);
+      if (!currentGroup) {
+        throw new Error("Nhóm không tồn tại");
+      }
 
-      // Chỉ cập nhật tên nếu có
-      if (name) {
+      const update = {};
+      const updatedFields = [];
+
+      // Chỉ cập nhật tên nếu có và khác với tên cũ
+      if (name && name !== currentGroup.name) {
         update.name = name;
+        updatedFields.push("tên nhóm");
       }
 
       // Chỉ cập nhật avatar nếu có
       if (avatar) {
         const avatarUrl = await uploadFile(avatar);
-        update.avatar = avatarUrl; // Sửa từ avatarUrl thành avatar để phù hợp
+        update.avatar = avatarUrl;
+        updatedFields.push("ảnh nhóm");
       }
 
-      update.allow_add_members = allow_add_members;
-      update.allow_change_name = allow_change_name;
-      update.allow_change_avatar = allow_change_avatar;
+      // Chỉ cập nhật các cài đặt nếu thực sự thay đổi
+      if (
+        allow_add_members !== undefined &&
+        allow_add_members !== currentGroup.allow_add_members
+      ) {
+        update.allow_add_members = allow_add_members;
+        updatedFields.push("quyền thêm thành viên");
+      }
 
-      return GroupChat.findByIdAndUpdate(groupId, update, { new: true });
+      if (
+        allow_change_name !== undefined &&
+        allow_change_name !== currentGroup.allow_change_name
+      ) {
+        update.allow_change_name = allow_change_name;
+        updatedFields.push("quyền đổi tên nhóm");
+      }
+
+      if (
+        allow_change_avatar !== undefined &&
+        allow_change_avatar !== currentGroup.allow_change_avatar
+      ) {
+        update.allow_change_avatar = allow_change_avatar;
+        updatedFields.push("quyền đổi ảnh nhóm");
+      }
+
+      // Nếu không có gì thay đổi thì trả về nhóm hiện tại
+      if (Object.keys(update).length === 0) {
+        return currentGroup;
+      }
+
+      // Cập nhật nhóm
+      const updatedGroup = await GroupChat.findByIdAndUpdate(groupId, update, {
+        new: true,
+      });
+
+      // Tạo thông báo nếu có cập nhật và biết người cập nhật
+      if (updatedFields.length > 0 && updatedById) {
+        const updater = await User.findById(updatedById);
+
+        if (updater) {
+          let notificationContent = "";
+          if (updatedFields.length === 1) {
+            notificationContent = `${updater.full_name} đã cập nhật ${updatedFields[0]}`;
+          } else {
+            const lastField = updatedFields.pop();
+            notificationContent = `${
+              updater.full_name
+            } đã cập nhật ${updatedFields.join(", ")} và ${lastField}`;
+          }
+
+          await GroupModel.createGroupNotification({
+            groupId,
+            content: notificationContent,
+            senderId: updatedById,
+          });
+        }
+      }
+
+      return updatedGroup;
     } catch (error) {
       console.error("Lỗi cập nhật nhóm:", error);
       throw error;
@@ -318,12 +541,49 @@ const GroupModel = {
   },
 
   // 6. Phân quyền (role: "admin"||"member")
-  setRole: async (groupId, userId, role) => {
-    return GroupMember.findOneAndUpdate(
-      { group_id: groupId, user_id: userId },
-      { role },
-      { new: true }
-    );
+  setRole: async (groupId, userId, role, adminId) => {
+    // return GroupMember.findOneAndUpdate(
+    //   { group_id: groupId, user_id: userId },
+    //   { role },
+    //   { new: true }
+    // );
+    try {
+      // Cập nhật vai trò thành viên
+      const result = await GroupMember.findOneAndUpdate(
+        { group_id: groupId, user_id: userId },
+        { role },
+        { new: true }
+      );
+
+      // Tạo thông báo
+      if (adminId && result) {
+        const admin = await User.findById(adminId);
+        const member = await User.findById(userId);
+
+        if (admin && member) {
+          let notificationContent = "";
+
+          if (role === "admin") {
+            notificationContent = `${admin.full_name} đã nâng ${member.full_name} lên làm phó nhóm`;
+          } else if (role === "member") {
+            notificationContent = `${admin.full_name} đã thu hồi quyền phó nhóm của ${member.full_name}`;
+          }
+
+          if (notificationContent) {
+            await GroupModel.createGroupNotification({
+              groupId,
+              content: notificationContent,
+              senderId: adminId,
+            });
+          }
+        }
+      }
+
+      return result;
+    } catch (error) {
+      console.error("Lỗi khi thay đổi vai trò thành viên:", error);
+      throw error;
+    }
   },
 
   // 7. Xóa nhóm (chỉ creator || admin chính)
@@ -420,7 +680,7 @@ const GroupModel = {
     }
   },
 
-  transferAdmin: async (groupId, userId) => {
+  transferAdmin: async (groupId, userId, currentAdminId) => {
     try {
       // Cập nhật admin_id trong GroupChat
       const updatedGroup = await GroupChat.findByIdAndUpdate(
@@ -431,6 +691,20 @@ const GroupModel = {
 
       if (!updatedGroup) {
         throw new Error("Nhóm không tồn tại");
+      }
+      // Lấy thông tin người dùng
+      const newAdmin = await User.findById(userId);
+      const oldAdmin = await User.findById(currentAdminId);
+
+      // Tạo thông báo chuyển quyền
+      if (newAdmin && oldAdmin) {
+        const notificationContent = `${oldAdmin.full_name} đã chuyển quyền nhóm trưởng cho ${newAdmin.full_name}`;
+
+        await GroupModel.createGroupNotification({
+          groupId,
+          content: notificationContent,
+          senderId: currentAdminId,
+        });
       }
 
       return updatedGroup;
@@ -675,12 +949,13 @@ const GroupModel = {
   },
 
   // Lấy danh sách thành viên được mời bởi bạn
-  getInvitedMembersByUserId: async (userId) => {
+  getInvitedMembersByUserId: async ({ userId, groupId }) => {
     try {
       const invitedMembers = await GroupMember.aggregate([
         {
           $match: {
             invited_by: new mongoose.Types.ObjectId(userId),
+            group_id: new mongoose.Types.ObjectId(groupId),
             // status: "approved",
           },
         },
@@ -718,13 +993,64 @@ const GroupModel = {
   },
 
   // Chấp nhận thành viên vào nhóm
-  acceptMember: async ({ groupId, memberId }) => {
+  // acceptMember: async ({ groupId, memberId }) => {
+  //   try {
+  //     return await GroupMember.findOneAndUpdate(
+  //       { group_id: groupId, user_id: memberId },
+  //       { status: "approved" },
+  //       { new: true }
+  //     );
+  //   } catch (error) {
+  //     console.error("Lỗi khi chấp nhận thành viên:", error);
+  //     throw error;
+  //   }
+  // },
+  acceptMember: async ({ groupId, memberId, adminId }) => {
     try {
-      return await GroupMember.findOneAndUpdate(
+      // Tìm và cập nhật trạng thái thành viên
+      const memberToAccept = await GroupMember.findOne({
+        group_id: groupId,
+        user_id: memberId,
+        status: "pending",
+      });
+
+      if (!memberToAccept) {
+        throw new Error("Không tìm thấy yêu cầu tham gia");
+      }
+
+      const updatedMember = await GroupMember.findOneAndUpdate(
         { group_id: groupId, user_id: memberId },
         { status: "approved" },
         { new: true }
       );
+
+      // Lấy thông tin người dùng để hiển thị trong thông báo
+      const member = await User.findById(memberId);
+      const admin = adminId ? await User.findById(adminId) : null;
+      const inviter = memberToAccept.invited_by
+        ? await User.findById(memberToAccept.invited_by)
+        : null;
+
+      // Tạo nội dung thông báo
+      let notificationContent = "";
+      if (member) {
+        if (inviter && admin) {
+          notificationContent = `${admin.full_name} đã chấp nhận ${member.full_name} vào nhóm (được mời bởi ${inviter.full_name})`;
+        } else if (admin) {
+          notificationContent = `${admin.full_name} đã chấp nhận ${member.full_name} vào nhóm`;
+        } else {
+          notificationContent = `${member.full_name} đã được chấp nhận vào nhóm`;
+        }
+
+        // Gửi thông báo
+        await GroupModel.createGroupNotification({
+          groupId,
+          content: notificationContent,
+          senderId: adminId || memberId,
+        });
+      }
+
+      return updatedMember;
     } catch (error) {
       console.error("Lỗi khi chấp nhận thành viên:", error);
       throw error;
@@ -732,13 +1058,63 @@ const GroupModel = {
   },
 
   // Từ chối thành viên vào nhóm
-  rejectMember: async ({ groupId, memberId }) => {
+  // rejectMember: async ({ groupId, memberId }) => {
+  //   try {
+  //     return await GroupMember.findOneAndDelete({
+  //       group_id: groupId,
+  //       user_id: memberId,
+  //       status: "pending",
+  //     });
+  //   } catch (error) {
+  //     console.error("Lỗi khi từ chối thành viên:", error);
+  //     throw error;
+  //   }
+  // },
+  rejectMember: async ({ groupId, memberId, adminId }) => {
     try {
-      return await GroupMember.findOneAndDelete({
+      // Lấy thông tin của member trước khi xóa
+      const memberToReject = await GroupMember.findOne({
         group_id: groupId,
         user_id: memberId,
         status: "pending",
       });
+
+      if (!memberToReject) {
+        throw new Error("Không tìm thấy yêu cầu tham gia");
+      }
+
+      // Lấy thông tin người dùng để hiển thị trong thông báo
+      const member = await User.findById(memberId);
+      const admin = adminId ? await User.findById(adminId) : null;
+      const inviter = memberToReject.invited_by
+        ? await User.findById(memberToReject.invited_by)
+        : null;
+
+      // Tạo nội dung thông báo
+      let notificationContent = "";
+      if (member && admin) {
+        if (inviter) {
+          notificationContent = `${admin.full_name} đã từ chối yêu cầu thêm ${member.full_name} vào nhóm (được mời bởi ${inviter.full_name})`;
+        } else {
+          notificationContent = `${admin.full_name} đã từ chối yêu cầu tham gia nhóm của ${member.full_name}`;
+        }
+
+        // Gửi thông báo
+        await GroupModel.createGroupNotification({
+          groupId,
+          content: notificationContent,
+          senderId: adminId,
+        });
+      }
+
+      // Xóa thành viên
+      await GroupMember.findOneAndDelete({
+        group_id: groupId,
+        user_id: memberId,
+        status: "pending",
+      });
+
+      return { groupId, memberId };
     } catch (error) {
       console.error("Lỗi khi từ chối thành viên:", error);
       throw error;

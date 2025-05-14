@@ -51,11 +51,11 @@ export default function LoginWithPass() {
   //  Hàm xử lý đăng nhập
   const handleLogin = async (e) => {
     e.preventDefault();
-    console.log("Form submitted", e); // Thêm log để kiểm tra
+    // console.log("Form submitted", e); // Thêm log để kiểm tra
     
     try {
       const phoneNumber = parsePhoneNumberFromString(phone, countryCode);
-      console.log("Sending login request with:", { phone: phoneNumber?.number, password: '***' });
+      // console.log("Sending login request with:", { phone: phoneNumber?.number, password: '***' });
       
       await dispatch(loginUser({ phone: phoneNumber.number, password })).unwrap(); // unwrap để lấy dữ liệu từ createAsyncThunk
       if (token || localStorage.getItem("token")) {
@@ -108,8 +108,8 @@ export default function LoginWithPass() {
     const error = validatePhone(value);
     setPhoneError(error);
   };
-  console.log("User:", user);
-  console.log("Token:", token);
+  // console.log("User:", user);
+  // console.log("Token:", token);
 
   return (
     <div className="container-login">

@@ -7,7 +7,26 @@ module.exports = (io) => {
       socket.join(groupId);
       console.log(` Socket ${socket.id} joined room: ${groupId}`);
     });
+    //lawng nghe tao nhom
+    socket.on("create-group", (groupId, groupData) => {
+      console.log("Create group:", groupId, groupData);
+      // io.to(groupId).emit("group-created", groupId, groupData);
+      // Emit đến người tạo nhóm
+      socket.emit("group-created", groupId, groupData);
 
+      // Emit đến tất cả thành viên được mời
+      if (
+        groupData.participant_ids &&
+        Array.isArray(groupData.participant_ids)
+      ) {
+        groupData.participant_ids.forEach((userId) => {
+          // Đảm bảo không gửi trùng lặp đến người tạo
+          if (userId !== socket.userId && userId !== groupData.admin_id) {
+            io.to(userId).emit("group-created", groupId, groupData);
+          }
+        });
+      }
+    });
     // Lắng nghe rời room theo groupId
     socket.on("leave-room", (groupId) => {
       socket.leave(groupId);
@@ -54,6 +73,12 @@ module.exports = (io) => {
     socket.on("transfer-admin", ({ groupId, userId }) => {
       console.log("Transfer admin:", groupId, userId);
       io.to(groupId).emit("admin-transferred", { groupId, userId });
+    });
+
+    // Lắng nghe sự kiện cập nhật quyền thành viên
+    socket.on("set-role", ({ groupId, userId, role }) => {
+      console.log("Set role:", groupId, userId, role);
+      io.to(groupId).emit("role-updated", { groupId, userId, role });
     });
 
     // Lắng nghe sự kiện cập nhật trạng thái phê duyệt thành viên

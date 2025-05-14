@@ -179,7 +179,7 @@ const ProfileModal = ({ visible, onClose, user: initialUser }) => {
   const [compressedCoverFile, setCompressedCoverFile] = useState(null);
   const [compressedAvatarFile, setCompressedAvatarFile] = useState(null);
 
-  console.log("User mới đã cập nhật trong profile modal: ", initialUser);
+  // console.log("User mới đã cập nhật trong profile modal: ", initialUser);
 
   const dispatch = useDispatch();
   // Update useEffect to handle initialization and cleanup

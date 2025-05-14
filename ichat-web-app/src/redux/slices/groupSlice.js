@@ -153,14 +153,14 @@ export const addMembers = createAsyncThunk(
 // Xóa thành viên khỏi nhóm
 export const removeMember = createAsyncThunk(
   "groups/removeMember",
-  async ({ groupId, userId }, { rejectWithValue }) => {
+  async ({ groupId, userId, adminId }, { rejectWithValue }) => {
     try {
       const response = await fetch(`${API_URL}remove-member`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ groupId, userId }),
+        body: JSON.stringify({ groupId, userId, adminId }),
       });
 
       const data = await response.json();
@@ -187,6 +187,7 @@ export const updateGroup = createAsyncThunk(
       allow_add_members,
       allow_change_name,
       allow_change_avatar,
+      currentUserId,
     },
     { rejectWithValue }
   ) => {
@@ -203,7 +204,7 @@ export const updateGroup = createAsyncThunk(
       formData.append("allow_add_members", allow_add_members.toString());
       formData.append("allow_change_name", allow_change_name.toString());
       formData.append("allow_change_avatar", allow_change_avatar.toString());
-
+      formData.append("currentUserId", currentUserId);
       const response = await fetch(`${API_URL}${groupId}`, {
         method: "PUT",
         body: formData,
@@ -305,7 +306,7 @@ export const searchGroupMessages = createAsyncThunk(
 // Cập nhật quyền thành viên trong nhóm
 export const setRole = createAsyncThunk(
   "groups/setRole",
-  async ({ groupId, userId, role }, { rejectWithValue }) => {
+  async ({ groupId, userId, role, adminId }, { rejectWithValue }) => {
     try {
       const response = await fetch(
         `${API_URL}${groupId}/members/${userId}/role`,
@@ -314,7 +315,7 @@ export const setRole = createAsyncThunk(
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ role }),
+          body: JSON.stringify({ role, adminId }),
         }
       );
 
@@ -373,7 +374,7 @@ export const isGroupSubAdmin = createAsyncThunk(
 // Chuyển nhường quyền admin chính cho người khác
 export const transferAdmin = createAsyncThunk(
   "groups/transferAdmin",
-  async ({ groupId, userId }, { rejectWithValue }) => {
+  async ({ groupId, userId, currentAdminId }, { rejectWithValue }) => {
     try {
       const response = await fetch(
         `${API_URL}transferAdmin/${groupId}/${userId}`,
@@ -382,7 +383,7 @@ export const transferAdmin = createAsyncThunk(
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ groupId, userId }),
+          body: JSON.stringify({ groupId, userId, currentAdminId }),
         }
       );
       const data = await response.json();
@@ -563,9 +564,11 @@ export const getPendingMembers = createAsyncThunk(
 // Lấy danh sách thành viên được mời bởi người dùng
 export const getInvitedMembersByUserId = createAsyncThunk(
   "groups/getInvitedMembersByUserId",
-  async (userId, { rejectWithValue }) => {
+  async ({ groupId, userId }, { rejectWithValue }) => {
     try {
-      const response = await fetch(`${API_URL}invited-members/${userId}`);
+      const response = await fetch(
+        `${API_URL}invited-members/${groupId}/${userId}`
+      );
       const data = await response.json();
 
       if (data.status === "error") {
@@ -582,7 +585,7 @@ export const getInvitedMembersByUserId = createAsyncThunk(
 // Chấp nhận thành viên vào nhóm
 export const acceptMember = createAsyncThunk(
   "groups/acceptMember",
-  async ({ groupId, memberId }, { rejectWithValue }) => {
+  async ({ groupId, memberId, adminId }, { rejectWithValue }) => {
     try {
       const response = await fetch(
         `${API_URL}/accept-member/${groupId}/${memberId}`,
@@ -591,6 +594,7 @@ export const acceptMember = createAsyncThunk(
           headers: {
             "Content-Type": "application/json",
           },
+          body: JSON.stringify({ adminId }),
         }
       );
 
@@ -610,7 +614,7 @@ export const acceptMember = createAsyncThunk(
 // Từ chối thành viên vào nhóm
 export const rejectMember = createAsyncThunk(
   "groups/rejectMember",
-  async ({ groupId, memberId }, { rejectWithValue }) => {
+  async ({ groupId, memberId, adminId }, { rejectWithValue }) => {
     try {
       const response = await fetch(
         `${API_URL}/reject-member/${groupId}/${memberId}`,
@@ -619,6 +623,7 @@ export const rejectMember = createAsyncThunk(
           headers: {
             "Content-Type": "application/json",
           },
+          body: JSON.stringify({ adminId }),
         }
       );
 

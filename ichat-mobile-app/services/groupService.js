@@ -253,6 +253,22 @@ const groupService = {
     }
   },
 
+  // Kiểm tra quyền admin (nhóm trưởng hay nhóm phó)
+  isGroupSubAdmin: async ({ groupId, userId }) => {
+    try {
+      const response = await apiService.get(
+        `/${PREFIX}/${groupId}/admin-check/${userId}`
+      );
+      if (response.data.status === "error") {
+        throw new Error(response.data.message);
+      }
+      return response.data.data;
+    } catch (error) {
+      console.log("Không thể kiểm tra quyền admin: ", error);
+      throw error;
+    }
+  },
+
   // Chuyển quyền quản trị viên
   appointAdmin: async ({ groupId, newAdimUserId, userId }) => {
     try {
@@ -286,6 +302,26 @@ const groupService = {
     } catch (error) {
       console.log("Không thể chuyển quyền quản trị viên: ", error);
       throw error;
+    }
+  },
+
+  // Cập nhật quyền thành viên trong nhóm
+  setRole: async ({ groupId, userId, role }) => {
+    try {
+      const response = await apiService.put(
+        `/${PREFIX}/${groupId}/members/${userId}/role`,
+        { role }
+      );
+
+      if (response.data.status === "error") {
+        console.error("API trả về lỗi:", response.data.message);
+        return null;
+      }
+
+      return response.data;
+    } catch (error) {
+      console.error("Lỗi khi cập nhật quyền thành viên:", error);
+      return null;
     }
   },
 
@@ -348,10 +384,10 @@ const groupService = {
   },
 
   // Lấy danh sách thành được mời bởi bạn
-  getInvitedMembersByUserId: async (userId) => {
+  getInvitedMembersByUserId: async ({ userId, groupId }) => {
     try {
       const response = await apiService.get(
-        `/${PREFIX}/invited-members/${userId}`
+        `/${PREFIX}/invited-members/${groupId}/${userId}`
       );
 
       if (response.data.status === "error") {

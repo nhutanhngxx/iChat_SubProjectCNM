@@ -103,7 +103,7 @@ const RequestList = () => {
           prev.filter((req) => req.id !== senderId)
         );
       }
-      console.log("Đã chấp nhận lời mời kết bạn thành công");
+      // console.log("Đã chấp nhận lời mời kết bạn thành công");
     } catch (error) {
       console.error("Lỗi khi chấp nhận lời mời kết bạn:", error);
     }
@@ -120,7 +120,7 @@ const RequestList = () => {
       if (result.status === "ok") {
         setSentRequests((prev) => prev.filter((req) => req.id !== requestId));
       }
-      console.log("Đã hủy lời mời kết bạn thành công");
+      // console.log("Đã hủy lời mời kết bạn thành công");
     } catch (error) {
       console.error("Lỗi khi hủy lời mời kết bạn:", error);
     }
