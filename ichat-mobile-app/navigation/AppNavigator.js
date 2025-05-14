@@ -34,6 +34,7 @@ import ModalCreateGroup from "../components/contact/ModalCreateGroup";
 import ModalAddMember from "../components/group/ModalAddMember";
 import ModalMemberManagement from "../components/group/ModalMemberManagement";
 import PendingInvitations from "../components/group/PendingInvitations";
+import SettingGroup from "../components/group/SettingGroup";
 
 const Stack = createStackNavigator();
 
@@ -134,6 +135,11 @@ export default function AppNavigator() {
           <Stack.Screen
             name="PendingInvitations"
             component={PendingInvitations}
+            options={{ animation: "none" }}
+          />
+          <Stack.Screen
+            name="SettingGroup"
+            component={SettingGroup}
             options={{ animation: "none" }}
           />
         </>

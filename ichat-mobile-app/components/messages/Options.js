@@ -526,7 +526,12 @@ const Option = ({ route }) => {
               }}
             ></View>
             {(adminGroup || subAdminGroup) && (
-              <TouchableOpacity style={styles.component}>
+              <TouchableOpacity
+                style={styles.component}
+                onPress={() =>
+                  navigation.navigate("SettingGroup", { groupId: id })
+                }
+              >
                 <Image
                   source={require("../../assets/icons/setting.png")}
                   style={styles.icon}

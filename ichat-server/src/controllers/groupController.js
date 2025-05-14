@@ -199,15 +199,15 @@ const GroupController = {
 
       // Chỉ thêm vào update nếu client thực sự gửi các giá trị này
       if (req.body.allow_add_members !== undefined) {
-        update.allow_add_members = req.body.allow_add_members === "true";
+        update.allow_add_members = req.body.allow_add_members === true;
       }
 
       if (req.body.allow_change_name !== undefined) {
-        update.allow_change_name = req.body.allow_change_name === "true";
+        update.allow_change_name = req.body.allow_change_name === true;
       }
 
       if (req.body.allow_change_avatar !== undefined) {
-        update.allow_change_avatar = req.body.allow_change_avatar === "true";
+        update.allow_change_avatar = req.body.allow_change_avatar === true;
       }
 
       console.log("Update data:", update, "currentUserId:", currentUserId);

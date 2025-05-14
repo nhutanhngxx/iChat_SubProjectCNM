@@ -215,6 +215,42 @@ const groupService = {
   // Cập nhật ảnh đại diện nhóm
   updateGroupAvatar: async ({ groupId, avatar, currentUserId }) => {},
 
+  // Cập nhật cài đặt nhóm
+  updateGroupSettings: async ({
+    groupId,
+    allow_add_members,
+    allow_change_name,
+    allow_change_avatar,
+    currentUserId,
+  }) => {
+    console.log(
+      "Update group settings:",
+      groupId,
+      allow_add_members,
+      allow_change_name,
+      allow_change_avatar,
+      currentUserId
+    );
+    try {
+      const response = await apiService.put(`/${PREFIX}/${groupId}`, {
+        allow_add_members,
+        allow_change_name,
+        allow_change_avatar,
+        currentUserId,
+      });
+
+      if (response.data.status === "error") {
+        throw new Error(response.data.message);
+      }
+      if (response.data.status === "ok") {
+        return { status: "ok", message: "Cập nhật cài đặt nhóm thành công." };
+      }
+    } catch (error) {
+      console.log("Không thể cập nhật cài đặt nhóm: ", error);
+      throw error;
+    }
+  },
+
   // Thêm thành viên mới
   addMember: async ({ groupId, userIds, inviterId }) => {
     try {
