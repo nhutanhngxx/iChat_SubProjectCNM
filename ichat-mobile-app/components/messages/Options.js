@@ -338,12 +338,12 @@ const Option = ({ route }) => {
             }}
           >
             <Text style={styles.name}>{receiverGroup?.name}</Text>
-            <TouchableOpacity onPress={() => setIsRenameModalVisible(true)}>
+            {/* <TouchableOpacity onPress={() => setIsRenameModalVisible(true)}>
               <Image
                 source={require("../../assets/icons/edit.png")}
                 style={[styles.icon, { marginTop: 10 }]}
               />
-            </TouchableOpacity>
+            </TouchableOpacity> */}
           </View>
         )}
       </View>
@@ -486,7 +486,12 @@ const Option = ({ route }) => {
                   marginHorizontal: -20,
                 }}
               ></View>
-              <TouchableOpacity style={styles.component}>
+              <TouchableOpacity
+                style={styles.component}
+                onPress={() => {
+                  navigation.navigate("CreateGroup", { friendId: id });
+                }}
+              >
                 <Image
                   source={require("../../assets/icons/add-group.png")}
                   style={styles.icon}

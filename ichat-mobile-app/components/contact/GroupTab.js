@@ -9,7 +9,6 @@ import {
   Alert,
 } from "react-native";
 import { Dimensions } from "react-native";
-import ModalCreateGroup from "./ModalCreateGroup";
 import { useNavigation } from "@react-navigation/native";
 import { UserContext } from "../../config/context/UserContext";
 import groupService from "../../services/groupService";
@@ -17,7 +16,6 @@ import groupService from "../../services/groupService";
 const GroupTab = () => {
   const navigation = useNavigation();
   const { width } = Dimensions.get("window");
-  const [isShowModal, setIsShowModal] = useState(false);
   const [groupList, setGroupList] = useState([]);
   const { user } = useContext(UserContext);
 
@@ -31,14 +29,6 @@ const GroupTab = () => {
     const interval = setInterval(fetchGroupList, 2000);
     return () => clearInterval(interval);
   }, [user?.id]);
-
-  const handleOpenModal = () => {
-    setIsShowModal(true);
-  };
-
-  const handleCloseModal = () => {
-    setIsShowModal(false);
-  };
 
   const handleOpenChatting = (chat) => {
     navigation.navigate("Chatting", { chat });
@@ -62,7 +52,6 @@ const GroupTab = () => {
 
   return (
     <View style={styles.container}>
-      {/* <ModalCreateGroup isVisible={isShowModal} onClose={handleCloseModal} /> */}
       <TouchableOpacity
         style={styles.addNewGroupButton}
         onPress={() => {

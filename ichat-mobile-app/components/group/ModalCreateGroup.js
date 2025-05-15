@@ -20,7 +20,7 @@ import { UserContext } from "../../config/context/UserContext";
 import { useNavigation } from "@react-navigation/native";
 import groupService from "../../services/groupService";
 
-const ModalCreateGroup = () => {
+const ModalCreateGroup = ({ route }) => {
   const [groupList, setGroupList] = useState([]);
   const [isChecked, setIsChecked] = useState({});
   const [isDisabled, setIsDisabled] = useState(true);
@@ -30,6 +30,17 @@ const ModalCreateGroup = () => {
   const [displayedFriendList, setDisplayedFriendList] = useState(friendList);
   const { user } = useContext(UserContext);
   const navigation = useNavigation();
+  const { friendId } = route.params || {};
+
+  useEffect(() => {
+    if (friendId && friendList.length > 0) {
+      const friend = friendList.find((item) => item.id === friendId);
+      if (friend && !groupList.some((item) => item.id === friendId)) {
+        setGroupList((prev) => [...prev, friend]);
+        setIsChecked((prev) => ({ ...prev, [friendId]: true }));
+      }
+    }
+  }, [friendId, friendList]);
 
   const handleCloseModal = () => {
     setGroupList([]);
@@ -37,7 +48,7 @@ const ModalCreateGroup = () => {
     setGroupName("");
     setSearchText("");
     setDisplayedFriendList(friendList);
-    navigation.goBack();
+    navigation.navigate("Home");
   };
 
   // Lấy danh sách bạn bè

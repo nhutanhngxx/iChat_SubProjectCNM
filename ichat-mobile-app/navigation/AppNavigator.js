@@ -30,7 +30,7 @@ import ViewProfile from "../components/profile/ViewProfile";
 import ForgotPasswordScreen from "../components/profile/ForgotPassword";
 import ChangePasswordScreen from "../components/profile/ChangePassword";
 import ManageUserBlock from "../components/profile/ManageUserBlock";
-import ModalCreateGroup from "../components/contact/ModalCreateGroup";
+import ModalCreateGroup from "../components/group/ModalCreateGroup";
 import ModalAddMember from "../components/group/ModalAddMember";
 import ModalMemberManagement from "../components/group/ModalMemberManagement";
 import PendingInvitations from "../components/group/PendingInvitations";
