@@ -450,7 +450,7 @@ const GroupModel = {
   // 5. Đổi tên Group / Set avatar
   updateGroup: async (
     groupId,
-    { name, avatar, allow_add_members, allow_change_name, allow_change_avatar },
+    { name, avatar, allow_change_name, allow_change_avatar },
     updatedById
   ) => {
     try {
@@ -477,14 +477,6 @@ const GroupModel = {
       }
 
       // Chỉ cập nhật các cài đặt nếu thực sự thay đổi
-      if (
-        allow_add_members !== undefined &&
-        allow_add_members !== currentGroup.allow_add_members
-      ) {
-        update.allow_add_members = allow_add_members;
-        updatedFields.push("quyền thêm thành viên");
-      }
-
       if (
         allow_change_name !== undefined &&
         allow_change_name !== currentGroup.allow_change_name

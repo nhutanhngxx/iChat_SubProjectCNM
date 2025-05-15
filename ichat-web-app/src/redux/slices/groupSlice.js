@@ -184,7 +184,6 @@ export const updateGroup = createAsyncThunk(
       groupId,
       name,
       avatar,
-      allow_add_members,
       allow_change_name,
       allow_change_avatar,
       currentUserId,
@@ -192,45 +191,45 @@ export const updateGroup = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      // const formData = new FormData();
+      // 1. Nếu có avatar, gửi formData riêng
+      if (avatar) {
+        const formData = new FormData();
+        formData.append("avatar", avatar);
+        formData.append("currentUserId", currentUserId);
 
-      // if (name) {
-      //   formData.append("name", name);
-      // }
+        const avatarRes = await fetch(`${API_URL}${groupId}`, {
+          method: "PUT",
+          body: formData,
+        });
 
-      // if (avatar) {
-      //   formData.append("avatar", avatar);
-      // }
-      // formData.append("allow_add_members", allow_add_members);
-      // formData.append("allow_change_name", allow_change_name);
-      // formData.append("allow_change_avatar", allow_change_avatar);
-      // formData.append("currentUserId", currentUserId);
-      // const response = await fetch(`${API_URL}${groupId}`, {
-      //   method: "PUT",
-      //   body: formData,
-      // });
+        const avatarData = await avatarRes.json();
+        if (avatarData.status === "error") {
+          return rejectWithValue(avatarData.message);
+        }
+      }
 
-      const body = {
+      // 2. Gửi thông tin khác dưới dạng JSON
+      const jsonBody = {
         name,
-        allow_add_members,
         allow_change_name,
         allow_change_avatar,
         currentUserId,
       };
 
-      const response = await fetch(`${API_URL}${groupId}`, {
+      const infoRes = await fetch(`${API_URL}${groupId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(body),
+        body: JSON.stringify(jsonBody),
       });
-      const data = await response.json();
-      if (data.status === "error") {
-        return rejectWithValue(data.message);
+
+      const infoData = await infoRes.json();
+      if (infoData.status === "error") {
+        return rejectWithValue(infoData.message);
       }
 
-      return data.data;
+      return infoData.data;
     } catch (error) {
       return rejectWithValue(error.message);
     }

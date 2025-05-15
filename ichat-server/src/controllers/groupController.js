@@ -198,9 +198,6 @@ const GroupController = {
       console.log("Update data:", update);
 
       // Chỉ thêm vào update nếu client thực sự gửi các giá trị này
-      if (req.body.allow_add_members !== undefined) {
-        update.allow_add_members = req.body.allow_add_members === true;
-      }
 
       if (req.body.allow_change_name !== undefined) {
         update.allow_change_name = req.body.allow_change_name === true;

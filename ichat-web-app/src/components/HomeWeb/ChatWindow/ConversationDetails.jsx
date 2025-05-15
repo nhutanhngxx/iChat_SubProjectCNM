@@ -148,7 +148,7 @@ const ConversationDetails = ({
   const [isSubAdmin, setIsSubAdmin] = useState(false);
   const [isMainAdmin, setIsMainAdmin] = useState(false);
   const [groupSettings, setGroupSettings] = useState({
-    allow_add_members: true,
+    // allow_add_members: true,
     allow_change_name: true,
     allow_change_avatar: true,
   });
@@ -525,7 +525,8 @@ const ConversationDetails = ({
   };
   // Hàm helper để kiểm tra quyền
   const canAddMembers = () => {
-    return isMainAdmin || isSubAdmin || groupSettings.allow_add_members;
+    console.log("Kiểm tra quyền thêm thành viên:", { isMainAdmin, isSubAdmin, isAdmin });
+    return isMainAdmin || isSubAdmin ;
   };
 
   const canChangeName = () => {
@@ -757,7 +758,6 @@ const ConversationDetails = ({
           groupId: selectedChat.id,
           name: groupName,
           avatar: groupAvatar,
-          allow_add_members: groupSettings.allow_add_members,
           allow_change_name: groupSettings.allow_change_name,
           allow_change_avatar: groupSettings.allow_change_avatar,
           currentUserId: user.id,
@@ -967,7 +967,6 @@ const ConversationDetails = ({
 
       if (response) {
         setGroupSettings({
-          allow_add_members: response.allow_add_members,
           allow_change_name: response.allow_change_name,
           allow_change_avatar: response.allow_change_avatar,
         });
@@ -1412,8 +1411,11 @@ useEffect(() => {
     if (groupAvatarPreview) {
       URL.revokeObjectURL(groupAvatarPreview);
     }
+    if (newGroupAvatarPreview && newGroupAvatarPreview.startsWith('blob:')) {
+      URL.revokeObjectURL(newGroupAvatarPreview);
+    }
   };
-}, [groupAvatarPreview]);
+}, []);
   if (!isVisible) return null;
 
   return (
@@ -1489,13 +1491,7 @@ useEffect(() => {
                     <button
                       className="conversation-action-button"
                       onClick={() => {
-                        if (canAddMembers()) {
-                          setShowAddMembersModal(true);
-                        } else {
-                          message.info(
-                            "Bạn không có quyền thêm thành viên vào nhóm"
-                          );
-                        }
+                        setShowAddMembersModal(true);
                       }}
                     >
                       <UserAddOutlined />
@@ -1679,6 +1675,13 @@ useEffect(() => {
                 </Button>,
               ]}
               width={500}
+               bodyStyle={{
+                maxHeight: "calc(90vh - 110px)", // 90% viewport height trừ đi khoảng cho header và footer
+                overflowY: "auto", // Cho phép cuộn dọc khi nội dung vượt quá
+                paddingRight: "16px", // Thêm padding bên phải để tránh nội dung bị che bởi thanh cuộn
+                scrollbarWidth: "none", // Firefox
+                msOverflowStyle: "none", // IE/Edge
+              }}
             >
               <div style={{ marginBottom: 20 }}>
                 <h4>Thông tin cơ bản</h4>
@@ -1777,19 +1780,7 @@ useEffect(() => {
                       )}
                     </div>
 
-                    <div style={{ marginBottom: 10 }}>
-                      <Checkbox
-                        checked={groupSettings.allow_add_members}
-                        onChange={(e) => {
-                          setGroupSettings({
-                            ...groupSettings,
-                            allow_add_members: e.target.checked,
-                          });
-                        }}
-                      >
-                        Cho phép tất cả thành viên thêm người mới
-                      </Checkbox>
-                    </div>
+                    
 
                     <div style={{ marginBottom: 10 }}>
                       <Checkbox
