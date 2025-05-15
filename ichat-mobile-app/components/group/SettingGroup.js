@@ -99,6 +99,17 @@ const SettingGroup = ({ route }) => {
     };
   }, [groupId, user?.id]);
 
+  // Tự động reset loading state sau 1 giây
+  useEffect(() => {
+    if (loading) {
+      const timer = setTimeout(() => {
+        setLoading(false);
+      }, 1000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [loading]);
+
   // Lấy thông tin nhóm
   const fetchGroupDetails = async () => {
     try {
@@ -202,20 +213,36 @@ const SettingGroup = ({ route }) => {
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: "Images",
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
         aspect: [1, 1],
         quality: 0.5,
       });
 
       if (!result.canceled) {
+        setLoading(true);
         const imageUri = result.assets[0].uri;
         setGroupAvatar(imageUri);
+
+        // Tạo đối tượng formData để gửi ảnh
+        const formData = new FormData();
+        // Lấy tên file từ URI
+        const filename = imageUri.split("/").pop();
+        // Đoán mime type
+        const match = /\.(\w+)$/.exec(filename);
+        const type = match ? `image/${match[1]}` : "image/jpeg";
+
+        // Tạo đối tượng file
+        const fileToUpload = {
+          uri: imageUri,
+          name: filename,
+          type: type,
+        };
 
         // Cập nhật ảnh đại diện nhóm
         const response = await groupService.updateGroupAvatar({
           groupId,
-          avatar: imageUri,
+          avatar: fileToUpload,
           currentUserId: user.id,
         });
 
@@ -233,6 +260,8 @@ const SettingGroup = ({ route }) => {
     } catch (error) {
       console.error("Lỗi khi cập nhật ảnh đại diện nhóm:", error);
       Alert.alert("Thông báo", "Không thể cập nhật ảnh đại diện nhóm");
+    } finally {
+      setLoading(false);
     }
   };
 

@@ -213,7 +213,33 @@ const groupService = {
   },
 
   // Cập nhật ảnh đại diện nhóm
-  updateGroupAvatar: async ({ groupId, avatar, currentUserId }) => {},
+  updateGroupAvatar: async ({ groupId, avatar, currentUserId }) => {
+    try {
+      // Tạo FormData để gửi file
+      const formData = new FormData();
+      formData.append("avatar", avatar);
+      formData.append("currentUserId", currentUserId);
+
+      const response = await apiService.put(`/${PREFIX}/${groupId}`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      if (response.data.status === "error") {
+        throw new Error(response.data.message);
+      }
+      if (response.data.status === "ok") {
+        return {
+          status: "ok",
+          message: "Cập nhật ảnh đại diện nhóm thành công.",
+        };
+      }
+    } catch (error) {
+      console.log("Không thể cập nhật ảnh đại diện nhóm: ", error);
+      throw error;
+    }
+  },
 
   // Cập nhật cài đặt nhóm
   updateGroupSettings: async ({
