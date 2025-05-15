@@ -192,26 +192,40 @@ export const updateGroup = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const formData = new FormData();
+      // const formData = new FormData();
 
-      if (name) {
-        formData.append("name", name);
-      }
+      // if (name) {
+      //   formData.append("name", name);
+      // }
 
-      if (avatar) {
-        formData.append("avatar", avatar);
-      }
-      formData.append("allow_add_members", allow_add_members.toString());
-      formData.append("allow_change_name", allow_change_name.toString());
-      formData.append("allow_change_avatar", allow_change_avatar.toString());
-      formData.append("currentUserId", currentUserId);
+      // if (avatar) {
+      //   formData.append("avatar", avatar);
+      // }
+      // formData.append("allow_add_members", allow_add_members);
+      // formData.append("allow_change_name", allow_change_name);
+      // formData.append("allow_change_avatar", allow_change_avatar);
+      // formData.append("currentUserId", currentUserId);
+      // const response = await fetch(`${API_URL}${groupId}`, {
+      //   method: "PUT",
+      //   body: formData,
+      // });
+
+      const body = {
+        name,
+        allow_add_members,
+        allow_change_name,
+        allow_change_avatar,
+        currentUserId,
+      };
+
       const response = await fetch(`${API_URL}${groupId}`, {
         method: "PUT",
-        body: formData,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
       });
-
       const data = await response.json();
-
       if (data.status === "error") {
         return rejectWithValue(data.message);
       }
