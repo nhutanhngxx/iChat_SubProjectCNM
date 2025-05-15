@@ -499,15 +499,15 @@ const Option = ({ route }) => {
                 <Text style={styles.title}>Tạo nhóm với {name}</Text>
               </TouchableOpacity>
               {/* 3 */}
-              <TouchableOpacity style={styles.component}>
+              {/* <TouchableOpacity style={styles.component}>
                 <Image
                   source={require("../../assets/icons/add-friend.png")}
                   style={styles.icon}
                 />
                 <Text style={styles.title}>Thêm {name} vào nhóm</Text>
-              </TouchableOpacity>
+              </TouchableOpacity> */}
               {/* 4 */}
-              <TouchableOpacity style={styles.component}>
+              {/* <TouchableOpacity style={styles.component}>
                 <Image
                   source={require("../../assets/icons/friend.png")}
                   style={styles.icon}
@@ -515,7 +515,7 @@ const Option = ({ route }) => {
                 <Text style={styles.title}>
                   Xem các nhóm chung ({sharedGroups?.length || 0})
                 </Text>
-              </TouchableOpacity>
+              </TouchableOpacity> */}
             </View>
           )}
         </View>
