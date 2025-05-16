@@ -28,6 +28,7 @@
     max-height: 80vh;
     overflow-y: auto;
     overflow-x: hidden;
+    scrollbar-width: none;
 }
 
 .chat-list {
@@ -145,7 +146,8 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 100px;
+    max-width: 200px;
+    display: inline-block;
 }
 
 .file-icon {
