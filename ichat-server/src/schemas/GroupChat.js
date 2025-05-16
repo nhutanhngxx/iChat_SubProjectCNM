@@ -8,7 +8,6 @@ const groupChatSchema = new mongoose.Schema(
       required: true,
     },
     avatar: { type: String, default: "" },
-    allow_add_members: { type: Boolean, default: true },
     allow_change_name: { type: Boolean, default: true },
     allow_change_avatar: { type: Boolean, default: true },
     require_approval: { type: Boolean, default: false }, // Yêu cầu thêm thành viên mới phải được duyệt bởi nhóm trưởng (admin)
