@@ -86,5 +86,7 @@ router.post(
   upload.array("images", 10), // Giới hạn 10 ảnh
   MessageController.sendMultipleImages
 );
+// Xoá lịch sử trò chuyện
+router.post("/delete-all-messages", MessageController.deleteAllMessagesForUser);
 
 module.exports = router;

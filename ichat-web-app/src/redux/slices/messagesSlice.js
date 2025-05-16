@@ -3,6 +3,35 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 // const API_URL = "http://localhost:5001/messages/";
 const API_URL = `http://${window.location.hostname}:5001/api/messages/`;
 
+// Xóa toàn bộ lịch sử tin nhắn của một cuộc trò chuyện cho người dùng hiện tại
+export const deleteAllMessagesForUser = createAsyncThunk(
+  "messages/deleteAllMessagesForUser",
+  async ({ userId, partnerId, chatType = "private" }, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${API_URL}delete-all-messages`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userId, partnerId, chatType }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        return rejectWithValue(data);
+      }
+
+      return data;
+    } catch (error) {
+      console.error("Error deleting conversation:", error);
+      return rejectWithValue({
+        error: "Network error",
+        details: error.message,
+      });
+    }
+  }
+);
 // Chuyển tiếp tin nhắn
 export const forwardMessage = createAsyncThunk(
   "messages/forwardMessage",
@@ -734,6 +763,36 @@ const messagesSlice = createSlice({
         state.loading = false;
         state.error = action.payload?.message || "Could not upload images";
         console.error("Failed to send multiple images:", action.payload);
+      })
+      .addCase(deleteAllMessagesForUser.pending, (state) => {
+        state.status = "loading";
+      })
+      .addCase(deleteAllMessagesForUser.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        // Khi xóa thành công, làm trống danh sách tin nhắn trong cuộc trò chuyện hiện tại
+        state.chatMessages = [];
+
+        // Có thể thêm một thông báo thành công vào state nếu cần
+        state.lastAction = {
+          type: "deleteConversation",
+          status: "success",
+          message: "Đã xóa lịch sử cuộc trò chuyện",
+          timestamp: new Date().toISOString(),
+        };
+      })
+      .addCase(deleteAllMessagesForUser.rejected, (state, action) => {
+        state.status = "failed";
+        state.error =
+          action.payload?.message || "Không thể xóa lịch sử cuộc trò chuyện";
+
+        // Ghi lại thông tin lỗi để debugging
+        state.lastAction = {
+          type: "deleteConversation",
+          status: "failed",
+          message:
+            action.payload?.message || "Không thể xóa lịch sử cuộc trò chuyện",
+          timestamp: new Date().toISOString(),
+        };
       });
   },
 });

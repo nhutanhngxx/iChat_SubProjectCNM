@@ -596,6 +596,7 @@ const GroupModel = {
       chat_type: "group",
       receiver_id: groupId,
       content: { $regex: keyword, $options: "i" },
+      isdelete: { $ne: new mongoose.Types.ObjectId(userId) }, // Bỏ qua tin nhắn đã bị xóa bởi user
     }).sort({ timestamp: -1 });
   },
 

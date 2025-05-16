@@ -24,6 +24,7 @@ import {
   DeleteOutlined,
   CloseOutlined,
   UserAddOutlined,
+  MessageOutlined,
 } from "@ant-design/icons";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -617,8 +618,7 @@ const MessageArea = ({ selectedChat, user, onChatChange, onSelectUser }) => {
             messageEndRef.current.scrollIntoView({ behavior: "smooth" });
           }
         }, 100);
-      } catch (error) {
-      }
+      } catch (error) {}
     }
   };
   const handleImageUpload = async (imageFile) => {
@@ -701,7 +701,6 @@ const MessageArea = ({ selectedChat, user, onChatChange, onSelectUser }) => {
         message.loading({ content: "Đang tải lên...", key: "uploadMedia" });
         // Determine file type if not provided
         const fileType = mediaType || determineFileType(file);
-
 
         // Create form data
         const formData = new FormData();
@@ -820,7 +819,6 @@ const MessageArea = ({ selectedChat, user, onChatChange, onSelectUser }) => {
         .filter((id) => id); // Lọc ra các ID hợp lệ
 
       if (repliedIds.length > 0) {
-
         try {
           // API call với danh sách ID để lấy tất cả tin nhắn cùng lúc
           const response = await dispatch(
@@ -831,7 +829,6 @@ const MessageArea = ({ selectedChat, user, onChatChange, onSelectUser }) => {
               repliedIds: repliedIds, // Truyền danh sách ID cần lấy
             })
           ).unwrap();
-
         } catch (error) {
           console.error("Failed to fetch replies:", error);
         }
@@ -926,7 +923,15 @@ const MessageArea = ({ selectedChat, user, onChatChange, onSelectUser }) => {
                 />
               </div>
             )}
-            {Array.isArray(displayMessages) ? (
+
+            {!Array.isArray(displayMessages) || displayMessages.length === 0 ? (
+              <div className="empty-conversation">
+                <MessageOutlined
+                  style={{ fontSize: "80px", opacity: 0.5, color: "#d9d9d9" }}
+                />
+                <p>Không có tin nhắn nào. Hãy bắt đầu cuộc trò chuyện!</p>
+              </div>
+            ) : (
               displayMessages
                 .filter((message) => {
                   // Simple, direct comparison focusing on string IDs
@@ -952,12 +957,9 @@ const MessageArea = ({ selectedChat, user, onChatChange, onSelectUser }) => {
                     />
                   </React.Fragment>
                 ))
-            ) : (
-              <div className="no-messages">No messages to display</div>
             )}
 
-            {/* Single scroll reference at the end */}
-            <div ref={messageEndRef} />
+            <div ref={messageEndRef}></div>
           </div>
         </Content>
 

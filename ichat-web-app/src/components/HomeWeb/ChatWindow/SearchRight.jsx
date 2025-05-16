@@ -295,7 +295,14 @@ const SearchRight = ({
     
     setTimeout(() => {
       let results = [...messages];
-      
+      // THÊM: Lọc bỏ tin nhắn đã xóa mềm
+    results = results.filter(msg => {
+      if (!Array.isArray(msg.isdelete)) {
+        return true; // Giữ lại nếu không có mảng isdelete
+      }
+      // Loại bỏ nếu ID người dùng hiện tại có trong mảng isdelete
+      return !msg.isdelete.some(id => id === user.id || id === String(user.id));
+    });
       // Lọc theo nội dung (text)
       if (text.trim()) {
         results = results.filter(msg => 

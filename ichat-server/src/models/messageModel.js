@@ -49,6 +49,7 @@ const MessageModel = {
           { type: "text" },
           { content: { $regex: keyword, $options: "i" } }, // Tìm kiếm không phân biệt hoa thường
           { content: { $ne: "Tin nhắn đã được thu hồi" } }, // Loại bỏ tin nhắn thu hồi
+          { isdelete: { $ne: userObjectId } }, // Bỏ qua tin nhắn đã xóa bởi người dùng
           {
             $or: [
               // Tin nhắn cá nhân
@@ -199,6 +200,7 @@ const MessageModel = {
   getUserMessages: async (userId) => {
     return await Messages.find({
       $or: [{ sender_id: userId }, { receiver_id: userId }],
+      isdelete: { $ne: userId }, // Bỏ qua những tin nhắn mà userId nằm trong isdelete
     }).sort({ createdAt: 1 });
   },
 
@@ -208,6 +210,7 @@ const MessageModel = {
         { sender_id: userId, receiver_id: receiverId },
         { sender_id: receiverId, receiver_id: userId },
       ],
+      isdelete: { $ne: userId }, // Bỏ qua những tin nhắn mà userId nằm trong isdelete
     }).sort({ createdAt: 1 });
   },
 
@@ -353,6 +356,67 @@ const MessageModel = {
     });
 
     return message; // hoặc return null nếu user đã xóa
+  },
+  // Thêm phương thức này vào MessageModel
+  deleteConversationForUser: async function (
+    userId,
+    partnerId,
+    chatType = "private"
+  ) {
+    try {
+      // Convert IDs to ObjectId
+      const userObjectId = new mongoose.Types.ObjectId(userId);
+      const partnerObjectId = new mongoose.Types.ObjectId(partnerId);
+
+      // Tạo điều kiện tìm kiếm tin nhắn dựa vào chatType
+      let filter = {};
+
+      if (chatType === "private") {
+        // Trường hợp chat riêng tư - tìm tất cả tin nhắn giữa hai người dùng
+        filter = {
+          $or: [
+            {
+              sender_id: userObjectId,
+              receiver_id: partnerObjectId,
+              chat_type: "private",
+            },
+            {
+              sender_id: partnerObjectId,
+              receiver_id: userObjectId,
+              chat_type: "private",
+            },
+          ],
+          // Chỉ lấy những tin nhắn mà người dùng chưa xóa
+          isdelete: { $not: { $elemMatch: { $eq: userObjectId } } },
+        };
+      } else if (chatType === "group") {
+        // Trường hợp chat nhóm - tìm tất cả tin nhắn trong nhóm
+        filter = {
+          receiver_id: partnerObjectId, // partnerId chính là group_id trong trường hợp này
+          chat_type: "group",
+          // Chỉ lấy những tin nhắn mà người dùng chưa xóa
+          isdelete: { $not: { $elemMatch: { $eq: userObjectId } } },
+        };
+      } else {
+        throw new Error("Loại chat không hợp lệ");
+      }
+
+      // Thêm ID người dùng vào mảng isdelete của tất cả tin nhắn phù hợp
+      const result = await Messages.updateMany(filter, {
+        $addToSet: { isdelete: userObjectId },
+      });
+
+      return {
+        success: true,
+        matchedCount: result.matchedCount,
+        modifiedCount: result.modifiedCount,
+      };
+    } catch (error) {
+      console.error("Lỗi khi xóa lịch sử cuộc trò chuyện:", error);
+      throw new Error(
+        "Không thể xóa lịch sử cuộc trò chuyện: " + error.message
+      );
+    }
   },
 };
 

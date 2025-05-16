@@ -68,6 +68,7 @@ import {
   fetchChatMessages,
   fetchMessages,
   getUserMessages,
+  deleteAllMessagesForUser
 } from "../../../redux/slices/messagesSlice";
 import { GrContract } from "react-icons/gr";
 import GifPicker from "./GifPicker";
@@ -436,35 +437,60 @@ const ConversationDetails = ({
     }
   };
   // Hàm kiểm tra xem hai người đã là bạn bè chưa
+  // const checkFriendshipStatus = async (memberId) => {
+  //   if (memberId === user.id) return false; // Không thể kết bạn với chính mình
+
+  //   setIsCheckingFriend(true);
+  //   try {
+  //     // Lấy danh sách bạn bè của user hiện tại
+  //     const response = await axios.get(
+  //       `http://${window.location.hostname}:5001/api/friendships/${user.id}`
+  //     );
+
+  //     // Kiểm tra xem memberId có trong danh sách bạn bè không
+  //     if (response.data && response.data.friends) {
+  //       const isFriend = response.data.friends.some(
+  //         (friend) =>
+  //           // Kiểm tra cả id và _id vì có thể có sự khác nhau trong cấu trúc dữ liệu
+  //           friend.id === memberId || friend._id === memberId
+  //       );
+  //       setIsCheckingFriend(false);
+  //       return isFriend;
+  //     }
+
+  //     setIsCheckingFriend(false);
+  //     return false;
+  //   } catch (error) {
+  //     console.error("Lỗi khi kiểm tra trạng thái bạn bè:", error);
+  //     setIsCheckingFriend(false);
+  //     return false;
+  //   }
+  // };
   const checkFriendshipStatus = async (memberId) => {
-    if (memberId === user.id) return false; // Không thể kết bạn với chính mình
+  if (memberId === user.id) return false; // Không thể kết bạn với chính mình
 
-    setIsCheckingFriend(true);
-    try {
-      // Lấy danh sách bạn bè của user hiện tại
-      const response = await axios.get(
-        `http://${window.location.hostname}:5001/api/friendships/${user.id}`
+  setIsCheckingFriend(true);
+  try {
+    // Sử dụng getUserFriends từ Redux thay vì gọi API trực tiếp
+    const response = await dispatch(getUserFriends(user.id)).unwrap();
+
+    // Kiểm tra xem memberId có trong danh sách bạn bè không
+    if (response && response.friends) {
+      const isFriend = response.friends.some(
+        (friend) => friend.id === memberId || friend._id === memberId
       );
-
-      // Kiểm tra xem memberId có trong danh sách bạn bè không
-      if (response.data && response.data.friends) {
-        const isFriend = response.data.friends.some(
-          (friend) =>
-            // Kiểm tra cả id và _id vì có thể có sự khác nhau trong cấu trúc dữ liệu
-            friend.id === memberId || friend._id === memberId
-        );
-        setIsCheckingFriend(false);
-        return isFriend;
-      }
-
       setIsCheckingFriend(false);
-      return false;
-    } catch (error) {
-      console.error("Lỗi khi kiểm tra trạng thái bạn bè:", error);
-      setIsCheckingFriend(false);
-      return false;
+      return isFriend;
     }
-  };
+
+    setIsCheckingFriend(false);
+    return false;
+  } catch (error) {
+    console.error("Lỗi khi kiểm tra trạng thái bạn bè:", error);
+    setIsCheckingFriend(false);
+    return false;
+  }
+};
   // Xử lý khi nhấp vào avatar của thành viên
   const handleMemberClick = async (member) => {
     setSelectedMember(member);
@@ -909,26 +935,44 @@ const ConversationDetails = ({
     }
   }
   // Tìm bạn bè
-  const fetchFriends = async () => {
-    try {
-      const response = await axios.get(
-        `http://${window.location.hostname}:5001/api/friendships/${user.id}`
-      );
-      // console.log("Friends response:", response.data.friends);
+  // const fetchFriends = async () => {
+  //   try {
+  //     const response = await axios.get(
+  //       `http://${window.location.hostname}:5001/api/friendships/${user.id}`
+  //     );
+  //     // console.log("Friends response:", response.data.friends);
 
-      if (response.data && response.data.friends) {
-        // Lọc ra bạn bè chưa có trong nhóm
-        const existingMemberIds = groupMembers.map((member) => member.user_id);
-        const availableFriends = response.data.friends.filter(
-          (friend) => !existingMemberIds.includes(friend.id || friend._id)
-        );
-        setFriends(availableFriends);
-      }
-    } catch (error) {
-      console.error("Error fetching friends:", error);
-      message.error("Không thể lấy danh sách bạn bè");
+  //     if (response.data && response.data.friends) {
+  //       // Lọc ra bạn bè chưa có trong nhóm
+  //       const existingMemberIds = groupMembers.map((member) => member.user_id);
+  //       const availableFriends = response.data.friends.filter(
+  //         (friend) => !existingMemberIds.includes(friend.id || friend._id)
+  //       );
+  //       setFriends(availableFriends);
+  //     }
+  //   } catch (error) {
+  //     console.error("Error fetching friends:", error);
+  //     message.error("Không thể lấy danh sách bạn bè");
+  //   }
+  // };
+  const fetchFriends = async () => {
+  try {
+    // Sử dụng getUserFriends từ Redux thay vì gọi API trực tiếp
+    const friendsResult = await dispatch(getUserFriends(user.id)).unwrap();
+    
+    if (friendsResult && friendsResult.friends) {
+      // Lọc ra bạn bè chưa có trong nhóm
+      const existingMemberIds = groupMembers.map((member) => member.user_id);
+      const availableFriends = friendsResult.friends.filter(
+        (friend) => !existingMemberIds.includes(friend.id || friend._id)
+      );
+      setFriends(availableFriends);
     }
-  };
+  } catch (error) {
+    console.error("Error fetching friends:", error);
+    message.error("Không thể lấy danh sách bạn bè");
+  }
+};
 
   // Gọi hàm này khi mở modal thêm thành viên
   useEffect(() => {
@@ -1294,15 +1338,45 @@ const ConversationDetails = ({
     }
   };
 
-  const handleDeleteHistory = async () => {
-    try {
-      // Implementation for deleting chat history
-      // await axios.delete(...);
-      message.success("Đã xóa lịch sử trò chuyện");
-      setShowDeleteHistoryModal(false);
-    } catch (error) {
-      message.error("Không thể xóa lịch sử trò chuyện. Vui lòng thử lại.");
-    }
+    const handleDeleteHistory = async () => {
+        message.loading({ content: 'Đang xóa tin nhắn...', key: 'deleteConvo' });
+        
+        dispatch(deleteAllMessagesForUser({
+          userId: user.id || user._id,
+          partnerId: selectedChat.id,
+          chatType: selectedChat.chat_type || 'private'
+        }))
+          .unwrap()
+          .then((result) => {
+            message.success({
+              content: 'Đã xóa lịch sử cuộc trò chuyện',
+              key: 'deleteConvo'
+            });
+            
+            // Đóng modal xóa lịch sử
+            setShowDeleteHistoryModal(false);
+            
+            // Cập nhật danh sách hội thoại trong sidebar
+            dispatch(fetchMessages(user.id || user._id));
+            
+            // Kiểm tra loại chat và gọi API phù hợp
+            if (selectedChat.chat_type === "group") {
+              // Nếu là nhóm, gọi getUserMessages
+              dispatch(getUserMessages(selectedChat.id));
+            } else {
+              // Nếu là chat 1-1, gọi fetchChatMessages
+              dispatch(fetchChatMessages({
+                senderId: user.id || user._id,
+                receiverId: selectedChat.id
+              }));
+            }
+          })
+          .catch((error) => {
+            message.error({
+              content: error.message || 'Không thể xóa tin nhắn',
+              key: 'deleteConvo'
+            });
+          });
   };
 
   const visibleMedia = showAll ? mediaItems : mediaItems.slice(0, 8);

@@ -787,6 +787,37 @@ const MessageController = {
       res.status(500).json({ error: "Failed to soft delete messages." });
     }
   },
+  // Hàm để xóa tất cả tin nhắn trong cuộc trò chuyện
+  deleteAllMessagesForUser: async (req, res) => {
+    try {
+      const { userId, partnerId, chatType } = req.body;
+
+      if (!userId || !partnerId) {
+        return res.status(400).json({
+          status: "error",
+          message: "Thiếu thông tin userId hoặc partnerId",
+        });
+      }
+
+      const result = await MessageModel.deleteConversationForUser(
+        userId,
+        partnerId,
+        chatType
+      );
+
+      res.status(200).json({
+        status: "ok",
+        message: `Lịch sử trò chuyện đã được xóa thành công cho người dùng.`,
+        affected: result.modifiedCount,
+      });
+    } catch (error) {
+      console.error("Lỗi khi xóa toàn bộ tin nhắn:", error);
+      res.status(500).json({
+        status: "error",
+        message: "Không thể xóa lịch sử trò chuyện",
+      });
+    }
+  },
 };
 
 module.exports = MessageController;
