@@ -450,7 +450,7 @@ const GroupModel = {
   // 5. Đổi tên Group / Set avatar
   updateGroup: async (
     groupId,
-    { name, avatar, allow_change_name, allow_change_avatar },
+    { name, avatar, require_approval, allow_change_name, allow_change_avatar },
     updatedById
   ) => {
     try {
@@ -491,6 +491,16 @@ const GroupModel = {
       ) {
         update.allow_change_avatar = allow_change_avatar;
         updatedFields.push("quyền đổi ảnh nhóm");
+      }
+
+      if (
+        require_approval !== undefined &&
+        require_approval !== currentGroup.require_approval
+      ) {
+        update.require_approval = require_approval;
+        updatedFields.push(
+          "yêu cầu phê duyệt khi có thành viên mới muốn tham gia"
+        );
       }
 
       // Nếu không có gì thay đổi thì trả về nhóm hiện tại

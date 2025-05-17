@@ -58,6 +58,14 @@ const SettingGroup = ({ route }) => {
       }
     });
 
+    socketService.onMemberApprovalUpdated(
+      ({ groupId: receivedGroupId, requireApproval }) => {
+        if (groupId === receivedGroupId) {
+          setAllowAddMembers(requireApproval);
+        }
+      }
+    );
+
     socketService.onRoleUpdated(
       ({ groupId: receivedGroupId, userId, role }) => {
         if (groupId === receivedGroupId) {
@@ -270,13 +278,21 @@ const SettingGroup = ({ route }) => {
     try {
       const response = await groupService.updateGroupSettings({
         groupId,
-        allow_add_members: allowAddMembers,
+        require_approval: allowAddMembers,
         allow_change_name: allowChangeName,
         allow_change_avatar: allowChangeAvatar,
         currentUserId: user.id,
       });
 
       if (response && response.status === "ok") {
+        socketService.handleUpdateGroup({
+          groupId,
+          name: "",
+          avatar: "",
+          require_approval: allowAddMembers,
+          allow_change_name: allowChangeName,
+          allow_change_avatar: allowChangeAvatar,
+        });
         Alert.alert("Thông báo", "Cập nhật cài đặt nhóm thành công");
       } else {
         Alert.alert("Thông báo", "Cập nhật cài đặt nhóm thất bại");
@@ -455,7 +471,7 @@ const SettingGroup = ({ route }) => {
 
                 <View style={styles.permissionItem}>
                   <Text style={styles.permissionText}>
-                    Cho phép thành viên thêm bạn vào nhóm (Phê duyệt thành viên)
+                    Yêu cầu phê duyệt khi có thành viên mới muốn tham gia
                   </Text>
                   <Switch
                     value={allowAddMembers}

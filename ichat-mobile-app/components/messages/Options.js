@@ -9,6 +9,7 @@ import {
   Alert,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
+import * as ImagePicker from "expo-image-picker";
 
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { UserContext } from "../../config/context/UserContext";
@@ -21,6 +22,7 @@ import friendService from "../../services/friendService";
 import ModalRenameGroup from "../group/ModalRenameGroup";
 import ModalSelectAdmin from "../group/ModalSelectAdmin";
 import socketService from "../../services/socketService";
+import { Avatar } from "@rneui/themed";
 
 const Option = ({ route }) => {
   const navigation = useNavigation();
@@ -36,6 +38,8 @@ const Option = ({ route }) => {
   const [isSelectAdminModalVisible, setIsSelectAdminModalVisible] =
     useState(false); // Modal chọn quản trị viên mới trước khi rời khỏi nhóm
 
+  const [updatedAvatar, setUpdatedAvatar] = useState(null);
+
   // Lắng nghe sự kiện từ socket
   useEffect(() => {
     if (!id) return;
@@ -43,15 +47,27 @@ const Option = ({ route }) => {
     socketService.joinRoom(id);
 
     // Lắng nghe sự kiện cập nhật thông tin nhóm
-    socketService.onGroupUpdated(({ groupId, name, avatar }) => {
-      if (id === groupId) {
-        setReceiverGroup((prev) => ({
-          ...prev,
-          name: name || prev.name,
-          avatar: avatar || prev.avatar,
-        }));
+    socketService.onGroupUpdated(
+      ({
+        groupId,
+        name,
+        avatar,
+        allow_change_name,
+        allow_change_avatar,
+        require_approval,
+      }) => {
+        if (id === groupId) {
+          setReceiverGroup((prev) => ({
+            ...prev,
+            name: name || prev.name,
+            avatar: avatar || prev.avatar,
+            allow_change_name: allow_change_name,
+            allow_change_avatar: allow_change_avatar,
+            require_approval: require_approval,
+          }));
+        }
       }
-    });
+    );
 
     // Lắng nghe sự kiện chuyển quyền quản trị viên
     socketService.onAdminTransferred(({ groupId, userId }) => {
@@ -315,21 +331,127 @@ const Option = ({ route }) => {
     }
   };
 
+  // Xử lý khi người dùng chọn ảnh đại diện mới cho nhóm
+  const handlePickAvatar = async () => {
+    try {
+      const permissionResult =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+      if (!permissionResult.granted) {
+        Alert.alert(
+          "Thông báo",
+          "Cần quyền truy cập thư viện ảnh để thay đổi ảnh đại diện"
+        );
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.5,
+      });
+
+      if (!result.canceled) {
+        const imageUri = result.assets[0].uri;
+
+        // Tạo đối tượng formData để gửi ảnh
+        const formData = new FormData();
+        // Lấy tên file từ URI
+        const filename = imageUri.split("/").pop();
+        // Đoán mime type
+        const match = /\.(\w+)$/.exec(filename);
+        const type = match ? `image/${match[1]}` : "image/jpeg";
+
+        // Tạo đối tượng file
+        const fileToUpload = {
+          uri: imageUri,
+          name: filename,
+          type: type,
+        };
+
+        // Cập nhật ảnh đại diện nhóm
+        const response = await groupService.updateGroupAvatar({
+          groupId: id,
+          avatar: fileToUpload,
+          currentUserId: user.id,
+        });
+
+        if (response && response.status === "ok") {
+          setUpdatedAvatar(imageUri);
+          socketService.handleUpdateGroup({
+            groupId: id,
+            name: "",
+            avatar: true,
+          });
+          Alert.alert("Thông báo", "Cập nhật ảnh đại diện nhóm thành công");
+        } else {
+          Alert.alert("Thông báo", "Cập nhật ảnh đại diện nhóm thất bại");
+        }
+      }
+    } catch (error) {
+      console.error("Lỗi khi cập nhật ảnh đại diện nhóm:", error);
+      Alert.alert("Thông báo", "Không thể cập nhật ảnh đại diện nhóm");
+    }
+  };
+
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
       <HeaderOption />
       <View style={styles.profileContainer}>
-        <Image
+        {/* <Image
           source={{
             uri: receiverInfo?.avatar_path || receiverGroup?.avatar,
           }}
           style={styles.avatar}
         />
-        {!adminGroup && !subAdminGroup && (
-          <Text style={styles.name}>{name}</Text>
-        )}
-        {(adminGroup || subAdminGroup) && (
+        {!receiverGroup.allow_change_avatar && !adminGroup && !subAdminGroup ? (
+          <></>
+        ) : (
+          <View style={styles.changeAvatarContainer}>
+            <TouchableOpacity onPress={handlePickAvatar}>
+              <Text style={styles.changeAvatarText}>Đổi ảnh đại diện</Text>
+            </TouchableOpacity>
+          </View>
+        )} */}
+
+        {/* Hiển thị ảnh */}
+        <TouchableOpacity
+          style={styles.avatarContainer}
+          onPress={handlePickAvatar}
+          disabled={
+            !receiverGroup.allow_change_avatar && !adminGroup && !subAdminGroup
+          }
+        >
+          <Avatar
+            size={80}
+            rounded
+            source={
+              updatedAvatar
+                ? { uri: updatedAvatar }
+                : receiverInfo?.avatar_path
+                ? { uri: receiverInfo.avatar_path }
+                : receiverGroup?.avatar
+                ? { uri: receiverGroup.avatar }
+                : require("../../assets/icons/gif.png")
+            }
+          />
+          {(receiverGroup.allow_change_avatar ||
+            adminGroup ||
+            subAdminGroup) && (
+            <View style={styles.editAvatarButton}>
+              <Image
+                source={require("../../assets/icons/image.png")}
+                style={styles.cameraIcon}
+              />
+            </View>
+          )}
+        </TouchableOpacity>
+        {/* Hiển thị tên */}
+        {!isGroup && <Text style={styles.name}>{name}</Text>}
+        {/* Nút chỉnh sửa tên nhóm */}
+        {isGroup && (
           <View
             style={{
               flexDirection: "row",
@@ -338,18 +460,20 @@ const Option = ({ route }) => {
             }}
           >
             <Text style={styles.name}>{receiverGroup?.name}</Text>
-            {/* <TouchableOpacity onPress={() => setIsRenameModalVisible(true)}>
-              <Image
-                source={require("../../assets/icons/edit.png")}
-                style={[styles.icon, { marginTop: 10 }]}
-              />
-            </TouchableOpacity> */}
+            {receiverGroup.allow_change_name || adminGroup || subAdminGroup ? (
+              <TouchableOpacity onPress={() => setIsRenameModalVisible(true)}>
+                <Image
+                  source={require("../../assets/icons/edit.png")}
+                  style={[styles.icon, { marginTop: 10 }]}
+                />
+              </TouchableOpacity>
+            ) : null}
           </View>
         )}
       </View>
 
       {/* Function under Avatar - User */}
-      {!adminGroup && !subAdminGroup && (
+      {!isGroup && (
         <View
           style={{
             flexDirection: "row",
@@ -366,17 +490,6 @@ const Option = ({ route }) => {
               />
             </TouchableOpacity>
             <Text style={{ textAlign: "center" }}>Tìm tin nhắn</Text>
-          </View>
-          <View style={{ width: 105, gap: 10, alignItems: "center" }}>
-            <TouchableOpacity
-              onPress={() => navigation.navigate("AddMember", { groupId: id })}
-            >
-              <Image
-                source={require("../../assets/icons/add-friend.png")}
-                style={styles.icon}
-              />
-            </TouchableOpacity>
-            <Text>Thêm thành viên</Text>
           </View>
           {receiverInfo && (
             <View style={{ width: 100, gap: 10, alignItems: "center" }}>
@@ -399,7 +512,7 @@ const Option = ({ route }) => {
       )}
 
       {/* Function under Avatar - Group */}
-      {(adminGroup || subAdminGroup) && (
+      {isGroup && (
         <View
           style={{
             flexDirection: "row",
@@ -431,15 +544,19 @@ const Option = ({ route }) => {
             <Text>Thêm thành viên</Text>
           </View>
           {/* 3. Đổi ảnh nhóm */}
-          {/* <View style={{ width: 105, gap: 10, alignItems: "center" }}>
-            <TouchableOpacity>
-              <Image
-                source={require("../../assets/icons/image.png")}
-                style={styles.icon}
-              />
-            </TouchableOpacity>
-            <Text>Đổi ảnh đại diện</Text>
-          </View> */}
+          {(receiverGroup?.allow_change_avatar ||
+            adminGroup ||
+            subAdminGroup) && (
+            <View style={{ width: 105, gap: 10, alignItems: "center" }}>
+              <TouchableOpacity onPress={handlePickAvatar}>
+                <Image
+                  source={require("../../assets/icons/image.png")}
+                  style={styles.icon}
+                />
+              </TouchableOpacity>
+              <Text>Đổi ảnh đại diện</Text>
+            </View>
+          )}
         </View>
       )}
 
@@ -703,6 +820,26 @@ const styles = StyleSheet.create({
     gap: 10,
     alignItems: "center",
     paddingBottom: 5,
+  },
+  avatarContainer: {
+    marginRight: 15,
+    position: "relative",
+  },
+  editAvatarButton: {
+    position: "absolute",
+    bottom: 0,
+    right: 0,
+    backgroundColor: "#2F80ED",
+    borderRadius: 15,
+    width: 30,
+    height: 30,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  cameraIcon: {
+    width: 24,
+    height: 24,
+    tintColor: "white",
   },
 });
 

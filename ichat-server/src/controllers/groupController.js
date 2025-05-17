@@ -207,6 +207,10 @@ const GroupController = {
         update.allow_change_avatar = req.body.allow_change_avatar === true;
       }
 
+      if (req.body.require_approval !== undefined) {
+        update.require_approval = req.body.require_approval === true;
+      }
+
       console.log("Update data:", update, "currentUserId:", currentUserId);
 
       const upd = await GroupModel.updateGroup(groupId, update, currentUserId);

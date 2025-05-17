@@ -218,9 +218,23 @@ class SocketService {
   }
 
   // Cập nhật thông tin nhóm
-  handleUpdateGroup({ groupId, name, avatar }) {
+  handleUpdateGroup({
+    groupId,
+    name,
+    avatar,
+    require_approval,
+    allow_change_name,
+    allow_change_avatar,
+  }) {
     if (this.ensureConnection()) {
-      this.socket.emit("update-group", { groupId, name, avatar });
+      this.socket.emit("update-group", {
+        groupId,
+        name,
+        avatar,
+        require_approval,
+        allow_change_name,
+        allow_change_avatar,
+      });
     }
   }
   onGroupUpdated(callback) {

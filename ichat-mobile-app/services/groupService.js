@@ -244,7 +244,7 @@ const groupService = {
   // Cập nhật cài đặt nhóm
   updateGroupSettings: async ({
     groupId,
-    allow_add_members,
+    require_approval,
     allow_change_name,
     allow_change_avatar,
     currentUserId,
@@ -252,14 +252,15 @@ const groupService = {
     console.log(
       "Update group settings:",
       groupId,
-      allow_add_members,
+      require_approval,
       allow_change_name,
       allow_change_avatar,
       currentUserId
     );
+
     try {
       const response = await apiService.put(`/${PREFIX}/${groupId}`, {
-        allow_add_members,
+        require_approval,
         allow_change_name,
         allow_change_avatar,
         currentUserId,
