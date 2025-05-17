@@ -543,45 +543,45 @@ const MessageController = {
 
       // PHẦN MỚI: LẤY DANH SÁCH NHÓM CHƯA CÓ TIN NHẮN
       // Lấy ID của các nhóm đã có tin nhắn
-      const existingGroupChatIds = recentGroupMessages.map((group) =>
-        group.receiver_id.toString()
-      );
+      // const existingGroupChatIds = recentGroupMessages.map((group) =>
+      //   group.receiver_id.toString()
+      // );
 
-      // Tìm các nhóm chưa có tin nhắn
-      const groupsWithNoMessages = [];
+      // // Tìm các nhóm chưa có tin nhắn
+      // const groupsWithNoMessages = [];
 
-      for (const groupId of groupObjectIds) {
-        if (!existingGroupChatIds.includes(groupId.toString())) {
-          // Lấy thông tin của nhóm
-          const groupInfo = await GroupChat.findById(groupId);
-          if (groupInfo) {
-            groupsWithNoMessages.push({
-              receiver_id: groupId,
-              name: groupInfo.name,
-              group_name: groupInfo.name,
-              avatar_path: groupInfo.avatar,
-              lastMessage: "", // Tin nhắn trống
-              originalMessage: "",
-              timestamp: groupInfo.created_at || new Date(),
-              status: "none",
-              user_status: "online", // Nhóm luôn "online"
-              type: "text",
-              unread: 0,
-              isLastMessageFromMe: false,
-              chat_type: "group",
-              sender_name: "",
-              admin_id: groupInfo.admin_id,
-            });
-          }
-        }
-      }
+      // for (const groupId of groupObjectIds) {
+      //   if (!existingGroupChatIds.includes(groupId.toString())) {
+      //     // Lấy thông tin của nhóm
+      //     const groupInfo = await GroupChat.findById(groupId);
+      //     if (groupInfo) {
+      //       groupsWithNoMessages.push({
+      //         receiver_id: groupId,
+      //         name: groupInfo.name,
+      //         group_name: groupInfo.name,
+      //         avatar_path: groupInfo.avatar,
+      //         lastMessage: "", // Tin nhắn trống
+      //         originalMessage: "",
+      //         timestamp: groupInfo.created_at || new Date(),
+      //         status: "none",
+      //         user_status: "online", // Nhóm luôn "online"
+      //         type: "text",
+      //         unread: 0,
+      //         isLastMessageFromMe: false,
+      //         chat_type: "group",
+      //         sender_name: "",
+      //         admin_id: groupInfo.admin_id,
+      //       });
+      //     }
+      //   }
+      // }
 
       // PHẦN 3: KẾT HỢP CẢ HAI VÀ SẮP XẾP
       const allRecentMessages = [
         ...recentPrivateReceivers,
         ...friendsWithNoMessages,
         ...recentGroupMessages,
-        ...groupsWithNoMessages,
+        // ...groupsWithNoMessages,
       ].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
       res.status(200).json({ success: true, data: allRecentMessages });

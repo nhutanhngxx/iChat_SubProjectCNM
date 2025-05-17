@@ -927,7 +927,7 @@ const MessageArea = ({ selectedChat, user, onChatChange, onSelectUser }) => {
             {!Array.isArray(displayMessages) || displayMessages.length === 0 ? (
               <div className="empty-conversation">
                 <MessageOutlined
-                  style={{ fontSize: "80px", opacity: 0.5, color: "#d9d9d9" }}
+                  style={{ fontSize: "80px", opacity: 0.5, color: "black" }}
                 />
                 <p>Không có tin nhắn nào. Hãy bắt đầu cuộc trò chuyện!</p>
               </div>

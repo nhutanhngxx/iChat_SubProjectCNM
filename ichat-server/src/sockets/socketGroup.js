@@ -5,7 +5,7 @@ module.exports = (io) => {
     // Tham gia room theo groupId
     socket.on("join-room", (groupId) => {
       socket.join(groupId);
-      console.log(` Socket ${socket.id} joined room: ${groupId}`);
+      // console.log(` Socket ${socket.id} joined room: ${groupId}`);
     });
     //lawng nghe tao nhom
     socket.on("create-group", (groupId, groupData) => {

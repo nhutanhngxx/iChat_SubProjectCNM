@@ -71,7 +71,7 @@ const formatDate = (date) => {
 
 // Format bytes helper
 const formatBytes = (bytes, decimals = 2) => {
-  if (!bytes) return "0 Bytes";
+  if (!bytes) return "Không rõ dung lượng";
   
   const k = 1024;
   const dm = decimals < 0 ? 0 : decimals;
@@ -173,13 +173,20 @@ const ComponentLeftSearch = ({ userList, onClose, onSelectChat, user, onSelectUs
   // Cache cho thông tin người dùng để không phải fetch nhiều lần
   const [userInfoCache, setUserInfoCache] = useState({});
   
-  // State lưu trữ thông tin người dùng được tìm nạp
+  // State lưu trữ thông tin người dùng được tìm kiếm
   const [usersLoading, setUsersLoading] = useState(false);
-  
+  const [processedFiles, setProcessedFiles] = useState([]);
+
+
   // Load user messages when component mounts
-  useEffect(() => {
-    if (user?.id) {
-      dispatch(fetchMessages(user.id));
+  // Thay thế useEffect
+useEffect(() => {
+  if (user?.id) {
+    // Chỉ fetch danh sách cuộc trò chuyện gần đây cho sidebar, không fetch tất cả tin nhắn
+    dispatch(fetchMessages(user.id));
+    
+    // Chỉ fetch dữ liệu tin nhắn khi người dùng đã nhập text tìm kiếm
+    if (searchText.trim()) {
       dispatch(getUserMessages(user.id))
         .unwrap()
         .then(messages => {
@@ -210,7 +217,8 @@ const ComponentLeftSearch = ({ userList, onClose, onSelectChat, user, onSelectUs
           console.error("Error fetching user messages:", error);
         });
     }
-  }, [dispatch, user?.id]);
+  }
+}, [dispatch, user?.id, searchText]);
   
   // Hàm fetch thông tin người dùng theo lô
   const fetchUserInfoBatch = async (userIds) => {
@@ -252,15 +260,33 @@ const ComponentLeftSearch = ({ userList, onClose, onSelectChat, user, onSelectUs
     
     return userInfoCache[userId] || { full_name: "Đang tải...", avatar_path: null };
   };
-const handleMessageSelect = (messageItem) => {
+const  handleMessageSelect = (messageItem) => {
   const currentUserId = user?.id || user?._id;
   
-  // Xác định ID người nhận trong cuộc trò chuyện
-  const chatId = messageItem.chat_type === 'group' 
-    ? messageItem.receiver_id 
-    : (messageItem.sender_id === currentUserId 
-        ? messageItem.receiver_id 
-        : messageItem.sender_id);
+  // Xác định ID và thông tin của cuộc trò chuyện
+  let chatId;
+  let chatPartnerInfo;
+  
+  if (messageItem.chat_type === 'group') {
+    // Nếu là chat nhóm, luôn sử dụng ID và thông tin của nhóm
+    chatId = messageItem.receiver_id;
+    
+    // Đảm bảo lấy thông tin nhóm từ receiver_id
+    chatPartnerInfo = {
+      ...getUserInfo(chatId),
+      // Đảm bảo chat_type luôn được giữ nguyên là 'group' 
+      chat_type: 'group'
+    };
+  } else {
+    // Nếu là chat cá nhân, xác định người đối diện
+    if (messageItem.sender_id === currentUserId) {
+      chatId = messageItem.receiver_id;
+      chatPartnerInfo = getUserInfo(messageItem.receiver_id);
+    } else {
+      chatId = messageItem.sender_id;
+      chatPartnerInfo = getUserInfo(messageItem.sender_id);
+    }
+  }
   
   message.loading({ content: "Đang tải cuộc trò chuyện...", key: "chatLoading" });
 
@@ -268,31 +294,23 @@ const handleMessageSelect = (messageItem) => {
     senderId: currentUserId,
     receiverId: chatId,
   })).then(() => {
-    // Lấy thông tin người dùng để hiển thị
-    const chatUserInfo = getUserInfo(chatId);
-    // Tạo đối tượng người dùng theo cấu trúc mà ChatWindow.handleSelectUser mong đợi
+    // Tạo đối tượng trò chuyện đúng định dạng
     const userToSelect = {
       id: chatId,
-      name: chatUserInfo.full_name || "Cuộc trò chuyện",
+      name: chatPartnerInfo.full_name || "Cuộc trò chuyện",
       lastMessage: messageItem.content,
       timestamp: messageItem.timestamp,
-      avatar_path: chatUserInfo.avatar_path,
+      avatar_path: chatPartnerInfo.avatar_path,
+      // Đảm bảo chat_type được giữ chính xác
       chat_type: messageItem.chat_type || "private",
-      // Thêm các trường cần thiết theo format của ChatWindow
       receiver_id: chatId,
-      // Đối với tin nhắn, lưu message_id để có thể scroll đến tin nhắn đó sau này
       originalMessage: messageItem.content,
       message_id: messageItem._id
     };
 
-    // Gọi onSelectUser thay vì onSelectChat/onSelectMessage
+    // Gọi onSelectUser để chuyển sang cuộc trò chuyện
     if (onSelectUser && typeof onSelectUser === 'function') {
       onSelectUser(userToSelect);
-    }
-    
-    // Vẫn giữ onSelectMessage nếu cần thiết để đánh dấu tin nhắn tìm kiếm
-    if (onSelectMessage && typeof onSelectMessage === 'function') {
-      onSelectMessage(messageItem);
     }
     
     // Đóng panel tìm kiếm
@@ -308,78 +326,90 @@ const handleMessageSelect = (messageItem) => {
 };
 
   const renderMessageItem = (message) => {
-    // Lấy thông tin người gửi từ cache
-    const senderInfo = message.sender_id ? getUserInfo(message.sender_id) : null;
-    // Lấy thông tin người nhận từ cache
-    const receiverInfo = message.receiver_id ? getUserInfo(message.receiver_id) : null;
-    
-    // Xác định thông tin hiển thị dựa trên loại tin nhắn và người dùng hiện tại
-    const isSender = message.sender_id === user.id;
-    const displayName = isSender ? receiverInfo?.full_name : senderInfo?.full_name;
-    const displayAvatar = isSender ? receiverInfo?.avatar_path : senderInfo?.avatar_path;
-    
-    // Format message content preview
-    let contentPreview = "";
-    if (message.type === "text") {
-      contentPreview = message.content && message.content.length > 50 
-        ? `${message.content.substring(0, 50)}...` 
-        : message.content || "";
-    } else if (message.type === "image") {
-      contentPreview = "[Hình ảnh]";
-    } else if (message.type === "file") {
-      // Trích xuất tên file từ đường dẫn S3
-      const fileName = message.content ? decodeURIComponent(message.content.split('/').pop()) : "File";
-      contentPreview = `[Tệp: ${fileName}]`;
-    } else if (message.type === "video") {
-      contentPreview = "[Video]";
-    } else if (message.type === "audio") {
-      contentPreview = "[Ghi âm]";
-    } else if (message.recall) {
-      contentPreview = "Tin nhắn đã bị thu hồi";
-    }
-    
-    // Format thời gian
-    const timestamp = message.timestamp 
-      ? new Date(message.timestamp).toLocaleString('vi-VN', {
-          hour: '2-digit', 
-          minute: '2-digit',
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit'
-        })
-      : "";
-    
-    return (
-     <List.Item 
-          className="list-item" 
-          id={`search-message-${message._id}`}
-          onClick={() => handleMessageSelect(message)}
-          style={{ cursor: 'pointer' }}
+  // Lấy thông tin người gửi và người nhận từ cache
+  const senderInfo = message.sender_id ? getUserInfo(message.sender_id) : null;
+  const receiverInfo = message.receiver_id ? getUserInfo(message.receiver_id) : null;
+  
+  // Xác định tin nhắn có phải của người dùng hiện tại hay không
+  const isSender = message.sender_id === user.id;
+  
+  // Tên hiển thị: "Bạn" nếu là tin nhắn của mình
+  let displayName = isSender ? "Bạn" : (senderInfo?.full_name || "Người dùng không xác định");
+  
+  // Avatar hiển thị:
+  // - Trong chat nhóm: avatar của người gửi
+  // - Trong chat riêng: avatar của người đối diện (không phải mình)
+  let displayAvatar;
+  if (message.chat_type === 'group') {
+    // Trong chat nhóm, hiển thị avatar của người gửi 
+    displayAvatar = isSender ? user.avatar_path : senderInfo?.avatar_path;
+  } else {
+    // Chat riêng: luôn hiển thị avatar của người đối diện
+    displayAvatar = isSender ? receiverInfo?.avatar_path : senderInfo?.avatar_path;
+  }
+  
+  // Format message content preview
+  let contentPreview = "";
+  if (message.type === "text") {
+    contentPreview = message.content && message.content.length > 50 
+      ? `${message.content.substring(0, 50)}...` 
+      : message.content || "";
+  } else if (message.type === "image") {
+    contentPreview = "[Hình ảnh]";
+  } else if (message.type === "file") {
+    // Trích xuất tên file từ đường dẫn
+    const fileName = message.content ? decodeURIComponent(message.content.split('/').pop()) : "File";
+    contentPreview = `[Tệp: ${fileName}]`;
+  } else if (message.type === "video") {
+    contentPreview = "[Video]";
+  } else if (message.type === "audio") {
+    contentPreview = "[Ghi âm]";
+  } else if (message.recall) {
+    contentPreview = "Tin nhắn đã bị thu hồi";
+  }
+  
+  // Format thời gian
+  const timestamp = message.timestamp 
+    ? new Date(message.timestamp).toLocaleString('vi-VN', {
+        hour: '2-digit', 
+        minute: '2-digit',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      })
+    : "";
+  
+  return (
+    <List.Item 
+      className="list-item" 
+      id={`search-message-${message._id}`}
+      onClick={() => handleMessageSelect(message)}
+      style={{ cursor: 'pointer' }}
+    >
+      <div className="avatar-container">
+        <Avatar 
+          size={48} 
+          src={displayAvatar} 
         >
-        <div className="avatar-container">
-          <Avatar 
-            size={48} 
-            src={displayAvatar} 
-          >
-            {!displayAvatar && displayName ? displayName.charAt(0).toUpperCase() : "?"}
-          </Avatar>
-        </div>
-        <div className="chat-info">
-          <Row justify="space-between">
-            <Col>
-              <span className="chat-name">{displayName || "Người dùng không xác định"}</span>
-            </Col>
-            <Col>
-              <span className="chat-time">{timestamp}</span>
-            </Col>
-          </Row>
-          <Row>
-            <span className="chat-message">{contentPreview}</span>
-          </Row>
-        </div>
-      </List.Item>
-    );
-  };
+          {!displayAvatar && displayName ? displayName.charAt(0).toUpperCase() : "?"}
+        </Avatar>
+      </div>
+      <div className="chat-info">
+        <Row justify="space-between">
+          <Col>
+            <span className="chat-name">{displayName}</span>
+          </Col>
+          <Col>
+            <span className="chat-time">{timestamp}</span>
+          </Col>
+        </Row>
+        <Row>
+          <span className="chat-message">{contentPreview}</span>
+        </Row>
+      </div>
+    </List.Item>
+  );
+};
   
   // Search function that searches through actual messages
   const searchMessages = useCallback(() => {
@@ -405,11 +435,11 @@ const handleMessageSelect = (messageItem) => {
   }, [searchText, searchMessages]);
 
   // Function to process files from messages
-  const processFileItems = useCallback(() => {
+const processFileItems = useCallback(() => {
   if (!userMessages) return [];
   
   return userMessages
-    .filter(msg => ['file', 'image', 'video', 'audio'].includes(msg.type))
+    .filter(msg => msg.type === 'file') 
     .map(msg => {
       const fileUrl = msg.content;
       
@@ -420,36 +450,30 @@ const handleMessageSelect = (messageItem) => {
         fileUrl.startsWith('data:')
       );
       
-      // Xử lý đường dẫn S3 để lấy tên file
+      // Xử lý đường dẫn để lấy tên file
       let fileName = 'Tệp không xác định';
+      let originalName = 'Tệp không xác định';
+      
       if (fileUrl && isValidUrl) {
         try {
-          // Tránh lỗi với URL không đúng định dạng
-          const urlParts = fileUrl.split('/');
-          const encodedFileName = urlParts[urlParts.length - 1];
+          fileName = decodeURIComponent(fileUrl.split('/').pop());
           
-          // Chỉ decode URL khi cần thiết
-          if (encodedFileName && encodedFileName.includes('%')) {
-            fileName = decodeURIComponent(encodedFileName);
+          const parts = fileName.split('-');
+          if (parts.length > 2) {
+            originalName = parts.slice(2).join('-');
           } else {
-            fileName = encodedFileName;
-          }
-          
-          // Nếu tên file có chứa timestamp hoặc uuid, cố gắng trích xuất tên gốc
-          const nameParts = fileName.split('-');
-          if (nameParts.length > 2) {
-            // Bỏ qua 2 phần đầu tiên nếu chúng là timestamp/uuid
-            fileName = nameParts.slice(2).join('-');
+            originalName = fileName;
           }
         } catch (error) {
           console.error("Error processing file name:", error);
+          originalName = fileName = 'Tệp không xác định';
         }
       } else if (msg.file_name) {
-        fileName = msg.file_name;
+        fileName = originalName = msg.file_name;
       }
       
       // Xác định loại file từ phần mở rộng
-      const fileExt = fileName.split('.').pop()?.toLowerCase() || '';
+      const fileExt = originalName.split('.').pop()?.toLowerCase() || '';
       
       let type = 'file';
       if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExt)) type = 'image';
@@ -459,22 +483,75 @@ const handleMessageSelect = (messageItem) => {
       else if (['mp4', 'mov', 'avi', 'webm'].includes(fileExt)) type = 'video';
       else if (['mp3', 'wav', 'ogg'].includes(fileExt)) type = 'audio';
       
-      // Lấy thông tin người gửi từ cache
-      const senderInfo = getUserInfo(msg.sender_id);
+      // Xác định người gửi có phải là người dùng hiện tại không
+      const isSelf = msg.sender_id === user.id;
+      
+      // Lấy thông tin đối tác chat
+      let chatPartnerId;
+      
+      if (msg.chat_type === 'group') {
+        // Nếu là nhóm, luôn sử dụng receiver_id của nhóm
+        chatPartnerId = msg.receiver_id;
+      } else {
+        // Nếu là chat cá nhân, xác định người đối diện
+        chatPartnerId = isSelf ? msg.receiver_id : msg.sender_id;
+      }
+      
+      // Hiển thị "Bạn" nếu là tin nhắn của người dùng hiện tại
+      const sender = isSelf ? "Bạn" : (getUserInfo(msg.sender_id).full_name || "Không xác định");
       
       return {
         id: msg._id,
-        name: fileName,
-        url: isValidUrl ? fileUrl : null, // Chỉ sử dụng URL hợp lệ
+        name: originalName,
+        url: isValidUrl ? fileUrl : null,
         type: type,
-        sender: senderInfo.full_name || "Không xác định",
+        sender: sender,
         date: new Date(msg.timestamp).toLocaleDateString('vi-VN'),
-        size: msg.file_size ? formatBytes(msg.file_size) : 'Không xác định',
-        message: msg
+        size: msg.file_size ? formatBytes(msg.file_size) : 'Đang tải...',
+        message: msg,
+        isSelf: isSelf,
+        chatPartnerId: chatPartnerId,
+        chat_type: msg.chat_type || "private" // Đảm bảo có chat_type
       };
     });
-}, [userMessages, userInfoCache]);
-
+}, [userMessages, userInfoCache, user?.id]);
+  // Thêm useEffect để fetch kích thước file
+useEffect(() => {
+  const files = processFileItems();
+  
+  // Chỉ xử lý khi có files và files thay đổi
+  if (files?.length > 0) {
+    const fetchFileSizes = async () => {
+      const filesWithSizes = [...files];
+      
+      for (let i = 0; i < filesWithSizes.length; i++) {
+        const file = filesWithSizes[i];
+        if (file.url) {
+          try {
+            // Gửi HEAD request để lấy kích thước
+            const response = await fetch(file.url, { method: 'HEAD' });
+            const sizeHeader = response.headers.get('Content-Length');
+            
+            if (sizeHeader) {
+              file.size = formatBytes(Number(sizeHeader));
+            } else {
+              file.size = "Không xác định";
+            }
+          } catch (error) {
+            console.error(`Lỗi khi lấy kích thước file ${file.name}:`, error);
+            file.size = "Không xác định";
+          }
+        }
+      }
+      
+      setProcessedFiles(filesWithSizes);
+    };
+    
+    fetchFileSizes();
+  } else {
+    setProcessedFiles([]);
+  }
+}, [processFileItems]);
 // Cập nhật renderFileItem để xử lý file không tồn tại
 const renderFileItem = (file) => {
   let icon;
@@ -502,59 +579,30 @@ const renderFileItem = (file) => {
   }
   
   return (
-     <List.Item 
-        className="list-item"
-        onClick={() => {
-          // Xử lý theo cách tương tự handleMessageSelect
-          const messageItem = file.message;
-          const currentUserId = user?.id || user?._id;
-          const chatId = messageItem.chat_type === 'group' 
-            ? messageItem.receiver_id 
-            : (messageItem.sender_id === currentUserId 
-                ? messageItem.receiver_id 
-                : messageItem.sender_id);
-                
-          const chatUserInfo = getUserInfo(chatId);
-          
-          // Tạo đối tượng để truyền vào onSelectUser
-          const userToSelect = {
-            id: chatId,
-            name: chatUserInfo.full_name || "Cuộc trò chuyện",
-            lastMessage: `[Tệp: ${file.name}]`,
-            timestamp: messageItem.timestamp,
-            avatar_path: chatUserInfo.avatar_path,
-            chat_type: messageItem.chat_type || "private",
-            receiver_id: chatId,
-            type: file.type, // Loại file
-            originalMessage: messageItem.content,
-            message_id: messageItem._id
-          };
-          
-          message.loading({ content: "Đang tải cuộc trò chuyện...", key: "fileLoading" });
-          
-          // Gọi callback từ parent
-          if (onSelectUser && typeof onSelectUser === 'function') {
-            onSelectUser(userToSelect);
-          }
-          
-          if (onSelectMessage && typeof onSelectMessage === 'function') {
-            onSelectMessage(messageItem);
-          }
-          
-          if (onClose && typeof onClose === 'function') {
-            onClose();
-          }
-          
-          message.success({ content: "Đã tải cuộc trò chuyện", key: "fileLoading" });
-        }}
-        style={{ cursor: 'pointer' }}
-      >
-      {/* Rest of the component remains the same */}
+    <List.Item 
+      className="list-item"
+      onClick={() => handleMessageSelect(file.message)}
+      style={{ cursor: 'pointer' }}
+    >
       <div className="avatar-container">
         <div className="file-icon">{icon}</div>
       </div>
       <div className="chat-info">
-        {/* Rest of the component */}
+        <Row justify="space-between">
+          <Col>
+            <span className="chat-name" title={file.name}>
+              {file.name.length > 25 ? file.name.substring(0, 25) + "..." : file.name}
+            </span>
+          </Col>
+          <Col>
+            <span className="chat-time">{file.size}</span>
+          </Col>
+        </Row>
+        <Row>
+          <span className="chat-message">
+            {file.sender} • {file.date}
+          </span>
+        </Row>
       </div>
     </List.Item>
   );
@@ -1199,24 +1247,21 @@ const handleUserSelect = (selectedItem) => {
 };
 
   // Filter files based on type and search
-  const getFilteredFiles = useCallback(() => {
-    const files = processFileItems();
+ const getFilteredFiles = useCallback(() => {
+  return processedFiles.filter(file => {
+    // Filter by type
+    if (selectedType !== "all" && file.type !== selectedType) return false;
     
-    return files.filter(file => {
-      // Filter by type
-      if (selectedType !== "all" && file.type !== selectedType) return false;
-      
-      // Filter by date range
-      if (dateRange.from && dateRange.to) {
-        const fileDate = new Date(file.message.timestamp);
-        if (fileDate < dateRange.from || fileDate > dateRange.to) return false;
-      }
-      
-      // Filter by search text
-      return file.name.toLowerCase().includes(searchText.toLowerCase());
-    });
-  }, [processFileItems, selectedType, dateRange, searchText]);
-
+    // Filter by date range
+    if (dateRange.from && dateRange.to) {
+      const fileDate = new Date(file.message.timestamp);
+      if (fileDate < dateRange.from || fileDate > dateRange.to) return false;
+    }
+    
+    // Filter by search text
+    return file.name.toLowerCase().includes(searchText.toLowerCase());
+  });
+}, [processedFiles, selectedType, dateRange, searchText]);
   return (
     <div className="chat-sidebar">
       <SearchComponent

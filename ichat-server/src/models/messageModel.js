@@ -405,6 +405,7 @@ const MessageModel = {
       const result = await Messages.updateMany(filter, {
         $addToSet: { isdelete: userObjectId },
       });
+      console.log("result", result);
 
       return {
         success: true,

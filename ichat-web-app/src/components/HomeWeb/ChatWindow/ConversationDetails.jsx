@@ -1370,6 +1370,22 @@ const ConversationDetails = ({
                 receiverId: selectedChat.id
               }));
             }
+            // Thêm code thoát khỏi cuộc trò chuyện giống như khi rời nhóm
+        if (onLeaveGroup && typeof onLeaveGroup === "function") {
+          onLeaveGroup();
+        } else {
+          // Kích hoạt sự kiện thoát nhóm/chat
+          window.dispatchEvent(
+            new CustomEvent("group-left", {
+              detail: { groupId: selectedChat.id },
+            })
+          );
+        }
+
+        // Đóng cửa sổ chi tiết
+        if (typeof handleExpandContract === "function") {
+          handleExpandContract(false);
+        }
           })
           .catch((error) => {
             message.error({
