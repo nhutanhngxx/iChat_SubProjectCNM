@@ -432,7 +432,8 @@ const Option = ({ route }) => {
                 ? { uri: updatedAvatar }
                 : receiverInfo?.avatar_path
                 ? { uri: receiverInfo.avatar_path }
-                : receiverGroup?.avatar
+                : receiverGroup?.avatar &&
+                  typeof receiverGroup.avatar === "string"
                 ? { uri: receiverGroup.avatar }
                 : require("../../assets/icons/gif.png")
             }
