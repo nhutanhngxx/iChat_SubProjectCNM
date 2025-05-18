@@ -197,8 +197,14 @@ const ChatWindow = ({ user, selectedFriend }) => {
           partnerId: normalizedUser.id,
           chatType: normalizedUser.chat_type,
         })
-      );
-      dispatch(fetchMessages(user.id));
+      )
+        .then(() => {
+          // Only fetch messages after markMessagesAsRead completes
+          dispatch(fetchMessages(user.id));
+        })
+        .catch((error) => {
+          console.error("Error marking messages as read:", error);
+        });
     }
   };
   useEffect(() => {
