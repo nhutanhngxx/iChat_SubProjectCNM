@@ -40,6 +40,7 @@ const createApi = async () => {
 
   const api = axios.create({
     baseURL: `http://${hostIP || DEFAULT_IP}:${PORT}/api`,
+    // baseURL: "https://ichat-server-production-b633.up.railway.app/api",
     // timeout: 10000, // Request sẽ bị hủy nếu quá x giây
     headers: { "Content-Type": "application/json" },
   });

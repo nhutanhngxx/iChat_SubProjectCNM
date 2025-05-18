@@ -341,6 +341,10 @@ const Priority = () => {
 
   const renderItem = ({ item }) => {
     if (!item) return null;
+    const truncatedMessage =
+      item.lastMessage.length > 30
+        ? `${item.lastMessage.slice(0, 30)}...`
+        : item.lastMessage;
     return (
       <TouchableOpacity
         style={[
@@ -356,7 +360,7 @@ const Priority = () => {
           <Image source={item.avatar} style={styles.avatar} />
           <View>
             <Text style={styles.name}>{item.name}</Text>
-            <Text>{item.lastMessage}</Text>
+            <Text>{truncatedMessage}</Text>
           </View>
         </View>
         <View>
