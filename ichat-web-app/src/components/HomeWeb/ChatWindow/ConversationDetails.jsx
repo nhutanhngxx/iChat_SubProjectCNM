@@ -88,6 +88,8 @@ import {
   rejectMember,
   checkMemberApproval,
 } from "../../../redux/slices/groupSlice";
+const REACT_APP_API_URL = process.env.REACT_APP_API_URL;
+
 const ConversationDetails = ({
   isVisible,
   selectedChat,
@@ -215,7 +217,7 @@ const ConversationDetails = ({
   const fetchInvitedMembers = async () => {
     try {
       const response = await dispatch(
-        getInvitedMembersByUserId({groupId:selectedChat.id,userId:user.id})
+        getInvitedMembersByUserId({ groupId: selectedChat.id, userId: user.id })
       ).unwrap();
       setInvitedMembers(response || []);
     } catch (error) {
@@ -375,7 +377,7 @@ const ConversationDetails = ({
           groupId: selectedChat.id,
           userId: user.id,
           role: "member",
-          adminId:user.id,
+          adminId: user.id,
         })
       ).unwrap();
       socket.emit("set-role", {
@@ -467,30 +469,30 @@ const ConversationDetails = ({
   //   }
   // };
   const checkFriendshipStatus = async (memberId) => {
-  if (memberId === user.id) return false; // Không thể kết bạn với chính mình
+    if (memberId === user.id) return false; // Không thể kết bạn với chính mình
 
-  setIsCheckingFriend(true);
-  try {
-    // Sử dụng getUserFriends từ Redux thay vì gọi API trực tiếp
-    const response = await dispatch(getUserFriends(user.id)).unwrap();
+    setIsCheckingFriend(true);
+    try {
+      // Sử dụng getUserFriends từ Redux thay vì gọi API trực tiếp
+      const response = await dispatch(getUserFriends(user.id)).unwrap();
 
-    // Kiểm tra xem memberId có trong danh sách bạn bè không
-    if (response && response.friends) {
-      const isFriend = response.friends.some(
-        (friend) => friend.id === memberId || friend._id === memberId
-      );
+      // Kiểm tra xem memberId có trong danh sách bạn bè không
+      if (response && response.friends) {
+        const isFriend = response.friends.some(
+          (friend) => friend.id === memberId || friend._id === memberId
+        );
+        setIsCheckingFriend(false);
+        return isFriend;
+      }
+
       setIsCheckingFriend(false);
-      return isFriend;
+      return false;
+    } catch (error) {
+      console.error("Lỗi khi kiểm tra trạng thái bạn bè:", error);
+      setIsCheckingFriend(false);
+      return false;
     }
-
-    setIsCheckingFriend(false);
-    return false;
-  } catch (error) {
-    console.error("Lỗi khi kiểm tra trạng thái bạn bè:", error);
-    setIsCheckingFriend(false);
-    return false;
-  }
-};
+  };
   // Xử lý khi nhấp vào avatar của thành viên
   const handleMemberClick = async (member) => {
     setSelectedMember(member);
@@ -552,7 +554,7 @@ const ConversationDetails = ({
   // Hàm helper để kiểm tra quyền
   const canAddMembers = () => {
     console.log("Kiểm tra quyền thêm thành viên:", { isMainAdmin, isSubAdmin, isAdmin });
-    return isMainAdmin || isSubAdmin ;
+    return isMainAdmin || isSubAdmin;
   };
 
   const canChangeName = () => {
@@ -802,7 +804,7 @@ const ConversationDetails = ({
       // Cập nhật lại state
       fetchGroupMembers();
       fetchGroupSettings();
-      
+
 
       setShowGroupSettingsModal(false);
       return response;
@@ -899,31 +901,31 @@ const ConversationDetails = ({
 
   const mediaItems = allMessages
     ? allMessages
-        .filter((msg) => msg.type === "image" || msg.type === "video")
-        .map((msg) => ({
-          id: msg._id,
-          type: msg.type,
-          url: msg.content,
-          timestamp: msg.timestamp,
-        }))
+      .filter((msg) => msg.type === "image" || msg.type === "video")
+      .map((msg) => ({
+        id: msg._id,
+        type: msg.type,
+        url: msg.content,
+        timestamp: msg.timestamp,
+      }))
     : [];
   const linkItems = allMessages
     ? allMessages
-        .filter(
-          (msg) =>
-            msg.type === "text" &&
-            msg.content &&
-            msg.content.match(/https?:\/\/[^\s]+/g)
-        )
-        .flatMap((msg) => {
-          const links = msg.content.match(/https?:\/\/[^\s]+/g) || [];
-          return links.map((link, index) => ({
-            id: `${msg._id}-${index}`,
-            url: link,
-            title: getDomainFromUrl(link),
-            date: new Date(msg.timestamp).toLocaleDateString(),
-          }));
-        })
+      .filter(
+        (msg) =>
+          msg.type === "text" &&
+          msg.content &&
+          msg.content.match(/https?:\/\/[^\s]+/g)
+      )
+      .flatMap((msg) => {
+        const links = msg.content.match(/https?:\/\/[^\s]+/g) || [];
+        return links.map((link, index) => ({
+          id: `${msg._id}-${index}`,
+          url: link,
+          title: getDomainFromUrl(link),
+          date: new Date(msg.timestamp).toLocaleDateString(),
+        }));
+      })
     : [];
 
   // Helper function to extract domain from URL
@@ -956,23 +958,23 @@ const ConversationDetails = ({
   //   }
   // };
   const fetchFriends = async () => {
-  try {
-    // Sử dụng getUserFriends từ Redux thay vì gọi API trực tiếp
-    const friendsResult = await dispatch(getUserFriends(user.id)).unwrap();
-    
-    if (friendsResult && friendsResult.friends) {
-      // Lọc ra bạn bè chưa có trong nhóm
-      const existingMemberIds = groupMembers.map((member) => member.user_id);
-      const availableFriends = friendsResult.friends.filter(
-        (friend) => !existingMemberIds.includes(friend.id || friend._id)
-      );
-      setFriends(availableFriends);
+    try {
+      // Sử dụng getUserFriends từ Redux thay vì gọi API trực tiếp
+      const friendsResult = await dispatch(getUserFriends(user.id)).unwrap();
+
+      if (friendsResult && friendsResult.friends) {
+        // Lọc ra bạn bè chưa có trong nhóm
+        const existingMemberIds = groupMembers.map((member) => member.user_id);
+        const availableFriends = friendsResult.friends.filter(
+          (friend) => !existingMemberIds.includes(friend.id || friend._id)
+        );
+        setFriends(availableFriends);
+      }
+    } catch (error) {
+      console.error("Error fetching friends:", error);
+      message.error("Không thể lấy danh sách bạn bè");
     }
-  } catch (error) {
-    console.error("Error fetching friends:", error);
-    message.error("Không thể lấy danh sách bạn bè");
-  }
-};
+  };
 
   // Gọi hàm này khi mở modal thêm thành viên
   useEffect(() => {
@@ -1028,7 +1030,7 @@ const ConversationDetails = ({
     try {
       // Modify this to use your actual API endpoint
       const response = await axios.get(
-        `http://${window.location.hostname}:5001/api/groups/${selectedChat.id}/members`
+        `${REACT_APP_API_URL}/api/groups/${selectedChat.id}/members`
       );
       // console.log("Group members response:", response);
 
@@ -1180,7 +1182,7 @@ const ConversationDetails = ({
       socket.emit("add-members", {
         groupId: selectedChat.id,
         userIds: selectedMembers,
-      }); 
+      });
       // console.log("Selected đã chọn cho handel Message:", selectedChat.id);
       await dispatch(
         fetchChatMessages({
@@ -1338,45 +1340,61 @@ const ConversationDetails = ({
     }
   };
 
-    const handleDeleteHistory = async () => {
-        message.loading({ content: 'Đang xóa tin nhắn...', key: 'deleteConvo' });
-        
-        dispatch(deleteAllMessagesForUser({
-          userId: user.id || user._id,
-          partnerId: selectedChat.id,
-          chatType: selectedChat.chat_type || 'private'
-        }))
-          .unwrap()
-          .then((result) => {
-            message.success({
-              content: 'Đã xóa lịch sử cuộc trò chuyện',
-              key: 'deleteConvo'
-            });
-            
-            // Đóng modal xóa lịch sử
-            setShowDeleteHistoryModal(false);
-            
-            // Cập nhật danh sách hội thoại trong sidebar
-            dispatch(fetchMessages(user.id || user._id));
-            
-            // Kiểm tra loại chat và gọi API phù hợp
-            if (selectedChat.chat_type === "group") {
-              // Nếu là nhóm, gọi getUserMessages
-              dispatch(getUserMessages(selectedChat.id));
-            } else {
-              // Nếu là chat 1-1, gọi fetchChatMessages
-              dispatch(fetchChatMessages({
-                senderId: user.id || user._id,
-                receiverId: selectedChat.id
-              }));
-            }
-          })
-          .catch((error) => {
-            message.error({
-              content: error.message || 'Không thể xóa tin nhắn',
-              key: 'deleteConvo'
-            });
-          });
+  const handleDeleteHistory = async () => {
+    message.loading({ content: 'Đang xóa tin nhắn...', key: 'deleteConvo' });
+
+    dispatch(deleteAllMessagesForUser({
+      userId: user.id || user._id,
+      partnerId: selectedChat.id,
+      chatType: selectedChat.chat_type || 'private'
+    }))
+      .unwrap()
+      .then((result) => {
+        message.success({
+          content: 'Đã xóa lịch sử cuộc trò chuyện',
+          key: 'deleteConvo'
+        });
+
+        // Đóng modal xóa lịch sử
+        setShowDeleteHistoryModal(false);
+
+        // Cập nhật danh sách hội thoại trong sidebar
+        dispatch(fetchMessages(user.id || user._id));
+
+        // Kiểm tra loại chat và gọi API phù hợp
+        if (selectedChat.chat_type === "group") {
+          // Nếu là nhóm, gọi getUserMessages
+          dispatch(getUserMessages(selectedChat.id));
+        } else {
+          // Nếu là chat 1-1, gọi fetchChatMessages
+          dispatch(fetchChatMessages({
+            senderId: user.id || user._id,
+            receiverId: selectedChat.id
+          }));
+        }
+        // Thêm code thoát khỏi cuộc trò chuyện giống như khi rời nhóm
+        if (onLeaveGroup && typeof onLeaveGroup === "function") {
+          onLeaveGroup();
+        } else {
+          // Kích hoạt sự kiện thoát nhóm/chat
+          window.dispatchEvent(
+            new CustomEvent("group-left", {
+              detail: { groupId: selectedChat.id },
+            })
+          );
+        }
+
+        // Đóng cửa sổ chi tiết
+        if (typeof handleExpandContract === "function") {
+          handleExpandContract(false);
+        }
+      })
+      .catch((error) => {
+        message.error({
+          content: error.message || 'Không thể xóa tin nhắn',
+          key: 'deleteConvo'
+        });
+      });
   };
 
   const visibleMedia = showAll ? mediaItems : mediaItems.slice(0, 8);
@@ -1479,17 +1497,17 @@ const ConversationDetails = ({
     };
   }, [selectedChat?.id, selectedChat?.chat_type, user.id]);
   // 4. cleanup URL preview avatar
-useEffect(() => {
-  return () => {
-    // Cleanup URL khi component unmount
-    if (groupAvatarPreview) {
-      URL.revokeObjectURL(groupAvatarPreview);
-    }
-    if (newGroupAvatarPreview && newGroupAvatarPreview.startsWith('blob:')) {
-      URL.revokeObjectURL(newGroupAvatarPreview);
-    }
-  };
-}, []);
+  useEffect(() => {
+    return () => {
+      // Cleanup URL khi component unmount
+      if (groupAvatarPreview) {
+        URL.revokeObjectURL(groupAvatarPreview);
+      }
+      if (newGroupAvatarPreview && newGroupAvatarPreview.startsWith('blob:')) {
+        URL.revokeObjectURL(newGroupAvatarPreview);
+      }
+    };
+  }, []);
   if (!isVisible) return null;
 
   return (
@@ -1749,7 +1767,7 @@ useEffect(() => {
                 </Button>,
               ]}
               width={500}
-               bodyStyle={{
+              bodyStyle={{
                 maxHeight: "calc(90vh - 110px)", // 90% viewport height trừ đi khoảng cho header và footer
                 overflowY: "auto", // Cho phép cuộn dọc khi nội dung vượt quá
                 paddingRight: "16px", // Thêm padding bên phải để tránh nội dung bị che bởi thanh cuộn
@@ -1767,23 +1785,23 @@ useEffect(() => {
                   }}
                 >
                   <div style={{ marginRight: 15 }}>
-                  <Avatar
-                    size={64}
-                    src={groupAvatarPreview || selectedChat.avatar_path}
-                    style={{
-                      cursor: canChangeAvatar() ? "pointer" : "default",
-                    }}
-                    onClick={() => {
-                      if (canChangeAvatar()) {
-                        document.getElementById("group-avatar-upload").click();
-                      } else if (!isMainAdmin && !isSubAdmin) {
-                        message.info("Chỉ quản trị viên mới có quyền thay đổi ảnh nhóm");
-                      }
-                    }}
-                  >
-                    {!groupAvatarPreview && !selectedChat.avatar_path &&
-                      (selectedChat.name || "G").charAt(0).toUpperCase()}
-                  </Avatar>
+                    <Avatar
+                      size={64}
+                      src={groupAvatarPreview || selectedChat.avatar_path}
+                      style={{
+                        cursor: canChangeAvatar() ? "pointer" : "default",
+                      }}
+                      onClick={() => {
+                        if (canChangeAvatar()) {
+                          document.getElementById("group-avatar-upload").click();
+                        } else if (!isMainAdmin && !isSubAdmin) {
+                          message.info("Chỉ quản trị viên mới có quyền thay đổi ảnh nhóm");
+                        }
+                      }}
+                    >
+                      {!groupAvatarPreview && !selectedChat.avatar_path &&
+                        (selectedChat.name || "G").charAt(0).toUpperCase()}
+                    </Avatar>
                     <input
                       type="file"
                       id="group-avatar-upload"
@@ -1854,7 +1872,7 @@ useEffect(() => {
                       )}
                     </div>
 
-                    
+
 
                     <div style={{ marginBottom: 10 }}>
                       <Checkbox
@@ -2241,103 +2259,103 @@ useEffect(() => {
                   // Only show pending tab for admins
                   ...(isAdmin || isSubAdmin
                     ? [
-                        {
-                          key: "pending",
-                          label: (
-                            <span>
-                              Yêu cầu tham gia
-                              {pendingMembers.length > 0 && (
-                                <Badge
-                                  count={pendingMembers.length}
-                                  style={{
-                                    backgroundColor: "#ff4d4f",
-                                    marginLeft: 8,
-                                  }}
-                                />
-                              )}
-                            </span>
-                          ),
-                          children: (
-                            <>
-                              {pendingMembersLoading ? (
-                                <div
-                                  style={{
-                                    textAlign: "center",
-                                    padding: "30px 0",
-                                  }}
-                                >
-                                  <Spin />
-                                  <div style={{ marginTop: 10, color: "#999" }}>
-                                    Đang tải danh sách...
-                                  </div>
+                      {
+                        key: "pending",
+                        label: (
+                          <span>
+                            Yêu cầu tham gia
+                            {pendingMembers.length > 0 && (
+                              <Badge
+                                count={pendingMembers.length}
+                                style={{
+                                  backgroundColor: "#ff4d4f",
+                                  marginLeft: 8,
+                                }}
+                              />
+                            )}
+                          </span>
+                        ),
+                        children: (
+                          <>
+                            {pendingMembersLoading ? (
+                              <div
+                                style={{
+                                  textAlign: "center",
+                                  padding: "30px 0",
+                                }}
+                              >
+                                <Spin />
+                                <div style={{ marginTop: 10, color: "#999" }}>
+                                  Đang tải danh sách...
                                 </div>
-                              ) : pendingMembers.length > 0 ? (
-                                <List
-                                  itemLayout="horizontal"
-                                  dataSource={pendingMembers}
-                                  renderItem={(member) => (
-                                    <List.Item
-                                      actions={[
-                                        <Button
-                                          type="primary"
-                                          size="small"
-                                          onClick={() =>
-                                            handleAcceptMember(
-                                              member.user_id,
-                                              member.member.full_name
-                                            )
-                                          }
-                                        >
-                                          Chấp nhận
-                                        </Button>,
-                                        <Button
-                                          danger
-                                          size="small"
-                                          onClick={() =>
-                                            handleRejectMember(
-                                              member.user_id,
-                                              member.member.full_name
-                                            )
-                                          }
-                                        >
-                                          Từ chối
-                                        </Button>,
-                                      ]}
-                                    >
-                                      <List.Item.Meta
-                                        avatar={
-                                          <Avatar
-                                            src={member.member.avatar_path}
-                                          >
-                                            {!member.member.avatar_path &&
-                                              member.member.full_name
-                                                ?.charAt(0)
-                                                .toUpperCase()}
-                                          </Avatar>
+                              </div>
+                            ) : pendingMembers.length > 0 ? (
+                              <List
+                                itemLayout="horizontal"
+                                dataSource={pendingMembers}
+                                renderItem={(member) => (
+                                  <List.Item
+                                    actions={[
+                                      <Button
+                                        type="primary"
+                                        size="small"
+                                        onClick={() =>
+                                          handleAcceptMember(
+                                            member.user_id,
+                                            member.member.full_name
+                                          )
                                         }
-                                        title={member.member.full_name}
-                                        description={
-                                          <span>
-                                            Yêu cầu tham gia vào{" "}
-                                            {new Date(
-                                              member.requested_at
-                                            ).toLocaleString()}
-                                          </span>
+                                      >
+                                        Chấp nhận
+                                      </Button>,
+                                      <Button
+                                        danger
+                                        size="small"
+                                        onClick={() =>
+                                          handleRejectMember(
+                                            member.user_id,
+                                            member.member.full_name
+                                          )
                                         }
-                                      />
-                                    </List.Item>
-                                  )}
-                                />
-                              ) : (
-                                <Empty
-                                  image={Empty.PRESENTED_IMAGE_SIMPLE}
-                                  description="Không có yêu cầu tham gia nào"
-                                />
-                              )}
-                            </>
-                          ),
-                        },
-                      ]
+                                      >
+                                        Từ chối
+                                      </Button>,
+                                    ]}
+                                  >
+                                    <List.Item.Meta
+                                      avatar={
+                                        <Avatar
+                                          src={member.member.avatar_path}
+                                        >
+                                          {!member.member.avatar_path &&
+                                            member.member.full_name
+                                              ?.charAt(0)
+                                              .toUpperCase()}
+                                        </Avatar>
+                                      }
+                                      title={member.member.full_name}
+                                      description={
+                                        <span>
+                                          Yêu cầu tham gia vào{" "}
+                                          {new Date(
+                                            member.requested_at
+                                          ).toLocaleString()}
+                                        </span>
+                                      }
+                                    />
+                                  </List.Item>
+                                )}
+                              />
+                            ) : (
+                              <Empty
+                                image={Empty.PRESENTED_IMAGE_SIMPLE}
+                                description="Không có yêu cầu tham gia nào"
+                              />
+                            )}
+                          </>
+                        ),
+                      },
+                    ]
                     : []), // If not admin, don't include this tab
                   {
                     key: "invited",
@@ -3270,7 +3288,7 @@ useEffect(() => {
                       setSelectedGif(gifUrl);
                       handleGifSelect(gifUrl);
                     }}
-                    onImageUpload={() => {}}
+                    onImageUpload={() => { }}
                     style={{ width: "100%" }}
                   />
                 )}
@@ -3526,7 +3544,7 @@ useEffect(() => {
                         checked={selectedFriendsForGroup.includes(
                           friend.id || friend._id
                         )}
-                        onChange={() => {}} // Handled by parent div click
+                        onChange={() => { }} // Handled by parent div click
                       />
                       <Avatar
                         src={friend.avatar_path}

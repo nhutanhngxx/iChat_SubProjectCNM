@@ -21,7 +21,7 @@ import {
   DownOutlined,
   PushpinOutlined,
   MoreOutlined,
-  MutedOutlined 
+  MutedOutlined
 } from "@ant-design/icons";
 import { MdMoreHoriz } from "react-icons/md";
 import "./ComponentLeft.css";
@@ -101,19 +101,33 @@ dayjs.extend(relativeTime);
 dayjs.extend(localizedFormat);
 dayjs.locale("vi"); // đặt ngôn ngữ
 // Component ChatItem: Render từng mục trong danh sách chat
-const ChatItem = ({ item, onSelectUser, onPin }) => {
+const ChatItem = ({ item, onSelectUser, onPin, currentUserId }) => {
   const [isClicked, setIsClicked] = useState(false);
-  // console.log("Item từ componetnLeft", item);
-  // console.log(typeof item.isLastMessageFromMe, item.isLastMessageFromMe);
+  console.log("Item from ChatItem: ", item);
+  console.log("Current User ID: ", currentUserId);
+
+
+
+  // Check if message is read by current user
+  const isUnread = () => {
+    // If the message is from the current user, don't mark as unread
+    if (item.isLastMessageFromMe) {
+      return false;
+    }
+
+    // Check if user has read the message (user ID is in read_by array)
+    return !item.read_by?.includes(currentUserId);
+  };
+
   const formatTime = (timestamp) => {
     const now = dayjs();
     const messageTime = dayjs(timestamp);
-  
+
     const diffInSeconds = now.diff(messageTime, "second");
     const diffInMinutes = now.diff(messageTime, "minute");
     const diffInHours = now.diff(messageTime, "hour");
     const diffInDays = now.diff(messageTime, "day");
-  
+
     if (diffInSeconds < 60) {
       return `${diffInSeconds} giây trước`;
     } else if (diffInMinutes < 60) {
@@ -126,38 +140,39 @@ const ChatItem = ({ item, onSelectUser, onPin }) => {
       return messageTime.format("D/M/YY");
     }
   };
-  
+
   const handleOnSelectUser = (user) => {
     onSelectUser(user);
-    // setIsSearchOpen(false);
     setIsClicked(true);
   };
-  // Hàm tạo nội dung tin nhắn cuối cùng
-const generateLastMessageText = (item) => {
-  // Xác định prefix (người gửi)
-  const prefix = item.isLastMessageFromMe === true 
-    ? "Bạn: " 
-    : (item.chat_type === "group" ? `${item.sender_name || ""}: ` : `${item.name}: `);
-  
-  // Xác định nội dung tin nhắn
-  let content = "";
-  if (item.type === "image") content = "Đã gửi một ảnh";
-  else if (item.type === "file") content = "Đã gửi một tệp tin";
-  else if (item.type === "video") content = "Đã gửi một video";
-  else if (item.type === "audio") content = "Đã gửi một audio";
-  else if (item.originalMessage?.length > 30) content = item.originalMessage.slice(0, 30) + "...";
-  else content = item.originalMessage || item.lastMessage || "Chưa có tin nhắn";
-  
-  return `${prefix}${content}`;
-};
+
+  // Generate last message text with styling
+  const generateLastMessageText = (item) => {
+    // Determine prefix (sender)
+    const prefix = item.isLastMessageFromMe === true
+      ? "Bạn: "
+      : (item.chat_type === "group" ? `${item.sender_name || ""}: ` : `${item.name}: `);
+
+    // Determine message content
+    let content = "";
+    if (item.type === "image") content = "Đã gửi một ảnh";
+    else if (item.type === "file") content = "Đã gửi một tệp tin";
+    else if (item.type === "video") content = "Đã gửi một video";
+    else if (item.type === "audio") content = "Đã gửi một audio";
+    else if (item.originalMessage?.length > 30) content = item.originalMessage.slice(0, 30) + "...";
+    else content = item.originalMessage || item.lastMessage || "Chưa có tin nhắn";
+
+    return `${prefix}${content}`;
+  };
+
+  // Determine if the message should be displayed in bold
+  const messageUnread = isUnread();
+
   return (
     <List.Item
       key={item.id}
       className="chat-item"
-      onClick={
-        // () => onSelectUser(item)
-        () => handleOnSelectUser(item)
-      }
+      onClick={() => handleOnSelectUser(item)}
     >
       <div className="avatar-container">
         <Avatar size={48} src={item.avatar_path} />
@@ -165,12 +180,14 @@ const generateLastMessageText = (item) => {
       <div className="chat-info">
         <Row justify="space-between">
           <Col>
-            <span className="chat-name">{item.name}</span>
+            <span className={`chat-name ${messageUnread ? "bold-text" : ""}`}>
+              {item.name}
+            </span>
           </Col>
 
           <Col>
-            <div className="time-and-more-container" onClick={(e) => e.stopPropagation()} >
-              <Dropdown overlay={<MenuMdMoreHoriz onPin={() => onPin(item.id)} />} trigger={["click"]} >
+            <div className="time-and-more-container" onClick={(e) => e.stopPropagation()}>
+              <Dropdown overlay={<MenuMdMoreHoriz onPin={() => onPin(item.id)} />} trigger={["click"]}>
                 <MdMoreHoriz className="md-more-horiz-icon" />
               </Dropdown>
               <span className="chat-time">{formatTime(item.timestamp)}</span>
@@ -183,28 +200,14 @@ const generateLastMessageText = (item) => {
           style={{ width: "100%", display: "inline-flex" }}
         >
           <Col>
-          <span className={`last-message ${item.type || "text"}`}>
+            <span className={`last-message ${item.type || "text"} ${messageUnread ? "bold-text" : ""}`}>
               {item.type === "video" && <VideoCameraOutlined />}
               {item.type === "audio" && <MutedOutlined />}
               {item.type === "notification" && <NotificationOutlined />}
-              {/* {`${item.isLastMessageFromMe === true ? "Bạn: " : 
-                (item.chat_type === "group" ? `${item.sender_name || ""}: ` : `${item.name}: `)
-                }${item.type === "image"
-                  ? "Đã gửi một ảnh"
-                  : item.type === "file"
-                    ? "Đã gửi một tệp tin"
-                    : item.type === "video"
-                      ? "Đã gửi một video"
-                      : item.type === "audio"
-                        ? "Đã gửi một audio"
-                        : item.originalMessage?.length > 30
-                          ? item.originalMessage.slice(0, 30) + "..."
-                          : item.originalMessage || item.lastMessage
-                }`} */}
-                {!item.originalMessage && !item.lastMessage 
-    ? "Chưa có tin nhắn" 
-    : generateLastMessageText(item)
-  }
+              {!item.originalMessage && !item.lastMessage
+                ? "Chưa có tin nhắn"
+                : generateLastMessageText(item)
+              }
             </span>
           </Col>
           <Col>
@@ -218,17 +221,17 @@ const generateLastMessageText = (item) => {
 };
 
 // Component ChatList: Hiển thị danh sách các ChatItem
-const ChatList = ({ filteredChatList, onSelectUser, onPin }) => (
+const ChatList = ({ filteredChatList, onSelectUser, onPin, currentUserId }) => (
   <List
     itemLayout="horizontal"
     dataSource={filteredChatList}
-    renderItem={(item) => <ChatItem item={item} onSelectUser={onSelectUser} onPin={onPin} />}
-    style={{overflowY:"scroll", maxHeight:"86vh",scrollbarWidth:"none"}} // Thay đổi chiều cao của danh sách
+    renderItem={(item) => <ChatItem item={item} onSelectUser={onSelectUser} onPin={onPin} currentUserId={currentUserId} />}
+    style={{ overflowY: "scroll", maxHeight: "86vh", scrollbarWidth: "none" }} // Thay đổi chiều cao của danh sách
   />
 );
 
 // Component chính: ComponentLeft
-const ComponentLeft = ({ userList, setUserList, onSelectUser,user }) => {
+const ComponentLeft = ({ userList, setUserList, onSelectUser, user }) => {
   const [activeTab, setActiveTab] = useState("priority");
   const [searchText] = useState("");
   const [showInterface, setShowInterface] = useState(false);
@@ -322,7 +325,7 @@ const ComponentLeft = ({ userList, setUserList, onSelectUser,user }) => {
       </Button>
     </div>
   );
-  
+
   return (
     <div>
       {showInterface ? (
@@ -381,12 +384,14 @@ const ComponentLeft = ({ userList, setUserList, onSelectUser,user }) => {
                   filteredChatList={filteredPriorityList}
                   onSelectUser={onSelectUser}
                   onPin={handlePin}
+                  currentUserId={user?.id} // Pass current user ID to ChatItem
                 />
               ) : (
                 <ChatList
                   filteredChatList={filteredOtherList}
                   onSelectUser={onSelectUser}
                   onPin={handlePin}
+                  currentUserId={user?.id} // Pass current user ID to ChatItem
                 />
               )}
             </div>

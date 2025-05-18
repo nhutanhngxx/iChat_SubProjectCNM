@@ -8,13 +8,15 @@ import { PiGreaterThan } from "react-icons/pi";
 import { IoMdClose } from "react-icons/io";
 import { FaRegCalendarAlt } from "react-icons/fa";
 import { Avatar, Spin } from "antd";
+const REACT_APP_API_URL = process.env.REACT_APP_API_URL;
 
-const SearchRight = ({ 
-  setShowSearchRight, 
-  messages, 
+
+const SearchRight = ({
+  setShowSearchRight,
+  messages,
   onMessageSelect,
   selectedChat,
-  user 
+  user
 }) => {
   const [showSenderFilter, setShowSenderFilter] = useState(false);
   const [showDateFilter, setShowDateFilter] = useState(false);
@@ -55,26 +57,26 @@ const SearchRight = ({
   const [selectedName, setSelectedName] = useState("");
   const handleSelectUser = (name, id) => {
     setSelectedName(name);
-    setFilters({...filters, sender: id});
+    setFilters({ ...filters, sender: id });
     setShowSenderFilter(false); // Ẩn modal sau khi chọn
   };
 
   const handleClearInput = () => {
     setSelectedName("");
-    setFilters({...filters, sender: null});
+    setFilters({ ...filters, sender: null });
   };
 
   const handleClearDateFilter = () => {
     setDateFrom("");
     setDateTo("");
-    setFilters({...filters, dateFrom: null, dateTo: null});
+    setFilters({ ...filters, dateFrom: null, dateTo: null });
   };
 
   const handleDateSelect = (option) => {
     const today = new Date();
     let fromDate = new Date();
-    
-    switch(option) {
+
+    switch (option) {
       case "yesterday":
         fromDate.setDate(today.getDate() - 1);
         break;
@@ -93,15 +95,15 @@ const SearchRight = ({
 
     const fromStr = fromDate.toISOString().split('T')[0];
     const toStr = today.toISOString().split('T')[0];
-    
+
     setDateFrom(fromStr);
     setDateTo(toStr);
     setFilters({
-      ...filters, 
+      ...filters,
       dateFrom: fromDate,
       dateTo: today
     });
-    
+
     setShowDateFilter(false);
   };
 
@@ -120,17 +122,17 @@ const SearchRight = ({
   useEffect(() => {
     const loadChatMembers = async () => {
       if (!messages || messages.length === 0) return;
-      
+
       // Trích xuất danh sách người gửi từ tin nhắn
       const senderMap = new Map();
-      
+
       // Luôn thêm người dùng hiện tại
-      senderMap.set(user.id, { 
-        id: user.id, 
-        name: "Bạn", 
-        avatar_path: user.avatar_path 
+      senderMap.set(user.id, {
+        id: user.id,
+        name: "Bạn",
+        avatar_path: user.avatar_path
       });
-      
+
       // Thu thập tất cả ID người dùng khác từ tin nhắn
       const otherSenderIds = [...new Set(
         messages
@@ -145,18 +147,18 @@ const SearchRight = ({
           name: selectedChat.name,
           avatar_path: selectedChat.avatar_path
         });
-        
+
         setChatMembers(Array.from(senderMap.values()));
         return;
       }
-      
+
       // Nếu là nhóm, fetch thông tin người dùng từ API
       try {
         // Fetch thông tin đồng thời cho tất cả người gửi
         const fetchPromises = otherSenderIds.map(async (senderId) => {
           try {
-            const response = await fetch(`http://${window.location.hostname}:5001/api/users/${senderId}`);
-            
+            const response = await fetch(`${REACT_APP_API_URL}/api/users/${senderId}`);
+
             if (!response.ok) {
               console.error(`Failed to fetch user info for ID ${senderId}`);
               return {
@@ -165,7 +167,7 @@ const SearchRight = ({
                 avatar_path: null
               };
             }
-            
+
             const data = await response.json();
             return {
               id: senderId,
@@ -181,32 +183,32 @@ const SearchRight = ({
             };
           }
         });
-        
+
         const fetchedUsers = await Promise.all(fetchPromises);
-        
+
         // Thêm thông tin người dùng đã fetch vào senderMap
         fetchedUsers.forEach(user => {
           if (!senderMap.has(user.id)) {
             senderMap.set(user.id, user);
           }
         });
-        
+
         setChatMembers(Array.from(senderMap.values()));
-        
+
         // Cập nhật userInfoMap cho việc hiển thị kết quả tìm kiếm
         const userInfoEntries = fetchedUsers.map(user => [
-          user.id, 
+          user.id,
           { full_name: user.name, avatar_path: user.avatar_path }
         ]);
-        
+
         setUserInfoMap(prevMap => ({
           ...prevMap,
           ...Object.fromEntries(userInfoEntries)
         }));
-        
+
       } catch (error) {
         console.error("Error loading chat members:", error);
-        
+
         // Trường hợp lỗi, dùng thông tin cơ bản
         otherSenderIds.forEach(id => {
           if (!senderMap.has(id)) {
@@ -217,17 +219,17 @@ const SearchRight = ({
             });
           }
         });
-        
+
         setChatMembers(Array.from(senderMap.values()));
       }
     };
-    
+
     loadChatMembers();
   }, [messages, selectedChat, user]);
   // console.log("messages", messages);
-  
+
   // console.log("chatMembers from SearchRight", chatMembers);
-  
+
 
   // Thực hiện tìm kiếm khi text hoặc filters thay đổi
   useEffect(() => {
@@ -243,79 +245,79 @@ const SearchRight = ({
   useEffect(() => {
     const fetchUsersInfo = async () => {
       if (!searchResults.length || !selectedChat?.chat_type === "group") return;
-      
+
       // Lấy tất cả sender_id khác nhau từ kết quả tìm kiếm
       const senderIds = [...new Set(
         searchResults
           .filter(msg => msg.sender_id !== user.id && !userInfoMap[msg.sender_id])
           .map(msg => msg.sender_id)
       )];
-      
+
       if (!senderIds.length) return;
-      
+
       // Lấy thông tin người dùng cho mỗi sender_id
       const userInfoPromises = senderIds.map(async (senderId) => {
         try {
-          const response = await fetch(`http://${window.location.hostname}:5001/api/users/${senderId}`);
-          
+          const response = await fetch(`${REACT_APP_API_URL}/api/users/${senderId}`);
+
           if (!response.ok) {
             console.error(`Failed to fetch user info for ID ${senderId}`);
             return [senderId, { full_name: "Thành viên nhóm", avatar_path: null }];
           }
-          
+
           const data = await response.json();
-          return [senderId, { 
-            full_name: data.user?.full_name || "Thành viên nhóm", 
-            avatar_path: data.user?.avatar_path 
+          return [senderId, {
+            full_name: data.user?.full_name || "Thành viên nhóm",
+            avatar_path: data.user?.avatar_path
           }];
         } catch (error) {
           console.error(`Error fetching user ${senderId} info:`, error);
           return [senderId, { full_name: "Thành viên nhóm", avatar_path: null }];
         }
       });
-      
+
       // Chờ tất cả các promise hoàn thành
       const userInfoResults = await Promise.all(userInfoPromises);
-      
+
       // Cập nhật map thông tin người dùng
       setUserInfoMap(prevMap => ({
         ...prevMap,
         ...Object.fromEntries(userInfoResults)
       }));
     };
-    
+
     fetchUsersInfo();
   }, [searchResults, selectedChat?.chat_type]);
 
   // Hàm tìm kiếm tin nhắn
   const searchMessages = () => {
     if (!messages) return;
-    
+
     setIsSearching(true);
-    
+
     setTimeout(() => {
       let results = [...messages];
       // THÊM: Lọc bỏ tin nhắn đã xóa mềm
-    results = results.filter(msg => {
-      if (!Array.isArray(msg.isdelete)) {
-        return true; // Giữ lại nếu không có mảng isdelete
-      }
-      // Loại bỏ nếu ID người dùng hiện tại có trong mảng isdelete
-      return !msg.isdelete.some(id => id === user.id || id === String(user.id));
-    });
+      results = results.filter(msg => {
+        if (!Array.isArray(msg.isdelete)) {
+          return true; // Giữ lại nếu không có mảng isdelete
+        }
+        // Loại bỏ nếu ID người dùng hiện tại có trong mảng isdelete
+        return !msg.isdelete.some(id => id === user.id || id === String(user.id));
+      });
       // Lọc theo nội dung (text)
       if (text.trim()) {
-        results = results.filter(msg => 
-          msg.content && 
+        results = results.filter(msg =>
+          msg.content &&
           msg.content.toLowerCase().includes(text.toLowerCase())
         );
       }
-      
+
       // Lọc theo người gửi
       if (filters.sender) {
         results = results.filter(msg => msg.sender_id === filters.sender);
       }
-      
+
       // Lọc theo khoảng thời gian
       if (filters.dateFrom && filters.dateTo) {
         results = results.filter(msg => {
@@ -323,13 +325,13 @@ const SearchRight = ({
           return msgDate >= filters.dateFrom && msgDate <= filters.dateTo;
         });
       }
-      
+
       // Sắp xếp kết quả theo thời gian, mới nhất lên đầu
       results = results.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-      
+
       // Giới hạn số lượng kết quả (nếu cần)
       // results = results.slice(0, 50);
-      
+
       setSearchResults(results);
       setIsSearching(false);
     }, 300); // Thêm độ trễ nhỏ để có animation loading
@@ -345,7 +347,7 @@ const SearchRight = ({
   // Format thời gian hiển thị
   const formatMessageTime = (timestamp) => {
     const date = new Date(timestamp);
-    return date.toLocaleString('vi-VN', { 
+    return date.toLocaleString('vi-VN', {
       hour: '2-digit',
       minute: '2-digit',
       day: '2-digit',
@@ -357,13 +359,13 @@ const SearchRight = ({
   // Hàm đánh dấu các từ khóa tìm kiếm trong nội dung
   const highlightText = (content, searchText) => {
     if (!searchText.trim() || !content) return content;
-    
+
     const regex = new RegExp(`(${searchText})`, 'gi');
     const parts = content.split(regex);
-    
-    return parts.map((part, index) => 
-      part.toLowerCase() === searchText.toLowerCase() 
-        ? <mark key={index} style={{ background: 'yellow', padding: 0 }}>{part}</mark> 
+
+    return parts.map((part, index) =>
+      part.toLowerCase() === searchText.toLowerCase()
+        ? <mark key={index} style={{ background: 'yellow', padding: 0 }}>{part}</mark>
         : part
     );
   };
@@ -442,8 +444,8 @@ const SearchRight = ({
                   className="mini-modal-sender-list-item"
                   onClick={() => handleSelectUser(member.name, member.id)}
                 >
-                  <Avatar 
-                    src={member.avatar_path} 
+                  <Avatar
+                    src={member.avatar_path}
                     size={32}
                   >
                     {!member.avatar_path && member.name.charAt(0).toUpperCase()}
@@ -454,7 +456,7 @@ const SearchRight = ({
             </div>
           </div>
         )}
-        <button 
+        <button
           onClick={() => handleShowDateFilter()}
           className={`${(filters.dateFrom || filters.dateTo) ? "text-blue" : ""}`}
         >
@@ -469,7 +471,7 @@ const SearchRight = ({
           )}
         </button>
         {showDateFilter && (
-          <div className="mini-modal-date" style={{zIndex:"1"}}>
+          <div className="mini-modal-date" style={{ zIndex: "1" }}>
             <div
               onMouseEnter={() => setShowDateBeetweenFilter(true)}
               onMouseLeave={() => setShowDateBeetweenFilter(false)}
@@ -502,11 +504,11 @@ const SearchRight = ({
                   placeholder="Từ ngày"
                   className="border p-1 w-full rounded"
                 />
-                <input 
+                <input
                   type="date"
                   value={dateTo}
                   onChange={(e) => setDateTo(e.target.value)}
-                  className="border p-1 w-full rounded" 
+                  className="border p-1 w-full rounded"
                 />
               </div>
               <div className="mini-modal-date-button">
@@ -530,36 +532,36 @@ const SearchRight = ({
             </div>
             <div className="search-results-list">
               {searchResults.map((message, index) => (
-                <div 
-                  key={message._id || index} 
+                <div
+                  key={message._id || index}
                   className="search-result-item"
                   onClick={() => handleMessageClick(message)}
                 >
-                  <Avatar 
+                  <Avatar
                     size={40}
                     src={
-                      message.sender_id === user.id 
-                        ? user.avatar_path 
-                        : (selectedChat.chat_type === "group" 
-                            ? userInfoMap[message.sender_id]?.avatar_path 
-                            : selectedChat.avatar_path)
+                      message.sender_id === user.id
+                        ? user.avatar_path
+                        : (selectedChat.chat_type === "group"
+                          ? userInfoMap[message.sender_id]?.avatar_path
+                          : selectedChat.avatar_path)
                     }
                   >
-                    {!message.sender_avatar && 
-                      (message.sender_id === user.id 
+                    {!message.sender_avatar &&
+                      (message.sender_id === user.id
                         ? "B"
-                        : (selectedChat.chat_type === "group" 
-                            ? (userInfoMap[message.sender_id]?.full_name || "?").charAt(0)
-                            : selectedChat.name.charAt(0))
+                        : (selectedChat.chat_type === "group"
+                          ? (userInfoMap[message.sender_id]?.full_name || "?").charAt(0)
+                          : selectedChat.name.charAt(0))
                       ).toUpperCase()}
                   </Avatar>
                   <div className="search-result-content">
                     <div className="search-result-sender">
                       <span>
-                      {message.sender_id === user.id 
-                        ? "Bạn" 
-                        : (selectedChat.chat_type === "group" 
-                            ? (userInfoMap[message.sender_id]?.full_name || "Thành viên nhóm") 
+                        {message.sender_id === user.id
+                          ? "Bạn"
+                          : (selectedChat.chat_type === "group"
+                            ? (userInfoMap[message.sender_id]?.full_name || "Thành viên nhóm")
                             : selectedChat.name)}
                       </span>
                       <span className="search-result-time">
@@ -589,8 +591,8 @@ const SearchRight = ({
         ) : (
           <div className="search-right-empty">
             <h3>
-              {text || filters.sender || filters.dateFrom 
-                ? "Không tìm thấy kết quả" 
+              {text || filters.sender || filters.dateFrom
+                ? "Không tìm thấy kết quả"
                 : "Nhập từ khoá để tìm kiếm"}
             </h3>
             <img

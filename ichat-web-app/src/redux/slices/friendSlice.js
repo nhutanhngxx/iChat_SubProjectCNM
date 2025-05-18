@@ -1,7 +1,9 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
-const API_URL = `http://${window.location.hostname}:5001/api/friendships`;
+// const API_URL = `http://${window.location.hostname}:5001/api/friendships`;
+const REACT_APP_API_URL = process.env.REACT_APP_API_URL;
+const API_URL = `${REACT_APP_API_URL}/api/friendships`;
 
 // Kiểm tra trạng thái chặn của 2 người dùng
 export const checkBlockingStatus = createAsyncThunk(

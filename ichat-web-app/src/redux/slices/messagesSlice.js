@@ -1,8 +1,39 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
 // const API_URL = "http://localhost:5001/messages/";
-const API_URL = `http://${window.location.hostname}:5001/api/messages/`;
+// const API_URL = `http://${window.location.hostname}:5001/api/messages/`;
+const REACT_APP_API_URL = process.env.REACT_APP_API_URL;
+const API_URL = `${REACT_APP_API_URL}/api/messages/`;
 
+// Đánh dấu tin nhắn là đã đọc
+export const markMessagesAsRead = createAsyncThunk(
+  "messages/markMessagesAsRead",
+  async ({ userId, partnerId, chatType = "private" }, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${API_URL}markMessagesAsRead`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userId, partnerId, chatType }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        return rejectWithValue(errorData);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error("Error marking messages as read:", error);
+      return rejectWithValue({
+        error: "Network error",
+        details: error.message || "Không thể đánh dấu tin nhắn đã đọc",
+      });
+    }
+  }
+);
 // Xóa toàn bộ lịch sử tin nhắn của một cuộc trò chuyện cho người dùng hiện tại
 export const deleteAllMessagesForUser = createAsyncThunk(
   "messages/deleteAllMessagesForUser",
@@ -791,6 +822,65 @@ const messagesSlice = createSlice({
           status: "failed",
           message:
             action.payload?.message || "Không thể xóa lịch sử cuộc trò chuyện",
+          timestamp: new Date().toISOString(),
+        };
+      })
+      .addCase(markMessagesAsRead.pending, (state) => {
+        state.status = "loading";
+      })
+      .addCase(markMessagesAsRead.fulfilled, (state, action) => {
+        state.status = "succeeded";
+
+        // If we're in a private chat, update the unread count in the sidebar
+        const { partnerId } = action.meta.arg;
+        const existingConversation = state.messages.find(
+          (conversation) =>
+            conversation.id === partnerId ||
+            conversation.receiver_id === partnerId
+        );
+
+        if (existingConversation) {
+          existingConversation.unread = 0;
+        }
+
+        // Update read_by for all messages in current chat
+        if (Array.isArray(state.chatMessages)) {
+          state.chatMessages = state.chatMessages.map((message) => {
+            // Only update messages where the current user is not the sender
+            if (message.sender_id !== action.meta.arg.userId) {
+              // Add current user to read_by array if not already there
+              if (!message.read_by || !Array.isArray(message.read_by)) {
+                message.read_by = [action.meta.arg.userId];
+              } else if (!message.read_by.includes(action.meta.arg.userId)) {
+                message.read_by = [...message.read_by, action.meta.arg.userId];
+              }
+
+              // Update status to viewed
+              message.status = "viewed";
+            }
+            return message;
+          });
+        }
+
+        // Log success information
+        state.lastAction = {
+          type: "markMessagesAsRead",
+          status: "success",
+          message: action.payload.message || "Đã đánh dấu tin nhắn là đã đọc",
+          timestamp: new Date().toISOString(),
+        };
+      })
+      .addCase(markMessagesAsRead.rejected, (state, action) => {
+        state.status = "failed";
+        state.error =
+          action.payload?.error || "Không thể đánh dấu tin nhắn đã đọc";
+
+        // Log error information
+        state.lastAction = {
+          type: "markMessagesAsRead",
+          status: "failed",
+          message:
+            action.payload?.error || "Không thể đánh dấu tin nhắn đã đọc",
           timestamp: new Date().toISOString(),
         };
       });

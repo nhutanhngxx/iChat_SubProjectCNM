@@ -1,7 +1,9 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
 // const API_URL = "http://localhost:5001/messages/";
-const API_URL = `http://${window.location.hostname}:5001/api/groups/`;
+// const API_URL = `http://${window.location.hostname}:5001/api/groups/`;
+const REACT_APP_API_URL = process.env.REACT_APP_API_URL;
+const API_URL = `${REACT_APP_API_URL}/api/groups/`;
 
 // Lấy danh sách nhóm mà người dùng tham gia
 export const getUserGroups = createAsyncThunk(

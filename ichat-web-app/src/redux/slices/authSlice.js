@@ -5,7 +5,8 @@ import {
   signInWithPhoneNumber,
 } from "../../firebase/config"; // Import firebase auth and RecaptchaVerifier
 import axios from "axios";
-const API_URL = `http://${window.location.hostname}:5001/api/`;
+const REACT_APP_API_URL = process.env.REACT_APP_API_URL;
+const API_URL = `${REACT_APP_API_URL}/api/`;
 // Định nghĩa action async để đăng nhập
 export const loginUser = createAsyncThunk(
   "auth/loginUser",

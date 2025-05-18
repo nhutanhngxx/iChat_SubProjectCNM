@@ -28,6 +28,8 @@ import { Tooltip, Popover } from "antd";
 import { fetchChatMessages } from "../../../redux/slices/messagesSlice";
 import ShareDialog from "./ShareDialog";
 // import { LikeOutlined, CheckOutlined } from "@ant-design/icons";
+const REACT_APP_API_URL = process.env.REACT_APP_API_URL;
+
 
 const Message = ({
   message,
@@ -232,7 +234,7 @@ const Message = ({
         try {
           // Kiểm tra nếu đã có thông tin người dùng trong cache
           const response = await fetch(
-            `http://${window.location.hostname}:5001/api/users/${message.sender_id}`
+            `${REACT_APP_API_URL}/api/users/${message.sender_id}`
           );
 
           if (!response.ok) {

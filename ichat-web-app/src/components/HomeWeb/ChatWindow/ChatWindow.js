@@ -10,6 +10,7 @@ import {
   fetchChatMessages,
   updateMessages,
   getUserMessages,
+  markMessagesAsRead,
 } from "../../../redux/slices/messagesSlice";
 import socket from "../../services/socket";
 import "./ChatWindow.css";
@@ -139,30 +140,31 @@ const ChatWindow = ({ user, selectedFriend }) => {
     };
   }, [user?.id, selectedUser, dispatch]);
 
-  const handleSelectUser = (user) => {
-    // console.log("Setting selected user to:", user);
+  const handleSelectUser = (selectedUserData) => {
+    console.log("Setting selected user to:", selectedUserData);
 
     // Normalize the user object structure to ensure consistent properties
     const normalizedUser = {
-      id: user.id,
-      name: user.name,
-      lastMessage: user.lastMessage || "",
-      time: user.timestamp || user.time || new Date(),
-      unread: user.unread || 0,
-      user_status: user.user_status || "Offline",
-      type: user.type || "text",
+      id: selectedUserData.id,
+      name: selectedUserData.name,
+      lastMessage: selectedUserData.lastMessage || "",
+      time: selectedUserData.timestamp || selectedUserData.time || new Date(),
+      unread: selectedUserData.unread || 0,
+      user_status: selectedUserData.user_status || "Offline",
+      type: selectedUserData.type || "text",
       avatar_path:
-        user.avatar_path ||
-        user.avatar ||
+        selectedUserData.avatar_path ||
+        selectedUserData.avatar ||
         "https://default-avatar.com/avatar.jpg",
-      priority: user.priority || "",
-      isLastMessageFromMe: user.isLastMessageFromMe || false,
+      priority: selectedUserData.priority || "",
+      isLastMessageFromMe: selectedUserData.isLastMessageFromMe || false,
       // This is very important - both fields are needed
-      receiver_id: user.receiver_id || user.id,
-      chat_type: user.chat_type || "private",
-      originalMessage: user.originalMessage || "",
-      sender_name: user.sender_name || "",
-      admin_id: user.admin_id || null,
+      receiver_id: selectedUserData.receiver_id || selectedUserData.id,
+      chat_type: selectedUserData.chat_type || "private",
+      originalMessage: selectedUserData.originalMessage || "",
+      sender_name: selectedUserData.sender_name || "",
+      admin_id: selectedUserData.admin_id || null,
+      read_by: selectedUserData.read_by || [],
     };
 
     setSelectedUser(normalizedUser);
@@ -189,6 +191,20 @@ const ChatWindow = ({ user, selectedFriend }) => {
           })
         );
       }
+      dispatch(
+        markMessagesAsRead({
+          userId: user.id,
+          partnerId: normalizedUser.id,
+          chatType: normalizedUser.chat_type,
+        })
+      )
+        .then(() => {
+          // Only fetch messages after markMessagesAsRead completes
+          dispatch(fetchMessages(user.id));
+        })
+        .catch((error) => {
+          console.error("Error marking messages as read:", error);
+        });
     }
   };
   useEffect(() => {
@@ -209,6 +225,7 @@ const ChatWindow = ({ user, selectedFriend }) => {
         originalMessage: msg.originalMessage,
         sender_name: msg.sender_name,
         admin_id: msg.admin_id,
+        read_by: msg.read_by,
       }));
 
       setUserListFromState(formattedUsers);

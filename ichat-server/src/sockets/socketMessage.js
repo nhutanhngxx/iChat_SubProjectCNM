@@ -35,7 +35,7 @@ module.exports = (io) => {
     // Tham gia room theo chatId
     socket.on("join-room", (chatId) => {
       socket.join(chatId);
-      console.log(` Socket ${socket.id} joined room: ${chatId}`);
+      // console.log(` Socket ${socket.id} joined room: ${chatId}`);
     });
 
     // Gửi tin nhắn
