@@ -8,6 +8,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { Spin, message } from "antd";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+const REACT_APP_API_URL = process.env.REACT_APP_API_URL;
 
 const GroupList = ({ onSelectGroup }) => {
   const dispatch = useDispatch();
@@ -23,13 +24,13 @@ const GroupList = ({ onSelectGroup }) => {
   useEffect(() => {
     const fetchGroups = async () => {
       if (!currentUser?.id) return;
-      
+
       setIsLoading(true);
       try {
         const response = await dispatch(getUserGroups(currentUser.id)).unwrap();
         // console.log("Fetched user groups:", response);
         setGroups(response || []);
-        
+
         // Sau khi lấy danh sách nhóm, lấy số lượng thành viên cho mỗi nhóm
         fetchMemberCounts(response || []);
       } catch (error) {
@@ -42,23 +43,23 @@ const GroupList = ({ onSelectGroup }) => {
 
     fetchGroups();
   }, [dispatch, currentUser?.id]);
-  
+
 
   // Hàm lấy số lượng thành viên cho mỗi nhóm
   const fetchMemberCounts = async (groupsList) => {
     if (!groupsList || groupsList.length === 0) return;
-    
+
     const countsObject = {};
-    
+
     try {
       // Tạo mảng các lời hứa để fetch song song
       const fetchPromises = groupsList.map(async (group) => {
         try {
           // Sử dụng API endpoint từ slice đã cung cấp
           const response = await axios.get(
-            `http://${window.location.hostname}:5001/api/groups/${group._id}/members`
+            `${REACT_APP_API_URL}/api/groups/${group._id}/members`
           );
-          
+
           if (response.data && response.data.data) {
             countsObject[group._id] = response.data.data.length;
           } else {
@@ -69,17 +70,17 @@ const GroupList = ({ onSelectGroup }) => {
           countsObject[group._id] = 0;
         }
       });
-      
+
       // Đợi tất cả các lời hứa hoàn thành
       await Promise.all(fetchPromises);
-      
+
       // Cập nhật state với số lượng thành viên
       setMemberCounts(countsObject);
     } catch (error) {
       console.error("Error fetching member counts:", error);
     }
   };
-  
+
   // Lọc danh sách theo từ khóa tìm kiếm
   const filteredGroups = groups
     .filter((group) =>
@@ -107,7 +108,7 @@ const GroupList = ({ onSelectGroup }) => {
       receiver_id: group._id,
       member_count: memberCounts[group._id] || 0 // Thêm số lượng thành viên
     };
-    
+
     // console.log("Selected group:", formattedGroup);
     // Store the selected friend in localStorage to retrieve in ChatWindow
     localStorage.setItem("selectedFriend", JSON.stringify(formattedGroup));
@@ -167,8 +168,8 @@ const GroupList = ({ onSelectGroup }) => {
             ) : filteredGroups.length > 0 ? (
               <ul className="friend-group">
                 {filteredGroups.map((group) => (
-                  <li 
-                    key={group._id} 
+                  <li
+                    key={group._id}
                     className="group-item"
                     onClick={() => handleSelectGroup(group)}
                     style={{ cursor: 'pointer' }}

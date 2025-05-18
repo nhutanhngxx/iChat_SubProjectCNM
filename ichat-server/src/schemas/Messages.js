@@ -28,6 +28,12 @@ const messageSchema = new mongoose.Schema(
       enum: ["sent", "received", "viewed"],
       default: "sent",
     },
+    read_by: {
+      type: [mongoose.Schema.Types.ObjectId], // array of UserInfo ids
+      ref: "UserInfo",
+      default: [],
+    },
+
     chat_type: { type: String, enum: ["private", "group"], required: true },
     // Mảng chứa các reaction, cho phép null hoặc rỗng
     reactions: {

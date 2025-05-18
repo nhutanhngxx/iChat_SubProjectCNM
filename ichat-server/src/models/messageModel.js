@@ -419,6 +419,64 @@ const MessageModel = {
       );
     }
   },
+  // Tin nhắn mới nhất (read_by)
+  markMessagesAsRead: async (userId, partnerId, chatType = "private") => {
+    try {
+      // Convert IDs to ObjectId
+      const userObjectId = new mongoose.Types.ObjectId(userId);
+      const partnerObjectId = new mongoose.Types.ObjectId(partnerId);
+      console.log("maskMessagesAsRead", userId, partnerId, chatType);
+
+      // Tạo điều kiện tìm kiếm tin nhắn dựa vào chatType
+      let filter = {};
+
+      if (chatType === "private") {
+        // Trường hợp chat riêng tư - chỉ cập nhật tin nhắn mà người dùng là người nhận
+        filter = {
+          sender_id: partnerObjectId,
+          receiver_id: userObjectId,
+          chat_type: "private",
+          $or: [
+            { read_by: { $exists: false } }, // Trường hợp field chưa tồn tại
+            { read_by: { $nin: [userObjectId] } }, // Trường hợp field đã tồn tại nhưng chưa có userId
+          ],
+        };
+      } else if (chatType === "group") {
+        // Trường hợp chat nhóm - cập nhật tin nhắn trong nhóm mà không phải do người dùng gửi
+        filter = {
+          receiver_id: partnerObjectId, // partnerId chính là group_id
+          sender_id: { $ne: userObjectId }, // Không phải tin nhắn người dùng gửi
+          chat_type: "group",
+          $or: [
+            { read_by: { $exists: false } }, // Trường hợp field chưa tồn tại
+            { read_by: { $nin: [userObjectId] } }, // Trường hợp field đã tồn tại nhưng chưa có userId
+          ],
+        };
+      } else {
+        throw new Error("Loại chat không hợp lệ");
+      }
+
+      // Thêm ID người dùng vào mảng read_by của tất cả tin nhắn phù hợp
+      const result = await Messages.updateMany(filter, {
+        $addToSet: { read_by: userObjectId },
+        $set: { status: "viewed" },
+      });
+
+      console.log("Update result:", result);
+
+      return {
+        success: true,
+        matchedCount: result.matchedCount,
+        modifiedCount: result.modifiedCount,
+        message: `Đã đánh dấu ${result.modifiedCount} tin nhắn là đã đọc`,
+      };
+    } catch (error) {
+      console.error("Lỗi khi cập nhật trạng thái đọc tin nhắn:", error);
+      throw new Error(
+        "Không thể cập nhật trạng thái đọc tin nhắn: " + error.message
+      );
+    }
+  },
 };
 
 module.exports = MessageModel;

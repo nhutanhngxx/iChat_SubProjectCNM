@@ -88,5 +88,7 @@ router.post(
 );
 // Xoá lịch sử trò chuyện
 router.post("/delete-all-messages", MessageController.deleteAllMessagesForUser);
+// Tin nhắn mới nhất(read_by)
+router.put("/markMessagesAsRead", MessageController.markMessagesAsRead);
 
 module.exports = router;

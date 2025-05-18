@@ -317,3 +317,21 @@
     color: #65676b;
     cursor: pointer;
 }
+.bold-text {
+  font-weight: 600;
+}
+
+.chat-name {
+  font-weight: 500;
+  transition: font-weight 0.2s ease;
+}
+
+.last-message {
+  color: #666;
+  transition: font-weight 0.2s ease;
+}
+
+.last-message.bold-text {
+  color: #000;
+  font-weight: 600;
+}

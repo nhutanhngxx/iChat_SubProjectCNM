@@ -262,6 +262,7 @@ const MessageController = {
             type: { $first: "$type" },
             lastMessageSender: { $first: "$sender_id" },
             chat_type: { $first: "$chat_type" },
+            read_by: { $first: "$read_by" },
           },
         },
         {
@@ -341,6 +342,7 @@ const MessageController = {
             unread: 1,
             isLastMessageFromMe: 1,
             chat_type: 1,
+            read_by: 1,
           },
         },
       ]);
@@ -388,6 +390,7 @@ const MessageController = {
               unread: 0,
               isLastMessageFromMe: false,
               chat_type: "private",
+              read_by: [],
             });
           }
         }
@@ -422,6 +425,7 @@ const MessageController = {
             type: { $first: "$type" }, // Đảm bảo type được giữ lại
             lastMessageSender: { $first: "$sender_id" },
             chat_type: { $first: "$chat_type" },
+            read_by: { $first: "$read_by" },
           },
         },
         // Lấy thông tin của nhóm
@@ -537,6 +541,7 @@ const MessageController = {
             isLastMessageFromMe: 1,
             chat_type: 1,
             admin_id: "$groupInfo.admin_id",
+            read_by: 1,
           },
         },
       ]);
@@ -815,6 +820,32 @@ const MessageController = {
       res.status(500).json({
         status: "error",
         message: "Không thể xóa lịch sử trò chuyện",
+      });
+    }
+  },
+  // Tin nhắn mới (read_by)
+  markMessagesAsRead: async (req, res) => {
+    try {
+      const { userId, partnerId, chatType } = req.body;
+
+      if (!userId || !partnerId || !chatType) {
+        return res.status(400).json({
+          error: "Thiếu thông tin cần thiết (userId, partnerId, chatType)",
+        });
+      }
+
+      const result = await MessageModel.markMessagesAsRead(
+        userId,
+        partnerId,
+        chatType
+      );
+
+      res.status(200).json(result);
+    } catch (error) {
+      console.error("Lỗi khi đánh dấu tin nhắn đã đọc:", error);
+      res.status(500).json({
+        success: false,
+        error: error.message || "Lỗi server khi đánh dấu tin nhắn đã đọc",
       });
     }
   },
