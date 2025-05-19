@@ -95,8 +95,9 @@ class SocketService {
 
   onReceiveMessage(callback) {
     if (this.ensureConnection()) {
-      this.socket.off("receive-message");
       this.socket.on("receive-message", callback);
+      // console.log("[SocketService] Setting up message listener...");
+      // this.socket.off("receive-message");
     }
   }
 

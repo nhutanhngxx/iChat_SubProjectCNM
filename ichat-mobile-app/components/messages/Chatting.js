@@ -89,7 +89,7 @@ const Chatting = ({ navigation, route }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
 
-  // console.log("Chatting: ", chat);
+  // console.log("Chatting: ", chat.unreadCount);
 
   // Thêm state để quản lý audio đang phát
   const [playingAudio, setPlayingAudio] = useState(null);

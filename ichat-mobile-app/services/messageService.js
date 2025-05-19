@@ -185,6 +185,19 @@ const messageService = {
       return null;
     }
   },
+
+  markMessagesAsRead: async (userId, messageId) => {
+    try {
+      const response = await apiService.post(`/${PREFIX}/markAsRead`, {
+        userId,
+        messageId,
+      });
+      return response.data;
+    } catch (error) {
+      console.log("Lỗi đánh dấu đã đọc ở Message Service: ", error);
+      return null;
+    }
+  },
 };
 
 export default messageService;

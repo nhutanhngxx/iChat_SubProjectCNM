@@ -23,7 +23,6 @@ const getHostIP = () => {
       const hostIP = debuggerHost.split(":")[0];
       return hostIP;
     }
-
     return null;
   } catch (error) {
     console.error("Error getting host IP:", error);

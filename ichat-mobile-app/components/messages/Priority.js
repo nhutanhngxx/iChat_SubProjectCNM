@@ -68,6 +68,7 @@ const Priority = () => {
                 lastMessage: lastMessageContent,
                 lastMessageTime: new Date(messageData?.timestamp).getTime(),
                 time: getTimeAgo(new Date(messageData?.timestamp)),
+                unreadCount: chat.unreadCount ? chat.unreadCount + 1 : 1, // Tăng số lượng tin nhắn chưa đọc
               };
             }
             return chat;
