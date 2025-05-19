@@ -52,11 +52,11 @@ export default function LoginWithPass() {
   const handleLogin = async (e) => {
     e.preventDefault();
     // console.log("Form submitted", e); // Thêm log để kiểm tra
-    
+
     try {
       const phoneNumber = parsePhoneNumberFromString(phone, countryCode);
       // console.log("Sending login request with:", { phone: phoneNumber?.number, password: '***' });
-      
+
       await dispatch(loginUser({ phone: phoneNumber.number, password })).unwrap(); // unwrap để lấy dữ liệu từ createAsyncThunk
       if (token || localStorage.getItem("token")) {
         navigate("/home");
@@ -136,6 +136,7 @@ export default function LoginWithPass() {
             <div
               className="menu-mini"
               onClick={() => setShowToggleModal(!showToggleModal)}
+              style={{ position: "relative", top: "-67%", right: "-26%", cursor: "pointer" }}
             >
               <LuSquareMenu
                 className="icon"
@@ -216,7 +217,7 @@ export default function LoginWithPass() {
                   </span>
                 </div>
               </div>
-              
+
               {phone !== "" && phoneError && (
                 <p className="error-text" style={{ color: "red", marginLeft: "30px", fontSize: "10px" }}>{phoneError}</p>
               )}
@@ -225,14 +226,14 @@ export default function LoginWithPass() {
                   {error}
                 </p>
               )}
-              
+
               <div className="container-body-button">
                 <button type="submit" disabled={loading}>
                   {loading ? "Đang đăng nhập..." : "Đăng nhập với mật khẩu"}
                 </button>
               </div>
             </form>
-            
+
             <div className="container-body-link">
               <button style={{}} onClick={() => setShowForgotPassword(true)} >Quên mật khẩu?</button>
               <button onClick={() => setShowRegister(true)}>
