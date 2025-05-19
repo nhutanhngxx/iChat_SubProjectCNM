@@ -43,7 +43,7 @@ import { Ionicons } from "@expo/vector-icons";
 import AudioRecorder from "./AudioRecorder";
 import CallOverlay from "./CallOverlay";
 import IncomingCallScreen from "./IncomingCallScreen";
-
+import Constants from "expo-constants";
 const renderReactionIcons = (reactions) => {
   const icons = {
     like: require("../../assets/icons/emoji-like.png"),
@@ -72,7 +72,10 @@ const renderReactionIcons = (reactions) => {
 
 const Chatting = ({ navigation, route }) => {
   const ipAdr = getHostIP();
-  const API_iChat = `http://${ipAdr}:5001/api/messages/`;
+  // const API_iChat = `http://${ipAdr}:5001/api/messages/`;
+  const API_URL = Constants.expoConfig.extra.API_URL;
+
+  const API_iChat = `${API_URL}/api/messages/`;
   const { user } = useContext(UserContext);
   const { chat } = route.params || {};
   const flatListRef = useRef(null); // "friend" | "not-friend" | "blocked" dùng để kiểm tra trạng thái bạn bè giữa 2 người dùng

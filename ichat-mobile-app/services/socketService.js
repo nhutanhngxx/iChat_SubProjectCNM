@@ -5,7 +5,8 @@ class SocketService {
   constructor() {
     this.socket = null;
     this.ipAdr = getHostIP();
-    this.API_URL = `http://${this.ipAdr}:5001/`;
+    // this.API_URL = `http://${this.ipAdr}:5001/`;
+    this.API_URL = "https://ichat-server-production-b633.up.railway.app/";
     this.messageHandlers = new Map();
   }
 

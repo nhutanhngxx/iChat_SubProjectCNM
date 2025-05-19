@@ -23,9 +23,12 @@ import {
   getAuth,
 } from "firebase/auth";
 import { getHostIP } from "../../services/api";
+import Constants from "expo-constants";
+const { API_URL } = Constants.expoConfig.extra.API_URL;
 
 const ipAdr = getHostIP();
-const API_iChat = `http://${ipAdr}:5001/api`;
+// const API_iChat = `http://${ipAdr}:5001/api`;
+const API_iChat = `${API_URL}/api`; // Địa chỉ API của bạn
 
 const ForgotPasswordScreen = ({ navigation }) => {
   const [step, setStep] = useState(1);
