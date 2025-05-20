@@ -20,6 +20,7 @@ import { ActivityIndicator } from "react-native-paper";
 import friendService from "../../services/friendService";
 import FriendButton from "../common/FriendButton";
 import userService from "../../services/userService";
+import Constants from "expo-constants";
 
 const SearchScreen = () => {
   const route = useRoute();
@@ -42,7 +43,8 @@ const SearchScreen = () => {
   const [listFriend, setListFriend] = useState([]);
 
   const ipAdr = getHostIP();
-  const API_iChat = `http://${ipAdr}:5001/api`;
+  // const API_iChat = `http://${ipAdr}:5001/api`;
+  const API_iChat = `${Constants.expoConfig.extra.apiUrl}/api`;
 
   const handleOpenChatting = async (selectedItem) => {
     try {

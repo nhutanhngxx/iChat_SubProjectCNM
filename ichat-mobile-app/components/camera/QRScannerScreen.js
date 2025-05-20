@@ -16,6 +16,7 @@ import Slider from "@react-native-community/slider";
 import { StatusBar } from "expo-status-bar";
 import { UserContext } from "../../config/context/UserContext";
 import { getHostIP } from "../../services/api";
+import Constants from "expo-constants";
 
 export default function CameraFunction() {
   const [cameraPermission, setCameraPermission] = useState(); // Trạng thái quyền truy cập camera
@@ -34,7 +35,8 @@ export default function CameraFunction() {
   let cameraRef = useRef(); // Tạo một tham chiếu đến camera
   const navigation = useNavigation(); // Hook để điều hướng giữa các màn hình
   const ipAdr = getHostIP();
-  const API_iChat = `http://${ipAdr}:5001/api`;
+  // const API_iChat = `http://${ipAdr}:5001/api`;
+  const API_iChat = `${Constants.expoConfig.extra.apiUrl}/api`;
   const { user } = useContext(UserContext);
   const sendQrSessionToServer = async (sessionId) => {
     try {

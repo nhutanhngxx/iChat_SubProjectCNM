@@ -20,10 +20,12 @@ import { StatusBar } from "expo-status-bar";
 import { UserContext } from "../../config/context/UserContext";
 import axios from "axios";
 import { getHostIP } from "../../services/api";
+import Constants from "expo-constants";
 
 const AddFriend = () => {
   const ipAdr = getHostIP();
-  const API_iChat = `http://${ipAdr}:5001/api`;
+  // const API_iChat = `http://${ipAdr}:5001/api`;
+  const API_iChat = `${Constants.expoConfig.extra.apiUrl}/api`;
   const { user } = useContext(UserContext);
   const [countryCode, setCountryCode] = useState("+84");
   const [phoneNumber, setPhoneNumber] = useState("");

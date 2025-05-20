@@ -40,7 +40,8 @@ const ChangePhoneNumber = () => {
   const navigation = useNavigation();
   const { user, setUser } = useContext(UserContext);
   const ipAdr = getHostIP();
-  const API_iChat = `http://${ipAdr}:5001`;
+  // const API_iChat = `http://${ipAdr}:5001`;
+  const API_iChat = `${Constants.expoConfig.extra.apiUrl}`;
   const recaptchaVerifier = useRef(null);
   const [verificationId, setVerificationId] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
