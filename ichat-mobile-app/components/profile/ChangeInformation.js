@@ -25,6 +25,8 @@ import changeAvatarIcon from "../../assets/icons/change-avatar.png";
 import goBackIcon from "../../assets/icons/go-back.png";
 import { getHostIP } from "../../services/api";
 
+import Constants from "expo-constants";
+
 const ChangeInformation = () => {
   const navigation = useNavigation();
   const { user, setUser } = useContext(UserContext);
@@ -59,7 +61,8 @@ const ChangeInformation = () => {
   };
 
   const ipAdr = getHostIP();
-  const API_iChat = `http://${ipAdr}:5001/api`;
+  // const API_iChat = `http://${ipAdr}:5001/api`;
+  const API_iChat = `${Constants.expoConfig.extra.apiUrl}/api`;
 
   const parseDate = (dateString) => {
     if (!dateString || typeof dateString !== "string") return new Date();

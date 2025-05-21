@@ -44,6 +44,8 @@ import AudioRecorder from "./AudioRecorder";
 import CallOverlay from "./CallOverlay";
 import IncomingCallScreen from "./IncomingCallScreen";
 
+import Constants from "expo-constants";
+
 const renderReactionIcons = (reactions) => {
   const icons = {
     like: require("../../assets/icons/emoji-like.png"),
@@ -72,7 +74,8 @@ const renderReactionIcons = (reactions) => {
 
 const Chatting = ({ navigation, route }) => {
   const ipAdr = getHostIP();
-  const API_iChat = `http://${ipAdr}:5001/api/messages/`;
+  // const API_iChat = `http://${ipAdr}:5001/api/messages/`;
+  const API_iChat = `${Constants.expoConfig.extra.apiUrl}/api/messages/`;
   const { user } = useContext(UserContext);
   const { chat } = route.params || {};
   const flatListRef = useRef(null); // "friend" | "not-friend" | "blocked" dùng để kiểm tra trạng thái bạn bè giữa 2 người dùng
@@ -89,7 +92,8 @@ const Chatting = ({ navigation, route }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
 
-  // console.log("Chatting: ", chat.unreadCount);
+  // console.log("Chatting: ", chat);
+  // console.log("Chatting: ", typeChat);
 
   // Thêm state để quản lý audio đang phát
   const [playingAudio, setPlayingAudio] = useState(null);
@@ -1685,7 +1689,11 @@ const Chatting = ({ navigation, route }) => {
             </TouchableOpacity>
 
             <View style={{ marginLeft: 10, gap: 2 }}>
-              <Text style={styles.name}>{chat.name}</Text>
+              <Text style={styles.name}>
+                {chat.name.length > 10
+                  ? `${chat.name.slice(0, 15)}...`
+                  : chat.name}
+              </Text>
               {/* <Text style={{ fontSize: 12, color: "gray" }}>
                 {chat.status === "Online" ? "Đang hoạt động" : "Ngoại tuyến"}
               </Text> */}

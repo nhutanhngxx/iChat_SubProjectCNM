@@ -42,7 +42,9 @@ const GroupTab = () => {
     >
       <View style={styles.item_leftSide}>
         <Image source={item.avatar} style={{ width: 50, height: 50 }} />
-        <Text style={{ fontWeight: "500", fontSize: 16 }}>{item.name}</Text>
+        <Text style={{ fontWeight: "500", fontSize: 16 }}>
+          {item.name.length > 15 ? `${item.name.slice(0, 20)}...` : item.name}
+        </Text>
       </View>
       <View style={{ display: "flex", flexDirection: "row", gap: 20 }}>
         <Text style={{ fontSize: 12 }}>{item.time}</Text>

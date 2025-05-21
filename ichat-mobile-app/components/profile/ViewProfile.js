@@ -13,9 +13,11 @@ import HeaderViewProfile from "../header/HeaderViewProfile";
 import { UserContext } from "../../config/context/UserContext";
 import { getHostIP } from "../../services/api";
 import friendService from "../../services/friendService";
+import Constants from "expo-constants";
 
 const ViewProfile = ({ route }) => {
-  const API_iChat = `http://${getHostIP()}:5001/api`;
+  // const API_iChat = `http://${getHostIP()}:5001/api`;
+  const API_iChat = `${Constants.expoConfig.extra.apiUrl}/api`;
   const navigation = useNavigation();
   const { foundUser } = route.params || {};
   const { user } = useContext(UserContext);

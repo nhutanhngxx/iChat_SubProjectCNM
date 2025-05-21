@@ -20,6 +20,7 @@ import { ActivityIndicator } from "react-native-paper";
 import friendService from "../../services/friendService";
 import FriendButton from "../common/FriendButton";
 import userService from "../../services/userService";
+import Constants from "expo-constants";
 
 const SearchScreen = () => {
   const route = useRoute();
@@ -42,7 +43,8 @@ const SearchScreen = () => {
   const [listFriend, setListFriend] = useState([]);
 
   const ipAdr = getHostIP();
-  const API_iChat = `http://${ipAdr}:5001/api`;
+  // const API_iChat = `http://${ipAdr}:5001/api`;
+  const API_iChat = `${Constants.expoConfig.extra.apiUrl}/api`;
 
   const handleOpenChatting = async (selectedItem) => {
     try {
@@ -109,16 +111,6 @@ const SearchScreen = () => {
         chatPartnerAvatar = "https://i.ibb.co/9k8sPRMx/best-seller.png";
       }
 
-      const chat = {
-        id: chatPartnerId,
-        name: chatPartnerName,
-        avatar: { uri: chatPartnerAvatar },
-        chatType: "private",
-        messageId: messageId || null,
-      };
-
-      console.log("Prepared chat object:", chat);
-
       // Kiểm tra trạng thái bạn bè
       const friendships = await friendService.getFriendListByUserId(user.id);
       const isFriend = friendships.some(
@@ -142,13 +134,41 @@ const SearchScreen = () => {
       }
 
       // Thông báo nếu không phải bạn bè
-      if (typeChat === "not-friend") {
-        Alert.alert(
-          "Thông báo",
-          "Bạn không phải là bạn bè với người này. Một số tính năng trò chuyện sẽ bị hạn chế.",
-          [{ text: "OK" }]
-        );
+      // if (typeChat === "not-friend") {
+      //   Alert.alert(
+      //     "Thông báo",
+      //     "Bạn không phải là bạn bè với người này. Một số tính năng trò chuyện sẽ bị hạn chế.",
+      //     [{ text: "OK" }]
+      //   );
+      // }
+
+      let chat = {};
+      if (selectedItem.chat_type === "group") {
+        chatPartnerId = selectedItem.receiver_id._id;
+        chatPartnerName = selectedItem.receiver_id.full_name || "Unknown Group";
+        chatPartnerAvatar = selectedItem.receiver_id.avatar_path;
+        typeChat = "normal";
       }
+      if (selectedItem.chat_type === "private") {
+        chat = {
+          id: chatPartnerId,
+          name: chatPartnerName,
+          avatar: { uri: chatPartnerAvatar },
+          chatType: selectedItem?.chat_type || "private",
+          messageId: messageId || null,
+        };
+      } else {
+        chat = {
+          id: chatPartnerId,
+          name: selectedItem.name,
+          avatar: { uri: selectedItem.avatar },
+          chatType: selectedItem?.chat_type || "group",
+          messageId: messageId || null,
+        };
+        typeChat = "normal";
+      }
+
+      console.log("Prepared chat object:", chat);
 
       console.log("Final navigation params:", { chat, typeChat });
       navigation.navigate("Chatting", { chat, typeChat });
@@ -282,6 +302,7 @@ const SearchScreen = () => {
     } else {
       setSearchUsers([]);
       setSearchMessages([]);
+      setSearchGroups([]);
     }
   }, [searchText]);
 
@@ -289,6 +310,7 @@ const SearchScreen = () => {
     if (searchText.trim().length === 0) {
       setSearchUsers([]);
       setSearchMessages([]);
+      setSearchGroups([]);
       return;
     }
 
@@ -326,6 +348,7 @@ const SearchScreen = () => {
       // Tìm kiếm người dùng, tin nhắn và nhóm
       let usersResponse = { data: { users: [] } };
       let messagesResponse = { data: { messages: [] } };
+      let groupsResponse = { data: { groups: [] } };
 
       try {
         usersResponse = await axios.get(
@@ -341,6 +364,17 @@ const SearchScreen = () => {
         );
       } catch (error) {
         console.error("Lỗi tìm kiếm tin nhắn:", error);
+      }
+
+      try {
+        groupsResponse = await axios.get(
+          `${API_iChat}/groups/search/${user.id}?search=${encodeURIComponent(
+            finalSearchQuery
+          )}`
+        );
+        console.log("Groups Response:", groupsResponse.data);
+      } catch (error) {
+        console.error("Lỗi tìm kiếm nhóm:", error);
       }
 
       if (
@@ -371,6 +405,15 @@ const SearchScreen = () => {
         setSearchMessages(messagesResponse.data.messages);
       } else {
         setSearchMessages([]);
+      }
+
+      if (
+        groupsResponse.data?.status === "ok" &&
+        Array.isArray(groupsResponse.data.data)
+      ) {
+        setSearchGroups(groupsResponse.data.data);
+      } else {
+        setSearchGroups([]);
       }
     } catch (error) {
       console.error("Lỗi tổng quát khi tìm kiếm:", error);
@@ -541,7 +584,7 @@ const SearchScreen = () => {
             titleStyle={{ fontSize: 16, fontWeight: "500", color: "white" }}
           />
           <Tab.Item
-            title="Tài khoản"
+            title="Liên hệ"
             titleStyle={{ fontSize: 16, fontWeight: "500", color: "white" }}
           />
         </Tab>
@@ -660,7 +703,9 @@ const SearchScreen = () => {
                 >
                   <Image
                     source={{
-                      uri: item.avatar_path || item.sender_id?.avatar_path,
+                      uri:
+                        item.receiver_id?.avatar_path ||
+                        item.sender_id?.avatar_path,
                     }}
                     style={{
                       width: 50,
@@ -671,9 +716,20 @@ const SearchScreen = () => {
                   />
                   <View style={{ gap: 5 }}>
                     <Text style={{ fontWeight: "bold", fontSize: 16 }}>
-                      {item.sender_id.full_name || "Unknown"}
+                      {item.chat_type === "group"
+                        ? item.receiver_id.full_name || "Unknown Group"
+                        : item.sender_id.full_name || "Unknown"}
                     </Text>
-                    <Text>{item.content}</Text>
+                    {item.chat_type === "group" ? (
+                      <>
+                        <Text style={{ fontSize: 14 }}>
+                          {item.sender_id?.full_name || "Unknown"}:{" "}
+                          {item.content}
+                        </Text>
+                      </>
+                    ) : (
+                      <Text>{item.content}</Text>
+                    )}
                   </View>
                 </TouchableOpacity>
               ) : (
@@ -697,7 +753,10 @@ const SearchScreen = () => {
                   >
                     <Image
                       source={{
-                        uri: item.sender_id?.avatar_path || item.avatar_path,
+                        uri:
+                          item.sender_id?.avatar_path ||
+                          item.avatar_path ||
+                          item.avatar,
                       }}
                       style={{
                         width: 50,
@@ -709,20 +768,22 @@ const SearchScreen = () => {
                     />
                     <View>
                       <Text style={{ fontSize: 16, fontWeight: "bold" }}>
-                        {item.full_name}
+                        {item.full_name || item.name}
                       </Text>
                     </View>
                   </TouchableOpacity>
-                  <FriendButton
-                    userId={user?.id}
-                    itemId={item.id}
-                    fullName={item.full_name}
-                    sentRequests={sentRequests}
-                    listFriend={listFriend}
-                    onSendRequest={handleSendFriendRequest}
-                    onCancelRequest={handleCancelFriendRequest}
-                    refreshRequests={refreshFriendRequests}
-                  />
+                  {!item.admin_id && (
+                    <FriendButton
+                      userId={user?.id}
+                      itemId={item.id}
+                      fullName={item.full_name}
+                      sentRequests={sentRequests}
+                      listFriend={listFriend}
+                      onSendRequest={handleSendFriendRequest}
+                      onCancelRequest={handleCancelFriendRequest}
+                      refreshRequests={refreshFriendRequests}
+                    />
+                  )}
                 </TouchableOpacity>
               )
             }
@@ -756,7 +817,9 @@ const SearchScreen = () => {
                 >
                   <Image
                     source={{
-                      uri: item.sender_id?.avatar_path || item.avatar_path,
+                      uri:
+                        item.receiver_id?.avatar_path ||
+                        item.sender_id?.avatar_path,
                     }}
                     style={{
                       width: 50,
@@ -767,9 +830,20 @@ const SearchScreen = () => {
                   />
                   <View style={{ gap: 5 }}>
                     <Text style={{ fontWeight: "bold", fontSize: 16 }}>
-                      {item.sender_id.full_name || "Unknown"}
+                      {item.chat_type === "group"
+                        ? item.receiver_id.full_name || "Unknown Group"
+                        : item.sender_id.full_name || "Unknown"}
                     </Text>
-                    <Text>{item.content}</Text>
+                    {item.chat_type === "group" ? (
+                      <>
+                        <Text style={{ fontSize: 14 }}>
+                          {item.sender_id?.full_name || "Unknown"}:{" "}
+                          {item.content}
+                        </Text>
+                      </>
+                    ) : (
+                      <Text>{item.content}</Text>
+                    )}
                   </View>
                 </TouchableOpacity>
               )}
@@ -791,13 +865,13 @@ const SearchScreen = () => {
           )}
         </TabView.Item>
 
-        {/* Tab "Tài khoản" */}
+        {/* Tab "Liên hệ" */}
         <TabView.Item
           style={{ width: "100%", padding: 10, backgroundColor: "white" }}
         >
-          {searchUsers.length > 0 ? (
+          {[...searchGroups, ...searchUsers].length > 0 ? (
             <FlatList
-              data={searchUsers}
+              data={[...searchGroups, ...searchUsers]}
               renderItem={({ item }) => (
                 <TouchableOpacity
                   style={{
@@ -818,7 +892,10 @@ const SearchScreen = () => {
                   >
                     <Image
                       source={{
-                        uri: item.sender_id?.avatar_path || item.avatar_path,
+                        uri:
+                          item.sender_id?.avatar_path ||
+                          item.avatar_path ||
+                          item.avatar,
                       }}
                       style={{
                         width: 50,
@@ -830,20 +907,22 @@ const SearchScreen = () => {
                     />
                     <View>
                       <Text style={{ fontSize: 16, fontWeight: "bold" }}>
-                        {item.full_name}
+                        {item.full_name || item.name}
                       </Text>
                     </View>
                   </TouchableOpacity>
-                  <FriendButton
-                    userId={user?.id}
-                    itemId={item.id}
-                    fullName={item.full_name}
-                    sentRequests={sentRequests}
-                    listFriend={listFriend}
-                    onSendRequest={handleSendFriendRequest}
-                    onCancelRequest={handleCancelFriendRequest}
-                    refreshRequests={refreshFriendRequests}
-                  />
+                  {!item.admin_id && (
+                    <FriendButton
+                      userId={user?.id}
+                      itemId={item.id}
+                      fullName={item.full_name}
+                      sentRequests={sentRequests}
+                      listFriend={listFriend}
+                      onSendRequest={handleSendFriendRequest}
+                      onCancelRequest={handleCancelFriendRequest}
+                      refreshRequests={refreshFriendRequests}
+                    />
+                  )}
                 </TouchableOpacity>
               )}
               keyExtractor={(item, index) =>

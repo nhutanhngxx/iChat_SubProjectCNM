@@ -19,6 +19,7 @@ import friendService from "../../services/friendService";
 import { UserContext } from "../../config/context/UserContext";
 import { useNavigation } from "@react-navigation/native";
 import groupService from "../../services/groupService";
+import goBackIcon from "../../assets/icons/go-back.png";
 
 const ModalCreateGroup = ({ route }) => {
   const [groupList, setGroupList] = useState([]);
@@ -173,9 +174,20 @@ const ModalCreateGroup = ({ route }) => {
   return (
     <Modal animationType="slide" transparent={true}>
       <View style={styles.container}>
-        <StatusBar style="dark" />
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={{ flexDirection: "row", alignItems: "center", gap: 5 }}
+            onPress={() => navigation.goBack()}
+          >
+            <Image
+              source={goBackIcon}
+              style={{ width: 25, height: 25, tintColor: "black" }}
+            />
+            <Text style={styles.headerTitle}>Tạo nhóm mới</Text>
+          </TouchableOpacity>
+        </View>
         <View style={styles.modalView}>
-          <SafeAreaView
+          {/* <View
             style={
               Platform.OS === "ios"
                 ? { flexDirection: "row", alignItems: "center", gap: 10 }
@@ -185,6 +197,7 @@ const ModalCreateGroup = ({ route }) => {
                   }
             }
           >
+            <StatusBar style="dark" />
             <TouchableOpacity onPress={handleCloseModal}>
               <Image
                 source={require("../../assets/icons/go-back.png")}
@@ -202,7 +215,8 @@ const ModalCreateGroup = ({ route }) => {
                 Tạo nhóm mới
               </Text>
             </TouchableOpacity>
-          </SafeAreaView>
+          </View> */}
+
           <Text style={{ textAlign: "center", fontSize: 16, paddingTop: 10 }}>
             Số người đã chọn:{" "}
             <Text style={{ fontWeight: "bold" }}>{groupList.length}</Text>
@@ -364,9 +378,9 @@ const styles = StyleSheet.create({
   },
   modalView: {
     width: "100%",
-    height: "100%",
     backgroundColor: "white",
-    paddingHorizontal: 12,
+    flex: 1,
+    paddingHorizontal: 10,
   },
 
   itemContainer: {
@@ -407,10 +421,22 @@ const styles = StyleSheet.create({
   addButton: {
     height: 50,
     width: 50,
-    // justifyContent: "center",
-    // alignItems: "center",
     borderRadius: 25,
-    // marginLeft: 10,
+  },
+  header: {
+    width: "100%",
+    height: 50,
+    justifyContent: "space-between",
+    flexDirection: "row",
+    alignItems: "flex-end",
+    // backgroundColor: "#3083F9",
+    backgroundColor: "white",
+    padding: 10,
+  },
+  headerTitle: {
+    color: "black",
+    fontSize: 18,
+    fontWeight: "bold",
   },
 });
 

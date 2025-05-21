@@ -1,5 +1,12 @@
 import React, { useState, useEffect, useContext } from "react";
-import { Text, View, Image, TouchableOpacity, StyleSheet } from "react-native";
+import {
+  Text,
+  View,
+  Image,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+} from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { UserContext } from "../../config/context/UserContext";
 import { StatusBar } from "expo-status-bar";
@@ -147,6 +154,23 @@ const ProfileInformation = () => {
               padding: 15,
               borderRadius: 20,
             }}
+            onPress={() =>
+              Alert.alert(
+                "Xóa tài khoản",
+                "Bạn có chắc chắn muốn xóa tài khoản không?",
+                [
+                  { text: "Hủy", style: "cancel" },
+                  {
+                    text: "Xóa",
+                    style: "destructive",
+                    onPress: () => {
+                      Alert.alert("Tính năng này hiện chưa khả dụng");
+                      // Xử lý xóa tài khoản ở đây
+                    },
+                  },
+                ]
+              )
+            }
           >
             <Text
               style={{ fontSize: 16, fontWeight: "bold", color: "#FF0000" }}

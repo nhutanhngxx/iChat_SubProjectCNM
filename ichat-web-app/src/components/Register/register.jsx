@@ -284,7 +284,7 @@ const RegisterModal = ({ visible, onClose, onRegister }) => {
                         src="https://i.ibb.co/TGJ0mZm/logo-ichat-removebg.png"
                         alt="logo-ichat"
                     />
-                    <h2>Đăng Ký Tài Khoản</h2>
+                    <h2>ĐĂNG KÝ TÀI KHOẢN</h2>
                 </div>
 
                 {/* B1 - Nhập SĐT */}

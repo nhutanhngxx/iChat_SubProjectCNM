@@ -4,8 +4,8 @@ const multer = require("multer");
 const upload = multer({ storage: multer.memoryStorage() });
 const GroupController = require("../controllers/groupController");
 
+router.get("/search/:userId", GroupController.searchGroup); // Tìm kiếm nhóm
 router.get("/:userId", GroupController.getUserGroups); // Lấy danh sách nhóm mà người dùng tham gia
-router.get("/search", GroupController.searchGroup); // Tìm kiếm nhóm
 router.get("/:groupId/members", GroupController.getGroupMembers); // Lấy danh sách thành viên của nhóm
 router.post("/", upload.single("avatar"), GroupController.createGroup); // Tạo nhóm mới
 router.post("/add-member", GroupController.addMember); // Thêm thành viên vào nhóm

@@ -1,187 +1,248 @@
-/* Overlay nền mờ */
+/* Overlay background */
 .modal-overlay {
-    /* position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100vh;
-    background-color: rgba(0, 0, 0, 0.6); /* mờ nhẹ */
-    /* display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 999; */ 
-    position: fixed;
-    inset: 0 !important; /* thay cho top: 0; left: 0; width: 100%; height: 100vh */
-    background-color: rgba(0, 0, 0, 0.6);
-    display: flex !important;
-    justify-content: center !important;
-    align-items: center !important;
-    z-index: 999;
+  position: fixed;
+  inset: 0 !important; 
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  z-index: 999;
+  backdrop-filter: blur(4px);
+}
+
+/* Registration modal container */
+.modal {
+  position: relative;
+  padding: 30px 40px;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 450px;
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+  font-family: 'Segoe UI', sans-serif;
+  box-sizing: border-box;
+  background-color: white;
+  z-index: 1000;
+  animation: fadeInAndScale 0.4s ease-out forwards;
+}
+
+@keyframes fadeInAndScale {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.9);
+    top: 50%;
+    left: 50%;
   }
-  
-  /* Hộp đăng ký */
-  .modal {
-    position: fixed;
-    padding: 30px 40px;
-    border-radius: 20px;
-    width: 100%;
-    max-width: 450px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-    font-family: 'Segoe UI', sans-serif;
-    box-sizing: border-box;
-    animation: slideInToCenter 0.4s ease-out forwards;
-    background-color: white;
-    z-index: 1000;
-  
-    /* Gốc ban đầu */
-    top: 0;
-    left: 0;
-    transform: translate(0, 0);
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+    top: 50%;
+    left: 50%;
   }
-    
-  @keyframes slideInToCenter {
-    0% {
-      opacity: 0;
-      top: 0;
-      left: 0;
-      transform: translate(0, 0);
-    }
-    100% {
-      opacity: 1;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-    }
-  }
-  
-  
-  .modal h2 {
-    margin-bottom: 50px;
-    font-size: 28px;
-    color: #2c3e50;
-    text-align: center;
-  }
-  
-  /* Input chung */
-  .modal input,
-  .modal select {
-    width: 100%;
-    padding: 12px 14px;
-    margin-bottom: 15px;
-    border: 1px solid #ccc;
-    border-radius: 12px;
-    font-size: 15px;
-    transition: 0.3s;
-  }
-  
-  .modal input:focus,
-  .modal select:focus {
-    outline: none;
-    border-color: #007bff;
-    box-shadow: 0 0 8px rgba(0, 123, 255, 0.2);
-  }
-  
-  /* Nút */
-  .modal-buttons {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 10px;
-  }
-  
-  .modal button {
-    padding: 10px 24px;
-    border: none;
-    border-radius: 10px;
-    font-size: 15px;
-    cursor: pointer;
-    transition: 0.3s;
-  }
-  
-  .modal .cancel {
-    background-color: #e74c3c;
-    color: white;
-  }
-  
-  .modal .confirm {
-    background-color: #3498db;
-    color: white;
-  }
-  
-  .modal .cancel:hover {
-    background-color: #c0392b;
-  }
-  
-  .modal .confirm:hover {
-    background-color: #2980b9;
-  }
-  
-  /* Responsive cho mobile */
-  @media (max-width: 500px) {
-    .modal {
-      padding: 20px 25px;
-      width: 90%;
-    }
-  
-    .modal h2 {
-      font-size: 22px;
-    }
-  }
+}
+
+/* Header styling */
+.modal h2 {
+  margin-bottom: 30px;
+  font-size: 28px;
+  color: #2c3e50;
+  text-align: center;
+  font-weight: 600;
+}
+
+.modal > div:first-child {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+/* Input styles */
+.modal input,
+.modal select {
+  width: 100%;
+  padding: 14px 16px;
+  margin-bottom: 15px;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  font-size: 16px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.modal input:focus,
+.modal select:focus {
+  outline: none;
+  border-color: #3498db;
+  box-shadow: 0 0 10px rgba(52, 152, 219, 0.2);
+}
+
+/* OTP input container */
 .otp-container {
   display: flex;
-  gap: 5px;
+  gap: 10px;
   justify-content: center;
-  margin-bottom: 30px;
-  }
+  margin: 25px 0;
+}
+
+/* OTP individual input */
 .otp-container input {
   width: 50px;
-  height: 50px;
+  height: 60px;
   font-size: 24px;
+  font-weight: 600;
   text-align: center;
   border-radius: 10px;
-  border: 1px solid #ccc;
-  transition: border-color 0.3s ease;
+  border: 1px solid #e0e0e0;
+  transition: all 0.3s ease;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.05);
 }
-.handleNextStep{
+
+.otp-container input:focus {
+  border-color: #3498db;
+  box-shadow: 0 0 10px rgba(52, 152, 219, 0.3);
+}
+
+/* Next step button */
+.handleNextStep {
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-top: 20px;
-  border: 1px solid #aca9a9 !important;
-  width: 60% !important;
-  padding: 10px 20px !important;
-  align-items: center;
-  align-self: center;
-
-}
-.modal-buttons{
-  display: flex;
-  justify-content: space-evenly;
-  margin-top: 20px;
-}
-.modal-buttons button{
+  margin: 25px auto 15px;
+  width: 70% !important;
+  padding: 14px 20px !important;
+  font-size: 17px !important;
+  font-weight: 500;
+  color: white;
+  background-color: #3498db !important;
   border: none !important;
-  background-color: #ffffff !important;
-  padding: 0px !important;
-
-}
-.modal-buttons button:hover{
-  background-color: #13ecec !important;
-  color: #ffffff !important;
-}
-.modal-buttons .cancel-modal{
-  /* nổi lên */
-  background-color: #d8d3d3 !important;
-  color: #000000 !important;
-  position: absolute;
-  right: 0px;
-  top: 0px;
-  width: 30px !important;
-  padding: 5px 5px !important;
-  border-radius: 20px 0px 0 20px  !important;
+  border-radius: 12px !important;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4);
+  cursor: pointer;
 }
 
-.modal-buttons .back-modal{
-  padding: 5px 5px !important;
-  border-radius: 50px 0px 0 50px !important;
-  background-color: #d8d3d3 !important;
+.handleNextStep:hover {
+  background-color: #2980b9 !important;
+  transform: translateY(-2px);
+}
+
+.handleNextStep:active {
+  transform: translateY(0);
+}
+
+/* Resend OTP button */
+.resend-otp {
+  background-color: transparent !important;
+  color: #3498db !important;
+  border: 1px solid #3498db !important;
+  border-radius: 12px !important;
+  padding: 10px 20px !important;
+  width: 100% !important;
+  font-weight: 500;
+  transition: all 0.3s;
+}
+
+.resend-otp:hover {
+  background-color: rgba(52, 152, 219, 0.1) !important;
+}
+
+/* Modal navigation buttons */
+.modal-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 25px;
+  position: relative;
+}
+
+/* Cancel button (X) */
+.modal-buttons .cancel-modal {
+  position: fixed;
+  right: 0;
+  top: 0;
+  width: 36px !important;
+  height: 36px !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(255, 255, 255, 0.9) !important;
+  color: #e74c3c !important;
+  font-weight: bold;
+  font-size: 16px;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+  transition: all 0.2s ease;
+  border-radius: 20px 0px 0px 20px;
+}
+
+.modal-buttons .cancel-modal:hover {
+  background-color: #df4635 !important;
+  color: white !important;
+  transform: rotate(90deg);
+  border-radius: 0px 0px 20px 20px;
+}
+
+/* Back button */
+.modal-buttons .back-modal {
+  padding: 10px 20px !important;
+  border-radius: 12px !important;
+  background-color: #ecf0f1 !important;
+  color: #7f8c8d !important;
+  font-weight: 500;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  transition: all 0.3s;
+}
+
+.modal-buttons .back-modal:hover {
+  background-color: #d5dbdb !important;
+  color: #2c3e50 !important;
+}
+
+/* Phone input container */
+.modal div[style*="display: flex; gap: 5px"] {
+  display: flex;
+  gap: 10px !important;
+  align-items: center;
+  border-bottom: none !important;
+  padding: 0 !important;
+}
+
+/* Country code selector */
+.modal select[style*="width: 100px"] {
+  width: 120px !important;
+  background-color: #f8f9fa;
+  border-radius: 12px;
+}
+
+/* Responsive styling */
+@media (max-width: 500px) {
+  .modal {
+    width: 90%;
+    padding: 25px 20px;
+  }
+  
+  .modal h2 {
+    font-size: 22px;
+    margin-bottom: 20px;
+  }
+  
+  .otp-container input {
+    width: 40px;
+    height: 50px;
+    font-size: 20px;
+  }
+  
+  .handleNextStep {
+    width: 100% !important;
+  }
+  
+  .modal-buttons .cancel-modal {
+    right: -10px;
+    top: -10px;
+  }
+}
+
+/* Countdown styling */
+.modal p[style*="text-align: center"] {
+  color: #7f8c8d;
+  font-size: 14px;
+  margin: 5px 0 15px;
 }

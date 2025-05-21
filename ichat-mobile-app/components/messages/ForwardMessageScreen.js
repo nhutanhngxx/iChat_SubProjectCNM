@@ -16,9 +16,11 @@ import { getHostIP } from "../../services/api";
 import { StatusBar } from "expo-status-bar";
 import messageService from "../../services/messageService";
 import axios from "axios";
+import Constants from "expo-constants";
 
 const ForwardMessageScreen = () => {
-  const API_iChat = `http://${getHostIP()}:5001/api/messages`;
+  // const API_iChat = `http://${getHostIP()}:5001/api/messages`;
+  const API_iChat = `${Constants.expoConfig.extra.apiUrl}/api/messages`;
   const navigation = useNavigation();
   const route = useRoute();
   const { user } = useContext(UserContext);

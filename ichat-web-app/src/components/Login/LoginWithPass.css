@@ -157,8 +157,9 @@ body {
   box-shadow: #bdbdbd 0px 0px 10px;
   position: absolute;
   padding: 5px 10px;
-  margin-left: -50px;
-  margin-top: 0px;
+  margin-left: -100px;
+  margin-top: 25px;
+  width: max-content;
 }
 .toggle-login-mode a {
   text-decoration: none;

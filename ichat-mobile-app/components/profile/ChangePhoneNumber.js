@@ -21,6 +21,7 @@ import { FirebaseRecaptchaVerifierModal } from "expo-firebase-recaptcha";
 import { firebaseConfig } from "../../config/firebase";
 import authService from "../../services/authService";
 import { getHostIP } from "../../services/api";
+import Constants from "expo-constants";
 
 const maskPhoneNumber = (phone) => {
   if (!phone || phone.length < 10) return phone;
@@ -40,7 +41,8 @@ const ChangePhoneNumber = () => {
   const navigation = useNavigation();
   const { user, setUser } = useContext(UserContext);
   const ipAdr = getHostIP();
-  const API_iChat = `http://${ipAdr}:5001`;
+  // const API_iChat = `http://${ipAdr}:5001`;
+  const API_iChat = `${Constants.expoConfig.extra.apiUrl}`;
   const recaptchaVerifier = useRef(null);
   const [verificationId, setVerificationId] = useState(null);
   const [isLoading, setIsLoading] = useState(false);

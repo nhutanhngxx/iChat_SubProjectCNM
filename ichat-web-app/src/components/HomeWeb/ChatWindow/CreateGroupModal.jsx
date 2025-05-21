@@ -232,7 +232,7 @@ const CreateGroupModal = ({ visible, onCancel, onOk, userMessageId }) => {
           />
         </div>
 
-        <div style={{ maxHeight: "300px", overflowY: "auto" }}>
+        <div style={{ maxHeight: "30vh", overflowY: "auto" }}>
           {isLoadingFriends ? (
             <div style={{ textAlign: "center", padding: "20px 0" }}>
               Đang tải danh sách bạn bè...
@@ -253,7 +253,7 @@ const CreateGroupModal = ({ visible, onCancel, onOk, userMessageId }) => {
                 >
                   <Checkbox
                     checked={selectedContacts.includes(friend._id)}
-                    onChange={() => {}}
+                    onChange={() => { }}
                   />
                   <Avatar
                     src={friend.avatar_path}
