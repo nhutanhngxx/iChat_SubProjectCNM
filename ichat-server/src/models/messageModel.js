@@ -2,6 +2,8 @@ const Messages = require("../schemas/Messages");
 const MessageCard = require("../schemas/MessageCard");
 const GroupChat = require("../schemas/GroupChat");
 const GroupMembers = require("../schemas/GroupMember");
+const GroupModel = require("./groupModel");
+const UserModel = require("./userModel");
 const mongoose = require("mongoose");
 const { uploadFile } = require("../services/upload-file");
 
@@ -43,13 +45,16 @@ const MessageModel = {
       throw { status: 400, message: "Từ khóa tìm kiếm là bắt buộc" };
     if (!userId) throw { status: 400, message: "ID người dùng là bắt buộc" };
 
+    const groups = await GroupModel.getUserGroups(userId);
+    const groupIds = groups.map((group) => group._id);
+
     try {
       const query = {
         $and: [
-          { type: "text" },
+          { type: { $ne: "notify" } }, // Loại bỏ tin nhắn thông báo
           { content: { $regex: keyword, $options: "i" } }, // Tìm kiếm không phân biệt hoa thường
           { content: { $ne: "Tin nhắn đã được thu hồi" } }, // Loại bỏ tin nhắn thu hồi
-          { isdelete: { $ne: userObjectId } }, // Bỏ qua tin nhắn đã xóa bởi người dùng
+          { isdelete: { $ne: userId } }, // Bỏ qua tin nhắn đã xóa bởi người dùng
           {
             $or: [
               // Tin nhắn cá nhân
@@ -63,23 +68,93 @@ const MessageModel = {
               // Tin nhắn nhóm
               {
                 chat_type: "group",
-                receiver_id: {
-                  $in: await GroupChat.find({
-                    members: new mongoose.Types.ObjectId(userId),
-                  }).distinct("_id"),
-                },
+                $or: [
+                  { sender_id: new mongoose.Types.ObjectId(userId) },
+                  {
+                    receiver_id: {
+                      $in: groupIds,
+                    },
+                  },
+                ],
+                // receiver_id: {
+                //   $in: await GroupChat.find({
+                //     members: new mongoose.Types.ObjectId(userId),
+                //   }).distinct("_id"),
+                // },
               },
             ],
           },
         ],
       };
 
+      // First get all matching messages
       const messages = await Messages.find(query)
         .sort({ timestamp: -1 }) // Sắp xếp mới nhất trước
-        .populate("sender_id", "full_name avatar_path") // Lấy thông tin người gửi
-        .populate("receiver_id", "full_name avatar_path"); // Lấy thông tin người nhận hoặc nhóm
+        .populate("sender_id", "full_name avatar_path"); // Lấy thông tin người gửi
 
-      return messages;
+      // Then populate receiver_id differently based on chat_type
+      const populatedMessages = await Promise.all(
+        messages.map(async (message) => {
+          const messageObj = message.toObject();
+
+          try {
+            if (messageObj.chat_type === "group" && messageObj.receiver_id) {
+              // For group messages, populate from GroupChat collection
+              const groupInfo = await GroupChat.findById(
+                messageObj.receiver_id
+              ).select("name avatar");
+
+              if (groupInfo) {
+                messageObj.receiver_id = {
+                  _id: groupInfo._id,
+                  full_name: groupInfo.name, // Map group name to full_name for consistent frontend handling
+                  avatar_path: groupInfo.avatar,
+                };
+              } else {
+                console.warn(
+                  `Group with ID ${messageObj.receiver_id} not found`
+                );
+                messageObj.receiver_id = {
+                  _id: messageObj.receiver_id,
+                  full_name: "Unknown Group",
+                  avatar_path: null,
+                };
+              }
+            } else if (
+              messageObj.chat_type === "private" &&
+              messageObj.receiver_id
+            ) {
+              // For private messages, populate user info
+              const userInfo = await mongoose
+                .model("UserInfo")
+                .findById(messageObj.receiver_id)
+                .select("full_name avatar_path");
+
+              if (userInfo) {
+                messageObj.receiver_id = userInfo;
+              } else {
+                console.warn(
+                  `User with ID ${messageObj.receiver_id} not found`
+                );
+                messageObj.receiver_id = {
+                  _id: messageObj.receiver_id,
+                  full_name: "Unknown User",
+                  avatar_path: null,
+                };
+              }
+            }
+          } catch (err) {
+            console.error(
+              `Error populating receiver for message ${messageObj._id}:`,
+              err
+            );
+          }
+
+          return messageObj;
+        })
+      );
+
+      return populatedMessages;
     } catch (error) {
       console.error("Lỗi khi tìm kiếm tin nhắn:", error);
       throw {
@@ -273,7 +348,6 @@ const MessageModel = {
 
   // Update your removeReaction function
   removeReaction: async ({ messageId, userId, reaction_type }) => {
-    console.log("MessageId:", messageId);
     const message = await Messages.findById(messageId);
     if (!message)
       throw {
@@ -405,7 +479,6 @@ const MessageModel = {
       const result = await Messages.updateMany(filter, {
         $addToSet: { isdelete: userObjectId },
       });
-      console.log("result", result);
 
       return {
         success: true,
@@ -425,7 +498,6 @@ const MessageModel = {
       // Convert IDs to ObjectId
       const userObjectId = new mongoose.Types.ObjectId(userId);
       const partnerObjectId = new mongoose.Types.ObjectId(partnerId);
-      console.log("maskMessagesAsRead", userId, partnerId, chatType);
 
       // Tạo điều kiện tìm kiếm tin nhắn dựa vào chatType
       let filter = {};
@@ -461,8 +533,6 @@ const MessageModel = {
         $addToSet: { read_by: userObjectId },
         $set: { status: "viewed" },
       });
-
-      console.log("Update result:", result);
 
       return {
         success: true,

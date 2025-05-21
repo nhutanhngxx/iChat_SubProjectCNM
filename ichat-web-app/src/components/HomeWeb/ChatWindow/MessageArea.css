@@ -963,3 +963,16 @@ style Modal Group
   font-size: 16px;
   margin-top: 15px;
 }
+.blocked-alert {
+  margin-bottom: 15px;
+  border-radius: 8px;
+}
+
+.blocked-alert .ant-alert-message {
+  font-weight: bold;
+  color: #ff4d4f;
+}
+
+.blocked-alert .ant-alert-description {
+  color: #666;
+}

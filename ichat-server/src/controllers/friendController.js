@@ -74,9 +74,6 @@ const FriendshipController = {
   checkFriendStatus: async (req, res) => {
     const { user_id, friend_id } = req.body;
     try {
-      console.log("User ID: ", user_id);
-      console.log("Friend ID: ", friend_id);
-
       const friendship = await Friendship.findOne({
         $or: [
           { sender_id: user_id, receiver_id: friend_id },
@@ -294,8 +291,6 @@ const FriendshipController = {
   //  Từ chối / Hủy lời mời kết bạn
   cancelFriendRequest: async (req, res) => {
     const { senderId, receiverId } = req.body;
-    console.log("Sender ID: ", senderId);
-    console.log("Receiver ID: ", receiverId);
 
     try {
       const friendship = await Friendship.findOneAndDelete({
@@ -320,9 +315,6 @@ const FriendshipController = {
   checkFriendStatus: async (req, res) => {
     const { user_id, friend_id } = req.body;
     try {
-      console.log("User ID: ", user_id);
-      console.log("Friend ID: ", friend_id);
-
       const friendship = await Friendship.findOne({
         $or: [
           { sender_id: user_id, receiver_id: friend_id },

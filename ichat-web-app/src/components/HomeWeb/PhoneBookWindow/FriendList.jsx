@@ -112,7 +112,10 @@ const FriendList = () => {
       <Menu.Item
         key="block"
         icon={<StopOutlined />}
-        onClick={() => handleBlock(friendId)}
+        onClick={(e) => {
+          e.domEvent.stopPropagation();
+          handleBlock(friendId);
+        }}
       >
         Chặn người này
       </Menu.Item>
@@ -121,7 +124,10 @@ const FriendList = () => {
         key="delete"
         icon={<DeleteOutlined />}
         danger
-        onClick={() => handleUnfriend(friendId)}
+        onClick={(e) => {
+          e.domEvent.stopPropagation();
+          handleUnfriend(friendId);
+        }}
       >
         Xóa bạn
       </Menu.Item>

@@ -11,7 +11,7 @@ export const checkBlockingStatus = createAsyncThunk(
   async ({ userId, otherUserId }, { rejectWithValue }) => {
     try {
       const res = await axios.get(
-        `${API_URL}/check-blocking-status/${userId}/${otherUserId}`
+        `${API_URL}/check-block-status/${userId}/${otherUserId}`
       );
       return res.data;
     } catch (err) {
