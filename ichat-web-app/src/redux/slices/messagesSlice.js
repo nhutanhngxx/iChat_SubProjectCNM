@@ -5,6 +5,47 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 const REACT_APP_API_URL = process.env.REACT_APP_API_URL;
 const API_URL = `${REACT_APP_API_URL}/api/messages/`;
 
+// Search messages by keyword
+export const searchMessagesByKeyword = createAsyncThunk(
+  "messages/searchMessagesByKeyword",
+  async ({ keyword, userId }, { rejectWithValue }) => {
+    try {
+      if (!keyword.trim()) {
+        return []; // Return empty array for empty searches
+      }
+
+      const response = await fetch(
+        `${API_URL}search/${userId}?search=${encodeURIComponent(keyword)}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        return rejectWithValue(errorData);
+      }
+
+      const data = await response.json();
+
+      // Return the messages array from the response
+      if (data.status === "ok") {
+        return data.messages || [];
+      }
+
+      return rejectWithValue(data);
+    } catch (error) {
+      console.error("Error searching messages:", error);
+      return rejectWithValue({
+        error: "Network error",
+        details: error.message || "Không thể tìm kiếm tin nhắn",
+      });
+    }
+  }
+);
 // Đánh dấu tin nhắn là đã đọc
 export const markMessagesAsRead = createAsyncThunk(
   "messages/markMessagesAsRead",
@@ -505,6 +546,9 @@ const messagesSlice = createSlice({
     chatStatus: "idle",
     userMessagesStatus: "idle", // Thêm trạng thái
     error: null,
+    searchResults: [],
+    searchStatus: "idle", // 'idle' | 'loading' | 'succeeded' | 'failed'
+    searchError: null,
   },
   reducers: {
     updateMessages: (state, action) => {
@@ -883,6 +927,18 @@ const messagesSlice = createSlice({
             action.payload?.error || "Không thể đánh dấu tin nhắn đã đọc",
           timestamp: new Date().toISOString(),
         };
+      })
+      .addCase(searchMessagesByKeyword.pending, (state) => {
+        state.searchStatus = "loading";
+      })
+      .addCase(searchMessagesByKeyword.fulfilled, (state, action) => {
+        state.searchStatus = "succeeded";
+        state.searchResults = action.payload;
+      })
+      .addCase(searchMessagesByKeyword.rejected, (state, action) => {
+        state.searchStatus = "failed";
+        state.searchError =
+          action.payload?.message || "Không thể tìm kiếm tin nhắn";
       });
   },
 });

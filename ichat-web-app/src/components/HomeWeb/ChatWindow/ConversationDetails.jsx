@@ -438,36 +438,7 @@ const ConversationDetails = ({
       console.error("Error transferring admin:", error);
     }
   };
-  // Hàm kiểm tra xem hai người đã là bạn bè chưa
-  // const checkFriendshipStatus = async (memberId) => {
-  //   if (memberId === user.id) return false; // Không thể kết bạn với chính mình
-
-  //   setIsCheckingFriend(true);
-  //   try {
-  //     // Lấy danh sách bạn bè của user hiện tại
-  //     const response = await axios.get(
-  //       `http://${window.location.hostname}:5001/api/friendships/${user.id}`
-  //     );
-
-  //     // Kiểm tra xem memberId có trong danh sách bạn bè không
-  //     if (response.data && response.data.friends) {
-  //       const isFriend = response.data.friends.some(
-  //         (friend) =>
-  //           // Kiểm tra cả id và _id vì có thể có sự khác nhau trong cấu trúc dữ liệu
-  //           friend.id === memberId || friend._id === memberId
-  //       );
-  //       setIsCheckingFriend(false);
-  //       return isFriend;
-  //     }
-
-  //     setIsCheckingFriend(false);
-  //     return false;
-  //   } catch (error) {
-  //     console.error("Lỗi khi kiểm tra trạng thái bạn bè:", error);
-  //     setIsCheckingFriend(false);
-  //     return false;
-  //   }
-  // };
+  // Hàm lấy danh sách thành viên trong nhóm
   const checkFriendshipStatus = async (memberId) => {
     if (memberId === user.id) return false; // Không thể kết bạn với chính mình
 
@@ -1548,32 +1519,38 @@ const ConversationDetails = ({
                     (selectedChat.name || "User").charAt(0).toUpperCase()}
                 </Avatar>
               </div>
-              <h3>
-                {selectedChat.name}
+              <h3 >
+                <div style={{ display: "flex", justifyContent: "center", width: "100%" }}>
+                  <span
+                    style={{
+                      fontSize: "20px",
+                      fontWeight: "bold",
+                      textAlign: "center",
+                      wordWrap: "break-word",
+                      maxWidth: "80%",
+                    }}
+                  >
+                    {selectedChat.name}
+                  </span>
+                </div>
+
                 {selectedChat.chat_type !== "group" && (
-                  <EditOutlined
+                  <span><EditOutlined
                     className="icon-edit"
                     onClick={handleShowModalSetNickName}
-                  />
+                  /></span>
                 )}
               </h3>
             </div>
 
-            <div className="action-buttons">
-              <div className="notification-layout">
+            <div className="action-buttons" style={{ borderTopWidth: "1px", borderBottomWidth: "1px", justifyContent: "center" }}>
+
+              <div style={{ width: "fit-content", maxWidth: "100px" }}>
                 <button className="conversation-action-button">
-                  <BellOutlined className="icon-notification" />
+                  <BellOutlined />
                 </button>
                 <span>
-                  Tắt <br /> thông báo
-                </span>
-              </div>
-              <div>
-                <button className="conversation-action-button">
-                  <PushpinOutlined />
-                </button>
-                <span>
-                  Ghim <br /> hộp thoại
+                  Tắt <br /> Thông báo
                 </span>
               </div>
 
@@ -1682,7 +1659,7 @@ const ConversationDetails = ({
 
               <div
                 className="friends-list"
-                style={{ maxHeight: "300px", overflowY: "auto" }}
+                style={{ maxHeight: "200px", overflowY: "auto" }}
               >
                 {friends
                   .filter(
@@ -1776,7 +1753,7 @@ const ConversationDetails = ({
               }}
             >
               <div style={{ marginBottom: 20 }}>
-                <h4>Thông tin cơ bản</h4>
+                <h2 style={{ fontSize: "20px", fontWeight: "700" }}>Thông tin cơ bản</h2>
                 <div
                   style={{
                     display: "flex",
@@ -1909,8 +1886,13 @@ const ConversationDetails = ({
 
               <div style={{ marginBottom: 20 }}>
                 <h4>Quản lý vai trò</h4>
-                <div className="admin-section">
-                  {groupMembers.slice(0, 5).map((member) => (
+                <div className="admin-section" style={{
+                  marginBottom: 10, overflowY: "auto",
+                  maxHeight: "280px",
+                  scrollbarWidth: "none", // Firefox
+                  msOverflowStyle: "none", // IE/Edge
+                }}>
+                  {groupMembers.slice(0, showAllMembers ? groupMembers.length : 5).map((member) => (
                     <div
                       key={member.user_id}
                       className="member-item"
@@ -2013,12 +1995,13 @@ const ConversationDetails = ({
                     </div>
                   ))}
 
-                  {groupMembers.length > 5 && (
-                    <Button type="link" style={{ padding: "10px 0" }}>
-                      Xem tất cả thành viên
-                    </Button>
-                  )}
+
                 </div>
+                {groupMembers.length > 5 && (
+                  <Button type="link" style={{ padding: "10px 0" }} onClick={() => setShowAllMembers(true)}>
+                    Xem tất cả thành viên
+                  </Button>
+                )}
               </div>
 
               {isMainAdmin && (
@@ -2116,128 +2099,7 @@ const ConversationDetails = ({
                 </div>
               }
             </Modal>
-            {/* Modal quản lý yêu cầu tham gia và thành viên đã mời */}
-            {/* <Modal
-                    title="Quản lý thành viên"
-                    open={showPendingMembersModal}
-                    onCancel={() => setShowPendingMembersModal(false)}
-                    footer={[
-                      <Button key="close" onClick={() => setShowPendingMembersModal(false)}>
-                        Đóng
-                      </Button>
-                    ]}
-                    width={600}
-                  >
-                    <Tabs 
-                      activeKey={membersTabActive} 
-                      onChange={setMembersTabActive}
-                      items={[
-                        {
-                          key: 'pending',
-                          label: (
-                            <span>
-                              Yêu cầu tham gia
-                              {pendingMembers.length > 0 && (
-                                <Badge 
-                                  count={pendingMembers.length} 
-                                  style={{ backgroundColor: '#ff4d4f', marginLeft: 8 }}
-                                />
-                              )}
-                            </span>
-                          ),
-                          children: (
-                            <>
-                              {pendingMembersLoading ? (
-                                <div style={{ textAlign: 'center', padding: '30px 0' }}>
-                                  <Spin />
-                                  <div style={{ marginTop: 10, color: '#999' }}>Đang tải danh sách...</div>
-                                </div>
-                              ) : pendingMembers.length > 0 ? (
-                                <List
-                                  itemLayout="horizontal"
-                                  dataSource={pendingMembers}
-                                  renderItem={member => (
-                                    <List.Item
-                                      actions={[
-                                        <Button 
-                                          type="primary" 
-                                          size="small" 
-                                          onClick={() => handleAcceptMember(member.user_id, member.member.full_name)}
-                                        >
-                                          Chấp nhận
-                                        </Button>,
-                                        <Button 
-                                          danger 
-                                          size="small" 
-                                          onClick={() => handleRejectMember(member.user_id, member.member.full_name)}
-                                        >
-                                          Từ chối
-                                        </Button>
-                                      ]}
-                                    >
-                                      <List.Item.Meta
-                                        avatar={<Avatar src={member.member.avatar_path}>
-                                          {!member.member.avatar_path && member.member.full_name?.charAt(0).toUpperCase()}
-                                        </Avatar>}
-                                        title={member.member.full_name}
-                                        description={
-                                          <span>
-                                            Yêu cầu tham gia vào {new Date(member.requested_at).toLocaleString()}
-                                          </span>
-                                        }
-                                      />
-                                    </List.Item>
-                                  )}
-                                />
-                              ) : (
-                                <Empty 
-                                  image={Empty.PRESENTED_IMAGE_SIMPLE} 
-                                  description="Không có yêu cầu tham gia nào" 
-                                />
-                              )}
-                            </>
-                          )
-                        },
-                        {
-                          key: 'invited',
-                          label: 'Thành viên đã mời',
-                          children: (
-                            <>
-                              {invitedMembers.length > 0 ? (
-                                <List
-                                  itemLayout="horizontal"
-                                  dataSource={invitedMembers}
-                                  renderItem={member => (
-                                    <List.Item>
-                                      <List.Item.Meta
-                                        avatar={<Avatar src={member.member.avatar_path}>
-                                          {!member.member.avatar_path && member.member.full_name?.charAt(0).toUpperCase()}
-                                        </Avatar>}
-                                        title={member.member.full_name || member.phone || 'Không có tên'}
-                                        description={
-                                          <span>
-                                            Đã mời vào {new Date(member.joined_at).toLocaleString()}
-                                            {member.status === 'pending' && ' - Đang chờ chấp nhận'}
-                                            {member.status === 'approved' && ' - Đã chấp nhận'}
-                                            {member.status === '' && ' - Đã từ chối'}
-                                          </span>
-                                        }
-                                      />
-                                    </List.Item>
-                                  )}
-                                />
-                              ) : (
-                                <Empty 
-                                  image={Empty.PRESENTED_IMAGE_SIMPLE} 
-                                  description="Bạn chưa mời ai vào nhóm này" 
-                                />
-                              )}
-                            </>
-                          )
-                        }
-                      ]}
-                    />
-                  </Modal> */}
+            {/* Modal mời thành viên */}
             <Modal
               title="Quản lý thành viên"
               open={showPendingMembersModal}
@@ -2444,7 +2306,7 @@ const ConversationDetails = ({
 
               <p>Chọn một thành viên để trở thành nhóm trưởng mới:</p>
 
-              <div style={{ maxHeight: "300px", overflowY: "auto" }}>
+              <div style={{ maxHeight: "200px", overflowY: "auto" }}>
                 {groupMembers
                   // Lọc ra các thành viên khác, ưu tiên hiển thị nhóm phó trước
                   .filter((member) => member.user_id !== user.id)
@@ -3205,7 +3067,7 @@ const ConversationDetails = ({
 
                 <p>Chọn một thành viên để trở thành admin mới:</p>
 
-                <div style={{ maxHeight: "300px", overflowY: "auto" }}>
+                <div style={{ maxHeight: "200px", overflowY: "auto" }}>
                   {groupMembers
                     // Lọc ra các thành viên khác, ưu tiên hiển thị nhóm phó trước
                     .filter((member) => member.user_id !== user.id)
@@ -3477,7 +3339,7 @@ const ConversationDetails = ({
             />
           </div>
 
-          <div style={{ maxHeight: "300px", overflowY: "auto" }}>
+          <div style={{ maxHeight: "200px", overflowY: "auto" }}>
             {isLoadingFriends ? (
               <div style={{ textAlign: "center", padding: "20px 0" }}>
                 Đang tải danh sách bạn bè...

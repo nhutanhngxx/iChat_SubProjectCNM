@@ -297,8 +297,13 @@ const SearchRight = ({
 
     setTimeout(() => {
       let results = [...messages];
-      // THÊM: Lọc bỏ tin nhắn đã xóa mềm
+      // THÊM: Lọc bỏ tin nhắn đã xóa mềm và tin nhắn là notify
       results = results.filter(msg => {
+        // loại bỏ tin nhắn là notify
+        if (msg.type === "notify") {
+          return false;
+        }
+        // Loại bỏ tin nhắn đã xóa mềm
         if (!Array.isArray(msg.isdelete)) {
           return true; // Giữ lại nếu không có mảng isdelete
         }

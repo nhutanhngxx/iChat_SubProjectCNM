@@ -97,10 +97,6 @@ const GroupController = {
         participantArray = [];
       }
 
-      console.log("Kiểu dữ liệu participant_ids:", typeof participant_ids);
-      console.log("Giá trị gốc:", participant_ids);
-      console.log("Mảng đã xử lý:", participantArray);
-
       const avatar = req.file;
 
       const group = await GroupModel.createGroup({
@@ -173,30 +169,13 @@ const GroupController = {
       const { groupId } = req.params;
       const { name } = req.body;
       const avatar = req.file || null;
-      // const allow_add_members = req.body.allow_add_members;
-      // const allow_change_name = req.body.allow_change_name;
-      // const allow_change_avatar = req.body.allow_change_avatar;
-      const currentUserId = req.body.currentUserId;
-      // console.log(groupId, name, avatar);
 
-      // const upd = await GroupModel.updateGroup(
-      //   groupId,
-      //   {
-      //     name,
-      //     avatar,
-      //     allow_add_members,
-      //     allow_change_name,
-      //     allow_change_avatar,
-      //   },
-      //   currentUserId
-      // );
+      const currentUserId = req.body.currentUserId;
 
       const update = {
         name,
         avatar,
       };
-
-      console.log("Update data:", update);
 
       // Chỉ thêm vào update nếu client thực sự gửi các giá trị này
 
@@ -211,8 +190,6 @@ const GroupController = {
       if (req.body.require_approval !== undefined) {
         update.require_approval = req.body.require_approval === true;
       }
-
-      console.log("Update data:", update, "currentUserId:", currentUserId);
 
       const upd = await GroupModel.updateGroup(groupId, update, currentUserId);
 

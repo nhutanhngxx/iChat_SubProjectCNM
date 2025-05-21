@@ -149,40 +149,12 @@ const GroupModel = {
         ? participant_ids.split(",")
         : [];
 
-      // Xử lý avatar nếu có
-      // let avatarUrl = null;
-      // if (avatar) {
-      //   avatarUrl = await uploadFile(avatar);
-      // }
-      console.log("Avatar received:", avatar);
-      if (avatar) {
-        console.log("Avatar properties:", {
-          hasBuffer: !!avatar.buffer,
-          mimetype: avatar.mimetype,
-          originalname: avatar.originalname,
-          size: avatar.size,
-        });
-      }
       // Xử lý avatar nếu có (Merge code)
       let avatarUrl =
         "https://nhutanhngxx.s3.ap-southeast-1.amazonaws.com/root/new-logo.png"; // default avatar
       if (avatar && avatar.buffer) {
         try {
-          console.log("Processing avatar...");
-          console.log("Avatar:", avatar);
-          console.log("Avatar buffer:", avatar.buffer);
-          console.log("Avatar mimetype:", avatar.mimetype);
-          console.log("Avatar originalname:", avatar.originalname);
-          console.log("Avatar size:", avatar.size);
-
-          // avatarUrl = await uploadFile({
-          //   buffer: avatar.buffer,
-          //   mimetype: avatar.mimetype,
-          //   originalname: avatar.originalname,
-          //   size: avatar.size,
-          // });
           avatarUrl = await uploadFile(avatar);
-          console.log("Avatar URL:", avatarUrl);
         } catch (error) {
           console.error("Lỗi upload avatar:", error);
           // Tiếp tục với avatar mặc định nếu upload thất bại
@@ -524,9 +496,6 @@ const GroupModel = {
         new: true,
       });
 
-      console.log("updatedGroup: ", updatedGroup);
-      console.log("updatedFields: ", updatedFields);
-
       // Tạo thông báo nếu có cập nhật và biết người cập nhật
       if (updatedFields.length > 0 && updatedById) {
         const updater = await User.findById(updatedById);
@@ -542,9 +511,7 @@ const GroupModel = {
             } đã cập nhật ${updatedFields.join(", ")} và ${lastField}`;
           }
 
-          console.log("notificationContent: ", notificationContent);
-
-          await GroupModel.createGroupNotification({
+              await GroupModel.createGroupNotification({
             groupId,
             content: notificationContent,
             senderId: updatedById,
@@ -859,9 +826,7 @@ const GroupModel = {
       group_id: groupId,
       user_id: userId,
     });
-    console.log("Group ID:", groupId);
-    console.log("User ID:", userId);
-    console.log("Member:", member);
+
 
     if (!member) {
       throw new Error("Bạn không phải là thành viên của nhóm này");
@@ -959,7 +924,7 @@ const GroupModel = {
           },
         },
       ]);
-      console.log("Pending members:", pendingMembers);
+
 
       return pendingMembers;
     } catch (error) {
