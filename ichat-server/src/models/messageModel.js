@@ -49,7 +49,7 @@ const MessageModel = {
           { type: "text" },
           { content: { $regex: keyword, $options: "i" } }, // Tìm kiếm không phân biệt hoa thường
           { content: { $ne: "Tin nhắn đã được thu hồi" } }, // Loại bỏ tin nhắn thu hồi
-          { isdelete: { $ne: userObjectId } }, // Bỏ qua tin nhắn đã xóa bởi người dùng
+          // { isdelete: { $ne: userObjectId } }, // Bỏ qua tin nhắn đã xóa bởi người dùng
           {
             $or: [
               // Tin nhắn cá nhân

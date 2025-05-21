@@ -792,6 +792,7 @@ const MessageController = {
       res.status(500).json({ error: "Failed to soft delete messages." });
     }
   },
+
   // Hàm để xóa tất cả tin nhắn trong cuộc trò chuyện
   deleteAllMessagesForUser: async (req, res) => {
     try {
@@ -823,6 +824,7 @@ const MessageController = {
       });
     }
   },
+
   // Tin nhắn mới (read_by)
   markMessagesAsRead: async (req, res) => {
     try {
