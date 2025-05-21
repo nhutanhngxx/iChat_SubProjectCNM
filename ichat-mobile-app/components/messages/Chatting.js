@@ -93,6 +93,7 @@ const Chatting = ({ navigation, route }) => {
   const [uploadProgress, setUploadProgress] = useState(0);
 
   // console.log("Chatting: ", chat);
+  // console.log("Chatting: ", typeChat);
 
   // Thêm state để quản lý audio đang phát
   const [playingAudio, setPlayingAudio] = useState(null);
@@ -1688,7 +1689,11 @@ const Chatting = ({ navigation, route }) => {
             </TouchableOpacity>
 
             <View style={{ marginLeft: 10, gap: 2 }}>
-              <Text style={styles.name}>{chat.name}</Text>
+              <Text style={styles.name}>
+                {chat.name.length > 10
+                  ? `${chat.name.slice(0, 15)}...`
+                  : chat.name}
+              </Text>
               {/* <Text style={{ fontSize: 12, color: "gray" }}>
                 {chat.status === "Online" ? "Đang hoạt động" : "Ngoại tuyến"}
               </Text> */}

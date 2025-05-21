@@ -41,12 +41,13 @@ const GroupController = {
 
   // Tìm kiếm nhóm
   searchGroup: async (req, res) => {
+    const userId = req.params.userId;
     const { search } = req.query;
     if (!search) {
       return res.status(400).json({ error: "Thiếu từ khóa tìm kiếm." });
     }
     try {
-      const groups = await GroupModel.searchGroup(search);
+      const groups = await GroupModel.searchGroup({ search, userId });
       res.json({ status: "ok", contacts: null, data: groups });
     } catch (error) {
       console.error("Error searching messages:", error);

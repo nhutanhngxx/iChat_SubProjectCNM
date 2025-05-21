@@ -114,11 +114,22 @@ const GroupModel = {
   },
 
   // Tìm kiếm nhóm
-  searchGroup: async (keyword) => {
+  searchGroup: async ({ search, userId }) => {
     try {
-      const groups = await GroupChat.find({
-        name: { $regex: keyword, $options: "i" }, // Tìm kiếm không phân biệt hoa thường
-      }).sort({ created_at: -1 });
+      // Lấy danh sách nhóm của người dùng
+      const userGroups = await GroupModel.getUserGroups(userId);
+
+      // Sử dụng filter của JavaScript thay vì find kiểu MongoDB
+      const groups = userGroups.filter(
+        (group) =>
+          group.name && group.name.toLowerCase().includes(search.toLowerCase())
+      );
+
+      // Sắp xếp kết quả
+      groups.sort((a, b) =>
+        b.created_at ? new Date(b.created_at) - new Date(a.created_at) : 0
+      );
+
       return groups;
     } catch (error) {
       console.error("Lỗi tìm kiếm nhóm:", error);

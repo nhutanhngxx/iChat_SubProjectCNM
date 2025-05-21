@@ -21,6 +21,7 @@ import { FirebaseRecaptchaVerifierModal } from "expo-firebase-recaptcha";
 import { firebaseConfig } from "../../config/firebase";
 import authService from "../../services/authService";
 import { getHostIP } from "../../services/api";
+import Constants from "expo-constants";
 
 const maskPhoneNumber = (phone) => {
   if (!phone || phone.length < 10) return phone;

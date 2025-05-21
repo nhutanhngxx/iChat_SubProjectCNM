@@ -20,6 +20,7 @@ import { UserContext } from "../../config/context/UserContext";
 import { useNavigation } from "@react-navigation/native";
 import groupService from "../../services/groupService";
 import socketService from "../../services/socketService";
+import goBackIcon from "../../assets/icons/go-back.png";
 
 const ModalAddMember = ({ route }) => {
   // Dữ liệu được truyền qua navigation - params
@@ -212,10 +213,22 @@ const ModalAddMember = ({ route }) => {
 
   return (
     <Modal animationType="slide" transparent={true}>
+      <StatusBar style="dark" />
       <View style={styles.container}>
-        <StatusBar style="dark" />
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={{ flexDirection: "row", alignItems: "center", gap: 5 }}
+            onPress={() => navigation.goBack()}
+          >
+            <Image
+              source={goBackIcon}
+              style={{ width: 25, height: 25, tintColor: "black" }}
+            />
+            <Text style={styles.headerTitle}>Thêm thành viên mới</Text>
+          </TouchableOpacity>
+        </View>
         <View style={styles.modalView}>
-          <SafeAreaView
+          {/* <SafeAreaView
             style={
               Platform.OS === "ios"
                 ? { flexDirection: "row", alignItems: "center", gap: 10 }
@@ -242,7 +255,8 @@ const ModalAddMember = ({ route }) => {
                 Thêm thành viên vào nhóm
               </Text>
             </TouchableOpacity>
-          </SafeAreaView>
+          </SafeAreaView> */}
+
           <Text style={{ textAlign: "center", fontSize: 16, paddingTop: 10 }}>
             Số người đã chọn:{" "}
             <Text style={{ fontWeight: "bold" }}>{memberList.length}</Text>
@@ -403,6 +417,21 @@ const styles = StyleSheet.create({
     // alignItems: "center",
     borderRadius: 25,
     // marginLeft: 10,
+  },
+  header: {
+    width: "100%",
+    height: 90,
+    justifyContent: "space-between",
+    flexDirection: "row",
+    alignItems: "flex-end",
+    // backgroundColor: "#3083F9",
+    backgroundColor: "white",
+    padding: 10,
+  },
+  headerTitle: {
+    color: "black",
+    fontSize: 18,
+    fontWeight: "bold",
   },
 });
 

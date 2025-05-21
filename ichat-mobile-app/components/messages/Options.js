@@ -460,7 +460,12 @@ const Option = ({ route }) => {
               gap: 10,
             }}
           >
-            <Text style={styles.name}>{receiverGroup?.name}</Text>
+            <Text style={styles.name}>
+              {receiverGroup?.name.length > 15
+                ? `${receiverGroup.name.slice(0, 18)}...`
+                : receiverGroup.name}
+            </Text>
+
             {receiverGroup.allow_change_name || adminGroup || subAdminGroup ? (
               <TouchableOpacity onPress={() => setIsRenameModalVisible(true)}>
                 <Image
