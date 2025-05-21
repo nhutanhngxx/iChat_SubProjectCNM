@@ -1886,8 +1886,13 @@ const ConversationDetails = ({
 
               <div style={{ marginBottom: 20 }}>
                 <h4>Quản lý vai trò</h4>
-                <div className="admin-section">
-                  {groupMembers.slice(0, 5).map((member) => (
+                <div className="admin-section" style={{
+                  marginBottom: 10, overflowY: "auto",
+                  maxHeight: "280px",
+                  scrollbarWidth: "none", // Firefox
+                  msOverflowStyle: "none", // IE/Edge
+                }}>
+                  {groupMembers.slice(0, showAllMembers ? groupMembers.length : 5).map((member) => (
                     <div
                       key={member.user_id}
                       className="member-item"
@@ -1990,12 +1995,13 @@ const ConversationDetails = ({
                     </div>
                   ))}
 
-                  {groupMembers.length > 5 && (
-                    <Button type="link" style={{ padding: "10px 0" }}>
-                      Xem tất cả thành viên
-                    </Button>
-                  )}
+
                 </div>
+                {groupMembers.length > 5 && (
+                  <Button type="link" style={{ padding: "10px 0" }} onClick={() => setShowAllMembers(true)}>
+                    Xem tất cả thành viên
+                  </Button>
+                )}
               </div>
 
               {isMainAdmin && (
