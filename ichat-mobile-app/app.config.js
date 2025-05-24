@@ -1,12 +1,13 @@
 export default {
   expo: {
     name: "iChat",
-    slug: "snack-a8e50932-4793-425a-859b-e124996f0590",
+    owner: "nhutanhngxx",
+    slug: "ichat-application",
     version: "1.0.0",
     orientation: "portrait",
     icon: "./assets/icons/new-logo.png",
     userInterfaceStyle: "light",
-    newArchEnabled: true,
+    newArchEnabled: false,
     splash: {
       image: "./assets/icons/new-logo.png",
       resizeMode: "contain",
@@ -41,7 +42,8 @@ export default {
         foregroundImage: "./assets/icons/new-logo.png",
         backgroundColor: "#ffffff",
       },
-      package: "com.anonymous.snacka8e509324793425a859be124996f0590",
+      package: "com.ichat.app",
+      versionCode: 2,
     },
     web: {
       favicon: "./assets/icons/new-logo.png",
@@ -51,17 +53,17 @@ export default {
       checkAutomatically: "onError",
       fallbackToCacheTimeout: 0,
     },
-    packagerOpts: {
-      dev: true,
-      hostType: "localhost",
-    },
+    // packagerOpts: {
+    //   dev: true,
+    //   hostType: "localhost",
+    // },
     host: "exp.host",
     experimental: {
       bridgeless: false,
     },
     plugins: [
+      "expo-system-ui",
       [
-        // "@config-plugins/react-native-webrtc",
         "expo-image-picker",
         {
           photosPermission: "Ứng dụng cần truy cập thư viện ảnh để chọn ảnh.",
@@ -86,6 +88,9 @@ export default {
       firebaseAppId: process.env.FIREBASE_APP_ID,
       firebaseMeasurementId: process.env.FIREBASE_MEASUREMENT_ID,
       apiUrl: process.env.API_URL,
+      eas: {
+        projectId: "a933cf88-1f9d-4d79-9513-7dba9906f8ff",
+      },
     },
   },
 };

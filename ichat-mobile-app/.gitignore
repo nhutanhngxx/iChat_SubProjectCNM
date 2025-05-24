@@ -3,6 +3,10 @@
 # dependencies
 node_modules/
 
+# github
+/android/gradle.properties
+
+
 # Expo
 .expo/
 dist/
