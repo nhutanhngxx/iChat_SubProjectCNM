@@ -1690,7 +1690,7 @@ const Chatting = ({ navigation, route }) => {
 
             <View style={{ marginLeft: 10, gap: 2 }}>
               <Text style={styles.name}>
-                {chat.name?.length > 10
+                {chat.name?.length > 15
                   ? `${chat.name.slice(0, 15)}...`
                   : chat.name}
               </Text>
