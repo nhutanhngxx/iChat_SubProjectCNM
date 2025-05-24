@@ -24,6 +24,7 @@ import editIcon from "../../assets/icons/edit.png";
 import changeAvatarIcon from "../../assets/icons/change-avatar.png";
 import goBackIcon from "../../assets/icons/go-back.png";
 import { getHostIP } from "../../services/api";
+import Constants from "expo-constants";
 
 import Constants from "expo-constants";
 

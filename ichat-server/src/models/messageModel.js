@@ -2,6 +2,8 @@ const Messages = require("../schemas/Messages");
 const MessageCard = require("../schemas/MessageCard");
 const GroupChat = require("../schemas/GroupChat");
 const GroupMembers = require("../schemas/GroupMember");
+const GroupModel = require("./groupModel");
+const UserModel = require("./userModel");
 const mongoose = require("mongoose");
 const { uploadFile } = require("../services/upload-file");
 const GroupModel = require("./groupModel");
@@ -43,8 +45,10 @@ const MessageModel = {
     if (!keyword)
       throw { status: 400, message: "Từ khóa tìm kiếm là bắt buộc" };
     if (!userId) throw { status: 400, message: "ID người dùng là bắt buộc" };
+
     const groups = await GroupModel.getUserGroups(userId);
     const groupIds = groups.map((group) => group._id);
+
     try {
       const query = {
         $and: [
@@ -141,9 +145,11 @@ const MessageModel = {
               err
             );
           }
+
           return messageObj;
         })
       );
+
       return populatedMessages;
     } catch (error) {
       console.error("Lỗi khi tìm kiếm tin nhắn:", error);
@@ -338,7 +344,6 @@ const MessageModel = {
 
   // Update your removeReaction function
   removeReaction: async ({ messageId, userId, reaction_type }) => {
-    console.log("MessageId:", messageId);
     const message = await Messages.findById(messageId);
     if (!message)
       throw {
@@ -470,7 +475,6 @@ const MessageModel = {
       const result = await Messages.updateMany(filter, {
         $addToSet: { isdelete: userObjectId },
       });
-      console.log("result", result);
 
       return {
         success: true,
@@ -490,7 +494,6 @@ const MessageModel = {
       // Convert IDs to ObjectId
       const userObjectId = new mongoose.Types.ObjectId(userId);
       const partnerObjectId = new mongoose.Types.ObjectId(partnerId);
-      console.log("maskMessagesAsRead", userId, partnerId, chatType);
 
       // Tạo điều kiện tìm kiếm tin nhắn dựa vào chatType
       let filter = {};
@@ -526,8 +529,6 @@ const MessageModel = {
         $addToSet: { read_by: userObjectId },
         $set: { status: "viewed" },
       });
-
-      console.log("Update result:", result);
 
       return {
         success: true,

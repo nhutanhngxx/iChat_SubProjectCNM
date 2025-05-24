@@ -11,21 +11,18 @@ const UserController = {
 
       let avatarUrl, coverUrl;
 
-      console.log("FILES RECEIVED:", Object.keys(req.files || {}));
-      console.log("FULL FILES OBJECT:", req.files);
-
       // Xử lý avatar
       if (req.files && req.files.avatar && req.files.avatar.length > 0) {
         avatarUrl = await uploadFile(req.files.avatar[0]);
       } else {
-        console.log("Không có avatar", req.files?.avatar);
+        // console.log("Không có avatar", req.files?.avatar);
       }
 
       // Xử lý cover
       if (req.files && req.files.cover && req.files.cover.length > 0) {
         coverUrl = await uploadFile(req.files.cover[0]);
       } else {
-        console.log("Không có cover", req.files?.cover);
+        // console.log("Không có cover", req.files?.cover);
       }
 
       const updateData = {
@@ -33,8 +30,6 @@ const UserController = {
         gender,
         dob,
       };
-      console.log(avatarUrl);
-      console.log(coverUrl);
 
       if (avatarUrl) updateData.avatar_path = avatarUrl;
       if (coverUrl) updateData.cover_path = coverUrl;
