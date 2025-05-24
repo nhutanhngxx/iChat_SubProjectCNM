@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Layout,
   List,
@@ -34,6 +34,8 @@ import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import localizedFormat from "dayjs/plugin/localizedFormat";
 import "dayjs/locale/vi";
+import { useDispatch } from 'react-redux';
+import { getUserFriends } from '../../../redux/slices/friendSlice'; // Import the getUserFriends action
 
 const { TabPane } = Tabs;
 
@@ -232,17 +234,36 @@ const ChatList = ({ filteredChatList, onSelectUser, onPin, currentUserId }) => (
 
 // Component chính: ComponentLeft
 const ComponentLeft = ({ userList, setUserList, onSelectUser, user }) => {
+  const dispatch = useDispatch();
   const [activeTab, setActiveTab] = useState("priority");
   const [searchText] = useState("");
   const [showInterface, setShowInterface] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
   const [categoryFilters, setCategoryFilters] = useState([]);
+  const [friendsList, setFriendsList] = useState([]); // State to store the user's friends
+
+  // Hàm để lấy danh sách bạn bè
+  useEffect(() => {
+    const fetchFriends = async () => {
+      try {
+        if (user && user.id) {
+          const result = await dispatch(getUserFriends(user.id)).unwrap();
+          if (result && result.friends) {
+            // Extract friend IDs for easy comparison
+            const friendIds = result.friends.map(friend => friend.id);
+            setFriendsList(friendIds);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching friends list:", error);
+      }
+    };
+
+    fetchFriends();
+  }, [dispatch, user]);
 
   // Lọc danh sách chat dựa trên searchText
   const filteredChatList = userList.filter((chat) => {
-    // const name = chat.name ? chat.name.toLowerCase() : "";
-    // const search = searchText ? searchText.toLowerCase() : "";
-    // const mathchesSearch = name.includes(search);
     const matchesStatus =
       statusFilter === "all" ||
       (statusFilter === "unread" && chat.unread !== 0);
@@ -253,16 +274,38 @@ const ComponentLeft = ({ userList, setUserList, onSelectUser, user }) => {
 
   // Sắp xếp hội thoại: ghim lên trên, sau đó theo thời gian
   const sortedConversations = [...filteredChatList].sort((a, b) => {
-    if (a.isPinned && !b.isPinned) return -1
-    if (!a.isPinned && b.isPinned) return 1
-    return 0
-  })
+    if (a.isPinned && !b.isPinned) return -1;
+    if (!a.isPinned && b.isPinned) return 1;
+    return new Date(b.timestamp) - new Date(a.timestamp); // Sort by most recent
+  });
 
-  // Lọc danh sách ưu tiên và danh sách khác
+  // Lọc danh sách bạn bè và không phải bạn bè
   const filteredPriorityList = sortedConversations
-    .filter((item) => item.priority || item.isPinned);
+    .filter((item) => {
+      // Check if this conversation is with a friend
+      // For private chats (not groups), check if the other user is in friendsList
+      if (item.chat_type === "group") {
+        // For groups, always show in priority tab
+        return true;
+      } else {
+        // For private chats, check if the user ID is in the friends list
+        const chatPartnerId = item.id;
+        return friendsList.includes(chatPartnerId);
+      }
+    });
+
   const filteredOtherList = sortedConversations
-    .filter((item) => !item.priority && !item.isPinned);
+    .filter((item) => {
+      // Show conversations with non-friends in the "Other" tab
+      if (item.chat_type === "group") {
+        // Groups are always in priority tab
+        return false;
+      } else {
+        // For private chats, check if the user ID is NOT in the friends list
+        const chatPartnerId = item.id;
+        return !friendsList.includes(chatPartnerId);
+      }
+    });
 
   const handlePin = (id) => {
     const updatedList = sortedConversations.map((item) =>
@@ -288,11 +331,7 @@ const ComponentLeft = ({ userList, setUserList, onSelectUser, user }) => {
     setUserList(updatedList);
   };
 
-
-
-
-
-  // Nội dung của Popover Phân loại v
+  // Nội dung của Popover Phân loại
   const filterContent = (
     <div className="filter-popover">
       <p>Theo trạng thái</p>
@@ -338,7 +377,6 @@ const ComponentLeft = ({ userList, setUserList, onSelectUser, user }) => {
       ) : (
         <Layout className="chat-sidebar">
           <SearchBar onFocus={() => setShowInterface(true)} onSelectUser={onSelectUser} />
-          {/* <ChatList filteredChatList={userList} onSelectUser={onSelectUser} /> */}
           <div className="conversations-container">
             <div className="classification-conversation-container">
               <div className="tabs-header">
@@ -347,6 +385,7 @@ const ComponentLeft = ({ userList, setUserList, onSelectUser, user }) => {
                     }`}
                   onClick={() => setActiveTab("priority")}
                 >
+                  {/* {filteredPriorityList.length > 0 ? `Ưu tiên (${filteredPriorityList.length})` : "Bạn bè"} */}
                   Ưu tiên
                 </button>
 
@@ -355,6 +394,7 @@ const ComponentLeft = ({ userList, setUserList, onSelectUser, user }) => {
                     }`}
                   onClick={() => setActiveTab("other")}
                 >
+                  {/* {filteredOtherList.length > 0 ? `Không phải bạn bè (${filteredOtherList.length})` : "Không phải bạn bè"} */}
                   Khác
                 </button>
               </div>
@@ -380,19 +420,27 @@ const ComponentLeft = ({ userList, setUserList, onSelectUser, user }) => {
             </div>
             <div className="list-conversations-container">
               {activeTab === "priority" ? (
-                <ChatList
-                  filteredChatList={filteredPriorityList}
-                  onSelectUser={onSelectUser}
-                  onPin={handlePin}
-                  currentUserId={user?.id} // Pass current user ID to ChatItem
-                />
+                filteredPriorityList.length > 0 ? (
+                  <ChatList
+                    filteredChatList={filteredPriorityList}
+                    onSelectUser={onSelectUser}
+                    onPin={handlePin}
+                    currentUserId={user?.id}
+                  />
+                ) : (
+                  <div className="empty-list-message">Không có cuộc trò chuyện nào với bạn bè</div>
+                )
               ) : (
-                <ChatList
-                  filteredChatList={filteredOtherList}
-                  onSelectUser={onSelectUser}
-                  onPin={handlePin}
-                  currentUserId={user?.id} // Pass current user ID to ChatItem
-                />
+                filteredOtherList.length > 0 ? (
+                  <ChatList
+                    filteredChatList={filteredOtherList}
+                    onSelectUser={onSelectUser}
+                    onPin={handlePin}
+                    currentUserId={user?.id}
+                  />
+                ) : (
+                  <div className="empty-list-message">Không có cuộc trò chuyện nào với người không phải bạn bè</div>
+                )
               )}
             </div>
           </div>

@@ -237,7 +237,7 @@
   background-color: rgb(255, 255, 255);
   overflow-y: auto;
   height: 79vh;
-  max-height: 79vh;
+  max-height: 73vh;
 }
 .conttent-searchRight .search-right-empty {
   display: flex;

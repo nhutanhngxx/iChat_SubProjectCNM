@@ -17,7 +17,6 @@ import { StatusBar } from "expo-status-bar";
 import { UserContext } from "../../config/context/UserContext";
 import { getHostIP } from "../../services/api";
 import Constants from "expo-constants";
-
 export default function CameraFunction() {
   const [cameraPermission, setCameraPermission] = useState(); // Trạng thái quyền truy cập camera
   const [mediaLibraryPermission, setMediaLibraryPermission] = useState(); // Trạng thái quyền truy cập thư viện ảnh
@@ -31,7 +30,6 @@ export default function CameraFunction() {
   const [zoom, setZoom] = useState(0); // Mức độ thu phóng của camera
   const [scanned, setScanned] = useState(false); // Trạng thái đã quét mã QR hay chưa (mặc định là chưa quét)
   const scannedRef = useRef(false); // Tham chiếu để theo dõi trạng thái quét mã QR
-
   let cameraRef = useRef(); // Tạo một tham chiếu đến camera
   const navigation = useNavigation(); // Hook để điều hướng giữa các màn hình
   const ipAdr = getHostIP();

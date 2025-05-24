@@ -44,7 +44,11 @@ import SearchRight from "./SearchRight";
 import { set } from "lodash";
 import "./MessageArea.css";
 import socket from "../../services/socket";
-import { getUserFriends } from "../../../redux/slices/friendSlice";
+import {
+  getUserFriends,
+  checkBlockingStatus,
+  unblockUser,
+} from "../../../redux/slices/friendSlice";
 import VideoCallModal from "./CallVideo/VideoCallModal";
 import { message as antMessage } from "antd";
 import { sendFriendRequest } from "../../../redux/slices/friendSlice";
@@ -371,6 +375,9 @@ const MessageArea = ({ selectedChat, user, onChatChange, onSelectUser }) => {
   const [replyingTo, setReplyingTo] = useState(null);
   //state để reset lại mesageArea khi người dùng rời nhóm
   const [currentChat, setCurrentChat] = useState(selectedChat);
+  const [isBlocked, setIsBlocked] = useState(false);
+  const [blockedByUser, setBlockedByUser] = useState(false);
+  const [blockedByTarget, setBlockedByTarget] = useState(false);
   //Scroll để tìm tin nhắn
   const scrollToMessage = (message) => {
     if (!message || !message._id) return;
@@ -526,6 +533,41 @@ const MessageArea = ({ selectedChat, user, onChatChange, onSelectUser }) => {
   const [friends, setFriends] = useState({ friends: [] });
 
   // Add this useEffect to fetch friends
+  // useEffect(() => {
+  //   const fetchFriends = async () => {
+  //     try {
+  //       const result = await dispatch(
+  //         getUserFriends(user._id || user.id)
+  //       ).unwrap();
+  //       setFriends(result);
+
+  //       // Chỉ kiểm tra nếu không phải chat nhóm
+  //       if (
+  //         result &&
+  //         result.friends &&
+  //         selectedChat &&
+  //         selectedChat.chat_type !== "group"
+  //       ) {
+  //         const isFriend = result.friends.some(
+  //           (friend) =>
+  //             friend.id === selectedChat.id ||
+  //             friend._id === selectedChat.id ||
+  //             String(friend.id) === String(selectedChat.id)
+  //         );
+  //         setIsFriendWithReceiver(isFriend);
+  //       } else if (selectedChat?.chat_type === "group") {
+  //         // Nếu là chat nhóm, luôn set là true
+  //         setIsFriendWithReceiver(true);
+  //       }
+  //     } catch (err) {
+  //       console.error("Error fetching friends:", err);
+  //     }
+  //   };
+
+  //   if (user?._id || user?.id) {
+  //     fetchFriends();
+  //   }
+  // }, [dispatch, user, selectedChat]);
   useEffect(() => {
     const fetchFriends = async () => {
       try {
@@ -548,12 +590,32 @@ const MessageArea = ({ selectedChat, user, onChatChange, onSelectUser }) => {
               String(friend.id) === String(selectedChat.id)
           );
           setIsFriendWithReceiver(isFriend);
+
+          // Nếu không phải bạn bè, kiểm tra trạng thái chặn
+          if (!isFriend && selectedChat.id !== user.id) {
+            const blockStatus = await dispatch(
+              checkBlockingStatus({
+                userId: user._id || user.id,
+                otherUserId: selectedChat.id,
+              })
+            ).unwrap();
+
+            setIsBlocked(blockStatus.isBlocked);
+            setBlockedByUser(blockStatus.blockedByUser);
+            setBlockedByTarget(blockStatus.blockedByTarget);
+          } else {
+            // Reset trạng thái chặn nếu là bạn bè
+            setIsBlocked(false);
+            setBlockedByUser(false);
+            setBlockedByTarget(false);
+          }
         } else if (selectedChat?.chat_type === "group") {
           // Nếu là chat nhóm, luôn set là true
           setIsFriendWithReceiver(true);
+          setIsBlocked(false);
         }
       } catch (err) {
-        console.error("Error fetching friends:", err);
+        console.error("Error fetching friends or checking block status:", err);
       }
     };
 
@@ -561,6 +623,42 @@ const MessageArea = ({ selectedChat, user, onChatChange, onSelectUser }) => {
       fetchFriends();
     }
   }, [dispatch, user, selectedChat]);
+  // Trạng thái bỏ chặn
+  const handleUnblock = async () => {
+    try {
+      antMessage.loading({
+        content: "Đang hủy chặn...",
+        key: "unblockUser",
+      });
+
+      const result = await dispatch(
+        unblockUser({
+          blocker_id: user.id,
+          blocked_id: selectedChat.id,
+        })
+      ).unwrap();
+
+      if (result.status === "ok") {
+        antMessage.success({
+          content: "Đã hủy chặn người dùng",
+          key: "unblockUser",
+          duration: 2,
+        });
+
+        // Reset trạng thái chặn
+        setIsBlocked(false);
+        setBlockedByUser(false);
+      } else {
+        throw new Error(result.message || "Không thể hủy chặn người dùng");
+      }
+    } catch (error) {
+      antMessage.error({
+        content: error.message || "Không thể hủy chặn. Vui lòng thử lại sau.",
+        key: "unblockUser",
+      });
+      console.error("Error unblocking user:", error);
+    }
+  };
   const handleSendMessage = async (
     text = "",
     image = null,
@@ -898,29 +996,57 @@ const MessageArea = ({ selectedChat, user, onChatChange, onSelectUser }) => {
           <div className="message-container">
             {!isFriendWithReceiver && selectedChat.chat_type !== "group" && (
               <div className="not-friend-banner">
-                <Alert
-                  message="Hai bạn chưa là bạn bè"
-                  description="Kết bạn để mở khóa tính năng tin nhắn đầy đủ."
-                  type="warning"
-                  showIcon
-                  action={
-                    friendRequestSent ? (
-                      <Button size="small" disabled>
-                        Đã gửi lời mời
-                      </Button>
-                    ) : (
-                      <Button
-                        type="primary"
-                        size="small"
-                        icon={<UserAddOutlined />}
-                        onClick={handleSendFriendRequest}
-                      >
-                        Kết bạn
-                      </Button>
-                    )
-                  }
-                  className="not-friend-alert"
-                />
+                {isBlocked ? (
+                  <Alert
+                    message={
+                      blockedByUser ? "Bạn đã chặn người này" : "Bạn đã bị chặn"
+                    }
+                    description={
+                      blockedByUser
+                        ? "Bạn sẽ không nhận được tin nhắn từ người này cho đến khi hủy chặn."
+                        : "Bạn không thể gửi tin nhắn đến người này vì họ đã chặn bạn."
+                    }
+                    type="error"
+                    showIcon
+                    action={
+                      blockedByUser ? (
+                        <Button
+                          type="primary"
+                          danger
+                          size="small"
+                          onClick={handleUnblock}
+                        >
+                          Hủy chặn
+                        </Button>
+                      ) : null
+                    }
+                    className="blocked-alert"
+                  />
+                ) : (
+                  <Alert
+                    message="Hai bạn chưa là bạn bè"
+                    description="Kết bạn để mở khóa tính năng tin nhắn đầy đủ."
+                    type="warning"
+                    showIcon
+                    action={
+                      friendRequestSent ? (
+                        <Button size="small" disabled>
+                          Đã gửi lời mời
+                        </Button>
+                      ) : (
+                        <Button
+                          type="primary"
+                          size="small"
+                          icon={<UserAddOutlined />}
+                          onClick={handleSendFriendRequest}
+                        >
+                          Kết bạn
+                        </Button>
+                      )
+                    }
+                    className="not-friend-alert"
+                  />
+                )}
               </div>
             )}
 
