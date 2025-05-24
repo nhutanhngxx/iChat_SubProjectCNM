@@ -160,9 +160,9 @@ const SearchScreen = () => {
       } else {
         chat = {
           id: chatPartnerId,
-          name: selectedItem.name,
-          avatar: { uri: selectedItem.avatar },
-          chatType: selectedItem?.chat_type || "group",
+          name: selectedItem.name || selectedItem.full_name,
+          avatar: { uri: selectedItem.avatar || chatPartnerAvatar },
+          chatType: selectedItem?.chat_type,
           messageId: messageId || null,
         };
         typeChat = "normal";
@@ -171,6 +171,12 @@ const SearchScreen = () => {
       console.log("Prepared chat object:", chat);
 
       console.log("Final navigation params:", { chat, typeChat });
+
+      if (chat.id === user.id) {
+        navigation.navigate("ProfileInformation");
+        return;
+      }
+
       navigation.navigate("Chatting", { chat, typeChat });
     } catch (error) {
       console.error("Error in handleOpenChatting:", error);
