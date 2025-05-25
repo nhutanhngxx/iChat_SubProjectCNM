@@ -11,7 +11,7 @@ const AudioRecorder = ({ onRecordComplete }) => {
   useEffect(() => {
     return () => {
       if (recording) {
-        stopRecording();
+        cancelRecording();
       }
     };
   }, []);
@@ -89,6 +89,27 @@ const AudioRecorder = ({ onRecordComplete }) => {
     }
   }
 
+  async function cancelRecording() {
+    try {
+      if (!recording) return;
+
+      // Dừng đếm thời gian
+      if (recording._intervalId) {
+        clearInterval(recording._intervalId);
+      }
+
+      await recording.stopAndUnloadAsync();
+
+      // Reset states mà không gửi file audio
+      setRecording(null);
+      setIsRecording(false);
+      setRecordingDuration(0);
+    } catch (err) {
+      console.error("Lỗi khi hủy ghi âm:", err);
+      Alert.alert("Lỗi", "Không thể hủy ghi âm");
+    }
+  }
+
   const formatDuration = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -97,18 +118,30 @@ const AudioRecorder = ({ onRecordComplete }) => {
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity
-        onPress={isRecording ? stopRecording : startRecording}
-        style={[styles.button, isRecording && styles.recordingButton]}
-      >
-        <Ionicons
-          name={isRecording ? "stop" : "mic"}
-          size={24}
-          color={isRecording ? "#ff4444" : "#007AFF"}
-        />
-      </TouchableOpacity>
-      {isRecording && (
-        <Text style={styles.duration}>{formatDuration(recordingDuration)}</Text>
+      {!isRecording ? (
+        <TouchableOpacity onPress={startRecording} style={styles.button}>
+          <Ionicons name="mic" size={24} color="#007AFF" />
+        </TouchableOpacity>
+      ) : (
+        <View style={styles.recordingContainer}>
+          <TouchableOpacity
+            onPress={cancelRecording}
+            style={[styles.button, styles.cancelButton]}
+          >
+            <Ionicons name="close" size={20} color="#ff4444" />
+          </TouchableOpacity>
+
+          <Text style={styles.duration}>
+            {formatDuration(recordingDuration)}
+          </Text>
+
+          <TouchableOpacity
+            onPress={stopRecording}
+            style={[styles.button, styles.stopButton]}
+          >
+            <Ionicons name="checkmark" size={20} color="#007AFF" />
+          </TouchableOpacity>
+        </View>
       )}
     </View>
   );
@@ -116,25 +149,37 @@ const AudioRecorder = ({ onRecordComplete }) => {
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: "row",
     alignItems: "center",
-    // padding: 10,
   },
   button: {
     width: 25,
     height: 25,
     borderRadius: 25,
-    // backgroundColor: "#f0f0f0",
     justifyContent: "center",
     alignItems: "center",
   },
-  recordingButton: {
+  recordingContainer: {
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: "#ffe0e0",
+    borderRadius: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  cancelButton: {
+    backgroundColor: "#fff",
+    marginRight: 8,
+  },
+  stopButton: {
+    backgroundColor: "#fff",
+    marginLeft: 8,
   },
   duration: {
-    marginLeft: 15,
-    fontSize: 16,
-    color: "#666",
+    fontSize: 14,
+    color: "#ff4444",
+    fontWeight: "500",
+    minWidth: 35,
+    textAlign: "center",
   },
 });
 
