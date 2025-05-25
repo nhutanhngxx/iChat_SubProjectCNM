@@ -1595,7 +1595,7 @@ const ConversationDetails = ({
                   </div>
                 </>
               ) : (
-                <div>
+                <div style={{ width: "fit-content", maxWidth: "100px" }}>
                   <button
                     className="conversation-action-button"
                     onClick={handleCreateGroupClick}
