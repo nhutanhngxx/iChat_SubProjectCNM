@@ -6,7 +6,6 @@ const GroupModel = require("./groupModel");
 const UserModel = require("./userModel");
 const mongoose = require("mongoose");
 const { uploadFile } = require("../services/upload-file");
-const GroupModel = require("./groupModel");
 
 const MessageModel = {
   // Xử lý nhiều ảnh

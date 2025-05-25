@@ -638,7 +638,7 @@ const Chatting = ({ navigation, route }) => {
     let finalName = parts.join("-");
 
     // Nếu tên dài hơn maxLength thì rút gọn lại, giữ đầu và đuôi
-    if (finalName.length > maxLength) {
+    if (finalName?.length > maxLength) {
       const keep = Math.floor((maxLength - 3) / 2); // Trừ 3 cho dấu "..."
       const start = finalName.slice(0, keep);
       const end = finalName.slice(-keep);
@@ -918,7 +918,7 @@ const Chatting = ({ navigation, route }) => {
               // Nếu không có mảng isdelete hoặc mảng rỗng thì hiển thị tin nhắn
               if (
                 !Array.isArray(message.isdelete) ||
-                message.isdelete.length === 0
+                message.isdelete?.length === 0
               ) {
                 return true;
               }
@@ -948,7 +948,7 @@ const Chatting = ({ navigation, route }) => {
           const filteredMessages = messages.filter((message) => {
             if (
               !Array.isArray(message.isdelete) ||
-              message.isdelete.length === 0
+              message.isdelete?.length === 0
             ) {
               return true;
             }
@@ -1079,7 +1079,7 @@ const Chatting = ({ navigation, route }) => {
       }
 
       // Gửi hình ảnh
-      if (selectedImages.length > 0) {
+      if (selectedImages?.length > 0) {
         const formData = new FormData();
         const groupId = Date.now().toString();
 
@@ -1102,7 +1102,7 @@ const Chatting = ({ navigation, route }) => {
           chat?.chatType === "group" ? "group" : "private"
         );
         formData.append("group_id", groupId);
-        formData.append("total_images", selectedImages.length.toString());
+        formData.append("total_images", selectedImages?.length.toString());
 
         const response = await axios.post(
           `${API_iChat}/send-multiple-images`,
@@ -1121,7 +1121,7 @@ const Chatting = ({ navigation, route }) => {
               ...message,
               chatId: roomId,
               group_id: groupId, // Thêm group_id vào message
-              total_images: selectedImages.length, // Thêm tổng số ảnh
+              total_images: selectedImages?.length, // Thêm tổng số ảnh
               is_group_images: true, // Đánh dấu là ảnh nhóm
             };
             socketService.handleSendMultipleImages(messageToSend);
@@ -1291,7 +1291,7 @@ const Chatting = ({ navigation, route }) => {
     }
     try {
       const isLastMessage =
-        selectedMessage._id === messages[messages.length - 1]._id;
+        selectedMessage._id === messages[messages?.length - 1]._id;
       const response = await messageService.softDeleteMessagesForUser(
         user.id,
         selectedMessage._id
@@ -1383,7 +1383,7 @@ const Chatting = ({ navigation, route }) => {
     }
 
     const renderImages = () => {
-      switch (groupImages.length) {
+      switch (groupImages?.length) {
         case 1:
           return (
             <TouchableOpacity
@@ -1467,10 +1467,10 @@ const Chatting = ({ navigation, route }) => {
                       style={styles.smallImage}
                       resizeMode="cover"
                     />
-                    {index === 1 && groupImages.length > 3 && (
+                    {index === 1 && groupImages?.length > 3 && (
                       <View style={styles.remainingCountOverlay}>
                         <Text style={styles.remainingCountText}>
-                          +{groupImages.length - 3}
+                          +{groupImages?.length - 3}
                         </Text>
                       </View>
                     )}
@@ -1691,7 +1691,7 @@ const Chatting = ({ navigation, route }) => {
 
             <View style={{ marginLeft: 10, gap: 2 }}>
               <Text style={styles.name}>
-                {chat.name.length > 10
+                {chat.name?.length > 15
                   ? `${chat.name.slice(0, 15)}...`
                   : chat.name}
               </Text>
@@ -1812,7 +1812,7 @@ const Chatting = ({ navigation, route }) => {
           renderItem={({ item, index }) => {
             // console.log("Tin nhắn:", item);
 
-            const isLastMessage = index === messages.length - 1;
+            const isLastMessage = index === messages?.length - 1;
             const isMyMessage = item.sender_id === user.id;
             const isRecalled = item.content === "Tin nhắn đã được thu hồi";
             const repliedMessage = item.reply_to
@@ -2084,7 +2084,7 @@ const Chatting = ({ navigation, route }) => {
                     )}
                     {/* Hiển thị reactions */}
                     {Array.isArray(item.reactions) &&
-                      item.reactions.length > 0 && (
+                      item.reactions?.length > 0 && (
                         <View
                           style={[
                             styles.reactionsContainer,
