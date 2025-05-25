@@ -26,8 +26,6 @@ import goBackIcon from "../../assets/icons/go-back.png";
 import { getHostIP } from "../../services/api";
 import Constants from "expo-constants";
 
-import Constants from "expo-constants";
-
 const ChangeInformation = () => {
   const navigation = useNavigation();
   const { user, setUser } = useContext(UserContext);

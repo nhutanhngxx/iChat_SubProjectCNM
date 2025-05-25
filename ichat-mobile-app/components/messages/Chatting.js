@@ -76,6 +76,7 @@ const Chatting = ({ navigation, route }) => {
   const ipAdr = getHostIP();
   // const API_iChat = `http://${ipAdr}:5001/api/messages/`;
   const API_iChat = `${Constants.expoConfig.extra.apiUrl}/api/messages/`;
+  console.log("API URL:", API_iChat);
   const { user } = useContext(UserContext);
   const { chat } = route.params || {};
   const flatListRef = useRef(null); // "friend" | "not-friend" | "blocked" dùng để kiểm tra trạng thái bạn bè giữa 2 người dùng
