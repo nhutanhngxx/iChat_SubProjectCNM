@@ -31,11 +31,11 @@ const AccountSecurity = () => {
           onPress={() => navigation.navigate("ChangePhoneNumber")}
         />
 
-        <SecurityItem
+        {/* <SecurityItem
           icon="qr-code-outline"
           label="Mã QR đăng nhập"
           onPress={() => navigation.navigate("AddFriend")}
-        />
+        /> */}
         <SecurityItem
           icon="key-outline"
           label="Thay đổi mật khẩu"
@@ -46,14 +46,14 @@ const AccountSecurity = () => {
           label="Danh sách chặn"
           onPress={() => navigation.navigate("BlockList")}
         />
-        <SecurityItem
+        {/* <SecurityItem
           icon="time-outline"
           label="Lịch sử thay đổi"
           onPress={() =>
             Alert.alert("Lịch sử thay đổi", "Chức năng này hiện chưa khả dụng")
           }
-        />
-        <SecurityItem
+        /> */}
+        {/* <SecurityItem
           icon="trash-outline"
           label="Xóa tài khoản"
           onPress={() =>
@@ -74,7 +74,7 @@ const AccountSecurity = () => {
             )
           }
           danger
-        />
+        /> */}
       </ScrollView>
     </View>
   );
