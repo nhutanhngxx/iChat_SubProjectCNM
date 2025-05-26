@@ -45,6 +45,7 @@ import CallOverlay from "./CallOverlay";
 import IncomingCallScreen from "./IncomingCallScreen";
 
 import Constants from "expo-constants";
+import { PermissionsAndroid } from "react-native";
 
 const renderReactionIcons = (reactions) => {
   const icons = {
@@ -76,7 +77,6 @@ const Chatting = ({ navigation, route }) => {
   const ipAdr = getHostIP();
   // const API_iChat = `http://${ipAdr}:5001/api/messages/`;
   const API_iChat = `${Constants.expoConfig.extra.apiUrl}/api/messages/`;
-  console.log("API URL:", API_iChat);
   const { user } = useContext(UserContext);
   const { chat } = route.params || {};
   const flatListRef = useRef(null); // "friend" | "not-friend" | "blocked" dùng để kiểm tra trạng thái bạn bè giữa 2 người dùng
@@ -1507,9 +1507,40 @@ const Chatting = ({ navigation, route }) => {
         return;
       }
 
+      if (Platform.OS === "android" && Platform.Version <= 29) {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE
+        );
+        if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+          Alert.alert(
+            "Cần quyền truy cập",
+            "Ứng dụng cần quyền để lưu file vào bộ nhớ"
+          );
+          return;
+        }
+      }
+
       // Lấy tên file từ URL
       const fileName = decodeURIComponent(saveFileName(fileUrl));
       const fileUri = `${FileSystem.documentDirectory}${fileName}`;
+      const fileExtension = fileName.split(".").pop().toLowerCase();
+
+      // Map file extension -> mimeType
+      const extensionToMime = {
+        jpg: "image/jpeg",
+        jpeg: "image/jpeg",
+        png: "image/png",
+        gif: "image/gif",
+        mp4: "video/mp4",
+        mov: "video/quicktime",
+        pdf: "application/pdf",
+        txt: "text/plain",
+        docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        // Thêm các loại file khác nếu cần
+      };
+      const mimeType =
+        extensionToMime[fileExtension] || "application/octet-stream";
 
       const downloadResumable = FileSystem.createDownloadResumable(
         fileUrl,
@@ -1523,7 +1554,6 @@ const Chatting = ({ navigation, route }) => {
         }
       );
 
-      // Lưu downloadResumable object
       setDownloadResumables((prev) => ({
         ...prev,
         [messageId]: downloadResumable,
@@ -1531,44 +1561,45 @@ const Chatting = ({ navigation, route }) => {
 
       const { uri } = await downloadResumable.downloadAsync();
 
-      // Xử lý file sau khi tải xong
       if (Platform.OS === "ios") {
-        // Trên iOS, lưu vào Photos nếu là ảnh/video, mở với QuickLook cho các file khác
-        const fileExtension = fileName.split(".").pop().toLowerCase();
         const isMedia = ["jpg", "jpeg", "png", "gif", "mov", "mp4"].includes(
           fileExtension
         );
-
         if (isMedia) {
           await MediaLibrary.saveToLibraryAsync(uri);
           Alert.alert("Thành công", "File đã được lưu vào thư viện");
         } else {
-          // Sử dụng QuickLook để xem file
           await Sharing.shareAsync(uri, {
             UTI: "public.item",
-            mimeType: "application/octet-stream",
           });
         }
-      } else {
-        // Trên Android, lưu file và mở
-        await MediaLibrary.createAssetAsync(uri);
-
-        const contentUri = await FileSystem.getContentUriAsync(uri);
-        await IntentLauncher.startActivityAsync("android.intent.action.VIEW", {
-          data: contentUri,
-          flags: 1,
-          type: "*/*",
-        });
-
-        Alert.alert("Thành công", "File đã được tải về máy của bạn");
+      } else if (Platform.OS === "android") {
+        const permissions =
+          await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
+        if (permissions.granted) {
+          const base64 = await FileSystem.readAsStringAsync(uri, {
+            encoding: FileSystem.EncodingType.Base64,
+          });
+          const newFileUri =
+            await FileSystem.StorageAccessFramework.createFileAsync(
+              permissions.directoryUri,
+              fileName,
+              mimeType
+            );
+          await FileSystem.writeAsStringAsync(newFileUri, base64, {
+            encoding: FileSystem.EncodingType.Base64,
+          });
+          Alert.alert("Thành công", "File đã được lưu vào thư mục tải xuống");
+        } else {
+          Alert.alert("Thông báo", "Bạn cần cấp quyền lưu file");
+        }
       }
     } catch (error) {
       if (error.message !== "Download canceled") {
-        // console.error("Lỗi khi tải file:", error);
-        Alert.alert("Thông báo", "Đã hủy tải file");
+        console.log("[Chatting] Lỗi khi tải file: ", error);
+        Alert.alert("Thông báo", "Có lỗi xảy ra khi tải file");
       }
     } finally {
-      // Cleanup
       setDownloadingFiles((prev) => {
         const newState = { ...prev };
         delete newState[messageId];
