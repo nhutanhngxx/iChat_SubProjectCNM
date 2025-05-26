@@ -15,12 +15,14 @@ import {
 import CustomButton from "../components/common/CustomButton";
 import { UserContext } from "../config/context/UserContext";
 import authService from "../services/authService";
+import { IconButton } from "react-native-paper";
 
 const LoginScreen = ({ navigation }) => {
   const { setUser } = useContext(UserContext);
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isPasswordVisible, setIsPasswordVisible] = useState(true);
 
   const handleLogin = async () => {
     if (!phone.trim() || !password.trim()) {
@@ -84,13 +86,27 @@ const LoginScreen = ({ navigation }) => {
                   maxLength={10} // không tính +84
                 />
               </View>
-              <TextInput
-                style={styles.input}
-                placeholder="Mật khẩu"
-                secureTextEntry
-                value={password}
-                onChangeText={setPassword}
-              />
+              <View
+                style={{
+                  position: "relative",
+                  width: "100%",
+                }}
+              >
+                <TextInput
+                  style={styles.input}
+                  placeholder="Nhập mật khẩu..."
+                  secureTextEntry={isPasswordVisible}
+                  value={password}
+                  onChangeText={setPassword}
+                />
+                <IconButton
+                  icon={isPasswordVisible ? "eye" : "eye-off"}
+                  onPress={() => setIsPasswordVisible(!isPasswordVisible)}
+                  style={{ position: "absolute", right: 5, top: 5 }}
+                  size={20}
+                />
+              </View>
+
               <Text
                 onPress={() => navigation.navigate("ForgotPassword")}
                 style={styles.forgotPassword}
