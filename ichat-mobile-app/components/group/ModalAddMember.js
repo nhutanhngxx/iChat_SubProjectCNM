@@ -372,6 +372,7 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
     backgroundColor: "white",
+    flex: 1,
     paddingHorizontal: 12,
   },
 
