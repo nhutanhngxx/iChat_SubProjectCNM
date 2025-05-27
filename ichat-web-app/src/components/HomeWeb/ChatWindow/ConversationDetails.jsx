@@ -476,15 +476,15 @@ const ConversationDetails = ({
     if (!selectedMember) return;
 
     try {
-      message.loading({
+          message.loading({
         content: "Đang gửi lời mời kết bạn...",
         key: "friendRequest",
       });
 
       await dispatch(
         sendFriendRequest({
-          sender_id: user.id,
-          receiver_id: selectedMember.user_id,
+          senderId: user.id,
+          receiverId: selectedMember.user_id,
         })
       ).unwrap();
 
@@ -1595,7 +1595,7 @@ const ConversationDetails = ({
                   </div>
                 </>
               ) : (
-                <div>
+                <div style={{ width: "fit-content", maxWidth: "100px" }}>
                   <button
                     className="conversation-action-button"
                     onClick={handleCreateGroupClick}

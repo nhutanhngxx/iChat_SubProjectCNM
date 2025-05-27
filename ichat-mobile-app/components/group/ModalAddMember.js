@@ -372,6 +372,7 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
     backgroundColor: "white",
+    flex: 1,
     paddingHorizontal: 12,
   },
 
@@ -420,7 +421,7 @@ const styles = StyleSheet.create({
   },
   header: {
     width: "100%",
-    height: 90,
+    height: 50,
     justifyContent: "space-between",
     flexDirection: "row",
     alignItems: "flex-end",
